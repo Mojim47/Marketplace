@@ -1,6 +1,5 @@
-export async function GET() {
-  return new Response(JSON.stringify({ status: 'ok', timestamp: new Date().toISOString() }), {
-    status: 200,
-    headers: { 'content-type': 'application/json' },
-  });
+import { NextResponse } from 'next/server';
+
+export function GET() {
+  return NextResponse.json({ status: 'ok', service: 'admin', time: new Date().toISOString() });
 }

@@ -17,6 +17,10 @@ on:
 env:
   NODE_VERSION: "20.18.1"
   PNPM_VERSION: "9.15.1"
+  # Required health endpoints for deploy gating
+  API_HEALTH_URL: ${{ secrets.API_HEALTH_URL }}
+  WEB_HEALTH_URL: ${{ secrets.WEB_HEALTH_URL }}
+  ADMIN_HEALTH_URL: ${{ secrets.ADMIN_HEALTH_URL }}
 
 concurrency:
   group: production-deploy-${{ github.ref }}
@@ -309,10 +313,15 @@ jobs:
           # Add actual deployment commands here
           # kubectl set image deployment/api api=ghcr.io/${{ github.repository }}:${{ github.sha }}
 
-      - name: "🏥 Run health check"
+      - name: "🏥 Run health checks (gate)"
         run: |
-          echo "🏥 Running health check..."
-          # curl -f https://api.nextgen-market.ir/health || exit 1
+          : "${API_HEALTH_URL:?Missing API_HEALTH_URL secret}"
+          : "${WEB_HEALTH_URL:?Missing WEB_HEALTH_URL secret}"
+          : "${ADMIN_HEALTH_URL:?Missing ADMIN_HEALTH_URL secret}"
+          echo "🏥 Running health checks..."
+          curl -f "$API_HEALTH_URL" || exit 1
+          curl -f "$WEB_HEALTH_URL" || exit 1
+          curl -f "$ADMIN_HEALTH_URL" || exit 1
 
       - name: "✅ Deployment complete"
         run: echo "✅ Production deployment successful!"
@@ -328,7 +337,12 @@ jobs:
       - name: "🏥 Verify API health"
         run: |
           echo "Verifying API health..."
-          # curl -f https://api.nextgen-market.ir/health/ready || exit 1
+          : "${API_HEALTH_URL:?Missing API_HEALTH_URL secret}"
+          : "${WEB_HEALTH_URL:?Missing WEB_HEALTH_URL secret}"
+          : "${ADMIN_HEALTH_URL:?Missing ADMIN_HEALTH_URL secret}"
+          curl -f "$API_HEALTH_URL" || exit 1
+          curl -f "$WEB_HEALTH_URL" || exit 1
+          curl -f "$ADMIN_HEALTH_URL" || exit 1
 
       - name: "📊 Generate deployment summary"
         run: |

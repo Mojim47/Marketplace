@@ -1,0 +1,7 @@
+{
+  "name": "web_orders_flow",
+  "routes": ["/orders"],
+  "requiredTestIds": {
+    "/orders": ["orders-title", "orders-list"]
+  }
+}

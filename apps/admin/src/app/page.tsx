@@ -1,20 +1,22 @@
+import { Button } from '../components/ui/button';
+
 export default function AdminHomePage() {
   return (
     <div className="min-h-screen">
       <div className="mx-auto max-w-6xl px-6 py-16">
         <header className="admin-card rounded-3xl p-8">
           <p className="text-xs text-slate-300">Admin Control Center</p>
-          <h1 className="admin-title mt-2 text-3xl text-white">ไแ ใฯํัํสํ NextGen</h1>
+          <h1 className="admin-title mt-2 text-3xl text-white">ูพูู ู…ุฏÛุฑÛุชÛ NextGen</h1>
           <p className="mt-3 text-sm text-slate-300">
-            ใวไํสๆัํไ แอูๅวํ Ýัๆิก ำแวใส ำํำสใก ๆ ศํไิๅวํ ๅๆิ ใีไๆฺํ ฯั ํ ไวๅ.
+            ู…ุงูÛุชูุฑÛูฺฏ ูุญุธูโ€ุงÛ ูุฑูุดุ ุณูุงู…ุช ุณÛุณุชู… ู ุจÛูุดโ€ูุงÛ ููุด ู…ุตููุนÛ ุฏุฑ Ûฺฉ ูฺฏุงู.
           </p>
         </header>
 
         <section className="mt-10 grid gap-6 lg:grid-cols-3">
           {[
-            { label: 'ำÝวัิๅวํ วใัๆา', value: '1,284' },
-            { label: 'ฯัยใฯ ัๆาวไๅ', value: '38.2B ัํวแ' },
-            { label: 'ๅิฯวัๅวํ Ýฺวแ', value: '3' },
+            { label: 'ุณูุงุฑุดโ€ูุงÛ ุงู…ุฑูุฒ', value: '1,284' },
+            { label: 'ุฏุฑุขู…ุฏ ุฑูุฒุงูู', value: '38.2B ุฑÛุงู' },
+            { label: 'ูุดุฏุงุฑูุงÛ ูุนุงู', value: '3' },
           ].map((item) => (
             <div key={item.label} className="admin-card rounded-2xl p-6">
               <p className="text-xs text-slate-400">{item.label}</p>
@@ -25,7 +27,7 @@ export default function AdminHomePage() {
 
         <section className="mt-10 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="admin-card rounded-3xl p-6">
-            <h2 className="admin-title text-xl text-white">ำแวใส ำัๆํำๅว</h2>
+            <h2 className="admin-title text-xl text-white">ุณูุงู…ุช ุณุฑูÛุณโ€ูุง</h2>
             <div className="mt-4 space-y-3">
               {['API Gateway', 'AI Search', 'AR Storage'].map((service) => (
                 <div key={service} className="flex items-center justify-between rounded-xl bg-white/5 px-4 py-3 text-sm">
@@ -36,13 +38,13 @@ export default function AdminHomePage() {
             </div>
           </div>
           <div className="admin-card rounded-3xl p-6">
-            <h2 className="admin-title text-xl text-white">ำํไวแๅวํ ๅๆิใไฯ</h2>
+            <h2 className="admin-title text-xl text-white">ุณÛฺฏูุงูโ€ูุงÛ ููุดู…ูุฏ</h2>
             <p className="mt-3 text-sm text-slate-300">
-              ำํำสใ ํิไๅวฯ ใํฯๅฯ ใๆฬๆฯํ วแวๅวํ ัสÞวึว ัว วÝาวํิ ฯๅํฯ ๆ Þํใสๅว ัว ศๅํไๅ ไํฯ.
+              ุณÛุณุชู… ูพÛุดููุงุฏ ู…Ûโ€ุฏูุฏ ู…ูุฌูุฏÛ ฺฉุงูุงูุงÛ ูพุฑุชูุงโ€ุถุง ุฑุง ุงูุฒุงÛุด ุฏูÛุฏ ู ูÛู…ุชโ€ูุง ุฑุง ุจูÛูู ฺฉูÛุฏ.
             </p>
-            <button className="mt-6 rounded-full bg-[color:var(--admin-brand)] px-6 py-3 text-sm font-semibold text-slate-900">
-              ใิวๅฯๅ าวัิ วใแ
-            </button>
+            <div className="mt-6 max-w-xs">
+              <Button loading={false}>ู…ุดุงูุฏู ฺฏุฒุงุฑุด ฺฉุงู…ู</Button>
+            </div>
           </div>
         </section>
       </div>

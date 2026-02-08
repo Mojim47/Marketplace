@@ -1,0 +1,7 @@
+{
+  "name": "web_profile_flow",
+  "routes": ["/profile"],
+  "requiredTestIds": {
+    "/profile": ["profile-title", "profile-form", "profile-status", "profile-fullname", "profile-email", "profile-phone", "profile-submit"]
+  }
+}

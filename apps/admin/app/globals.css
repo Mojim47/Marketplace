@@ -1,0 +1,43 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --admin-bg: var(--color-neutral-900);
+  --admin-ink: var(--color-neutral-0);
+  --admin-muted: var(--color-neutral-200);
+  --admin-card: rgb(var(--color-neutral-900-rgb) / 0.78);
+  --admin-border: rgb(var(--color-neutral-400-rgb) / 0.2);
+  --admin-brand: var(--color-primary-400);
+}
+
+html,
+body {
+  background-color: var(--admin-bg);
+}
+
+body {
+  font-family: var(--font-vazirmatn), sans-serif;
+  color: var(--admin-ink);
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(1000px 600px at 85% -10%, rgb(var(--color-primary-400-rgb) / 0.25), transparent 60%),
+    linear-gradient(160deg, var(--color-neutral-900) 0%, var(--color-neutral-800) 50%, var(--color-neutral-900) 100%);
+}
+
+.admin-card {
+  background: var(--admin-card);
+  border: 1px solid var(--admin-border);
+  box-shadow: var(--shadow-2xl);
+}
+
+.admin-title {
+  font-family: var(--font-fraunces), serif;
+  letter-spacing: -0.02em;
+}

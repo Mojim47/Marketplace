@@ -15,6 +15,7 @@
     "@mui/material": "^5.15.14",
     "@nextgen/ai": "workspace:*",
     "@nextgen/ar": "workspace:*",
+    "@nextgen/observability": "workspace:*",
     "@nextgen/types": "workspace:*",
     "@nextgen/auth": "workspace:*",
     "@tanstack/react-query": "^5.51.0",

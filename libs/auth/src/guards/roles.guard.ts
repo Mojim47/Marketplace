@@ -3,15 +3,15 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import {
-  Injectable,
-  CanActivate,
-  ExecutionContext,
+  type CanActivate,
+  type ExecutionContext,
   ForbiddenException,
+  Injectable,
   Logger,
 } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
-import type { UserRole } from '@prisma/client';
+import type { Reflector } from '@nestjs/core';
 import { REQUIRED_ROLES_KEY } from '../decorators/roles.decorator';
+import type { UserRole } from '../types';
 import type { AuthenticatedUser } from '../types';
 
 @Injectable()
@@ -21,10 +21,10 @@ export class RolesGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const requiredRoles = this.reflector.getAllAndOverride<UserRole[]>(
-      REQUIRED_ROLES_KEY,
-      [context.getHandler(), context.getClass()],
-    );
+    const requiredRoles = this.reflector.getAllAndOverride<UserRole[]>(REQUIRED_ROLES_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
 
     if (!requiredRoles || requiredRoles.length === 0) {
       return true;
@@ -37,7 +37,7 @@ export class RolesGuard implements CanActivate {
       throw new ForbiddenException('User not authenticated');
     }
 
-    const hasRole = requiredRoles.some(role => user.roles.includes(role));
+    const hasRole = requiredRoles.some((role) => user.roles.includes(role));
 
     if (!hasRole) {
       this.logger.warn('Access denied - insufficient roles', {

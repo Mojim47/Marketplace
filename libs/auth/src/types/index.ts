@@ -2,7 +2,8 @@
 // Auth Types - Type Definitions for Authentication System
 // ═══════════════════════════════════════════════════════════════════════════
 
-import type { UserRole, DealerTier } from '@prisma/client';
+export type UserRole = string;
+export type DealerTier = string;
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Token Types

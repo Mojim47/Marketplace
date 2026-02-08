@@ -69,7 +69,6 @@
         "noPrototypeBuiltins": "error",
         "noRedeclare": "error",
         "noShadowRestrictedNames": "error",
-        "noThrowLiteral": "error",
         "useAwait": "error",
         "useDefaultSwitchClauseLast": "error",
         "useGetterReturn": "error",

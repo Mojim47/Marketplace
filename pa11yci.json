@@ -1,0 +1,20 @@
+{
+  "defaults": {
+    "standard": "WCAG2AA",
+    "runners": ["axe"],
+    "timeout": 30000,
+    "wait": 500,
+    "chromeLaunchConfig": {
+      "args": ["--no-sandbox", "--disable-setuid-sandbox"]
+    }
+  },
+  "urls": [
+    "http://localhost:3000/",
+    "http://localhost:3000/cart",
+    "http://localhost:3000/checkout",
+    "http://localhost:3000/checkout/success",
+    "http://localhost:3000/profile",
+    "http://localhost:3000/orders",
+    "http://localhost:3003/login"
+  ]
+}

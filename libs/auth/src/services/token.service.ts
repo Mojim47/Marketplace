@@ -7,13 +7,12 @@
 // - Token binding to session and device
 // ═══════════════════════════════════════════════════════════════════════════
 
+import { createHash, randomBytes } from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
+import type { ConfigService } from '@nestjs/config';
+import type { JwtService } from '@nestjs/jwt';
 import { Redis } from 'ioredis';
-import { randomBytes, createHash } from 'crypto';
-import type { TokenPayload, TokenPair, TokenScope, AuthConfig } from '../types';
-import type { UserRole } from '@prisma/client';
+import type { AuthConfig, TokenPair, TokenPayload, TokenScope, UserRole } from '../types';
 
 export interface CreateTokenOptions {
   user_id: string;
@@ -37,7 +36,7 @@ export class TokenService {
 
   constructor(
     private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
+    private readonly configService: ConfigService
   ) {
     this.config = this.configService.get<AuthConfig['jwt']>('auth.jwt', {
       secret: '',
@@ -73,7 +72,9 @@ export class TokenService {
       roles: options.roles,
       scopes: options.scopes,
       sid: options.session_id,
-      dfp: options.device_fingerprint ? this.hashFingerprint(options.device_fingerprint) : undefined,
+      dfp: options.device_fingerprint
+        ? this.hashFingerprint(options.device_fingerprint)
+        : undefined,
       iat: now,
       exp: now + accessExpiry,
       type: 'access',
@@ -87,7 +88,9 @@ export class TokenService {
       roles: options.roles,
       scopes: options.scopes,
       sid: options.session_id,
-      dfp: options.device_fingerprint ? this.hashFingerprint(options.device_fingerprint) : undefined,
+      dfp: options.device_fingerprint
+        ? this.hashFingerprint(options.device_fingerprint)
+        : undefined,
       iat: now,
       exp: now + refreshExpiry,
       type: 'refresh',
@@ -115,7 +118,7 @@ export class TokenService {
         hash: refreshTokenHash,
         user_id: options.user_id,
         created_at: now,
-      }),
+      })
     );
 
     return {
@@ -150,7 +153,7 @@ export class TokenService {
    */
   async verifyAndRotateRefreshToken(
     refreshToken: string,
-    deviceFingerprint?: string,
+    deviceFingerprint?: string
   ): Promise<{ payload: TokenPayload; newTokenPair: TokenPair }> {
     // Verify the refresh token
     const payload = await this.jwtService.verifyAsync<TokenPayload>(refreshToken, {
@@ -244,7 +247,7 @@ export class TokenService {
   async revokeAllUserSessions(userId: string, tenantId: string): Promise<void> {
     const pattern = `${this.REFRESH_TOKEN_PREFIX}*`;
     const keys = await this.redis.keys(pattern);
-    
+
     for (const key of keys) {
       const data = await this.redis.get(key);
       if (data) {
@@ -254,7 +257,7 @@ export class TokenService {
         }
       }
     }
-    
+
     this.logger.log('All user sessions revoked', { user_id: userId, tenant_id: tenantId });
   }
 
@@ -288,15 +291,20 @@ export class TokenService {
       return 900; // Default 15 minutes
     }
 
-    const value = parseInt(match[1], 10);
+    const value = Number.parseInt(match[1], 10);
     const unit = match[2];
 
     switch (unit) {
-      case 's': return value;
-      case 'm': return value * 60;
-      case 'h': return value * 3600;
-      case 'd': return value * 86400;
-      default: return 900;
+      case 's':
+        return value;
+      case 'm':
+        return value * 60;
+      case 'h':
+        return value * 3600;
+      case 'd':
+        return value * 86400;
+      default:
+        return 900;
     }
   }
 
@@ -306,17 +314,67 @@ export class TokenService {
   getDefaultScopes(roles: UserRole[]): TokenScope[] {
     const scopeMap: Record<UserRole, TokenScope[]> = {
       CUSTOMER: ['user:read', 'user:update', 'order:read', 'order:create', 'product:read'],
-      DEALER: ['user:read', 'user:update', 'order:read', 'order:create', 'product:read', 'dealer:read', 'dealer:order:create'],
-      VENDOR: ['user:read', 'user:update', 'product:read', 'product:create', 'product:update', 'vendor:read', 'vendor:product:manage'],
-      EXECUTOR: ['user:read', 'user:update', 'executor:read', 'executor:bid:create', 'executor:project:manage'],
-      ADMIN: ['user:read', 'user:update', 'admin:user:read', 'admin:user:manage', 'product:read', 'product:update', 'order:read', 'order:update'],
-      SUPER_ADMIN: ['user:read', 'user:update', 'user:delete', 'admin:user:read', 'admin:user:manage', 'admin:system:manage', 'product:read', 'product:create', 'product:update', 'product:delete', 'order:read', 'order:create', 'order:update', 'order:cancel', 'vendor:read', 'vendor:manage'],
+      DEALER: [
+        'user:read',
+        'user:update',
+        'order:read',
+        'order:create',
+        'product:read',
+        'dealer:read',
+        'dealer:order:create',
+      ],
+      VENDOR: [
+        'user:read',
+        'user:update',
+        'product:read',
+        'product:create',
+        'product:update',
+        'vendor:read',
+        'vendor:product:manage',
+      ],
+      EXECUTOR: [
+        'user:read',
+        'user:update',
+        'executor:read',
+        'executor:bid:create',
+        'executor:project:manage',
+      ],
+      ADMIN: [
+        'user:read',
+        'user:update',
+        'admin:user:read',
+        'admin:user:manage',
+        'product:read',
+        'product:update',
+        'order:read',
+        'order:update',
+      ],
+      SUPER_ADMIN: [
+        'user:read',
+        'user:update',
+        'user:delete',
+        'admin:user:read',
+        'admin:user:manage',
+        'admin:system:manage',
+        'product:read',
+        'product:create',
+        'product:update',
+        'product:delete',
+        'order:read',
+        'order:create',
+        'order:update',
+        'order:cancel',
+        'vendor:read',
+        'vendor:manage',
+      ],
     };
 
     const scopes = new Set<TokenScope>();
     for (const role of roles) {
       const roleScopes = scopeMap[role] || [];
-      roleScopes.forEach(scope => scopes.add(scope));
+      for (const scope of roleScopes) {
+        scopes.add(scope);
+      }
     }
 
     return Array.from(scopes);
