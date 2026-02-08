@@ -1,0 +1,206 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "NextGen ClickHouse Analytics",
+    "tags": ["nextgen", "clickhouse", "analytics"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "ClickHouse Query Performance",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.50, rate(clickhouse_query_duration_seconds_bucket[5m]))",
+            "legendFormat": "P50 Query Time"
+          },
+          {
+            "expr": "histogram_quantile(0.95, rate(clickhouse_query_duration_seconds_bucket[5m]))",
+            "legendFormat": "P95 Query Time"
+          },
+          {
+            "expr": "histogram_quantile(0.99, rate(clickhouse_query_duration_seconds_bucket[5m]))",
+            "legendFormat": "P99 Query Time"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "unit": "s"
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "Analytics Events Ingestion",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "rate(analytics_events_ingested_total{event_type=\"search\"}[5m])",
+            "legendFormat": "Search Events"
+          },
+          {
+            "expr": "rate(analytics_events_ingested_total{event_type=\"product_view\"}[5m])",
+            "legendFormat": "Product Views"
+          },
+          {
+            "expr": "rate(analytics_events_ingested_total{event_type=\"order\"}[5m])",
+            "legendFormat": "Orders"
+          },
+          {
+            "expr": "rate(analytics_events_ingested_total{event_type=\"ar_stream\"}[5m])",
+            "legendFormat": "AR Streams"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "axisLabel": "Events/sec"
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "Top Search Terms (Real-time)",
+        "type": "table",
+        "targets": [
+          {
+            "datasource": "ClickHouse",
+            "rawSql": "SELECT search_term, count() as searches FROM search_events WHERE timestamp >= now() - INTERVAL 1 HOUR GROUP BY search_term ORDER BY searches DESC LIMIT 20"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "align": "auto",
+              "displayMode": "auto"
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+      },
+      {
+        "id": 4,
+        "title": "Failed Searches (Business Opportunities)",
+        "type": "table",
+        "targets": [
+          {
+            "datasource": "ClickHouse",
+            "rawSql": "SELECT search_term, count() as failed_searches FROM search_events WHERE results_count = 0 AND timestamp >= now() - INTERVAL 1 HOUR GROUP BY search_term ORDER BY failed_searches DESC LIMIT 15"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "align": "auto",
+              "displayMode": "auto"
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+      },
+      {
+        "id": 5,
+        "title": "Revenue Analytics (Real-time)",
+        "type": "timeseries",
+        "targets": [
+          {
+            "datasource": "ClickHouse",
+            "rawSql": "SELECT toStartOfMinute(timestamp) as time, sum(amount) as revenue FROM order_events WHERE timestamp >= now() - INTERVAL 1 HOUR GROUP BY time ORDER BY time"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "unit": "currencyIRR"
+          }
+        },
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16}
+      },
+      {
+        "id": 6,
+        "title": "Tenant Activity Distribution",
+        "type": "piechart",
+        "targets": [
+          {
+            "datasource": "ClickHouse",
+            "rawSql": "SELECT tenant_id, count() as events FROM system_events WHERE timestamp >= now() - INTERVAL 1 HOUR GROUP BY tenant_id ORDER BY events DESC LIMIT 10"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"}
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24}
+      },
+      {
+        "id": 7,
+        "title": "ClickHouse System Metrics",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "clickhouse_background_pool_task_active_count",
+            "legendFormat": "Active Background Tasks"
+          },
+          {
+            "expr": "clickhouse_memory_usage_bytes / 1024 / 1024",
+            "legendFormat": "Memory Usage (MB)"
+          },
+          {
+            "expr": "rate(clickhouse_query_total[5m])",
+            "legendFormat": "Queries/sec"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"}
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24}
+      },
+      {
+        "id": 8,
+        "title": "Data Ingestion Pipeline Health",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "up{job=\"vector\"}",
+            "legendFormat": "Vector Status"
+          },
+          {
+            "expr": "rate(vector_events_processed_total[5m])",
+            "legendFormat": "Events Processed/sec"
+          },
+          {
+            "expr": "vector_buffer_events_count",
+            "legendFormat": "Buffer Size"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {"color": "red", "value": 0},
+                {"color": "green", "value": 1}
+              ]
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 32}
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "10s"
+  }
+}

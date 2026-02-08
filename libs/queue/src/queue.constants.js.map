@@ -1,0 +1,1 @@
+{"version":3,"file":"queue.constants.js","sourceRoot":"","sources":["queue.constants.ts"],"names":[],"mappings":";;;AAIa,QAAA,WAAW,GAAG;IACzB,KAAK,EAAE,aAAa;IACpB,GAAG,EAAE,WAAW;IAChB,aAAa,EAAE,wBAAwB;IACvC,aAAa,EAAE,qBAAqB;IACpC,kBAAkB,EAAE,0BAA0B;IAC9C,oBAAoB,EAAE,4BAA4B;CAC1C,CAAC"}

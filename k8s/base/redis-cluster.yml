@@ -1,0 +1,332 @@
+---
+# Redis Cluster Deployment for Enterprise Scalability Architecture
+# Requirements: 2.6, 6.1, 6.2
+# Provides high-availability caching for client cache, CQRS, and AI semantic cache
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nextgen-marketplace
+  labels:
+    name: nextgen-marketplace
+---
+# Redis Cluster ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-cluster-config
+  namespace: nextgen-marketplace
+data:
+  redis.conf: |
+    # Redis Cluster Configuration
+    cluster-enabled yes
+    cluster-config-file nodes.conf
+    cluster-node-timeout 5000
+    cluster-announce-ip ${POD_IP}
+    cluster-announce-port 6379
+    cluster-announce-bus-port 16379
+    
+    # Memory Management
+    maxmemory 1gb
+    maxmemory-policy allkeys-lru
+    
+    # Persistence (AOF for durability)
+    appendonly yes
+    appendfsync everysec
+    auto-aof-rewrite-percentage 100
+    auto-aof-rewrite-min-size 64mb
+    
+    # Security
+    protected-mode no
+    
+    # Performance
+    tcp-keepalive 300
+    timeout 0
+    tcp-backlog 511
+    
+    # Logging
+    loglevel notice
+
+---
+# Redis Cluster StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis-cluster
+  namespace: nextgen-marketplace
+  labels:
+    app: redis-cluster
+    component: cache
+spec:
+  serviceName: redis-cluster-headless
+  replicas: 6  # 3 masters + 3 replicas for HA
+  selector:
+    matchLabels:
+      app: redis-cluster
+  template:
+    metadata:
+      labels:
+        app: redis-cluster
+        component: cache
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9121"
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - redis-cluster
+                topologyKey: kubernetes.io/hostname
+      
+      containers:
+        - name: redis
+          image: redis:7.2-alpine
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - -c
+            - |
+              # Replace POD_IP in config
+              sed "s/\${POD_IP}/${POD_IP}/g" /etc/redis/redis.conf > /data/redis.conf
+              exec redis-server /data/redis.conf
+          ports:
+            - name: redis
+              containerPort: 6379
+              protocol: TCP
+            - name: cluster-bus
+              containerPort: 16379
+              protocol: TCP
+          env:
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+            - name: redis-config
+              mountPath: /etc/redis
+          livenessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - ALL
+        
+        # Redis Exporter for Prometheus metrics
+        - name: redis-exporter
+          image: oliver006/redis_exporter:v1.55.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: metrics
+              containerPort: 9121
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+      
+      volumes:
+        - name: redis-config
+          configMap:
+            name: redis-cluster-config
+  
+  volumeClaimTemplates:
+    - metadata:
+        name: redis-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: standard
+        resources:
+          requests:
+            storage: 10Gi
+
+---
+# Headless Service for StatefulSet DNS
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-cluster-headless
+  namespace: nextgen-marketplace
+  labels:
+    app: redis-cluster
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: 6379
+    - name: cluster-bus
+      port: 16379
+      targetPort: 16379
+  selector:
+    app: redis-cluster
+
+---
+# Client Service for Redis Cluster
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-cluster
+  namespace: nextgen-marketplace
+  labels:
+    app: redis-cluster
+spec:
+  type: ClusterIP
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: 6379
+    - name: metrics
+      port: 9121
+      targetPort: 9121
+  selector:
+    app: redis-cluster
+
+---
+# Pod Disruption Budget for Redis Cluster
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: redis-cluster-pdb
+  namespace: nextgen-marketplace
+spec:
+  minAvailable: 4  # Ensure at least 4 pods (majority) are available
+  selector:
+    matchLabels:
+      app: redis-cluster
+
+---
+# ServiceMonitor for Prometheus
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: redis-cluster-monitor
+  namespace: nextgen-marketplace
+  labels:
+    app: redis-cluster
+    release: prometheus-operator
+spec:
+  selector:
+    matchLabels:
+      app: redis-cluster
+  endpoints:
+    - port: metrics
+      interval: 30s
+      path: /metrics
+
+---
+# NetworkPolicy for Redis Cluster
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: redis-cluster-network-policy
+  namespace: nextgen-marketplace
+spec:
+  podSelector:
+    matchLabels:
+      app: redis-cluster
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow from API pods
+    - from:
+        - podSelector:
+            matchLabels:
+              app: api
+      ports:
+        - protocol: TCP
+          port: 6379
+    # Allow from worker pods
+    - from:
+        - podSelector:
+            matchLabels:
+              app: worker
+      ports:
+        - protocol: TCP
+          port: 6379
+    # Allow cluster communication between Redis pods
+    - from:
+        - podSelector:
+            matchLabels:
+              app: redis-cluster
+      ports:
+        - protocol: TCP
+          port: 6379
+        - protocol: TCP
+          port: 16379
+    # Allow Prometheus scraping
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+      ports:
+        - protocol: TCP
+          port: 9121
+  egress:
+    # Allow cluster communication
+    - to:
+        - podSelector:
+            matchLabels:
+              app: redis-cluster
+      ports:
+        - protocol: TCP
+          port: 6379
+        - protocol: TCP
+          port: 16379
+    # Allow DNS
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: UDP
+          port: 53

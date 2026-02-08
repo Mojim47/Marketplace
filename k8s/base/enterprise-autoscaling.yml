@@ -1,0 +1,356 @@
+---
+# Enterprise Scalability Architecture - Auto-scaling Configuration
+# Requirements: 6.1, 6.2
+# Enhanced HPA configurations for all services
+
+# API HPA with custom metrics
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: api-enterprise-hpa
+  namespace: nextgen-marketplace
+  labels:
+    app: api
+    tier: enterprise
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: api
+  minReplicas: 3
+  maxReplicas: 20
+  metrics:
+    # CPU-based scaling
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    # Memory-based scaling
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+    # Custom metric: requests per second (requires Prometheus Adapter)
+    - type: Pods
+      pods:
+        metric:
+          name: http_requests_per_second
+        target:
+          type: AverageValue
+          averageValue: "100"
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 25
+          periodSeconds: 60
+        - type: Pods
+          value: 2
+          periodSeconds: 60
+      selectPolicy: Min
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 15
+        - type: Pods
+          value: 4
+          periodSeconds: 15
+      selectPolicy: Max
+
+---
+# Worker HPA for background job processing
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: worker-enterprise-hpa
+  namespace: nextgen-marketplace
+  labels:
+    app: worker
+    tier: enterprise
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: worker
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 75
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+    # Custom metric: queue depth (requires Prometheus Adapter)
+    - type: External
+      external:
+        metric:
+          name: redis_queue_depth
+          selector:
+            matchLabels:
+              queue: "jobs"
+        target:
+          type: AverageValue
+          averageValue: "50"
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 180
+      policies:
+        - type: Percent
+          value: 50
+          periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 30
+        - type: Pods
+          value: 3
+          periodSeconds: 30
+      selectPolicy: Max
+
+---
+# Web Frontend HPA
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: web-enterprise-hpa
+  namespace: nextgen-marketplace
+  labels:
+    app: web
+    tier: enterprise
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: web
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 50
+          periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 30
+
+---
+# ML Service HPA for AI search
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: ml-service-enterprise-hpa
+  namespace: nextgen-marketplace
+  labels:
+    app: ml-service
+    tier: enterprise
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: ml-service
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 75
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 600  # Longer stabilization for ML workloads
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 120
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+        - type: Pods
+          value: 2
+          periodSeconds: 60
+
+---
+# Pod Disruption Budgets for high availability
+
+# API PDB
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: api-enterprise-pdb
+  namespace: nextgen-marketplace
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: api
+
+---
+# Worker PDB
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: worker-enterprise-pdb
+  namespace: nextgen-marketplace
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: worker
+
+---
+# Web PDB
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: web-enterprise-pdb
+  namespace: nextgen-marketplace
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: web
+
+---
+# ML Service PDB
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: ml-service-enterprise-pdb
+  namespace: nextgen-marketplace
+spec:
+  minAvailable: 0  # Allow full disruption for single replica
+  selector:
+    matchLabels:
+      app: ml-service
+
+---
+# Vertical Pod Autoscaler for API (requires VPA controller)
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: api-enterprise-vpa
+  namespace: nextgen-marketplace
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: api
+  updatePolicy:
+    updateMode: "Auto"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: api
+        minAllowed:
+          cpu: 200m
+          memory: 256Mi
+        maxAllowed:
+          cpu: 4000m
+          memory: 8Gi
+        controlledResources: ["cpu", "memory"]
+
+---
+# Vertical Pod Autoscaler for Worker
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: worker-enterprise-vpa
+  namespace: nextgen-marketplace
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: worker
+  updatePolicy:
+    updateMode: "Auto"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: worker
+        minAllowed:
+          cpu: 100m
+          memory: 128Mi
+        maxAllowed:
+          cpu: 2000m
+          memory: 4Gi
+
+---
+# Prometheus Adapter ConfigMap for custom metrics
+# Required for custom HPA metrics like http_requests_per_second
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-adapter-config
+  namespace: nextgen-marketplace
+data:
+  config.yaml: |
+    rules:
+      # HTTP requests per second metric
+      - seriesQuery: 'http_requests_total{namespace="nextgen-marketplace",pod!=""}'
+        resources:
+          overrides:
+            namespace: {resource: "namespace"}
+            pod: {resource: "pod"}
+        name:
+          matches: "^(.*)_total$"
+          as: "${1}_per_second"
+        metricsQuery: 'rate(<<.Series>>{<<.LabelMatchers>>}[2m])'
+      
+      # Redis queue depth metric
+      - seriesQuery: 'redis_queue_length{namespace="nextgen-marketplace"}'
+        resources:
+          overrides:
+            namespace: {resource: "namespace"}
+        name:
+          as: "redis_queue_depth"
+        metricsQuery: 'avg(<<.Series>>{<<.LabelMatchers>>})'
+      
+      # Cache hit rate metric
+      - seriesQuery: 'cache_hits_total{namespace="nextgen-marketplace",pod!=""}'
+        resources:
+          overrides:
+            namespace: {resource: "namespace"}
+            pod: {resource: "pod"}
+        name:
+          as: "cache_hit_rate"
+        metricsQuery: 'rate(cache_hits_total{<<.LabelMatchers>>}[5m]) / (rate(cache_hits_total{<<.LabelMatchers>>}[5m]) + rate(cache_misses_total{<<.LabelMatchers>>}[5m]))'

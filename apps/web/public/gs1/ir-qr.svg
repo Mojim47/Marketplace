@@ -1,0 +1,7 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300">
+  <rect fill="#fff" width="300" height="300"/>
+  <text x="150" y="140" text-anchor="middle" font-size="12" font-family="Arial">https://gs1.ir/01/=IR-251211-2249</text>
+  <text x="150" y="160" text-anchor="middle" font-size="10" fill="#666">GTIN: 6260143900128</text>
+  <text x="150" y="180" text-anchor="middle" font-size="10" fill="#666">Serial: IR-251211-2249</text>
+  <text x="150" y="200" text-anchor="middle" font-size="8" fill="#999">Signed with ES256</text>
+</svg>

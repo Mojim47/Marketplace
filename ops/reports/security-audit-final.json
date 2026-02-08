@@ -1,0 +1,75 @@
+{
+  "generatedAt": "2025-11-14T17:33:42.051Z",
+  "scope": ["libs/security/src", "libs/auth/src"],
+  "vulnerabilities": [],
+  "designFindings": [
+    {
+      "area": "token",
+      "status": "pass",
+      "note": "Access tokens enforce exp check"
+    },
+    {
+      "area": "refresh",
+      "status": "pass",
+      "note": "Refresh tokens are one-time and rotated"
+    },
+    {
+      "area": "session",
+      "status": "pass",
+      "note": "Inactivity timeout enforced"
+    },
+    {
+      "area": "device-binding",
+      "status": "pass",
+      "note": "Timing-safe comparison used"
+    },
+    {
+      "area": "integration",
+      "status": "pass",
+      "note": "Token manager uses security primitives"
+    }
+  ],
+  "compliance": {
+    "ISO27001": {
+      "A_9_4_2": {
+        "status": "aligned",
+        "evidence": [
+          "device-binding.ts evaluateBinding",
+          "session-store.ts inactivity",
+          "token-manager.ts revoke"
+        ]
+      },
+      "A_8_23": {
+        "status": "aligned",
+        "evidence": [
+          "security/crypto.ts AES-256-GCM",
+          "security/hashing.ts scrypt",
+          "security/token.ts HS256"
+        ]
+      }
+    },
+    "PCI_DSS_v4": {
+      "8.2": {
+        "status": "aligned",
+        "evidence": ["scrypt hashing", "per-session tokens"]
+      },
+      "8.3": {
+        "status": "aligned",
+        "evidence": ["MFA on untrusted device via evaluateBinding"]
+      },
+      "3.5": {
+        "status": "aligned",
+        "evidence": ["secrets vault encryption"]
+      },
+      "3.6": {
+        "status": "aligned",
+        "evidence": ["key management procedures in code and tests"]
+      }
+    }
+  },
+  "recommendations": [],
+  "summary": {
+    "total": 0,
+    "highOrCritical": "none"
+  }
+}

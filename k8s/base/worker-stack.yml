@@ -1,0 +1,265 @@
+# ServiceAccount for Worker deployment (original)
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: worker-service-account
+  namespace: nextgen
+---
+# Service Account for Vault Authentication (Worker specific)
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: nextgen-worker-vault
+  namespace: nextgen
+  labels:
+    app: worker
+    component: vault-auth
+automountServiceAccountToken: true
+---
+# ClusterRoleBinding for Worker to Vault Authentication
+# This binds the 'nextgen-worker-vault' ServiceAccount to the global 'nextgen-vault-auth' ClusterRole.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: nextgen-vault-auth-worker-binding
+roleRef:
+  apiGroups: ["rbac.authorization.k8s.io"]
+  kind: ClusterRole
+  name: nextgen-vault-auth # Reuses the global ClusterRole defined in api-stack.yml
+subjects:
+  - kind: ServiceAccount
+    name: nextgen-worker-vault
+    namespace: nextgen
+---
+# Deployment - Background Worker (with Vault Agent Sidecar)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+  namespace: nextgen
+  labels:
+    app: worker
+spec:
+  replicas: 2
+  strategy:
+    type: Recreate # Use Recreate for simpler singleton workers, or RollingUpdate if multiple can run
+  selector:
+    matchLabels:
+      app: worker
+  template:
+    metadata:
+      labels:
+        app: worker
+      annotations:
+        # Explicitly disable vault.hashicorp.com/agent-inject as we are using a manual sidecar approach.
+        vault.hashicorp.com/agent-inject: "false"
+        # This annotation ensures a rolling restart when the vault-agent-config ConfigMap changes.
+        checksum/vault-agent-config: "{{ include (print $.Template.BasePath "/vault-agent-config.yaml") . | sha256sum }}"
+    spec:
+      serviceAccountName: nextgen-worker-vault # Use the Vault-enabled SA
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1002
+        fsGroup: 1002
+        seccompProfile:
+          type: RuntimeDefault
+      
+      initContainers:
+        # The 'vault-init' container fetches initial secrets directly from Vault
+        # before the main application and Vault Agent sidecar start.
+        - name: vault-init
+          image: hashicorp/vault:1.15.2 # 🔴 ACTION REQUIRED: Use a specific, stable version of Vault image
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - -c
+            - |
+              # Authenticate with Vault using Kubernetes Service Account token
+              vault login -method=kubernetes role=nextgen-api jwt="$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" # Using nextgen-api role for now
+              
+              # Fetch secrets and store them in the shared memory volume.
+              vault kv get -format=json nextgen/data/database > /vault/secrets/database.json
+              vault kv get -format=json nextgen/data/redis > /vault/secrets/redis.json
+              vault kv get -format=json nextgen/data/external-services > /vault/secrets/external-services.json # For SMTP_PASSWORD etc.
+              
+              echo "Initial secrets fetched by vault-init for worker"
+          env:
+            - name: VAULT_ADDR
+              value: "http://vault.vault-system.svc.cluster.local:8200" # 🔴 ACTION REQUIRED: Match your Vault address.
+            - name: VAULT_SKIP_VERIFY
+              value: "true" # 🔴 ACTION REQUIRED: Disable this in production and configure proper TLS verification.
+          volumeMounts:
+            - name: vault-secrets-shared
+              mountPath: /vault/secrets
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 1001 # Non-root user for Vault init container
+            capabilities:
+              drop:
+                - ALL
+      
+      containers:
+        # The 'vault-agent' sidecar container runs the Vault Agent in client mode.
+        # It continually renews the Vault token and re-renders secret templates.
+        - name: vault-agent
+          image: hashicorp/vault:1.15.2 # 🔴 ACTION REQUIRED: Use a specific, stable version of Vault image.
+          imagePullPolicy: IfNotPresent
+          command:
+            - vault
+            - agent
+            - -config=/vault/config/vault-agent.hcl
+            - -log-level=info # Adjust log level as needed
+          env:
+            - name: VAULT_ADDR
+              value: "http://vault.vault-system.svc.cluster.local:8200" # 🔴 ACTION REQUIRED: Match your Vault address.
+            - name: VAULT_SKIP_VERIFY
+              value: "true" # 🔴 ACTION REQUIRED: Disable this in production and configure proper TLS verification.
+          volumeMounts:
+            - name: vault-agent-config-volume # Mount ConfigMap for Vault Agent HCL config and templates
+              mountPath: /vault/config
+            - name: vault-secrets-shared # Mount shared memory volume for secrets
+              mountPath: /vault/secrets
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "128Mi"
+              cpu: "100m"
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 1001 # Non-root user for Vault agent
+            capabilities:
+              drop:
+                - ALL
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - "test -f /vault/secrets/.vault-token" # Check if agent token exists
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 2
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - "test -f /vault/secrets/database && test -f /vault/secrets/redis && test -f /vault/secrets/external-services" # Check if all secret files are rendered
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 2
+
+        # Main Application Container
+        - name: worker
+          image: nextgen/worker:latest # Assumes image is built and pushed to a registry
+          imagePullPolicy: IfNotPresent
+          
+          # No ports are exposed as this is a background worker
+          
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -a # Export all variables for current shell and future processes
+              source /vault/secrets/database
+              source /vault/secrets/redis
+              source /vault/secrets/external-services
+              set +a
+              
+              exec node apps/worker/dist/main.js
+          
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: LOG_LEVEL
+              value: "info"
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          
+          # Liveness/Readiness probes are omitted as this worker may not have an HTTP interface.
+          # A common pattern is for the process to exit on unrecoverable errors,
+          # and Kubernetes will restart it.
+          # For advanced health checks, an 'exec' probe could run a script.
+          
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - ALL
+          
+          volumeMounts:
+            - name: vault-secrets-shared
+              mountPath: /vault/secrets
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+      
+      volumes:
+        - name: vault-agent-config-volume # Mount ConfigMap for Vault Agent
+          configMap:
+            name: vault-agent-config # References the ConfigMap defined in api-stack.yml
+            defaultMode: 0644
+        - name: vault-secrets-shared # Shared memory volume for secrets
+          emptyDir:
+            medium: Memory
+            sizeLimit: 10Mi
+        - name: tmp
+          emptyDir: {}
+      
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+---
+# NetworkPolicy for Worker to Vault communication
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: worker-to-vault-network-policy
+  namespace: nextgen
+spec:
+  podSelector:
+    matchLabels:
+      app: worker
+  policyTypes:
+    - Egress
+  egress:
+    - to: # Allow egress to Vault
+        - namespaceSelector:
+            matchLabels:
+              name: vault-system # Vault namespace
+      ports:
+        - protocol: TCP
+          port: 8200
+    - to:
+        - namespaceSelector: {} # Allow all namespaces for now, or specify. 🔴 ACTION REQUIRED: Refine egress rules
+      ports:
+        - protocol: TCP
+          port: 5432 # Placeholder egress for managed PostgreSQL
+        - protocol: TCP
+          port: 6379 # Placeholder egress for managed Redis
+        - protocol: UDP
+          port: 53    # DNS

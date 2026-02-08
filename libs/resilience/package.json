@@ -1,0 +1,25 @@
+{
+  "name": "@nextgen/resilience",
+  "version": "1.0.0",
+  "description": "Resilience utilities for external service integrations",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@nestjs/common": "^10.0.0",
+    "opossum": "^8.1.4"
+  },
+  "devDependencies": {
+    "vitest": "^2.1.9"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  }
+}

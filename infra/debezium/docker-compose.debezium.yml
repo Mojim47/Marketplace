@@ -1,0 +1,171 @@
+version: '3.8'
+
+# ═══════════════════════════════════════════════════════════════════════════
+# NextGen Marketplace - Debezium CDC Stack
+# ═══════════════════════════════════════════════════════════════════════════
+# 
+# CDC (Change Data Capture) infrastructure for CQRS pattern
+# Requirements: 3.3, 3.4 - Replicate changes from Write_DB to Read_DB
+#
+# Usage:
+#   docker-compose -f docker-compose.yml -f infra/debezium/docker-compose.debezium.yml up -d
+# ═══════════════════════════════════════════════════════════════════════════
+
+services:
+  # ═══════════════════════════════════════════════════════════════════════
+  # ZOOKEEPER - Kafka Coordination
+  # ═══════════════════════════════════════════════════════════════════════
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: nextgen-zookeeper
+    restart: unless-stopped
+    ports:
+      - "${ZOOKEEPER_PORT:-2181}:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+      - zookeeper_logs:/var/lib/zookeeper/log
+    networks:
+      - nextgen-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "2181"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ═══════════════════════════════════════════════════════════════════════
+  # KAFKA - Message Broker for CDC Events
+  # ═══════════════════════════════════════════════════════════════════════
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: nextgen-kafka
+    restart: unless-stopped
+    ports:
+      - "${KAFKA_PORT:-9092}:9092"
+      - "${KAFKA_INTERNAL_PORT:-29092}:29092"
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_LOG_RETENTION_BYTES: 1073741824
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    networks:
+      - nextgen-network
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  # ═══════════════════════════════════════════════════════════════════════
+  # DEBEZIUM CONNECT - CDC Connector
+  # ═══════════════════════════════════════════════════════════════════════
+  debezium:
+    image: debezium/connect:2.4
+    container_name: nextgen-debezium
+    restart: unless-stopped
+    ports:
+      - "${DEBEZIUM_PORT:-8083}:8083"
+    depends_on:
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    environment:
+      BOOTSTRAP_SERVERS: kafka:29092
+      GROUP_ID: nextgen-cdc-group
+      CONFIG_STORAGE_TOPIC: nextgen_connect_configs
+      OFFSET_STORAGE_TOPIC: nextgen_connect_offsets
+      STATUS_STORAGE_TOPIC: nextgen_connect_statuses
+      CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      STATUS_STORAGE_REPLICATION_FACTOR: 1
+      KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_KEY_CONVERTER_SCHEMAS_ENABLE: "false"
+      CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
+    volumes:
+      - ./debezium-postgres-connector.json:/kafka/config/postgres-connector.json:ro
+      - ./meilisearch-sink-connector.json:/kafka/config/meilisearch-sink.json:ro
+    networks:
+      - nextgen-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/connectors"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # ═══════════════════════════════════════════════════════════════════════
+  # MEILISEARCH - Read Database (Search Engine)
+  # ═══════════════════════════════════════════════════════════════════════
+  meilisearch:
+    image: getmeili/meilisearch:v1.5
+    container_name: nextgen-meilisearch
+    restart: unless-stopped
+    ports:
+      - "${MEILISEARCH_PORT:-7700}:7700"
+    environment:
+      MEILI_MASTER_KEY: ${MEILISEARCH_API_KEY}
+      MEILI_ENV: ${NODE_ENV:-production}
+      MEILI_NO_ANALYTICS: "true"
+      MEILI_LOG_LEVEL: INFO
+    volumes:
+      - meilisearch_data:/meili_data
+    networks:
+      - nextgen-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7700/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ═══════════════════════════════════════════════════════════════════════
+  # KAFKA UI - Monitoring (Optional)
+  # ═══════════════════════════════════════════════════════════════════════
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: nextgen-kafka-ui
+    restart: unless-stopped
+    ports:
+      - "${KAFKA_UI_PORT:-8080}:8080"
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      KAFKA_CLUSTERS_0_NAME: nextgen
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+      KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME: debezium
+      KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS: http://debezium:8083
+    networks:
+      - nextgen-network
+    profiles:
+      - monitoring
+
+networks:
+  nextgen-network:
+    external: true
+
+volumes:
+  zookeeper_data:
+    driver: local
+  zookeeper_logs:
+    driver: local
+  kafka_data:
+    driver: local
+  meilisearch_data:
+    driver: local

@@ -1,0 +1,66 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# Qdrant Configuration for Enterprise-SERTA
+# ═══════════════════════════════════════════════════════════════════════════
+
+service:
+  host: 0.0.0.0
+  http_port: 6333
+  grpc_port: 6334
+  enable_cors: true
+  max_request_size_mb: 32
+  max_workers: 4
+
+storage:
+  storage_path: /qdrant/storage
+  snapshots_path: /qdrant/snapshots
+  temp_path: /qdrant/temp
+  
+  # Enable on-disk payload storage for large datasets
+  on_disk_payload: true
+  
+  # WAL (Write-Ahead Log) configuration
+  wal:
+    wal_capacity_mb: 32
+    wal_segments_ahead: 0
+  
+  # Performance optimizations for code embeddings
+  performance:
+    max_search_threads: 4
+    max_optimization_threads: 2
+  
+  # Optimizer settings for vector search performance
+  optimizers:
+    # Threshold for deleted vectors before optimization
+    deleted_threshold: 0.2
+    
+    # Minimum number of vectors before vacuum
+    vacuum_min_vector_number: 1000
+    
+    # Default number of segments per collection
+    default_segment_number: 2
+    
+    # Maximum segment size (number of vectors)
+    max_segment_size: 20000
+    
+    # Memory mapping threshold
+    memmap_threshold: 50000
+    
+    # Indexing threshold
+    indexing_threshold: 10000
+    
+    # Flush interval in seconds
+    flush_interval_sec: 30
+    
+    # Maximum optimization threads
+    max_optimization_threads: 2
+
+# Cluster configuration (for future scaling)
+cluster:
+  enabled: false
+  
+# Telemetry configuration
+telemetry:
+  disabled: true
+
+# Logging configuration
+log_level: INFO

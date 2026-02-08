@@ -1,0 +1,21 @@
+name: "CodeQL config"
+
+queries:
+  - uses: security-and-quality
+  - uses: security-extended
+
+paths:
+  include:
+    - src
+    - lib
+    - apps
+  exclude:
+    - node_modules
+    - test
+    - dist
+    - build
+
+disable-default-queries: false
+
+# The 'customQueries' block was removed as it was syntactically incorrect and non-functional.
+# To add custom queries, create .ql files and reference them in a query suite (.qls) file.

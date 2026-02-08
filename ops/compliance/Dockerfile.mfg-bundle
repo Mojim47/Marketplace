@@ -1,0 +1,20 @@
+FROM alpine:3.19
+
+LABEL org.opencontainers.image.title="NextGen MFG Bundle"
+LABEL org.opencontainers.image.description="CE-DoC + PFMEA + ISO9001 + GS1 Digital Link"
+LABEL org.opencontainers.image.version="1.0.0"
+LABEL org.opencontainers.image.vendor="NextGen Marketplace"
+
+WORKDIR /mfg-bundle
+
+COPY mfg-bundle/*.json ./
+COPY mfg-bundle/.well-known ./.well-known/
+COPY mfg-bundle/qr.svg ./
+
+RUN apk add --no-cache ca-certificates && \
+    chmod -R 444 *.json qr.svg && \
+    chmod -R 555 .well-known
+
+VOLUME ["/mfg-bundle"]
+
+CMD ["sh", "-c", "echo 'MFG Bundle v1.0.0 Ready' && ls -lah"]

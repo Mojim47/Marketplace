@@ -1,0 +1,50 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# NextGen Marketplace - Code Ownership
+# ═══════════════════════════════════════════════════════════════════════════
+# These owners will be requested for review when someone opens a PR that
+# modifies code in a directory or file they own.
+
+# ───────────────────────────────────────────────────────────────────────────
+# Critical Financial Logic - Requires Approval
+# ───────────────────────────────────────────────────────────────────────────
+/libs/core/src/finance.ts                    @${{ github.repository_owner }}
+/libs/core/src/finance.test.ts               @${{ github.repository_owner }}
+
+# ───────────────────────────────────────────────────────────────────────────
+# Database Schema - Requires Approval
+# ───────────────────────────────────────────────────────────────────────────
+/prisma/schema.prisma                        @${{ github.repository_owner }}
+/prisma/migrations/                          @${{ github.repository_owner }}
+
+# ───────────────────────────────────────────────────────────────────────────
+# Security & Infrastructure - Requires Approval
+# ───────────────────────────────────────────────────────────────────────────
+/.github/workflows/                          @${{ github.repository_owner }}
+/Dockerfile*                                 @${{ github.repository_owner }}
+/docker-compose*.yml                         @${{ github.repository_owner }}
+/.env.production.example                     @${{ github.repository_owner }}
+/.env.staging.example                        @${{ github.repository_owner }}
+/.env.local.example                          @${{ github.repository_owner }}
+/infra/                                      @${{ github.repository_owner }}
+/k8s/                                        @${{ github.repository_owner }}
+/helm/                                       @${{ github.repository_owner }}
+/terraform/                                  @${{ github.repository_owner }}
+/ops/                                        @${{ github.repository_owner }}
+/monitoring/                                 @${{ github.repository_owner }}
+/vault/                                      @${{ github.repository_owner }}
+
+# ───────────────────────────────────────────────────────────────────────────
+# Order Processing - Requires Approval
+# ───────────────────────────────────────────────────────────────────────────
+/apps/api/src/order/                         @${{ github.repository_owner }}
+
+# ───────────────────────────────────────────────────────────────────────────
+# Payment Integration - Requires Approval
+# ───────────────────────────────────────────────────────────────────────────
+/apps/api/src/modules/payment/               @${{ github.repository_owner }}
+/libs/payment/                               @${{ github.repository_owner }}
+
+# ───────────────────────────────────────────────────────────────────────────
+# Default - All Other Files
+# ───────────────────────────────────────────────────────────────────────────
+*                                            @${{ github.repository_owner }}

@@ -1,0 +1,40 @@
+{
+  "generatedAt": "2025-11-15T16:00:41.429Z",
+  "modules": [
+    {
+      "id": "api",
+      "label": "API (NestJS payment + health)"
+    },
+    {
+      "id": "web",
+      "label": "Next.js storefront"
+    },
+    {
+      "id": "admin",
+      "label": "Admin console (React microapp)"
+    },
+    {
+      "id": "ui-lib",
+      "label": "UI component library"
+    },
+    {
+      "id": "types-lib",
+      "label": "DTO library"
+    }
+  ],
+  "steps": [
+    {
+      "id": "ts-build",
+      "label": "TypeScript composite build",
+      "status": "PASS",
+      "durationMs": 483
+    },
+    {
+      "id": "tests",
+      "label": "Vitest coverage",
+      "status": "FAIL",
+      "durationMs": 14989,
+      "error": "Vitest coverage failed with code 1"
+    }
+  ]
+}

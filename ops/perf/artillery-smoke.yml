@@ -1,0 +1,16 @@
+config:
+  target: "http://localhost:3000"
+  phases:
+    - duration: 60
+      arrivalRate: 5
+  ensure:
+    p95: 450
+    maxErrorRate: 1
+
+scenarios:
+  - name: health + home
+    flow:
+      - get:
+          url: "/api/health"
+      - get:
+          url: "/"

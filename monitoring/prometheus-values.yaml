@@ -1,0 +1,136 @@
+# Values for kube-prometheus-stack Helm Chart
+# This configures Prometheus, Grafana, and Alertmanager for the NextGen Marketplace
+
+defaultRules:
+  enabled: true
+
+alertmanager:
+  enabled: true
+  alertmanagerSpec:
+    # Use existing alertmanager.yml configuration
+    config:
+      global:
+        resolve_timeout: 5m
+        slack_api_url: '${SLACK_WEBHOOK_URL}' # 🔴 ACTION REQUIRED: Configure SLACK_WEBHOOK_URL in Alertmanager Secret
+      route:
+        receiver: 'default'
+        group_by: ['alertname', 'cluster', 'service']
+        group_wait: 10s
+        group_interval: 10s
+        repeat_interval: 12h
+        routes:
+          - match:
+              severity: critical
+            receiver: 'critical-team'
+            continue: true
+            group_wait: 0s
+            repeat_interval: 1h
+          - match:
+              severity: high
+            receiver: 'ops-team'
+            repeat_interval: 4h
+          - match:
+              severity: medium
+            receiver: 'default'
+            group_wait: 5m
+      receivers:
+        - name: 'default'
+          slack_configs:
+            - channel: '#alerts'
+              title: '⚠️ Alert: {{ .GroupLabels.alertname }}'
+              text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+        - name: 'critical-team'
+          slack_configs:
+            - channel: '#critical-alerts'
+              title: '🚨 CRITICAL: {{ .GroupLabels.alertname }}'
+              text: '{{ range .Alerts }}{{ .Annotations.description }}\nRunbook: {{ .Annotations.runbook }}{{ end }}'
+          pagerduty_configs:
+            - service_key: '${PAGERDUTY_SERVICE_KEY}' # 🔴 ACTION REQUIRED: Configure PAGERDUTY_SERVICE_KEY in Alertmanager Secret
+        - name: 'ops-team'
+          slack_configs:
+            - channel: '#ops-alerts'
+              title: '🔴 High Priority: {{ .GroupLabels.alertname }}'
+              text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+      inhibit_rules:
+        - source_match:
+            severity: 'critical'
+          target_match:
+            severity: 'warning'
+          equal: ['alertname', 'cluster', 'service']
+        - source_match:
+            alertname: 'Maintenance'
+          target_match_re:
+            severity: 'info|warning'
+          equal: ['instance', 'job']
+    # If you have specific Alertmanager alert rules (e.g. prometheus-alerts.yaml),
+    # you can configure them as additional alertmanagerConfigs secrets.
+    # For now, we assume the configuration above is sufficient.
+
+prometheus:
+  enabled: true
+  prometheusSpec:
+    serviceMonitorSelector:
+      matchLabels:
+        release: prometheus-operator # Select ServiceMonitors labeled with this release
+    # You can specify additional scraping configurations if needed,
+    # but the ServiceMonitors should cover most application metrics.
+    # scrapeConfigs: [] # Add if you need custom scrape jobs not covered by ServiceMonitors
+
+    ruleSelector:
+      matchLabels:
+        prometheus: nextgen-rules # Select PrometheusRule resources labeled with this.
+    # Optional: If you have existing PrometheusRule files (e.g. from prometheus-alerts.yaml),
+    # you can either convert them to PrometheusRule CRDs or use a ConfigMap.
+    # For now, we recommend creating PrometheusRule CRDs.
+
+    podMonitorSelector: {} # You can define rules for PodMonitors here as well
+
+    # External labels for consistency with existing prometheus.yml
+    externalLabels:
+      cluster: 'nextgen'
+      environment: 'production'
+    
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: standard # 🔴 ACTION REQUIRED: Use your cluster's default storage class, or define one.
+          resources:
+            requests:
+              storage: 50Gi # 🔴 ACTION REQUIRED: Adjust storage size as needed
+
+grafana:
+  enabled: true
+  adminPassword: "your_strong_admin_password" # 🔴 ACTION REQUIRED: CHANGE THIS PASSWORD OR USE A SECRET
+  # Grafana Ingress settings
+  ingress:
+    enabled: true
+    className: nginx
+    hosts:
+      - grafana.example.com # 🔴 ACTION REQUIRED: Replace with your Grafana domain
+    tls:
+      - hosts:
+          - grafana.example.com # 🔴 ACTION REQUIRED: Replace with your Grafana domain
+        secretName: grafana-tls-cert # 🔴 ACTION REQUIRED: Ensure cert-manager issues this cert
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      # Add any other necessary annotations for performance, security, etc.
+  
+  # Dashboard provisioning (automatic dashboard import)
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard # Label to look for on ConfigMaps/Secrets containing dashboards
+    datasources:
+      enabled: true # Automatically configure Prometheus as a data source
+
+# kube-state-metrics and node-exporter are enabled by default and are good to keep.
+# Set custom resource limits/requests as needed.
+kubeControllerManager:
+  enabled: false # Usually not needed for application monitoring
+kubeEtcd:
+  enabled: false # Usually not needed for application monitoring
+kubeScheduler:
+  enabled: false # Usually not needed for application monitoring
+kubeProxy:
+  enabled: false # Usually not needed for application monitoring

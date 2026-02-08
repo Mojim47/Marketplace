@@ -1,0 +1,274 @@
+---
+# MeiliSearch Deployment for Enterprise Scalability Architecture
+# Requirements: 3.1, 3.2, 6.1, 6.2
+# Provides fast search indexing for CQRS read model
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: meilisearch-config
+  namespace: nextgen-marketplace
+data:
+  # MeiliSearch environment configuration
+  MEILI_ENV: "production"
+  MEILI_DB_PATH: "/meili_data/data.ms"
+  MEILI_HTTP_ADDR: "0.0.0.0:7700"
+  MEILI_LOG_LEVEL: "INFO"
+  MEILI_MAX_INDEXING_MEMORY: "1073741824"  # 1GB
+  MEILI_MAX_INDEXING_THREADS: "4"
+
+---
+# MeiliSearch Secret (API Key)
+# In production, use Vault or External Secrets Operator
+apiVersion: v1
+kind: Secret
+metadata:
+  name: meilisearch-secret
+  namespace: nextgen-marketplace
+type: Opaque
+stringData:
+  # Generate with: openssl rand -base64 32
+  MEILI_MASTER_KEY: "CHANGE_ME_IN_PRODUCTION_USE_VAULT"
+
+---
+# MeiliSearch StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: meilisearch
+  namespace: nextgen-marketplace
+  labels:
+    app: meilisearch
+    component: search
+spec:
+  serviceName: meilisearch-headless
+  replicas: 1  # MeiliSearch doesn't support native clustering yet
+  selector:
+    matchLabels:
+      app: meilisearch
+  template:
+    metadata:
+      labels:
+        app: meilisearch
+        component: search
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "7700"
+        prometheus.io/path: "/metrics"
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      
+      containers:
+        - name: meilisearch
+          image: getmeili/meilisearch:v1.5
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 7700
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: meilisearch-config
+            - secretRef:
+                name: meilisearch-secret
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: 2000m
+              memory: 4Gi
+          volumeMounts:
+            - name: meilisearch-data
+              mountPath: /meili_data
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 30
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - ALL
+  
+  volumeClaimTemplates:
+    - metadata:
+        name: meilisearch-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: standard
+        resources:
+          requests:
+            storage: 50Gi
+
+---
+# Headless Service for StatefulSet
+apiVersion: v1
+kind: Service
+metadata:
+  name: meilisearch-headless
+  namespace: nextgen-marketplace
+  labels:
+    app: meilisearch
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - name: http
+      port: 7700
+      targetPort: 7700
+  selector:
+    app: meilisearch
+
+---
+# Client Service for MeiliSearch
+apiVersion: v1
+kind: Service
+metadata:
+  name: meilisearch
+  namespace: nextgen-marketplace
+  labels:
+    app: meilisearch
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 7700
+      targetPort: 7700
+  selector:
+    app: meilisearch
+
+---
+# Pod Disruption Budget for MeiliSearch
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: meilisearch-pdb
+  namespace: nextgen-marketplace
+spec:
+  minAvailable: 0  # Single replica, allow disruption for maintenance
+  selector:
+    matchLabels:
+      app: meilisearch
+
+---
+# HorizontalPodAutoscaler for MeiliSearch
+# Note: MeiliSearch doesn't support horizontal scaling natively
+# This HPA is for future multi-instance read replicas pattern
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: meilisearch-hpa
+  namespace: nextgen-marketplace
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: meilisearch
+  minReplicas: 1
+  maxReplicas: 1  # Keep at 1 until MeiliSearch supports clustering
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 80
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 85
+
+---
+# NetworkPolicy for MeiliSearch
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: meilisearch-network-policy
+  namespace: nextgen-marketplace
+spec:
+  podSelector:
+    matchLabels:
+      app: meilisearch
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow from API pods
+    - from:
+        - podSelector:
+            matchLabels:
+              app: api
+      ports:
+        - protocol: TCP
+          port: 7700
+    # Allow from worker pods (for indexing)
+    - from:
+        - podSelector:
+            matchLabels:
+              app: worker
+      ports:
+        - protocol: TCP
+          port: 7700
+    # Allow Prometheus scraping
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+      ports:
+        - protocol: TCP
+          port: 7700
+  egress:
+    # Allow DNS
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: UDP
+          port: 53
+
+---
+# ServiceMonitor for Prometheus
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: meilisearch-monitor
+  namespace: nextgen-marketplace
+  labels:
+    app: meilisearch
+    release: prometheus-operator
+spec:
+  selector:
+    matchLabels:
+      app: meilisearch
+  endpoints:
+    - port: http
+      interval: 30s
+      path: /metrics

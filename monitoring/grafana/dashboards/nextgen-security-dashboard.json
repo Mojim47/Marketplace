@@ -1,0 +1,187 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "NextGen Security & Behavioral Analysis",
+    "tags": ["nextgen", "security", "behavioral"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Security Violations Real-time",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "rate(security_violations_total{type=\"sql_injection\"}[5m])",
+            "legendFormat": "SQL Injection Attempts"
+          },
+          {
+            "expr": "rate(security_violations_total{type=\"xss\"}[5m])",
+            "legendFormat": "XSS Attempts"
+          },
+          {
+            "expr": "rate(security_violations_total{type=\"path_traversal\"}[5m])",
+            "legendFormat": "Path Traversal"
+          },
+          {
+            "expr": "rate(security_violations_total{type=\"command_injection\"}[5m])",
+            "legendFormat": "Command Injection"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "axisLabel": "Violations/sec"
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "Tenant Isolation Violations",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(increase(cross_tenant_access_attempts_total[1h]))",
+            "legendFormat": "Cross-Tenant Attempts (1h)"
+          },
+          {
+            "expr": "sum(increase(rls_policy_violations_total[1h]))",
+            "legendFormat": "RLS Violations (1h)"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {"color": "green", "value": 0},
+                {"color": "yellow", "value": 1},
+                {"color": "red", "value": 5}
+              ]
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "Suspicious Activity Heatmap",
+        "type": "heatmap",
+        "targets": [
+          {
+            "expr": "sum by (ip_address) (rate(suspicious_activity_total[5m]))",
+            "legendFormat": "{{ip_address}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "vis": false
+              }
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 8}
+      },
+      {
+        "id": 4,
+        "title": "Rate Limiting Status",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "rate(rate_limit_exceeded_total{type=\"global\"}[5m])",
+            "legendFormat": "Global Rate Limits"
+          },
+          {
+            "expr": "rate(rate_limit_exceeded_total{type=\"inventory\"}[5m])",
+            "legendFormat": "Inventory Rate Limits"
+          },
+          {
+            "expr": "rate(rate_limit_exceeded_total{type=\"bidding\"}[5m])",
+            "legendFormat": "Bidding Rate Limits"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"}
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16}
+      },
+      {
+        "id": 5,
+        "title": "Blocked IPs & Users",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "topk(10, sum by (ip_address) (increase(ip_blocked_total[1h])))",
+            "legendFormat": "{{ip_address}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "align": "auto",
+              "displayMode": "auto"
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16}
+      },
+      {
+        "id": 6,
+        "title": "Authentication Events",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "rate(auth_attempts_total{result=\"success\"}[5m])",
+            "legendFormat": "Successful Logins"
+          },
+          {
+            "expr": "rate(auth_attempts_total{result=\"failed\"}[5m])",
+            "legendFormat": "Failed Logins"
+          },
+          {
+            "expr": "rate(auth_attempts_total{result=\"2fa_required\"}[5m])",
+            "legendFormat": "2FA Required"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"}
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24}
+      },
+      {
+        "id": 7,
+        "title": "Risk Score Distribution",
+        "type": "histogram",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(security_risk_score_bucket[5m]))",
+            "legendFormat": "P95 Risk Score"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"}
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24}
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "5s"
+  }
+}

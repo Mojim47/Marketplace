@@ -1,0 +1,39 @@
+{
+  "name": "enterprise-serta",
+  "version": "1.0.0",
+  "description": "Enterprise Zero-Trust Threat-Graph + Vector-DB + ML-Driven Auditor",
+  "main": "dist/simple-analyzer.js",
+  "bin": {
+    "serta": "dist/simple-analyzer.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/simple-analyzer.js",
+    "dev": "ts-node src/simple-analyzer.ts",
+    "analyze": "ts-node src/simple-analyzer.ts",
+    "analyze:nextgen": "ts-node src/simple-analyzer.ts ../",
+    "test": "echo \"Simple analyzer - no tests needed\"",
+    "clean": "rm -rf dist serta-results"
+  },
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "glob": "^10.3.10",
+    "typescript": "^5.3.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.6",
+    "ts-node": "^10.9.2"
+  },
+  "keywords": [
+    "security",
+    "threat-analysis",
+    "vulnerability-scanner",
+    "code-analysis",
+    "nextgen-marketplace"
+  ],
+  "author": "Enterprise-SERTA Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

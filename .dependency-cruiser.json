@@ -1,0 +1,46 @@
+{
+  "forbidden": [
+    {
+      "name": "domain-isolation",
+      "comment": "Domain must not depend on outer layers.",
+      "severity": "error",
+      "from": { "path": "^src/domain" },
+      "to": { "path": "^src/(application|interfaces|infrastructure)" }
+    },
+    {
+      "name": "application-no-interface",
+      "comment": "Application layer cannot import interfaces directly.",
+      "severity": "error",
+      "from": { "path": "^src/application" },
+      "to": { "path": "^src/interfaces" }
+    },
+    {
+      "name": "infrastructure-no-interface",
+      "comment": "Infrastructure should not import interface adapters.",
+      "severity": "warn",
+      "from": { "path": "^src/infrastructure" },
+      "to": { "path": "^src/interfaces" }
+    },
+    {
+      "name": "libs-no-apps",
+      "comment": "Libraries must not depend on app code.",
+      "severity": "error",
+      "from": { "path": "^libs/" },
+      "to": { "path": "^apps/" }
+    },
+    {
+      "name": "apps-no-cross-apps",
+      "comment": "Apps must not import from other apps.",
+      "severity": "error",
+      "from": { "path": "^apps/([^/]+)/" },
+      "to": { "path": "^apps/(?!\\1)/" }
+    }
+  ],
+  "options": {
+    "tsConfig": {
+      "fileName": "./tsconfig.test.json"
+    },
+    "tsPreCompilationDeps": true,
+    "baseDir": "."
+  }
+}

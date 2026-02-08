@@ -1,0 +1,34 @@
+# This deployment will be REJECTED by Gatekeeper
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: insecure-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: insecure-app
+  template:
+    metadata:
+      labels:
+        app: insecure-app
+    spec:
+      containers:
+      - name: app
+        image: nginx:latest
+        # VIOLATIONS:
+        # - Missing runAsNonRoot=true
+        # - Missing readOnlyRootFilesystem=true  
+        # - Missing capabilities.drop=["ALL"]
+        # - Missing seccompProfile.type=RuntimeDefault
+        securityContext:
+          privileged: true  # VIOLATION: privileged=true
+          allowPrivilegeEscalation: true  # VIOLATION: should be false
+---
+# Expected Gatekeeper rejection messages:
+# - Container app must set runAsNonRoot=true
+# - Container app must set readOnlyRootFilesystem=true
+# - Container app must drop ALL capabilities
+# - Pod must set seccompProfile.type=RuntimeDefault
+# - Container app cannot run as privileged
+# - Container app must set allowPrivilegeEscalation=false

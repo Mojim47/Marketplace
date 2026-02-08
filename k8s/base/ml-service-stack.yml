@@ -1,0 +1,146 @@
+# ServiceAccount for ML Service deployment
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ml-service-account
+  namespace: nextgen
+---
+# NetworkPolicy for ML Service
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ml-service-network-policy
+  namespace: nextgen
+spec:
+  podSelector:
+    matchLabels:
+      app: ml-service
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from: # Allow internal services in nextgen namespace to talk to ML service
+        - podSelector:
+            matchLabels: {} # Allow all pods within the same namespace (nextgen)
+      ports:
+        - protocol: TCP
+          port: 3000
+  egress:
+    # Allow DNS
+    - ports:
+        - protocol: UDP
+          port: 53
+    # Allow outbound traffic for model downloads (e.g., Hugging Face, S3)
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8 # Exclude private networks
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+      ports:
+        - protocol: TCP
+          port: 80
+        - protocol: TCP
+          port: 443
+---
+# Deployment - ML Microservice
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-service
+  namespace: nextgen
+  labels:
+    app: ml-service
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ml-service
+  template:
+    metadata:
+      labels:
+        app: ml-service
+        version: v1
+    spec:
+      serviceAccountName: ml-service-account
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1005 # Unique UID for ML service
+        fsGroup: 1005
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: ml-service
+          image: nextgen/ml-service:latest # This will be replaced by CI/CD pipeline
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: PORT
+              value: "3000"
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: 1000m
+              memory: 2Gi
+          livenessProbe:
+            httpGet:
+              path: /ml/health # Based on app.setGlobalPrefix('ml') and /health endpoint
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /ml/health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 2
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            # 🔴 TODO: Mount a volume for ML models if they are not baked into the image.
+            # e.g., an EmptyDir or PersistentVolumeClaim for /app/models
+      volumes:
+        - name: tmp
+          emptyDir: {}
+---
+# Service for ML Microservice
+apiVersion: v1
+kind: Service
+metadata:
+  name: ml-service
+  namespace: nextgen
+  labels:
+    app: ml-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 3000
+      protocol: TCP
+      name: http
+  selector:
+    app: ml-service

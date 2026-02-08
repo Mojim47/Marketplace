@@ -1,0 +1,313 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# CANARY ROLLOUT PLAN - Network Security Hardening
+# ═══════════════════════════════════════════════════════════════════════════
+# Objective: Remove host port bindings with zero downtime
+# SLA: 99.9% uptime, P99 latency increase <5%
+# Auto-rollback: Triggered on latency degradation
+# ═══════════════════════════════════════════════════════════════════════════
+
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: nextgen-network-hardening
+  namespace: nextgen
+  labels:
+    app: nextgen-api
+    version: network-hardened
+spec:
+  replicas: 6
+  strategy:
+    canary:
+      # Canary deployment strategy
+      maxSurge: "25%"
+      maxUnavailable: 0
+      
+      # Traffic splitting steps
+      steps:
+      - setWeight: 10    # 10% traffic to canary
+      - pause:
+          duration: 2m   # Monitor for 2 minutes
+      - analysis:
+          templates:
+          - templateName: latency-check
+          args:
+          - name: service-name
+            value: nextgen-api
+      - setWeight: 25    # 25% traffic to canary
+      - pause:
+          duration: 3m
+      - analysis:
+          templates:
+          - templateName: latency-check
+          - templateName: error-rate-check
+      - setWeight: 50    # 50% traffic to canary
+      - pause:
+          duration: 5m
+      - analysis:
+          templates:
+          - templateName: latency-check
+          - templateName: error-rate-check
+          - templateName: database-connection-check
+      - setWeight: 75    # 75% traffic to canary
+      - pause:
+          duration: 5m
+      - analysis:
+          templates:
+          - templateName: comprehensive-check
+      - setWeight: 100   # Full rollout
+      
+      # Auto-rollback configuration
+      abortScaleDownDelaySeconds: 30
+      scaleDownDelaySeconds: 30
+      
+      # Traffic routing via Istio
+      trafficRouting:
+        istio:
+          virtualService:
+            name: nextgen-api-vs
+            routes:
+            - primary
+          destinationRule:
+            name: nextgen-api-dr
+            canarySubsetName: canary
+            stableSubsetName: stable
+
+  selector:
+    matchLabels:
+      app: nextgen-api
+  
+  template:
+    metadata:
+      labels:
+        app: nextgen-api
+        version: network-hardened
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: nextgen-api
+      containers:
+      - name: api
+        image: nextgen/api:network-hardened
+        ports:
+        - containerPort: 3000
+          name: http
+        - containerPort: 9090
+          name: metrics
+        env:
+        # Database connection via service mesh only
+        - name: DATABASE_URL
+          value: "postgresql://$(DB_USER):$(DB_PASSWORD)@postgres.nextgen.svc.cluster.local:5432/$(DB_NAME)?schema=public"
+        - name: REDIS_HOST
+          value: "redis.nextgen.svc.cluster.local"
+        - name: REDIS_PORT
+          value: "6379"
+        envFrom:
+        - secretRef:
+            name: nextgen-secrets
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+
+---
+# Analysis Templates for Auto-Rollback
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: latency-check
+  namespace: nextgen
+spec:
+  args:
+  - name: service-name
+  metrics:
+  - name: p99-latency
+    interval: 30s
+    count: 4
+    successCondition: result[0] < 1.05 * result[1]  # P99 latency increase <5%
+    failureLimit: 2
+    provider:
+      prometheus:
+        address: http://prometheus.monitoring.svc.cluster.local:9090
+        query: |
+          histogram_quantile(0.99,
+            sum(rate(http_request_duration_seconds_bucket{
+              service="{{args.service-name}}"
+            }[2m])) by (le)
+          )
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: error-rate-check
+  namespace: nextgen
+spec:
+  metrics:
+  - name: error-rate
+    interval: 30s
+    count: 4
+    successCondition: result[0] < 0.02  # Error rate <2%
+    failureLimit: 2
+    provider:
+      prometheus:
+        address: http://prometheus.monitoring.svc.cluster.local:9090
+        query: |
+          sum(rate(http_requests_total{
+            service="nextgen-api",
+            status=~"5.."
+          }[2m])) /
+          sum(rate(http_requests_total{
+            service="nextgen-api"
+          }[2m]))
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: database-connection-check
+  namespace: nextgen
+spec:
+  metrics:
+  - name: db-connection-success
+    interval: 30s
+    count: 4
+    successCondition: result[0] > 0.98  # DB connection success >98%
+    failureLimit: 2
+    provider:
+      prometheus:
+        address: http://prometheus.monitoring.svc.cluster.local:9090
+        query: |
+          sum(rate(database_connections_successful_total{
+            service="nextgen-api"
+          }[2m])) /
+          sum(rate(database_connections_total{
+            service="nextgen-api"
+          }[2m]))
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: comprehensive-check
+  namespace: nextgen
+spec:
+  metrics:
+  - name: overall-health
+    interval: 60s
+    count: 3
+    successCondition: result[0] > 0.99  # Overall health >99%
+    failureLimit: 1
+    provider:
+      prometheus:
+        address: http://prometheus.monitoring.svc.cluster.local:9090
+        query: |
+          (
+            sum(rate(http_requests_total{
+              service="nextgen-api",
+              status=~"2.."
+            }[5m])) /
+            sum(rate(http_requests_total{
+              service="nextgen-api"
+            }[5m]))
+          ) * 
+          (
+            sum(up{job="nextgen-api"}) /
+            count(up{job="nextgen-api"})
+          )
+
+---
+# Istio VirtualService for traffic splitting
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: nextgen-api-vs
+  namespace: nextgen
+spec:
+  hosts:
+  - nextgen-api.nextgen.svc.cluster.local
+  http:
+  - match:
+    - headers:
+        canary:
+          exact: "true"
+    route:
+    - destination:
+        host: nextgen-api.nextgen.svc.cluster.local
+        subset: canary
+  - route:
+    - destination:
+        host: nextgen-api.nextgen.svc.cluster.local
+        subset: stable
+      weight: 100
+    - destination:
+        host: nextgen-api.nextgen.svc.cluster.local
+        subset: canary
+      weight: 0
+
+---
+# Istio DestinationRule for subset definitions
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: nextgen-api-dr
+  namespace: nextgen
+spec:
+  host: nextgen-api.nextgen.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+  subsets:
+  - name: stable
+    labels:
+      version: stable
+    trafficPolicy:
+      connectionPool:
+        tcp:
+          maxConnections: 100
+        http:
+          http1MaxPendingRequests: 50
+          maxRequestsPerConnection: 10
+  - name: canary
+    labels:
+      version: network-hardened
+    trafficPolicy:
+      connectionPool:
+        tcp:
+          maxConnections: 100
+        http:
+          http1MaxPendingRequests: 50
+          maxRequestsPerConnection: 10
+
+---
+# ServiceMonitor for Prometheus metrics
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: nextgen-api-canary
+  namespace: nextgen
+spec:
+  selector:
+    matchLabels:
+      app: nextgen-api
+  endpoints:
+  - port: metrics
+    interval: 15s
+    path: /metrics
+    honorLabels: true

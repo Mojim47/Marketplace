@@ -1,0 +1,400 @@
+# Prometheus Alert Rules
+# File: prometheus/alert-rules.yml
+
+---
+groups:
+  # HTTP & Application Alerts
+  - name: application_alerts
+    interval: 30s
+    rules:
+      # High Error Rate Alert (5xx errors > 5%)
+      - alert: HighErrorRate5xx
+        expr: http:error:rate1m > 5
+        for: 5m
+        labels:
+          severity: critical
+          component: api
+          slo: 'true'
+        annotations:
+          summary: 'High 5xx error rate detected'
+          description: '{{ $value }}% of requests are failing (5xx) in the last 1 minute'
+          dashboard: 'http://grafana:3000/d/api-health'
+          runbook: 'https://wiki.example.com/runbooks/high-error-rate'
+
+      # Error Rate Spike Alert
+      - alert: ErrorRateSpike
+        expr: |
+          (http:error:rate1m - http:error:rate5m) > 10
+        for: 2m
+        labels:
+          severity: warning
+          component: api
+        annotations:
+          summary: 'Error rate spike detected'
+          description: 'Error rate increased by {{ $value }}% in the last minute'
+
+      # Low Success Rate Alert (< 95%)
+      - alert: LowSuccessRate
+        expr: http:success:rate5m < 95
+        for: 5m
+        labels:
+          severity: critical
+          component: api
+          slo: 'true'
+        annotations:
+          summary: 'Success rate below SLO threshold'
+          description: 'Success rate is {{ $value }}%, SLO target is 99%'
+
+      # High Latency Alert (p95 > 1s)
+      - alert: HighLatencyP95
+        expr: http:latency:p95 > 1000
+        for: 5m
+        labels:
+          severity: warning
+          component: api
+          slo: 'true'
+        annotations:
+          summary: 'P95 latency exceeds threshold'
+          description: 'P95 latency is {{ $value }}ms (threshold: 1000ms)'
+
+      # Critical Latency Alert (p99 > 5s)
+      - alert: CriticalLatencyP99
+        expr: http:latency:p99 > 5000
+        for: 2m
+        labels:
+          severity: critical
+          component: api
+          slo: 'true'
+        annotations:
+          summary: 'P99 latency exceeds critical threshold'
+          description: 'P99 latency is {{ $value }}ms (critical threshold: 5000ms)'
+
+      # Service Unavailable Alert
+      - alert: ServiceUnavailable
+        expr: up{job="api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: api
+        annotations:
+          summary: 'API service is unavailable'
+          description: 'API service at {{ $labels.instance }} is down'
+
+      # Availability SLO Violation Alert
+      - alert: AvailabilitySLOViolation
+        expr: availability:percent < 99.9
+        for: 10m
+        labels:
+          severity: critical
+          component: api
+          slo: 'true'
+        annotations:
+          summary: 'Availability SLO violation'
+          description: 'Availability is {{ $value }}%, SLO target is 99.9%'
+
+  # Database Alerts
+  - name: database_alerts
+    interval: 30s
+    rules:
+      # High Query Latency Alert
+      - alert: HighDatabaseLatency
+        expr: db:query:latency:p95 > 500
+        for: 5m
+        labels:
+          severity: warning
+          component: database
+          slo: 'true'
+        annotations:
+          summary: 'Database query latency is high'
+          description: 'P95 query latency is {{ $value }}ms for {{ $labels.query_type }}'
+
+      # Connection Pool Nearly Exhausted
+      - alert: DatabaseConnectionPoolExhausted
+        expr: db:connection:pool:utilization > 90
+        for: 2m
+        labels:
+          severity: critical
+          component: database
+        annotations:
+          summary: 'Database connection pool nearly exhausted'
+          description: 'Connection pool utilization is {{ $value }}%'
+
+      # Connection Pool Critical
+      - alert: DatabaseConnectionPoolCritical
+        expr: db:connection:pool:utilization > 95
+        for: 1m
+        labels:
+          severity: critical
+          component: database
+        annotations:
+          summary: 'Database connection pool critically low'
+          description: 'Connection pool utilization is {{ $value }}%'
+
+      # Database Timeout Alert
+      - alert: DatabaseTimeouts
+        expr: rate(db_errors_total{error_type="timeout"}[5m]) > 0.1
+        for: 3m
+        labels:
+          severity: critical
+          component: database
+        annotations:
+          summary: 'Database timeouts detected'
+          description: 'Timeout rate: {{ $value }} per second'
+
+      # Slow Queries Alert
+      - alert: SlowQueriesDetected
+        expr: rate(db_slow_queries_total[5m]) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: 'Slow queries detected'
+          description: 'Slow query rate: {{ $value }} per second'
+
+  # Cache Alerts
+  - name: cache_alerts
+    interval: 30s
+    rules:
+      # Low Cache Hit Ratio Alert
+      - alert: LowCacheHitRatio
+        expr: cache:hit:ratio < 80
+        for: 5m
+        labels:
+          severity: warning
+          component: cache
+          slo: 'true'
+        annotations:
+          summary: 'Cache hit ratio below threshold'
+          description: 'Cache hit ratio is {{ $value }}% (threshold: 80%)'
+
+      # Cache Size Growing Too Fast
+      - alert: CacheSizeGrowth
+        expr: rate(cache_size[5m]) > 1000
+        for: 5m
+        labels:
+          severity: warning
+          component: cache
+        annotations:
+          summary: 'Cache size growing rapidly'
+          description: 'Cache growing at {{ $value }} items/sec'
+
+  # Payment Processing Alerts
+  - name: payment_alerts
+    interval: 30s
+    rules:
+      # Payment Success Rate Alert
+      - alert: LowPaymentSuccessRate
+        expr: payment:success:rate1m < 98
+        for: 5m
+        labels:
+          severity: critical
+          component: payments
+          slo: 'true'
+        annotations:
+          summary: 'Payment success rate is low'
+          description: 'Payment success rate is {{ $value }}% (threshold: 98%)'
+
+      # Payment Processing Timeout Alert
+      - alert: PaymentProcessingTimeout
+        expr: payment:latency:p95 > 10000
+        for: 3m
+        labels:
+          severity: critical
+          component: payments
+        annotations:
+          summary: 'Payment processing is slow'
+          description: 'P95 payment processing time is {{ $value }}ms'
+
+      # High Payment Failure Rate
+      - alert: HighPaymentFailureRate
+        expr: rate(payments_failed_total[5m]) > 0.5
+        for: 3m
+        labels:
+          severity: critical
+          component: payments
+        annotations:
+          summary: 'High payment failure rate'
+          description: 'Payment failure rate: {{ $value }} failures/sec'
+
+  # Dead Letter Queue Alerts
+  - name: dlq_alerts
+    interval: 1m
+    rules:
+      # DLQ Messages Accumulating
+      - alert: DLQMessagesAccumulating
+        expr: dlq_messages_count > 100
+        for: 5m
+        labels:
+          severity: warning
+          component: dlq
+        annotations:
+          summary: 'DLQ has accumulated messages'
+          description: '{{ $value }} messages in DLQ (threshold: 100)'
+
+      # DLQ Critical
+      - alert: DLQCritical
+        expr: dlq_messages_count > 1000
+        for: 2m
+        labels:
+          severity: critical
+          component: dlq
+        annotations:
+          summary: 'DLQ critically backed up'
+          description: '{{ $value }} messages in DLQ (critical: 1000)'
+
+      # DLQ Processing Slow
+      - alert: DLQProcessingSlow
+        expr: dlq_processing_duration_ms > 30000
+        for: 5m
+        labels:
+          severity: warning
+          component: dlq
+        annotations:
+          summary: 'DLQ message processing is slow'
+          description: 'DLQ processing taking {{ $value }}ms per message'
+
+  # System Resource Alerts
+  - name: system_alerts
+    interval: 30s
+    rules:
+      # High Memory Usage Alert
+      - alert: HighMemoryUsage
+        expr: system:memory:utilization > 85
+        for: 5m
+        labels:
+          severity: warning
+          component: system
+        annotations:
+          summary: 'Memory usage is high'
+          description: 'Memory utilization is {{ $value }}% on {{ $labels.instance }}'
+
+      # Critical Memory Usage Alert
+      - alert: CriticalMemoryUsage
+        expr: system:memory:utilization > 95
+        for: 2m
+        labels:
+          severity: critical
+          component: system
+        annotations:
+          summary: 'Memory usage is critical'
+          description: 'Memory utilization is {{ $value }}% on {{ $labels.instance }}'
+
+      # Memory Leak Detected (continuous growth)
+      - alert: MemoryLeakSuspected
+        expr: |
+          rate(memory_usage_bytes{type="heap_used"}[5m]) > 0
+          and
+          rate(memory_usage_bytes{type="heap_used"}[1h]) > 0
+        for: 30m
+        labels:
+          severity: warning
+          component: system
+        annotations:
+          summary: 'Possible memory leak detected'
+          description: 'Memory continuously growing on {{ $labels.instance }}'
+
+      # High CPU Usage Alert
+      - alert: HighCPUUsage
+        expr: system:cpu:utilization > 80
+        for: 5m
+        labels:
+          severity: warning
+          component: system
+        annotations:
+          summary: 'CPU usage is high'
+          description: 'CPU utilization is {{ $value }}% on {{ $labels.instance }}'
+
+      # CPU Anomaly Detected
+      - alert: CPUAnomaly
+        expr: |
+          abs(system:cpu:utilization - avg_over_time(system:cpu:utilization[1h])) > 50
+        for: 5m
+        labels:
+          severity: warning
+          component: system
+        annotations:
+          summary: 'CPU usage anomaly detected'
+          description: 'CPU usage anomaly on {{ $labels.instance }}: {{ $value }}%'
+
+      # RAM Anomaly Detected
+      - alert: RAMAnomaly
+        expr: |
+          abs(system:memory:utilization - avg_over_time(system:memory:utilization[1h])) > 40
+        for: 5m
+        labels:
+          severity: warning
+          component: system
+        annotations:
+          summary: 'RAM usage anomaly detected'
+          description: 'RAM usage anomaly on {{ $labels.instance }}: {{ $value }}%'
+
+  # Error Budget Alerts
+  - name: error_budget_alerts
+    interval: 5m
+    rules:
+      # Error Budget Depleting (more than 50% consumed)
+      - alert: ErrorBudgetDepletingFast
+        expr: slo:error:budget:consumed > 50
+        for: 1m
+        labels:
+          severity: warning
+          component: slo
+          slo: 'true'
+        annotations:
+          summary: 'Error budget depleting faster than expected'
+          description: '{{ $value }}% of monthly error budget already consumed'
+
+      # Error Budget Critical (more than 90% consumed)
+      - alert: ErrorBudgetCritical
+        expr: slo:error:budget:consumed > 90
+        for: 1m
+        labels:
+          severity: critical
+          component: slo
+          slo: 'true'
+        annotations:
+          summary: 'Error budget critically low'
+          description: '{{ $value }}% of monthly error budget consumed'
+
+      # Error Budget Exceeded
+      - alert: ErrorBudgetExceeded
+        expr: slo:error:budget:consumed > 100
+        for: 1m
+        labels:
+          severity: critical
+          component: slo
+          slo: 'true'
+        annotations:
+          summary: 'Error budget exceeded'
+          description: 'SLO violated: {{ $value }}% budget consumed'
+
+  # Request Spike Alerts
+  - name: traffic_alerts
+    interval: 30s
+    rules:
+      # Traffic Spike Detected
+      - alert: TrafficSpike
+        expr: |
+          (throughput:requests:per:second - avg_over_time(throughput:requests:per:second[1h])) 
+          / avg_over_time(throughput:requests:per:second[1h]) > 1
+        for: 5m
+        labels:
+          severity: info
+          component: api
+        annotations:
+          summary: 'Traffic spike detected'
+          description: 'Current RPS: {{ $value }}, baseline: 2x'
+
+      # Traffic Anomaly - Sudden Drop
+      - alert: TrafficDropAnomaly
+        expr: |
+          (avg_over_time(throughput:requests:per:second[1h]) - throughput:requests:per:second) 
+          / avg_over_time(throughput:requests:per:second[1h]) > 0.5
+        for: 10m
+        labels:
+          severity: warning
+          component: api
+        annotations:
+          summary: 'Traffic drop anomaly detected'
+          description: 'Traffic dropped 50% from baseline'

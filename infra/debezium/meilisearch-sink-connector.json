@@ -1,0 +1,35 @@
+{
+  "name": "nextgen-meilisearch-sink",
+  "config": {
+    "connector.class": "com.meilisearch.kafka.connect.MeiliSearchSinkConnector",
+    "tasks.max": "3",
+
+    "topics": "cdc.products,cdc.product_variants,cdc.orders,cdc.order_items,cdc.inventory_logs,cdc.categories",
+
+    "meilisearch.host.url": "${MEILISEARCH_URL:-http://meilisearch:7700}",
+    "meilisearch.api.key": "${MEILISEARCH_API_KEY}",
+
+    "index.name.format": "${topic}",
+    "document.id.field": "id",
+
+    "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "key.converter.schemas.enable": "false",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter.schemas.enable": "false",
+
+    "batch.size": "100",
+    "flush.interval.ms": "500",
+
+    "delete.enabled": "true",
+    "delete.on.null.values": "true",
+
+    "errors.tolerance": "all",
+    "errors.log.enable": "true",
+    "errors.log.include.messages": "true",
+    "errors.deadletterqueue.topic.name": "meilisearch.dlq",
+    "errors.deadletterqueue.context.headers.enable": "true",
+
+    "retry.max.attempts": "5",
+    "retry.backoff.ms": "1000"
+  }
+}

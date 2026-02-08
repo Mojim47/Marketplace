@@ -1,0 +1,37 @@
+{
+  "workspace": {
+    "id": "",
+    "name": "NextGen Marketplace API"
+  },
+  "collection": {
+    "id": "",
+    "name": "NextGen Market API v3",
+    "description": "Enterprise-grade marketplace API platform for Iranian market with Persian/Jalali date support"
+  },
+  "environments": [
+    {
+      "id": "",
+      "name": "Local Development",
+      "values": {
+        "base_url": "http://localhost:3001/api/v3",
+        "api_version": "v3"
+      }
+    },
+    {
+      "id": "",
+      "name": "Staging",
+      "values": {
+        "base_url": "https://api-staging.nextgen.local/api/v3",
+        "api_version": "v3"
+      }
+    },
+    {
+      "id": "",
+      "name": "Production",
+      "values": {
+        "base_url": "https://api.nextgen.local/api/v3",
+        "api_version": "v3"
+      }
+    }
+  ]
+}

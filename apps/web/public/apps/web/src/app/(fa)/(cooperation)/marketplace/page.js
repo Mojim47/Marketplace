@@ -1,0 +1,17 @@
+import { jsx as _jsx, jsxs as _jsxs } from 'react/jsx-runtime';
+export default function Page() {
+  return _jsxs('main', {
+    dir: 'rtl',
+    children: [
+      _jsx('h1', {
+        children:
+          '\u0628\u0627\u0632\u0627\u0631\u06AF\u0627\u0647 \u0647\u0645\u06A9\u0627\u0631\u06CC \u2014 \u062E\u0631\u06CC\u062F \u0648 \u0641\u0631\u0648\u0634 \u0639\u0645\u062F\u0647',
+      }),
+      _jsx('p', {
+        children:
+          '\u0645\u06A9\u0627\u0646 \u0646\u0645\u0627\u06CC\u0634 \u0642\u0631\u0627\u0631\u062F\u0627\u062F\u0647\u0627\u060C \u067E\u06CC\u0634\u0646\u0647\u0627\u062F\u0627\u062A \u0642\u06CC\u0645\u062A \u06AF\u0631\u0648\u0647\u06CC \u0648 \u062A\u0633\u0648\u06CC\u0647\u200C\u062D\u0633\u0627\u0628\u200C\u0647\u0627\u06CC \u06CC\u06A9\u067E\u0627\u0631\u0686\u0647.',
+      }),
+    ],
+  });
+}
+//# sourceMappingURL=page.js.map

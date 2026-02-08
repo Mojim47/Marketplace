@@ -1,0 +1,17 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# NextGen Marketplace - Grafana Dashboard Provisioning
+# ═══════════════════════════════════════════════════════════════════════════
+
+apiVersion: 1
+
+providers:
+  - name: 'NextGen Dashboards'
+    orgId: 1
+    folder: 'NextGen Marketplace'
+    folderUid: 'nextgen'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards

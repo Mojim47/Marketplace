@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --admin-bg: #0b0f1a;
+    --admin-ink: #f8fafc;
+    --admin-muted: #cbd5f5;
+    --admin-card: rgba(15, 23, 42, 0.78);
+    --admin-border: rgba(148, 163, 184, 0.2);
+    --admin-brand: #38bdf8;
+  }
+
+  body {
+    font-family: var(--font-vazirmatn), sans-serif;
+    background: radial-gradient(1000px 600px at 85% -10%, rgba(56, 189, 248, 0.25), transparent 60%),
+      linear-gradient(160deg, #0b0f1a 0%, #0f172a 50%, #0b1220 100%);
+    color: var(--admin-ink);
+  }
+}
+
+@layer components {
+  .admin-card {
+    background: var(--admin-card);
+    border: 1px solid var(--admin-border);
+    backdrop-filter: blur(18px);
+    box-shadow: 0 18px 50px rgba(15, 23, 42, 0.5);
+  }
+
+  .admin-title {
+    font-family: var(--font-fraunces), serif;
+    letter-spacing: -0.02em;
+  }
+}

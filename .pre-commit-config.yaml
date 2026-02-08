@@ -1,0 +1,320 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# PRE-COMMIT HOOKS - NextGen Marketplace
+# ═══════════════════════════════════════════════════════════════════════════
+# Purpose: Prevent secrets and sensitive data from being committed to Git
+# Author: Senior DevSecOps Engineer
+# Installation: pre-commit install
+# ═══════════════════════════════════════════════════════════════════════════
+
+repos:
+  # ───────────────────────────────────────────────────────────────────────────
+  # Secret Detection & Security
+  # ───────────────────────────────────────────────────────────────────────────
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        name: 🔍 Detect Secrets
+        args: 
+          - '--baseline'
+          - '.secrets.baseline'
+          - '--exclude-files'
+          - '.*\.lock$'
+          - '--exclude-files'
+          - '.*\.min\.js$'
+          - '--exclude-files'
+          - 'node_modules/.*'
+          - '--exclude-files'
+          - 'dist/.*'
+          - '--exclude-files'
+          - '.next/.*'
+        exclude: |
+          (?x)^(
+              .*\.lock$|
+              .*\.min\.js$|
+              node_modules/.*|
+              dist/.*|
+              .next/.*|
+              coverage/.*|
+              .*\.tsbuildinfo$
+          )$
+
+  - repo: https://github.com/gitguardian/ggshield
+    rev: v1.25.0
+    hooks:
+      - id: ggshield
+        name: 🛡️ GitGuardian Secret Scan
+        language: python
+        stages: [commit]
+        exclude: |
+          (?x)^(
+              .*\.lock$|
+              node_modules/.*|
+              dist/.*|
+              .next/.*|
+              coverage/.*
+          )$
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Git Hooks & File Validation
+  # ───────────────────────────────────────────────────────────────────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        name: 🧹 Remove Trailing Whitespace
+        exclude: |
+          (?x)^(
+              .*\.md$|
+              .*\.lock$
+          )$
+      
+      - id: end-of-file-fixer
+        name: 📝 Fix End of Files
+        exclude: |
+          (?x)^(
+              .*\.lock$|
+              node_modules/.*|
+              dist/.*
+          )$
+      
+      - id: check-yaml
+        name: ✅ Check YAML Syntax
+        exclude: |
+          (?x)^(
+              .*\.lock$|
+              node_modules/.*
+          )$
+      
+      - id: check-json
+        name: ✅ Check JSON Syntax
+        exclude: |
+          (?x)^(
+              .*\.lock$|
+              node_modules/.*|
+              dist/.*|
+              .next/.*
+          )$
+      
+      - id: check-toml
+        name: ✅ Check TOML Syntax
+      
+      - id: check-xml
+        name: ✅ Check XML Syntax
+      
+      - id: check-merge-conflict
+        name: 🔀 Check for Merge Conflicts
+      
+      - id: check-case-conflict
+        name: 📁 Check Case Conflicts
+      
+      - id: check-added-large-files
+        name: 📦 Check Large Files
+        args: ['--maxkb=1024']  # 1MB limit
+      
+      - id: check-executables-have-shebangs
+        name: 🔧 Check Executable Shebangs
+      
+      - id: check-shebang-scripts-are-executable
+        name: 🔧 Check Shebang Executables
+      
+      - id: forbid-new-submodules
+        name: 🚫 Forbid New Submodules
+      
+      - id: no-commit-to-branch
+        name: 🚫 Protect Main Branch
+        args: ['--branch', 'main', '--branch', 'master', '--branch', 'production']
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Custom Secret Patterns (NextGen Specific)
+  # ───────────────────────────────────────────────────────────────────────────
+  - repo: local
+    hooks:
+      - id: nextgen-secret-check
+        name: 🔐 NextGen Secret Patterns
+        entry: bash -c
+        language: system
+        args:
+          - |
+            # Check for specific NextGen secret patterns
+            if grep -r -E "(c8Luy6gbYN9MnwFPxEsJ0Kt5zedXpBvQ|p8orPW2EmSZ35biwnVe4aqHCQx6gtGAv|930723286f4a3c8d51cc6f5ebc07d059453e989f7da8ac1dfbe3e64753790025)" . --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=dist --exclude-dir=.next; then
+              echo "❌ CRITICAL: Hardcoded NextGen secrets detected!"
+              echo "These secrets were previously exposed and must not be committed."
+              echo "Use Vault integration instead: {{VAULT:nextgen/database#password}}"
+              exit 1
+            fi
+            
+            # Check for common secret patterns
+            if grep -r -E "(password\s*=\s*['\"][^'\"]{8,}['\"]|secret\s*=\s*['\"][^'\"]{16,}['\"]|key\s*=\s*['\"][^'\"]{16,}['\"])" . --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=dist --exclude-dir=.next --exclude="*.md" --exclude="*.example" --exclude="*.template"; then
+              echo "❌ WARNING: Potential secrets detected in code!"
+              echo "Please review and use Vault integration if these are real secrets."
+              exit 1
+            fi
+            
+            # Check for .env files (should not be committed)
+            if find . -name ".env" -not -path "./node_modules/*" -not -path "./.git/*" | grep -q .; then
+              echo "❌ CRITICAL: .env file detected!"
+              echo "Environment files should not be committed to Git."
+              echo "Use .env.example or .env.template instead."
+              exit 1
+            fi
+            
+            echo "✅ No NextGen secrets detected"
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Docker & Kubernetes Security
+  # ───────────────────────────────────────────────────────────────────────────
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.12.0
+    hooks:
+      - id: hadolint-docker
+        name: 🐳 Dockerfile Linting
+        args: 
+          - '--ignore'
+          - 'DL3008'  # Pin versions in apt get install
+          - '--ignore'
+          - 'DL3009'  # Delete apt cache
+        files: Dockerfile.*
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # TypeScript & JavaScript Quality
+  # ───────────────────────────────────────────────────────────────────────────
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v8.56.0
+    hooks:
+      - id: eslint
+        name: 🔍 ESLint
+        files: \.(js|jsx|ts|tsx)$
+        exclude: |
+          (?x)^(
+              node_modules/.*|
+              dist/.*|
+              .next/.*|
+              coverage/.*|
+              .*\.d\.ts$
+          )$
+        additional_dependencies:
+          - '@typescript-eslint/eslint-plugin@^6.0.0'
+          - '@typescript-eslint/parser@^6.0.0'
+          - 'eslint-config-next@^14.0.0'
+
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.1.0
+    hooks:
+      - id: prettier
+        name: 💅 Prettier
+        files: \.(js|jsx|ts|tsx|json|md|yml|yaml)$
+        exclude: |
+          (?x)^(
+              node_modules/.*|
+              dist/.*|
+              .next/.*|
+              coverage/.*|
+              .*\.lock$|
+              .*\.tsbuildinfo$
+          )$
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Infrastructure as Code Security
+  # ───────────────────────────────────────────────────────────────────────────
+  - repo: https://github.com/bridgecrewio/checkov
+    rev: 3.1.34
+    hooks:
+      - id: checkov
+        name: 🔒 Checkov IaC Security
+        args:
+          - '--framework'
+          - 'kubernetes,dockerfile,terraform'
+          - '--skip-check'
+          - 'CKV_K8S_43'  # Image should use digest
+          - '--skip-check'
+          - 'CKV_K8S_14'  # Image Tag should be fixed
+        files: \.(yaml|yml|tf|dockerfile)$
+        exclude: |
+          (?x)^(
+              node_modules/.*|
+              .terraform/.*
+          )$
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Commit Message Validation
+  # ───────────────────────────────────────────────────────────────────────────
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v3.13.0
+    hooks:
+      - id: commitizen
+        name: 📝 Conventional Commits
+        stages: [commit-msg]
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Custom Vault Integration Check
+  # ───────────────────────────────────────────────────────────────────────────
+  - repo: local
+    hooks:
+      - id: vault-integration-check
+        name: 🏦 Vault Integration Check
+        entry: bash -c
+        language: system
+        args:
+          - |
+            # Check that environment files use Vault placeholders
+            for env_file in $(find . -name "*.env*" -not -path "./node_modules/*" -not -path "./.git/*" -not -name "*.example" -not -name "*.template"); do
+              if [ -f "$env_file" ]; then
+                if grep -E "(password|secret|key)\s*=\s*[^{]" "$env_file" | grep -v "{{VAULT:" > /dev/null; then
+                  echo "❌ CRITICAL: Non-Vault secrets found in $env_file"
+                  echo "All secrets must use Vault placeholders: {{VAULT:path#key}}"
+                  exit 1
+                fi
+              fi
+            done
+            
+            # Check Kubernetes manifests for hardcoded secrets
+            for k8s_file in $(find . -name "*.yaml" -o -name "*.yml" | grep -E "(k8s|kubernetes)" | grep -v node_modules); do
+              if [ -f "$k8s_file" ]; then
+                if grep -E "(password|secret|key):\s*['\"][^'\"{}]+['\"]" "$k8s_file" > /dev/null; then
+                  echo "❌ WARNING: Potential hardcoded secrets in $k8s_file"
+                  echo "Use Kubernetes secrets or Vault integration instead."
+                  exit 1
+                fi
+              fi
+            done
+            
+            echo "✅ Vault integration check passed"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# CONFIGURATION
+# ═══════════════════════════════════════════════════════════════════════════
+
+default_language_version:
+  python: python3.11
+  node: '20.11.0'
+
+default_stages: [commit, push]
+
+# Fail fast - stop on first failure
+fail_fast: true
+
+# Minimum pre-commit version
+minimum_pre_commit_version: '3.0.0'
+
+# ═══════════════════════════════════════════════════════════════════════════
+# INSTALLATION INSTRUCTIONS
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# 1. Install pre-commit:
+#    pip install pre-commit
+#    
+# 2. Install hooks:
+#    pre-commit install
+#    pre-commit install --hook-type commit-msg
+#    
+# 3. Run on all files (optional):
+#    pre-commit run --all-files
+#    
+# 4. Update hooks:
+#    pre-commit autoupdate
+#
+# 5. Skip hooks (emergency only):
+#    git commit --no-verify
+#
+# ═══════════════════════════════════════════════════════════════════════════

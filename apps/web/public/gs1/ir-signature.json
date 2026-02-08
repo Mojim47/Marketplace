@@ -1,0 +1,11 @@
+﻿{
+  "signature": "IR_SIG_MTIyMzUwMTkwNQ==",
+  "header": { "kid": "ir-gs1-2025", "typ": "JWT", "alg": "ES256" },
+  "payload": {
+    "country": "IR",
+    "serial": "IR-251211-2249",
+    "iss": "nextgen-market.ir",
+    "gtin": "6260143900128",
+    "iat": 1765493364
+  }
+}

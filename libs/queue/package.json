@@ -1,0 +1,14 @@
+{
+  "name": "@nextgen/queue",
+  "version": "1.0.0",
+  "description": "NextGen Queue Library - BullMQ Integration",
+  "main": "src/index.ts",
+  "dependencies": {
+    "@nestjs/common": "^10.0.0",
+    "@nestjs/config": "^3.0.0",
+    "bullmq": "^5.0.0",
+    "ioredis": "^5.0.0"
+  },
+  "devDependencies": {
+  }
+}

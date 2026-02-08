@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="120" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .title { font: bold 14px Arial; fill: #1a1a1a; }
+      .label { font: 11px Arial; fill: #333; }
+      .value { font: bold 11px Arial; fill: #0066cc; }
+      .spec { font: 9px Arial; fill: #666; }
+    </style>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="200" height="120" fill="#f8f9fa" stroke="#0066cc" stroke-width="2" rx="4"/>
+  
+  <!-- Header -->
+  <text x="100" y="20" text-anchor="middle" class="title">CALIBRATION CERTIFICATE</text>
+  <line x1="10" y1="25" x2="190" y2="25" stroke="#0066cc" stroke-width="1"/>
+  
+  <!-- Camera FOV -->
+  <text x="15" y="45" class="label">Camera FOV:</text>
+  <text x="110" y="45" class="value">78° ± 2°</text>
+  
+  <!-- IMU Bias -->
+  <text x="15" y="62" class="label">IMU Bias:</text>
+  <text x="110" y="62" class="value">≤ 0.5 °/s</text>
+  
+  <!-- Calibration Date -->
+  <text x="15" y="79" class="label">Cal. Date:</text>
+  <text x="110" y="79" class="value">[DATE]</text>
+  
+  <!-- Serial Number -->
+  <text x="15" y="96" class="label">Serial No:</text>
+  <text x="110" y="96" class="value">[SERIAL]</text>
+  
+  <!-- Standard Reference -->
+  <text x="100" y="112" text-anchor="middle" class="spec">IEC 62950 | ISO 45001</text>
+</svg>

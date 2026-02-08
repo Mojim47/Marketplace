@@ -1,0 +1,52 @@
+{
+  "name": "@nextgen/auth",
+  "version": "1.0.0",
+  "description": "Enterprise-grade authentication library with JWT, 2FA, rate limiting, and session management",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p .",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest",
+    "coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "argon2": "^0.31.2",
+    "ioredis": "^5.3.2",
+    "passport": "^0.7.0",
+    "passport-jwt": "^4.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/passport-jwt": "^4.0.1",
+    "vitest": "^1.0.0",
+    "fast-check": "^3.14.0"
+  },
+  "peerDependencies": {
+    "@nestjs/common": "^10.0.0",
+    "@nestjs/config": "^3.0.0",
+    "@nestjs/jwt": "^10.0.0",
+    "@nestjs/passport": "^10.0.0",
+    "@prisma/client": "^5.7.0",
+    "@nextgen/errors": "workspace:*"
+  },
+  "keywords": [
+    "auth",
+    "authentication",
+    "jwt",
+    "totp",
+    "2fa",
+    "session",
+    "rate-limiting",
+    "nestjs"
+  ]
+}

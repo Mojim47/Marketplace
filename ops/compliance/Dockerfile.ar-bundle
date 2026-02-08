@@ -1,0 +1,23 @@
+FROM alpine:3.19
+
+LABEL org.opencontainers.image.title="NextGen AR Bundle"
+LABEL org.opencontainers.image.description="EU AR Address + e-DoC Signature + DPC Ireland"
+LABEL org.opencontainers.image.version="1.0.0"
+LABEL org.opencontainers.image.vendor="NextGen EU Representative GmbH"
+
+WORKDIR /ar-bundle
+
+COPY ar-bundle/*.json ./
+COPY ar-bundle/*.pem ./
+COPY ar-bundle/*.html ./
+COPY ar-bundle/*.jsonld ./
+COPY ar-bundle/*.sig ./
+COPY ar-bundle/*.xml ./
+
+RUN apk add --no-cache ca-certificates openssl && \
+    chmod 400 ar-key.pem && \
+    chmod 444 *.json *.html *.jsonld *.sig *.xml
+
+VOLUME ["/ar-bundle"]
+
+CMD ["sh", "-c", "echo 'AR Bundle v1.0.0 Ready' && ls -lah"]

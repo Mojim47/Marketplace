@@ -1,0 +1,292 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# ISTIO AUTHORIZATION POLICIES - NextGen Marketplace
+# ═══════════════════════════════════════════════════════════════════════════
+# Purpose: Deny direct IP:port access, enforce service mesh communication
+# Security Level: CRITICAL - Zero Trust Network Architecture
+# ═══════════════════════════════════════════════════════════════════════════
+
+---
+# Namespace for Istio policies
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nextgen
+  labels:
+    istio-injection: enabled
+    security.istio.io/tlsMode: istio
+
+---
+# DENY ALL direct IP access to PostgreSQL
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: deny-postgres-direct-access
+  namespace: nextgen
+spec:
+  selector:
+    matchLabels:
+      app: postgres
+  action: DENY
+  rules:
+  # Deny any direct IP:port access
+  - from:
+    - source:
+        notPrincipals: ["cluster.local/ns/nextgen/sa/nextgen-api"]
+  # Deny access from outside the mesh
+  - from:
+    - source:
+        notNamespaces: ["nextgen"]
+  # Deny access on non-standard ports
+  - to:
+    - operation:
+        ports: ["22", "80", "443", "8080", "9090"]
+
+---
+# DENY ALL direct IP access to Redis
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: deny-redis-direct-access
+  namespace: nextgen
+spec:
+  selector:
+    matchLabels:
+      app: redis
+  action: DENY
+  rules:
+  # Deny any direct IP:port access
+  - from:
+    - source:
+        notPrincipals: ["cluster.local/ns/nextgen/sa/nextgen-api"]
+  # Deny access from outside the mesh
+  - from:
+    - source:
+        notNamespaces: ["nextgen"]
+  # Deny access on non-standard ports
+  - to:
+    - operation:
+        ports: ["22", "80", "443", "8080", "9090"]
+
+---
+# ALLOW ONLY API service to access PostgreSQL
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-api-to-postgres
+  namespace: nextgen
+spec:
+  selector:
+    matchLabels:
+      app: postgres
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        principals: ["cluster.local/ns/nextgen/sa/nextgen-api"]
+    to:
+    - operation:
+        ports: ["5432"]
+        methods: ["*"]
+
+---
+# ALLOW ONLY API service to access Redis
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-api-to-redis
+  namespace: nextgen
+spec:
+  selector:
+    matchLabels:
+      app: redis
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        principals: ["cluster.local/ns/nextgen/sa/nextgen-api"]
+    to:
+    - operation:
+        ports: ["6379"]
+        methods: ["*"]
+
+---
+# DENY external access to internal services
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: deny-external-to-internal
+  namespace: nextgen
+spec:
+  action: DENY
+  rules:
+  # Deny access from outside cluster
+  - from:
+    - source:
+        notNamespaces: ["nextgen", "istio-system", "kube-system"]
+    to:
+    - operation:
+        ports: ["5432", "6379", "9090", "3100", "16686"]
+
+---
+# ALLOW only specific ingress traffic
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-ingress-to-api
+  namespace: nextgen
+spec:
+  selector:
+    matchLabels:
+      app: nextgen-api
+  action: ALLOW
+  rules:
+  # Allow ingress gateway
+  - from:
+    - source:
+        principals: ["cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"]
+    to:
+    - operation:
+        ports: ["3000"]
+        methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
+  # Allow internal service communication
+  - from:
+    - source:
+        namespaces: ["nextgen"]
+    to:
+    - operation:
+        ports: ["3000", "9090"]
+
+---
+# Network Policy for additional layer of security
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-direct-database-access
+  namespace: nextgen
+spec:
+  podSelector:
+    matchLabels:
+      app: postgres
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Only allow from API pods
+  - from:
+    - podSelector:
+        matchLabels:
+          app: nextgen-api
+    ports:
+    - protocol: TCP
+      port: 5432
+  egress:
+  # Allow DNS resolution
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-direct-redis-access
+  namespace: nextgen
+spec:
+  podSelector:
+    matchLabels:
+      app: redis
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Only allow from API pods
+  - from:
+    - podSelector:
+        matchLabels:
+          app: nextgen-api
+    ports:
+    - protocol: TCP
+      port: 6379
+  egress:
+  # Allow DNS resolution
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+
+---
+# PeerAuthentication for mTLS enforcement
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: nextgen
+spec:
+  mtls:
+    mode: STRICT
+
+---
+# DestinationRule for mTLS
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: postgres-mtls
+  namespace: nextgen
+spec:
+  host: postgres.nextgen.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: redis-mtls
+  namespace: nextgen
+spec:
+  host: redis.nextgen.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+
+---
+# ServiceEntry to prevent external database access
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: block-external-postgres
+  namespace: nextgen
+spec:
+  hosts:
+  - "*.postgres.com"
+  - "*.postgresql.org"
+  - "*.rds.amazonaws.com"
+  - "*.database.azure.com"
+  - "*.googleapis.com"
+  ports:
+  - number: 5432
+    name: postgres
+    protocol: TCP
+  location: MESH_EXTERNAL
+  resolution: NONE
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: block-external-redis
+  namespace: nextgen
+spec:
+  hosts:
+  - "*.redis.com"
+  - "*.redislabs.com"
+  - "*.elasticache.amazonaws.com"
+  - "*.cache.azure.com"
+  ports:
+  - number: 6379
+    name: redis
+    protocol: TCP
+  location: MESH_EXTERNAL
+  resolution: NONE

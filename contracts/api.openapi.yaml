@@ -1,0 +1,3194 @@
+openapi: 3.1.0
+
+info:
+  title: NextGen Market API
+  description: |
+    Enterprise-grade marketplace API platform for Iranian market
+    
+    ## ویژگی‌ها (Features)
+    - Production-ready REST API
+    - OpenAPI 3.1 specification
+    - Semantic versioning (v1, v2, v3)
+    - Full backwards compatibility
+    - Persian/Jalali date support
+    - Iranian Rial currency formatting
+    
+    ## احراز هویت (Authentication)
+    این API از JWT RS256 برای احراز هویت استفاده می‌کند.
+    توکن‌ها هر 15 دقیقه منقضی می‌شوند و باید با refresh token تمدید شوند.
+    
+    ## محدودیت نرخ (Rate Limiting)
+    - کاربران عادی: 100 درخواست در دقیقه
+    - کاربران احراز هویت شده: 1000 درخواست در دقیقه
+    - مدیران: 10000 درخواست در دقیقه
+  version: 3.1.0
+  contact:
+    name: پشتیبانی API
+    email: api-support@nextgen.local
+    url: https://docs.nextgen.local
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+
+servers:
+  - url: https://api.nextgen.local/api/v3
+    description: Production API (سرور اصلی)
+    variables:
+      region:
+        default: ir
+        enum:
+          - ir
+          - us
+          - eu
+  - url: https://api-staging.nextgen.local/api/v3
+    description: Staging API (سرور تست)
+  - url: http://localhost:3000/api/v3
+    description: Local Development (توسعه محلی)
+
+security:
+  - BearerAuth: []
+  - ApiKeyAuth: []
+
+tags:
+  - name: Authentication
+    description: |
+      احراز هویت و مدیریت توکن
+      User authentication and token management
+  - name: Users
+    description: |
+      مدیریت حساب کاربری
+      User account management
+  - name: Products
+    description: |
+      عملیات کاتالوگ محصولات
+      Product catalog operations
+  - name: Orders
+    description: |
+      مدیریت و پردازش سفارشات
+      Order management and processing
+  - name: Invoices
+    description: |
+      صدور و مدیریت فاکتور
+      Invoice generation and management
+  - name: Payments
+    description: |
+      پردازش و پیگیری پرداخت
+      Payment processing and tracking
+  - name: Tax
+    description: |
+      محاسبه مالیات و انطباق
+      Tax calculation and compliance
+  - name: Fraud Detection
+    description: |
+      تشخیص و جلوگیری از تقلب
+      Fraud detection and prevention
+  - name: Health
+    description: |
+      سلامت و وضعیت سیستم
+      System health and status
+
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check endpoint
+      description: |
+        بررسی وضعیت سلامت API
+        Check if API is operational
+      operationId: getHealth
+      responses:
+        '200':
+          description: API is healthy (API سالم است)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [ok, degraded, critical]
+                  timestamp:
+                    type: string
+                    format: date-time
+                  version:
+                    type: string
+                  uptime:
+                    type: number
+                    format: float
+                    description: Uptime in seconds
+                  services:
+                    type: object
+                    properties:
+                      database:
+                        type: string
+                        enum: [connected, disconnected]
+                      cache:
+                        type: string
+                        enum: [connected, disconnected]
+                      message-queue:
+                        type: string
+                        enum: [connected, disconnected]
+              example:
+                status: ok
+                timestamp: "1402-09-15T10:30:00+03:30"
+                version: "3.1.0"
+                uptime: 86400.5
+                services:
+                  database: connected
+                  cache: connected
+                  message-queue: connected
+        '503':
+          description: API is unhealthy (API ناسالم است)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: "SYS_001"
+                message: "سرویس در دسترس نیست"
+                messageEn: "Service unavailable"
+                timestamp: "1402-09-15T10:30:00+03:30"
+
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register new user (ثبت‌نام کاربر جدید)
+      description: |
+        ایجاد حساب کاربری جدید
+        Create a new user account
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            example:
+              email: "ali.mohammadi@example.com"
+              password: "SecurePass123!"
+              name: "علی محمدی"
+              phone: "09123456789"
+      responses:
+        '201':
+          description: User registered successfully (کاربر با موفقیت ثبت شد)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+              example:
+                access_token: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
+                refresh_token: "dGhpcyBpcyBhIHJlZnJlc2ggdG9rZW4..."
+                token_type: "Bearer"
+                expires_in: 900
+                user:
+                  id: "550e8400-e29b-41d4-a716-446655440000"
+                  email: "ali.mohammadi@example.com"
+                  name: "علی محمدی"
+                  phone: "09123456789"
+                  status: "active"
+                  roles: ["user"]
+                  created_at: "1402-09-15T10:30:00+03:30"
+        '400':
+          description: Invalid request data (داده‌های درخواست نامعتبر)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+              example:
+                code: "VAL_001"
+                message: "ورودی نامعتبر است"
+                messageEn: "Invalid input"
+                fields:
+                  email: ["فرمت ایمیل نامعتبر است"]
+                  password: ["رمز عبور باید حداقل 8 کاراکتر باشد"]
+        '409':
+          description: User already exists (کاربر قبلاً وجود دارد)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: "AUTH_006"
+                message: "این ایمیل قبلاً ثبت شده است"
+                messageEn: "Email already registered"
+                timestamp: "1402-09-15T10:30:00+03:30"
+        '429':
+          description: Too many registration attempts (تعداد درخواست‌ها بیش از حد مجاز)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+              example:
+                code: "AUTH_003"
+                message: "تعداد درخواست‌ها بیش از حد مجاز است"
+                messageEn: "Rate limit exceeded"
+                retry_after: 300
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Login user (ورود کاربر)
+      description: |
+        احراز هویت کاربر و دریافت توکن JWT
+        Authenticate user and return JWT token
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              email: "ali.mohammadi@example.com"
+              password: "SecurePass123!"
+      responses:
+        '200':
+          description: Login successful (ورود موفق)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+              example:
+                access_token: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
+                refresh_token: "dGhpcyBpcyBhIHJlZnJlc2ggdG9rZW4..."
+                token_type: "Bearer"
+                expires_in: 900
+                user:
+                  id: "550e8400-e29b-41d4-a716-446655440000"
+                  email: "ali.mohammadi@example.com"
+                  name: "علی محمدی"
+                  status: "active"
+                  roles: ["user"]
+        '401':
+          description: Invalid credentials (اطلاعات ورود نامعتبر)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: "AUTH_001"
+                message: "نام کاربری یا رمز عبور اشتباه است"
+                messageEn: "Invalid username or password"
+                timestamp: "1402-09-15T10:30:00+03:30"
+        '429':
+          description: Too many login attempts (تعداد تلاش‌های ورود بیش از حد مجاز)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+              example:
+                code: "AUTH_003"
+                message: "تعداد درخواست‌ها بیش از حد مجاز است. لطفاً 5 دقیقه صبر کنید"
+                messageEn: "Rate limit exceeded. Please wait 5 minutes"
+                retry_after: 300
+      x-rate-limit:
+        requests: 5
+        window: 300
+
+  /auth/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh access token (تمدید توکن)
+      description: |
+        دریافت توکن جدید با استفاده از refresh token
+        Get new access token using refresh token
+      operationId: refreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refresh_token]
+              properties:
+                refresh_token:
+                  type: string
+            example:
+              refresh_token: "dGhpcyBpcyBhIHJlZnJlc2ggdG9rZW4..."
+      responses:
+        '200':
+          description: Token refreshed successfully (توکن با موفقیت تمدید شد)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+              example:
+                access_token: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.newtoken..."
+                refresh_token: "bmV3IHJlZnJlc2ggdG9rZW4..."
+                token_type: "Bearer"
+                expires_in: 900
+        '401':
+          description: Invalid refresh token (توکن تمدید نامعتبر)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: "AUTH_002"
+                message: "توکن منقضی شده است"
+                messageEn: "Token expired"
+                timestamp: "1402-09-15T10:30:00+03:30"
+
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: Logout user (خروج کاربر)
+      description: |
+        باطل کردن توکن‌های کاربر
+        Invalidate user tokens
+      operationId: logoutUser
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Logout successful (خروج موفق)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+              example:
+                message: "با موفقیت خارج شدید"
+        '401':
+          description: Unauthorized (غیرمجاز)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: "AUTH_007"
+                message: "احراز هویت الزامی است"
+                messageEn: "Authentication required"
+
+  /auth/2fa/setup:
+    post:
+      tags:
+        - Authentication
+      summary: Setup 2FA (راه‌اندازی احراز هویت دو مرحله‌ای)
+      description: |
+        فعال‌سازی احراز هویت دو مرحله‌ای با TOTP
+        Enable two-factor authentication with TOTP
+      operationId: setup2FA
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 2FA setup initiated (راه‌اندازی 2FA آغاز شد)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  secret:
+                    type: string
+                  qr_code:
+                    type: string
+                    description: Base64 encoded QR code image
+              example:
+                secret: "JBSWY3DPEHPK3PXP"
+                qr_code: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..."
+        '401':
+          description: Unauthorized (غیرمجاز)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/2fa/verify:
+    post:
+      tags:
+        - Authentication
+      summary: Verify 2FA code (تایید کد 2FA)
+      description: |
+        تایید کد TOTP برای احراز هویت دو مرحله‌ای
+        Verify TOTP code for two-factor authentication
+      operationId: verify2FA
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code:
+                  type: string
+                  pattern: '^\d{6}$'
+            example:
+              code: "123456"
+      responses:
+        '200':
+          description: 2FA verified successfully (2FA با موفقیت تایید شد)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  verified:
+                    type: boolean
+                  backup_codes:
+                    type: array
+                    items:
+                      type: string
+              example:
+                verified: true
+                backup_codes: ["ABC123", "DEF456", "GHI789"]
+        '400':
+          description: Invalid code (کد نامعتبر)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: "AUTH_005"
+                message: "کد تایید اشتباه است"
+                messageEn: "Invalid verification code"
+
+  /users:
+    get:
+      tags:
+        - Users
+      summary: List users (لیست کاربران)
+      description: |
+        دریافت لیست صفحه‌بندی شده کاربران (فقط مدیر)
+        Get paginated list of users (admin only)
+      operationId: listUsers
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+          example: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+          example: 20
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: جستجو بر اساس ایمیل یا نام
+          example: "علی"
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, inactive, suspended]
+          example: "active"
+      responses:
+        '200':
+          description: List of users (لیست کاربران)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedUsers'
+              example:
+                data:
+                  - id: "550e8400-e29b-41d4-a716-446655440000"
+                    email: "ali.mohammadi@example.com"
+                    name: "علی محمدی"
+                    phone: "09123456789"
+                    status: "active"
+                    roles: ["user"]
+                    created_at: "1402-09-15T10:30:00+03:30"
+                  - id: "550e8400-e29b-41d4-a716-446655440001"
+                    email: "maryam.hosseini@example.com"
+                    name: "مریم حسینی"
+                    phone: "09129876543"
+                    status: "active"
+                    roles: ["user", "seller"]
+                    created_at: "1402-09-10T08:15:00+03:30"
+                pagination:
+                  page: 1
+                  limit: 20
+                  total: 150
+                  pages: 8
+        '401':
+          description: Unauthorized (غیرمجاز)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: "AUTH_007"
+                message: "احراز هویت الزامی است"
+                messageEn: "Authentication required"
+        '403':
+          description: Forbidden - admin only (دسترسی ممنوع - فقط مدیر)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: "RBAC_001"
+                message: "شما دسترسی به این بخش را ندارید"
+                messageEn: "You don't have access to this section"
+
+  /users/{userId}:
+    get:
+      tags:
+        - Users
+      summary: Get user details (دریافت جزئیات کاربر)
+      description: |
+        دریافت اطلاعات کاربر خاص
+        Retrieve specific user information
+      operationId: getUser
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: User details (جزئیات کاربر)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+              example:
+                id: "550e8400-e29b-41d4-a716-446655440000"
+                email: "ali.mohammadi@example.com"
+                name: "علی محمدی"
+                phone: "09123456789"
+                national_id: "0012345678"
+                status: "active"
+                roles: ["user"]
+                address:
+                  province: "تهران"
+                  city: "تهران"
+                  street: "خیابان ولیعصر، پلاک ۱۲۳"
+                  postal_code: "1234567890"
+                created_at: "1402-09-15T10:30:00+03:30"
+                updated_at: "1402-09-20T14:45:00+03:30"
+        '401':
+          description: Unauthorized (غیرمجاز)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: User not found (کاربر یافت نشد)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: "USR_001"
+                message: "کاربر یافت نشد"
+                messageEn: "User not found"
+
+    put:
+      tags:
+        - Users
+      summary: Update user profile (به‌روزرسانی پروفایل کاربر)
+      description: |
+        به‌روزرسانی اطلاعات پروفایل کاربر
+        Update user profile information
+      operationId: updateUser
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+            example:
+              name: "علی محمدی‌نژاد"
+              phone: "09121234567"
+              address:
+                province: "تهران"
+                city: "تهران"
+                street: "خیابان شریعتی، کوچه گلستان، پلاک ۴۵"
+                postal_code: "1234567890"
+      responses:
+        '200':
+          description: User updated successfully (کاربر با موفقیت به‌روزرسانی شد)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+              example:
+                id: "550e8400-e29b-41d4-a716-446655440000"
+                email: "ali.mohammadi@example.com"
+                name: "علی محمدی‌نژاد"
+                phone: "09121234567"
+                status: "active"
+                updated_at: "1402-09-25T16:30:00+03:30"
+        '400':
+          description: Invalid request data (داده‌های درخواست نامعتبر)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+              example:
+                code: "VAL_001"
+                message: "ورودی نامعتبر است"
+                messageEn: "Invalid input"
+                fields:
+                  phone: ["شماره موبایل نامعتبر است"]
+        '401':
+          description: Unauthorized (غیرمجاز)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: User not found (کاربر یافت نشد)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Users
+      summary: Delete user account (حذف حساب کاربری)
+      description: |
+        حذف دائمی حساب کاربری و داده‌های مرتبط
+        Permanently delete user account and related data
+      operationId: deleteUser
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '204':
+          description: User deleted successfully (کاربر با موفقیت حذف شد)
+        '401':
+          description: Unauthorized (غیرمجاز)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: User not found (کاربر یافت نشد)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /products:
+    get:
+      tags:
+        - Products
+      summary: List products (لیست محصولات)
+      description: |
+        دریافت لیست صفحه‌بندی شده محصولات با فیلتر
+        Get paginated list of products with filtering
+      operationId: listProducts
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+          example: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+          example: 20
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: جستجو در نام و توضیحات محصول
+          example: "شیرآلات"
+        - name: category
+          in: query
+          schema:
+            type: string
+          example: "لوازم بهداشتی"
+        - name: min_price
+          in: query
+          schema:
+            type: number
+            format: float
+          description: حداقل قیمت (ریال)
+          example: 1000000
+        - name: max_price
+          in: query
+          schema:
+            type: number
+            format: float
+          description: حداکثر قیمت (ریال)
+          example: 50000000
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [price_asc, price_desc, rating, newest]
+          example: "newest"
+      responses:
+        '200':
+          description: List of products (لیست محصولات)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProducts'
+              example:
+                data:
+                  - id: "660e8400-e29b-41d4-a716-446655440000"
+                    name: "شیر روشویی مدل کلاسیک"
+                    description: "شیر روشویی با طراحی کلاسیک و کیفیت عالی"
+                    price: 12500000
+                    price_formatted: "۱۲,۵۰۰,۰۰۰ ریال"
+                    category: "شیرآلات"
+                    sku: "SHR-CLS-001"
+                    stock: 150
+                    rating: 4.5
+                    reviews_count: 89
+                    created_at: "1402-08-01T09:00:00+03:30"
+                  - id: "660e8400-e29b-41d4-a716-446655440001"
+                    name: "توالت فرنگی مدل لوکس"
+                    description: "توالت فرنگی با سیستم شستشوی پیشرفته"
+                    price: 45000000
+                    price_formatted: "۴۵,۰۰۰,۰۰۰ ریال"
+                    category: "توالت فرنگی"
+                    sku: "TLT-LUX-001"
+                    stock: 45
+                    rating: 4.8
+                    reviews_count: 156
+                    created_at: "1402-07-15T11:30:00+03:30"
+                pagination:
+                  page: 1
+                  limit: 20
+                  total: 1250
+                  pages: 63
+        '400':
+          description: Invalid query parameters (پارامترهای جستجو نامعتبر)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+    post:
+      tags:
+        - Products
+      summary: Create product (ایجاد محصول)
+      description: |
+        ایجاد محصول جدید (فقط فروشنده)
+        Create new product (seller only)
+      operationId: createProduct
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProductRequest'
+            example:
+              name: "شیر حمام مدل مدرن"
+              description: "شیر حمام با طراحی مدرن و صرفه‌جویی در مصرف آب"
+              price: 18500000
+              category: "شیرآلات"
+              sku: "SHR-MDR-002"
+              stock: 100
+              specifications:
+                جنس: "استیل ضدزنگ"
+                گارانتی: "۵ سال"
+                کشور_سازنده: "ایران"
+      responses:
+        '201':
+          description: Product created successfully (محصول با موفقیت ایجاد شد)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+              example:
+                id: "660e8400-e29b-41d4-a716-446655440002"
+                name: "شیر حمام مدل مدرن"
+                description: "شیر حمام با طراحی مدرن و صرفه‌جویی در مصرف آب"
+                price: 18500000
+                price_formatted: "۱۸,۵۰۰,۰۰۰ ریال"
+                category: "شیرآلات"
+                sku: "SHR-MDR-002"
+                stock: 100
+                rating: 0
+                reviews_count: 0
+                created_at: "1402-09-25T14:00:00+03:30"
+        '400':
+          description: Invalid request data (داده‌های درخواست نامعتبر)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '401':
+          description: Unauthorized (غیرمجاز)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - seller only (دسترسی ممنوع - فقط فروشنده)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: "RBAC_002"
+                message: "فقط فروشندگان می‌توانند محصول ایجاد کنند"
+                messageEn: "Only sellers can create products"
+
+  /products/{productId}:
+    get:
+      tags:
+        - Products
+      summary: Get product details (دریافت جزئیات محصول)
+      description: |
+        دریافت اطلاعات کامل محصول
+        Retrieve specific product information
+      operationId: getProduct
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: "660e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Product details (جزئیات محصول)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+              example:
+                id: "660e8400-e29b-41d4-a716-446655440000"
+                name: "شیر روشویی مدل کلاسیک"
+                description: "شیر روشویی با طراحی کلاسیک و کیفیت عالی. مناسب برای حمام و سرویس بهداشتی."
+                price: 12500000
+                price_formatted: "۱۲,۵۰۰,۰۰۰ ریال"
+                price_toman: "۱,۲۵۰,۰۰۰ تومان"
+                category: "شیرآلات"
+                sku: "SHR-CLS-001"
+                stock: 150
+                rating: 4.5
+                reviews_count: 89
+                specifications:
+                  جنس: "برنج کروم"
+                  گارانتی: "۳ سال"
+                  کشور_سازنده: "ایران"
+                  وزن: "۱.۲ کیلوگرم"
+                images:
+                  - url: "https://cdn.nextgen.local/products/shr-cls-001-1.jpg"
+                    alt: "شیر روشویی - نمای جلو"
+                  - url: "https://cdn.nextgen.local/products/shr-cls-001-2.jpg"
+                    alt: "شیر روشویی - نمای کنار"
+                vendor:
+                  id: "770e8400-e29b-41d4-a716-446655440000"
+                  name: "فروشگاه شیرآلات ایران"
+                created_at: "1402-08-01T09:00:00+03:30"
+                updated_at: "1402-09-20T11:30:00+03:30"
+        '404':
+          description: Product not found (محصول یافت نشد)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: "PRD_001"
+                message: "محصول یافت نشد"
+                messageEn: "Product not found"
+
+    put:
+      tags:
+        - Products
+      summary: Update product (به‌روزرسانی محصول)
+      description: |
+        به‌روزرسانی اطلاعات محصول (فقط فروشنده مالک)
+        Update product information (owner seller only)
+      operationId: updateProduct
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProductRequest'
+            example:
+              price: 13000000
+              stock: 200
+              description: "شیر روشویی با طراحی کلاسیک و کیفیت عالی - موجودی جدید"
+      responses:
+        '200':
+          description: Product updated successfully (محصول با موفقیت به‌روزرسانی شد)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+        '400':
+          description: Invalid request data (داده‌های درخواست نامعتبر)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '401':
+          description: Unauthorized (غیرمجاز)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden (دسترسی ممنوع)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Product not found (محصول یافت نشد)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Products
+      summary: Delete product (حذف محصول)
+      description: |
+        حذف محصول (فقط فروشنده مالک یا مدیر)
+        Delete product (owner seller or admin only)
+      operationId: deleteProduct
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Product deleted successfully (محصول با موفقیت حذف شد)
+        '401':
+          description: Unauthorized (غیرمجاز)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden (دسترسی ممنوع)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Product not found (محصول یافت نشد)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /orders:
+    get:
+      tags:
+        - Orders
+      summary: List orders (لیست سفارشات)
+      description: |
+        دریافت لیست سفارشات کاربر
+        Get user's order list
+      operationId: listOrders
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+          example: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+          example: 20
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, confirmed, shipped, delivered, cancelled]
+          example: "delivered"
+      responses:
+        '200':
+          description: List of orders (لیست سفارشات)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedOrders'
+              example:
+                data:
+                  - id: "880e8400-e29b-41d4-a716-446655440000"
+                    order_number: "ORD-1402-09-001234"
+                    status: "delivered"
+                    total: 57500000
+                    total_formatted: "۵۷,۵۰۰,۰۰۰ ریال"
+                    items_count: 3
+                    created_at: "1402-09-10T14:30:00+03:30"
+                    delivered_at: "1402-09-15T11:00:00+03:30"
+                pagination:
+                  page: 1
+                  limit: 20
+                  total: 25
+                  pages: 2
+        '401':
+          description: Unauthorized (غیرمجاز)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - Orders
+      summary: Create order (ایجاد سفارش)
+      description: |
+        ایجاد سفارش خرید جدید
+        Create new purchase order
+      operationId: createOrder
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+            example:
+              items:
+                - product_id: "660e8400-e29b-41d4-a716-446655440000"
+                  quantity: 2
+                - product_id: "660e8400-e29b-41d4-a716-446655440001"
+                  quantity: 1
+              shipping_address:
+                province: "تهران"
+                city: "تهران"
+                street: "خیابان ولیعصر، کوچه بهار، پلاک ۱۵"
+                postal_code: "1234567890"
+              notes: "لطفاً قبل از ارسال تماس بگیرید"
+      responses:
+        '201':
+          description: Order created successfully (سفارش با موفقیت ایجاد شد)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+              example:
+                id: "880e8400-e29b-41d4-a716-446655440001"
+                order_number: "ORD-1402-09-001235"
+                user_id: "550e8400-e29b-41d4-a716-446655440000"
+                items:
+                  - product_id: "660e8400-e29b-41d4-a716-446655440000"
+                    product_name: "شیر روشویی مدل کلاسیک"
+                    quantity: 2
+                    unit_price: 12500000
+                    total: 25000000
+                  - product_id: "660e8400-e29b-41d4-a716-446655440001"
+                    product_name: "توالت فرنگی مدل لوکس"
+                    quantity: 1
+                    unit_price: 45000000
+                    total: 45000000
+                subtotal: 70000000
+                shipping_cost: 2500000
+                tax: 6300000
+                total: 78800000
+                total_formatted: "۷۸,۸۰۰,۰۰۰ ریال"
+                status: "pending"
+                shipping_address:
+                  province: "تهران"
+                  city: "تهران"
+                  street: "خیابان ولیعصر، کوچه بهار، پلاک ۱۵"
+                  postal_code: "1234567890"
+                created_at: "1402-09-25T16:45:00+03:30"
+        '400':
+          description: Invalid request data (داده‌های درخواست نامعتبر)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+              example:
+                code: "VAL_001"
+                message: "ورودی نامعتبر است"
+                messageEn: "Invalid input"
+                fields:
+                  items: ["حداقل یک محصول باید انتخاب شود"]
+        '401':
+          description: Unauthorized (غیرمجاز)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Insufficient stock (موجودی ناکافی)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: "ORD_002"
+                message: "موجودی محصول کافی نیست"
+                messageEn: "Insufficient product stock"
+                details:
+                  product_id: "660e8400-e29b-41d4-a716-446655440000"
+                  requested: 10
+                  available: 5
+
+  /orders/{orderId}:
+    get:
+      tags:
+        - Orders
+      summary: Get order details (دریافت جزئیات سفارش)
+      description: |
+        دریافت اطلاعات کامل سفارش
+        Retrieve specific order information
+      operationId: getOrder
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: "880e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Order details (جزئیات سفارش)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+              example:
+                id: "880e8400-e29b-41d4-a716-446655440000"
+                order_number: "ORD-1402-09-001234"
+                user_id: "550e8400-e29b-41d4-a716-446655440000"
+                items:
+                  - product_id: "660e8400-e29b-41d4-a716-446655440000"
+                    product_name: "شیر روشویی مدل کلاسیک"
+                    quantity: 2
+                    unit_price: 12500000
+                    total: 25000000
+                subtotal: 25000000
+                shipping_cost: 2500000
+                tax: 2250000
+                total: 29750000
+                total_formatted: "۲۹,۷۵۰,۰۰۰ ریال"
+                status: "delivered"
+                tracking_number: "TRK-1402-09-5678"
+                shipping_address:
+                  province: "تهران"
+                  city: "تهران"
+                  street: "خیابان ولیعصر، کوچه بهار، پلاک ۱۵"
+                  postal_code: "1234567890"
+                created_at: "1402-09-10T14:30:00+03:30"
+                confirmed_at: "1402-09-10T15:00:00+03:30"
+                shipped_at: "1402-09-12T09:00:00+03:30"
+                delivered_at: "1402-09-15T11:00:00+03:30"
+        '401':
+          description: Unauthorized (غیرمجاز)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Order not found (سفارش یافت نشد)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: "ORD_001"
+                message: "سفارش یافت نشد"
+                messageEn: "Order not found"
+
+  /orders/{orderId}/cancel:
+    post:
+      tags:
+        - Orders
+      summary: Cancel order (لغو سفارش)
+      description: |
+        لغو سفارش (فقط قبل از ارسال)
+        Cancel order (only before shipping)
+      operationId: cancelOrder
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+            example:
+              reason: "تغییر نظر مشتری"
+      responses:
+        '200':
+          description: Order cancelled successfully (سفارش با موفقیت لغو شد)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+              example:
+                id: "880e8400-e29b-41d4-a716-446655440001"
+                order_number: "ORD-1402-09-001235"
+                status: "cancelled"
+                cancelled_at: "1402-09-25T17:00:00+03:30"
+                cancellation_reason: "تغییر نظر مشتری"
+        '400':
+          description: Cannot cancel order (امکان لغو سفارش وجود ندارد)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: "ORD_003"
+                message: "سفارش ارسال شده قابل لغو نیست"
+                messageEn: "Shipped orders cannot be cancelled"
+        '401':
+          description: Unauthorized (غیرمجاز)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Order not found (سفارش یافت نشد)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /invoices:
+    get:
+      tags:
+        - Invoices
+      summary: List invoices (لیست فاکتورها)
+      description: |
+        دریافت لیست فاکتورهای کاربر
+        Get user's invoice list
+      operationId: listInvoices
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, sent, paid, overdue, cancelled]
+      responses:
+        '200':
+          description: List of invoices (لیست فاکتورها)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedInvoices'
+              example:
+                data:
+                  - id: "990e8400-e29b-41d4-a716-446655440000"
+                    invoice_number: "INV-1402-09-001234"
+                    order_id: "880e8400-e29b-41d4-a716-446655440000"
+                    subtotal: 25000000
+                    tax: 2250000
+                    total: 27250000
+                    total_formatted: "۲۷,۲۵۰,۰۰۰ ریال"
+                    status: "paid"
+                    due_date: "1402-09-20"
+                    paid_at: "1402-09-15T14:30:00+03:30"
+                    created_at: "1402-09-10T15:00:00+03:30"
+                pagination:
+                  page: 1
+                  limit: 20
+                  total: 15
+                  pages: 1
+        '401':
+          description: Unauthorized (غیرمجاز)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - Invoices
+      summary: Generate invoice (صدور فاکتور)
+      description: |
+        ایجاد فاکتور از سفارش
+        Create invoice from order
+      operationId: createInvoice
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateInvoiceRequest'
+            example:
+              order_id: "880e8400-e29b-41d4-a716-446655440000"
+              due_days: 30
+              notes: "فاکتور رسمی با مهر و امضا"
+      responses:
+        '201':
+          description: Invoice created successfully (فاکتور با موفقیت صادر شد)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvoiceResponse'
+              example:
+                id: "990e8400-e29b-41d4-a716-446655440001"
+                invoice_number: "INV-1402-09-001235"
+                order_id: "880e8400-e29b-41d4-a716-446655440000"
+                customer:
+                  name: "علی محمدی"
+                  national_id: "0012345678"
+                  address: "تهران، خیابان ولیعصر"
+                items:
+                  - description: "شیر روشویی مدل کلاسیک"
+                    quantity: 2
+                    unit_price: 12500000
+                    total: 25000000
+                subtotal: 25000000
+                tax_rate: 9
+                tax: 2250000
+                total: 27250000
+                total_formatted: "۲۷,۲۵۰,۰۰۰ ریال"
+                total_in_words: "بیست و هفت میلیون و دویست و پنجاه هزار ریال"
+                status: "sent"
+                due_date: "1402-10-10"
+                created_at: "1402-09-10T15:00:00+03:30"
+        '400':
+          description: Invalid request data (داده‌های درخواست نامعتبر)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '401':
+          description: Unauthorized (غیرمجاز)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Order not found (سفارش یافت نشد)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /invoices/{invoiceId}:
+    get:
+      tags:
+        - Invoices
+      summary: Get invoice details (دریافت جزئیات فاکتور)
+      description: |
+        دریافت اطلاعات کامل یک فاکتور
+        Retrieve complete invoice information
+      operationId: getInvoice
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: invoiceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: "990e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Invoice details (جزئیات فاکتور)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvoiceResponse'
+              example:
+                id: "990e8400-e29b-41d4-a716-446655440000"
+                invoice_number: "INV-1402-09-001234"
+                order_id: "880e8400-e29b-41d4-a716-446655440000"
+                subtotal: 25000000
+                tax: 2250000
+                total: 27250000
+                total_formatted: "۲۷,۲۵۰,۰۰۰ ریال"
+                status: "paid"
+        '401':
+          description: Unauthorized (غیرمجاز)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Invoice not found (فاکتور یافت نشد)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: "INV_001"
+                message: "فاکتور یافت نشد"
+                messageEn: "Invoice not found"
+
+  /invoices/{invoiceId}/download:
+    get:
+      tags:
+        - Invoices
+      summary: Download invoice PDF (دانلود PDF فاکتور)
+      description: |
+        دانلود فاکتور به صورت فایل PDF
+        Download invoice as PDF file
+      operationId: downloadInvoice
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: invoiceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: "990e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Invoice PDF file (فایل PDF فاکتور)
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '401':
+          description: Unauthorized (غیرمجاز)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: "AUTH_007"
+                message: "احراز هویت الزامی است"
+                messageEn: "Authentication required"
+        '404':
+          description: Invoice not found (فاکتور یافت نشد)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: "INV_001"
+                message: "فاکتور یافت نشد"
+                messageEn: "Invoice not found"
+
+  /payments:
+    post:
+      tags:
+        - Payments
+      summary: Process payment (پردازش پرداخت)
+      description: |
+        پردازش تراکنش پرداخت
+        Process payment transaction
+      operationId: processPayment
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+            example:
+              invoice_id: "990e8400-e29b-41d4-a716-446655440000"
+              amount: 27250000
+              method: "zarinpal"
+              callback_url: "https://nextgen.local/payment/callback"
+      responses:
+        '200':
+          description: Payment initiated successfully (پرداخت با موفقیت آغاز شد)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+              example:
+                id: "aa0e8400-e29b-41d4-a716-446655440000"
+                invoice_id: "990e8400-e29b-41d4-a716-446655440000"
+                amount: 27250000
+                amount_formatted: "۲۷,۲۵۰,۰۰۰ ریال"
+                status: "pending"
+                method: "zarinpal"
+                gateway_url: "https://www.zarinpal.com/pg/StartPay/A00000000000000000000000000123456789"
+                authority: "A00000000000000000000000000123456789"
+                created_at: "1402-09-25T17:30:00+03:30"
+        '400':
+          description: Invalid request data (داده‌های درخواست نامعتبر)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '401':
+          description: Unauthorized (غیرمجاز)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '402':
+          description: Payment declined (پرداخت رد شد)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: "PAY_001"
+                message: "پرداخت ناموفق بود"
+                messageEn: "Payment failed"
+        '422':
+          description: Invoice already paid (فاکتور قبلاً پرداخت شده)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: "PAY_003"
+                message: "این فاکتور قبلاً پرداخت شده است"
+                messageEn: "Invoice already paid"
+
+  /payments/{paymentId}:
+    get:
+      tags:
+        - Payments
+      summary: Get payment details (دریافت جزئیات پرداخت)
+      description: |
+        دریافت اطلاعات کامل یک پرداخت
+        Retrieve complete payment information
+      operationId: getPayment
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Payment details (جزئیات پرداخت)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+              example:
+                id: "aa0e8400-e29b-41d4-a716-446655440000"
+                invoice_id: "990e8400-e29b-41d4-a716-446655440000"
+                amount: 27250000
+                amount_formatted: "۲۷,۲۵۰,۰۰۰ ریال"
+                status: "completed"
+                method: "zarinpal"
+                transaction_id: "TXN-1402-09-987654"
+                ref_id: "123456789"
+                card_pan: "6037-99**-****-1234"
+                created_at: "1402-09-25T17:30:00+03:30"
+                completed_at: "1402-09-25T17:35:00+03:30"
+        '401':
+          description: Unauthorized (غیرمجاز)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Payment not found (پرداخت یافت نشد)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: "PAY_004"
+                message: "پرداخت یافت نشد"
+                messageEn: "Payment not found"
+
+  /payments/{paymentId}/verify:
+    post:
+      tags:
+        - Payments
+      summary: Verify payment (تایید پرداخت)
+      description: |
+        تایید پرداخت پس از بازگشت از درگاه
+        Verify payment after gateway callback
+      operationId: verifyPayment
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [authority, status]
+              properties:
+                authority:
+                  type: string
+                status:
+                  type: string
+            example:
+              authority: "A00000000000000000000000000123456789"
+              status: "OK"
+      responses:
+        '200':
+          description: Payment verified successfully (پرداخت با موفقیت تایید شد)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+              example:
+                id: "aa0e8400-e29b-41d4-a716-446655440000"
+                status: "completed"
+                ref_id: "123456789"
+                message: "پرداخت با موفقیت انجام شد"
+        '400':
+          description: Payment verification failed (تایید پرداخت ناموفق)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: "PAY_005"
+                message: "تایید پرداخت ناموفق بود"
+                messageEn: "Payment verification failed"
+
+  /payments/{paymentId}/refund:
+    post:
+      tags:
+        - Payments
+      summary: Refund payment (استرداد وجه)
+      description: |
+        درخواست استرداد وجه برای پرداخت انجام شده
+        Request refund for completed payment
+      operationId: refundPayment
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason:
+                  type: string
+                amount:
+                  type: number
+                  format: float
+                  description: مبلغ استرداد جزئی (اختیاری)
+            example:
+              reason: "کالای معیوب"
+              amount: 12500000
+      responses:
+        '200':
+          description: Refund processed successfully (استرداد با موفقیت انجام شد)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefundResponse'
+              example:
+                id: "bb0e8400-e29b-41d4-a716-446655440000"
+                payment_id: "aa0e8400-e29b-41d4-a716-446655440000"
+                amount: 12500000
+                amount_formatted: "۱۲,۵۰۰,۰۰۰ ریال"
+                status: "completed"
+                reason: "کالای معیوب"
+                created_at: "1402-09-26T10:00:00+03:30"
+        '400':
+          description: Invalid refund request (درخواست استرداد نامعتبر)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: "PAY_006"
+                message: "مبلغ استرداد بیشتر از مبلغ پرداخت است"
+                messageEn: "Refund amount exceeds payment amount"
+        '401':
+          description: Unauthorized (غیرمجاز)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /tax/calculate:
+    post:
+      tags:
+        - Tax
+      summary: Calculate tax (محاسبه مالیات)
+      description: |
+        محاسبه مالیات بر ارزش افزوده برای اقلام
+        Calculate VAT for items
+      operationId: calculateTax
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaxCalculationRequest'
+            example:
+              items:
+                - amount: 12500000
+                  category: "شیرآلات"
+                - amount: 45000000
+                  category: "توالت فرنگی"
+              jurisdiction: "IR"
+      responses:
+        '200':
+          description: Tax calculation result (نتیجه محاسبه مالیات)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaxCalculationResponse'
+              example:
+                subtotal: 57500000
+                subtotal_formatted: "۵۷,۵۰۰,۰۰۰ ریال"
+                tax_rate: 9
+                tax_amount: 5175000
+                tax_formatted: "۵,۱۷۵,۰۰۰ ریال"
+                total: 62675000
+                total_formatted: "۶۲,۶۷۵,۰۰۰ ریال"
+                breakdown:
+                  - category: "شیرآلات"
+                    amount: 12500000
+                    tax: 1125000
+                  - category: "توالت فرنگی"
+                    amount: 45000000
+                    tax: 4050000
+        '400':
+          description: Invalid request data (داده‌های درخواست نامعتبر)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+              example:
+                code: "VAL_001"
+                message: "ورودی نامعتبر است"
+                messageEn: "Invalid input"
+                fields:
+                  jurisdiction: ["کد منطقه مالیاتی نامعتبر است"]
+
+  /fraud/check:
+    post:
+      tags:
+        - Fraud Detection
+      summary: Check for fraud (بررسی تقلب)
+      description: |
+        تحلیل تراکنش برای ریسک تقلب
+        Analyze transaction for fraud risk
+      operationId: checkFraud
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FraudCheckRequest'
+            example:
+              amount: 50000000
+              card_token: "tok_visa_4242"
+              user_ip: "185.143.234.56"
+              user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+              device_fingerprint: "fp_abc123xyz"
+      responses:
+        '200':
+          description: Fraud analysis result (نتیجه تحلیل تقلب)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FraudCheckResponse'
+              example:
+                risk_score: 0.15
+                risk_level: "low"
+                flags: []
+                recommended_action: "approve"
+                details:
+                  ip_reputation: "clean"
+                  velocity_check: "passed"
+                  device_trust: "high"
+        '400':
+          description: Invalid request data (داده‌های درخواست نامعتبر)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  /b2b/organizations:
+    get:
+      tags:
+        - B2B
+      summary: List B2B organizations (لیست سازمان‌های B2B)
+      description: |
+        دریافت لیست سازمان‌های تجاری
+        Get list of business organizations
+      operationId: listOrganizations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: tier
+          in: query
+          schema:
+            type: string
+            enum: [gold, silver, bronze]
+      responses:
+        '200':
+          description: List of organizations (لیست سازمان‌ها)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedOrganizations'
+              example:
+                data:
+                  - id: "cc0e8400-e29b-41d4-a716-446655440000"
+                    name: "شرکت ساختمانی آریا"
+                    registration_number: "123456"
+                    national_id: "10101234567"
+                    economic_code: "411234567890"
+                    tier: "gold"
+                    credit_limit: 5000000000
+                    credit_used: 1500000000
+                    discount_rate: 15
+                    created_at: "1402-01-15T09:00:00+03:30"
+                pagination:
+                  page: 1
+                  limit: 20
+                  total: 45
+                  pages: 3
+        '401':
+          description: Unauthorized (غیرمجاز)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /b2b/proforma:
+    post:
+      tags:
+        - B2B
+      summary: Create proforma invoice (ایجاد پیش‌فاکتور)
+      description: |
+        ایجاد پیش‌فاکتور برای مشتری B2B
+        Create proforma invoice for B2B customer
+      operationId: createProforma
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProformaRequest'
+            example:
+              organization_id: "cc0e8400-e29b-41d4-a716-446655440000"
+              items:
+                - product_id: "660e8400-e29b-41d4-a716-446655440000"
+                  quantity: 100
+                  unit_price: 11000000
+              validity_days: 7
+              notes: "قیمت‌ها شامل تخفیف ویژه مشتریان طلایی است"
+      responses:
+        '201':
+          description: Proforma created successfully (پیش‌فاکتور با موفقیت ایجاد شد)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProformaResponse'
+              example:
+                id: "dd0e8400-e29b-41d4-a716-446655440000"
+                proforma_number: "PRF-1402-09-001234"
+                organization:
+                  id: "cc0e8400-e29b-41d4-a716-446655440000"
+                  name: "شرکت ساختمانی آریا"
+                items:
+                  - product_name: "شیر روشویی مدل کلاسیک"
+                    quantity: 100
+                    unit_price: 11000000
+                    discount: 1500000
+                    total: 950000000
+                subtotal: 1100000000
+                discount: 150000000
+                tax: 85500000
+                total: 1035500000
+                total_formatted: "۱,۰۳۵,۵۰۰,۰۰۰ ریال"
+                status: "pending"
+                valid_until: "1402-10-02"
+                created_at: "1402-09-25T18:00:00+03:30"
+        '400':
+          description: Invalid request data (داده‌های درخواست نامعتبر)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '401':
+          description: Unauthorized (غیرمجاز)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    # Authentication Schemas
+    AuthResponse:
+      type: object
+      required: [access_token, refresh_token, user]
+      properties:
+        access_token:
+          type: string
+          description: توکن دسترسی JWT (معتبر برای 15 دقیقه)
+        refresh_token:
+          type: string
+          description: توکن تمدید (معتبر برای 7 روز)
+        token_type:
+          type: string
+          default: Bearer
+        expires_in:
+          type: integer
+          description: زمان انقضا به ثانیه
+        user:
+          $ref: '#/components/schemas/UserResponse'
+
+    RegisterRequest:
+      type: object
+      required: [email, password, name]
+      properties:
+        email:
+          type: string
+          format: email
+          description: آدرس ایمیل
+        password:
+          type: string
+          format: password
+          minLength: 8
+          description: رمز عبور (حداقل 8 کاراکتر، شامل حروف بزرگ، کوچک، عدد و کاراکتر خاص)
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+          description: نام و نام خانوادگی
+        phone:
+          type: string
+          pattern: '^09[0-9]{9}$'
+          description: شماره موبایل (فرمت ایران)
+        national_id:
+          type: string
+          pattern: '^[0-9]{10}$'
+          description: کد ملی
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          description: آدرس ایمیل
+        password:
+          type: string
+          format: password
+          description: رمز عبور
+
+    # User Schemas
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+          description: نام و نام خانوادگی
+        phone:
+          type: string
+          description: شماره موبایل
+        national_id:
+          type: string
+          description: کد ملی
+        status:
+          type: string
+          enum: [active, inactive, suspended]
+          description: وضعیت حساب
+        roles:
+          type: array
+          items:
+            type: string
+            enum: [user, seller, admin, b2b_customer, executor, vendor, support, finance, warehouse, marketing, content, super_admin]
+          description: نقش‌های کاربر
+        address:
+          $ref: '#/components/schemas/PersianAddress'
+        created_at:
+          type: string
+          format: date-time
+          description: تاریخ ایجاد (شمسی)
+        updated_at:
+          type: string
+          format: date-time
+          description: تاریخ به‌روزرسانی (شمسی)
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+          description: نام و نام خانوادگی
+        phone:
+          type: string
+          pattern: '^09[0-9]{9}$'
+          description: شماره موبایل
+        address:
+          $ref: '#/components/schemas/PersianAddress'
+
+    PaginatedUsers:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserResponse'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    # Product Schemas
+    ProductResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          description: نام محصول
+        description:
+          type: string
+          description: توضیحات محصول
+        price:
+          type: number
+          format: float
+          minimum: 0
+          description: قیمت (ریال)
+        price_formatted:
+          type: string
+          description: قیمت فرمت شده (ریال)
+        price_toman:
+          type: string
+          description: قیمت به تومان
+        category:
+          type: string
+          description: دسته‌بندی
+        sku:
+          type: string
+          description: کد محصول
+        stock:
+          type: integer
+          minimum: 0
+          description: موجودی
+        rating:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 5
+          description: امتیاز
+        reviews_count:
+          type: integer
+          description: تعداد نظرات
+        specifications:
+          type: object
+          additionalProperties:
+            type: string
+          description: مشخصات فنی
+        images:
+          type: array
+          items:
+            type: object
+            properties:
+              url:
+                type: string
+              alt:
+                type: string
+        vendor:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateProductRequest:
+      type: object
+      required: [name, price, category, sku]
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 200
+          description: نام محصول
+        description:
+          type: string
+          maxLength: 2000
+          description: توضیحات محصول
+        price:
+          type: number
+          format: float
+          minimum: 0
+          description: قیمت (ریال)
+        category:
+          type: string
+          description: دسته‌بندی
+        sku:
+          type: string
+          pattern: '^[A-Z0-9\-]{3,20}$'
+          description: کد محصول
+        stock:
+          type: integer
+          minimum: 0
+          description: موجودی
+        specifications:
+          type: object
+          additionalProperties:
+            type: string
+          description: مشخصات فنی
+
+    UpdateProductRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+          format: float
+        stock:
+          type: integer
+        specifications:
+          type: object
+          additionalProperties:
+            type: string
+
+    PaginatedProducts:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductResponse'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    # Order Schemas
+    CreateOrderRequest:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [product_id, quantity]
+            properties:
+              product_id:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+                minimum: 1
+        shipping_address:
+          $ref: '#/components/schemas/PersianAddress'
+        notes:
+          type: string
+          description: یادداشت سفارش
+
+    OrderResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        order_number:
+          type: string
+          description: شماره سفارش
+        user_id:
+          type: string
+          format: uuid
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              product_id:
+                type: string
+                format: uuid
+              product_name:
+                type: string
+              quantity:
+                type: integer
+              unit_price:
+                type: number
+              total:
+                type: number
+        subtotal:
+          type: number
+          format: float
+          description: جمع کل قبل از مالیات
+        shipping_cost:
+          type: number
+          format: float
+          description: هزینه ارسال
+        tax:
+          type: number
+          format: float
+          description: مالیات
+        total:
+          type: number
+          format: float
+          description: جمع کل
+        total_formatted:
+          type: string
+          description: جمع کل فرمت شده
+        status:
+          type: string
+          enum: [pending, confirmed, processing, shipped, delivered, cancelled]
+          description: وضعیت سفارش
+        tracking_number:
+          type: string
+          description: کد رهگیری
+        shipping_address:
+          $ref: '#/components/schemas/PersianAddress'
+        notes:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        confirmed_at:
+          type: string
+          format: date-time
+        shipped_at:
+          type: string
+          format: date-time
+        delivered_at:
+          type: string
+          format: date-time
+        cancelled_at:
+          type: string
+          format: date-time
+        cancellation_reason:
+          type: string
+
+    PaginatedOrders:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderResponse'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    # Invoice Schemas
+    CreateInvoiceRequest:
+      type: object
+      required: [order_id]
+      properties:
+        order_id:
+          type: string
+          format: uuid
+        due_days:
+          type: integer
+          default: 30
+          description: مهلت پرداخت (روز)
+        notes:
+          type: string
+          description: یادداشت فاکتور
+
+    InvoiceResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        invoice_number:
+          type: string
+          description: شماره فاکتور
+        order_id:
+          type: string
+          format: uuid
+        customer:
+          type: object
+          properties:
+            name:
+              type: string
+            national_id:
+              type: string
+            address:
+              type: string
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              description:
+                type: string
+              quantity:
+                type: integer
+              unit_price:
+                type: number
+              total:
+                type: number
+        subtotal:
+          type: number
+          format: float
+        tax_rate:
+          type: number
+          format: float
+        tax:
+          type: number
+          format: float
+        total:
+          type: number
+          format: float
+        total_formatted:
+          type: string
+        total_in_words:
+          type: string
+          description: مبلغ به حروف
+        status:
+          type: string
+          enum: [draft, sent, paid, overdue, cancelled]
+        due_date:
+          type: string
+          format: date
+        paid_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+    PaginatedInvoices:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/InvoiceResponse'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    # Payment Schemas
+    PaymentRequest:
+      type: object
+      required: [invoice_id, amount, method]
+      properties:
+        invoice_id:
+          type: string
+          format: uuid
+        amount:
+          type: number
+          format: float
+          minimum: 0.01
+          description: مبلغ پرداخت (ریال)
+        method:
+          type: string
+          enum: [zarinpal, mellat, saman, parsian, credit_card, bank_transfer]
+          description: روش پرداخت
+        callback_url:
+          type: string
+          format: uri
+          description: آدرس بازگشت
+
+    PaymentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        invoice_id:
+          type: string
+          format: uuid
+        amount:
+          type: number
+          format: float
+        amount_formatted:
+          type: string
+        status:
+          type: string
+          enum: [pending, completed, failed, refunded]
+        method:
+          type: string
+        gateway_url:
+          type: string
+          description: آدرس درگاه پرداخت
+        authority:
+          type: string
+          description: کد پیگیری درگاه
+        transaction_id:
+          type: string
+        ref_id:
+          type: string
+          description: شماره مرجع
+        card_pan:
+          type: string
+          description: شماره کارت (ماسک شده)
+        created_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+
+    RefundResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        payment_id:
+          type: string
+          format: uuid
+        amount:
+          type: number
+          format: float
+        amount_formatted:
+          type: string
+        status:
+          type: string
+          enum: [pending, completed, failed]
+        reason:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    # Tax Schemas
+    TaxCalculationRequest:
+      type: object
+      required: [items, jurisdiction]
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            required: [amount]
+            properties:
+              amount:
+                type: number
+                format: float
+              category:
+                type: string
+        jurisdiction:
+          type: string
+          description: کد منطقه مالیاتی (مثال IR برای ایران)
+
+    TaxCalculationResponse:
+      type: object
+      properties:
+        subtotal:
+          type: number
+          format: float
+        subtotal_formatted:
+          type: string
+        tax_rate:
+          type: number
+          format: float
+        tax_amount:
+          type: number
+          format: float
+        tax_formatted:
+          type: string
+        total:
+          type: number
+          format: float
+        total_formatted:
+          type: string
+        breakdown:
+          type: array
+          items:
+            type: object
+            properties:
+              category:
+                type: string
+              amount:
+                type: number
+              tax:
+                type: number
+
+    # Fraud Detection Schemas
+    FraudCheckRequest:
+      type: object
+      required: [amount]
+      properties:
+        amount:
+          type: number
+          format: float
+        card_token:
+          type: string
+        user_ip:
+          type: string
+          format: ipv4
+        user_agent:
+          type: string
+        device_fingerprint:
+          type: string
+
+    FraudCheckResponse:
+      type: object
+      properties:
+        risk_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: امتیاز ریسک (0 تا 1)
+        risk_level:
+          type: string
+          enum: [low, medium, high, critical]
+          description: سطح ریسک
+        flags:
+          type: array
+          items:
+            type: string
+          description: پرچم‌های هشدار
+        recommended_action:
+          type: string
+          enum: [approve, review, decline]
+          description: اقدام پیشنهادی
+        details:
+          type: object
+          properties:
+            ip_reputation:
+              type: string
+            velocity_check:
+              type: string
+            device_trust:
+              type: string
+
+    # B2B Schemas
+    CreateProformaRequest:
+      type: object
+      required: [organization_id, items]
+      properties:
+        organization_id:
+          type: string
+          format: uuid
+        items:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [product_id, quantity]
+            properties:
+              product_id:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+                minimum: 1
+              unit_price:
+                type: number
+                format: float
+        validity_days:
+          type: integer
+          default: 7
+          description: مدت اعتبار (روز)
+        notes:
+          type: string
+
+    ProformaResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        proforma_number:
+          type: string
+        organization:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              product_name:
+                type: string
+              quantity:
+                type: integer
+              unit_price:
+                type: number
+              discount:
+                type: number
+              total:
+                type: number
+        subtotal:
+          type: number
+        discount:
+          type: number
+        tax:
+          type: number
+        total:
+          type: number
+        total_formatted:
+          type: string
+        status:
+          type: string
+          enum: [pending, approved, rejected, expired, converted]
+        valid_until:
+          type: string
+          format: date
+        created_at:
+          type: string
+          format: date-time
+
+    PaginatedOrganizations:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              name:
+                type: string
+              registration_number:
+                type: string
+              national_id:
+                type: string
+              economic_code:
+                type: string
+              tier:
+                type: string
+                enum: [gold, silver, bronze]
+              credit_limit:
+                type: number
+              credit_used:
+                type: number
+              discount_rate:
+                type: number
+              created_at:
+                type: string
+                format: date-time
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    # Common Schemas
+    PersianAddress:
+      type: object
+      required: [province, city, street, postal_code]
+      properties:
+        province:
+          type: string
+          description: استان
+        city:
+          type: string
+          description: شهر
+        street:
+          type: string
+          description: آدرس کامل
+        postal_code:
+          type: string
+          pattern: '^[0-9]{10}$'
+          description: کد پستی
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          description: شماره صفحه
+        limit:
+          type: integer
+          description: تعداد در هر صفحه
+        total:
+          type: integer
+          description: تعداد کل
+        pages:
+          type: integer
+          description: تعداد صفحات
+
+    # Error Schemas with Persian Descriptions
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          description: کد خطا
+        message:
+          type: string
+          description: پیام خطا (فارسی)
+        messageEn:
+          type: string
+          description: پیام خطا (انگلیسی)
+        details:
+          type: object
+          description: جزئیات اضافی
+        timestamp:
+          type: string
+          format: date-time
+          description: زمان وقوع خطا
+        path:
+          type: string
+          description: مسیر درخواست
+        requestId:
+          type: string
+          description: شناسه درخواست
+
+    ValidationError:
+      type: object
+      required: [code, message, fields]
+      properties:
+        code:
+          type: string
+          default: VAL_001
+        message:
+          type: string
+          description: پیام خطا (فارسی)
+        messageEn:
+          type: string
+          description: پیام خطا (انگلیسی)
+        fields:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          description: خطاهای هر فیلد
+
+    RateLimitError:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          default: AUTH_003
+        message:
+          type: string
+          description: پیام خطا (فارسی)
+        messageEn:
+          type: string
+          description: پیام خطا (انگلیسی)
+        retry_after:
+          type: integer
+          description: زمان انتظار (ثانیه)
+
+  # Security Schemes
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        توکن دسترسی JWT (اعتبار 15 دقیقه)
+        JWT access token (15 min validity)
+
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: |
+        کلید API برای احراز هویت سرویس به سرویس
+        API key for service-to-service authentication
+
+# Error Codes Reference (مرجع کدهای خطا)
+x-error-codes:
+  # Authentication Errors (خطاهای احراز هویت)
+  AUTH_001:
+    message: "نام کاربری یا رمز عبور اشتباه است"
+    messageEn: "Invalid username or password"
+    httpStatus: 401
+  AUTH_002:
+    message: "توکن منقضی شده است"
+    messageEn: "Token expired"
+    httpStatus: 401
+  AUTH_003:
+    message: "تعداد درخواست‌ها بیش از حد مجاز است"
+    messageEn: "Rate limit exceeded"
+    httpStatus: 429
+  AUTH_004:
+    message: "احراز هویت دو مرحله‌ای الزامی است"
+    messageEn: "Two-factor authentication required"
+    httpStatus: 401
+  AUTH_005:
+    message: "کد تایید اشتباه است"
+    messageEn: "Invalid verification code"
+    httpStatus: 400
+  AUTH_006:
+    message: "این ایمیل قبلاً ثبت شده است"
+    messageEn: "Email already registered"
+    httpStatus: 409
+  AUTH_007:
+    message: "احراز هویت الزامی است"
+    messageEn: "Authentication required"
+    httpStatus: 401
+  AUTH_008:
+    message: "توکن نامعتبر است"
+    messageEn: "Invalid token"
+    httpStatus: 401
+  AUTH_009:
+    message: "حساب کاربری غیرفعال است"
+    messageEn: "Account is disabled"
+    httpStatus: 403
+  AUTH_010:
+    message: "IP شما به دلیل تلاش‌های ناموفق مسدود شده است"
+    messageEn: "IP blocked due to failed attempts"
+    httpStatus: 429
+
+  # Validation Errors (خطاهای اعتبارسنجی)
+  VAL_001:
+    message: "ورودی نامعتبر است"
+    messageEn: "Invalid input"
+    httpStatus: 400
+  VAL_002:
+    message: "فیلد الزامی وارد نشده است"
+    messageEn: "Required field missing"
+    httpStatus: 400
+  VAL_003:
+    message: "شماره موبایل نامعتبر است"
+    messageEn: "Invalid phone number"
+    httpStatus: 400
+  VAL_004:
+    message: "کد ملی نامعتبر است"
+    messageEn: "Invalid national ID"
+    httpStatus: 400
+  VAL_005:
+    message: "کد پستی نامعتبر است"
+    messageEn: "Invalid postal code"
+    httpStatus: 400
+  VAL_006:
+    message: "فرمت ایمیل نامعتبر است"
+    messageEn: "Invalid email format"
+    httpStatus: 400
+  VAL_007:
+    message: "شماره شبا نامعتبر است"
+    messageEn: "Invalid IBAN"
+    httpStatus: 400
+
+  # RBAC Errors (خطاهای دسترسی)
+  RBAC_001:
+    message: "شما دسترسی به این بخش را ندارید"
+    messageEn: "You don't have access to this section"
+    httpStatus: 403
+  RBAC_002:
+    message: "فقط فروشندگان می‌توانند محصول ایجاد کنند"
+    messageEn: "Only sellers can create products"
+    httpStatus: 403
+  RBAC_003:
+    message: "فقط مدیران می‌توانند این عملیات را انجام دهند"
+    messageEn: "Only admins can perform this operation"
+    httpStatus: 403
+
+  # User Errors (خطاهای کاربر)
+  USR_001:
+    message: "کاربر یافت نشد"
+    messageEn: "User not found"
+    httpStatus: 404
+  USR_002:
+    message: "پروفایل کاربر ناقص است"
+    messageEn: "User profile incomplete"
+    httpStatus: 400
+
+  # Product Errors (خطاهای محصول)
+  PRD_001:
+    message: "محصول یافت نشد"
+    messageEn: "Product not found"
+    httpStatus: 404
+  PRD_002:
+    message: "محصول غیرفعال است"
+    messageEn: "Product is inactive"
+    httpStatus: 400
+  PRD_003:
+    message: "کد محصول تکراری است"
+    messageEn: "Duplicate SKU"
+    httpStatus: 409
+
+  # Order Errors (خطاهای سفارش)
+  ORD_001:
+    message: "سفارش یافت نشد"
+    messageEn: "Order not found"
+    httpStatus: 404
+  ORD_002:
+    message: "موجودی محصول کافی نیست"
+    messageEn: "Insufficient product stock"
+    httpStatus: 422
+  ORD_003:
+    message: "سفارش ارسال شده قابل لغو نیست"
+    messageEn: "Shipped orders cannot be cancelled"
+    httpStatus: 400
+  ORD_004:
+    message: "سبد خرید خالی است"
+    messageEn: "Cart is empty"
+    httpStatus: 400
+
+  # Invoice Errors (خطاهای فاکتور)
+  INV_001:
+    message: "فاکتور یافت نشد"
+    messageEn: "Invoice not found"
+    httpStatus: 404
+  INV_002:
+    message: "فاکتور قبلاً پرداخت شده است"
+    messageEn: "Invoice already paid"
+    httpStatus: 400
+  INV_003:
+    message: "فاکتور منقضی شده است"
+    messageEn: "Invoice expired"
+    httpStatus: 400
+
+  # Payment Errors (خطاهای پرداخت)
+  PAY_001:
+    message: "پرداخت ناموفق بود"
+    messageEn: "Payment failed"
+    httpStatus: 402
+  PAY_002:
+    message: "موجودی کافی نیست"
+    messageEn: "Insufficient balance"
+    httpStatus: 402
+  PAY_003:
+    message: "این فاکتور قبلاً پرداخت شده است"
+    messageEn: "Invoice already paid"
+    httpStatus: 422
+  PAY_004:
+    message: "پرداخت یافت نشد"
+    messageEn: "Payment not found"
+    httpStatus: 404
+  PAY_005:
+    message: "تایید پرداخت ناموفق بود"
+    messageEn: "Payment verification failed"
+    httpStatus: 400
+  PAY_006:
+    message: "مبلغ استرداد بیشتر از مبلغ پرداخت است"
+    messageEn: "Refund amount exceeds payment amount"
+    httpStatus: 400
+  PAY_007:
+    message: "درگاه پرداخت در دسترس نیست"
+    messageEn: "Payment gateway unavailable"
+    httpStatus: 503
+
+  # Database Errors (خطاهای پایگاه داده)
+  DB_001:
+    message: "خطا در اتصال به پایگاه داده"
+    messageEn: "Database connection error"
+    httpStatus: 503
+  DB_002:
+    message: "تراکنش با خطا مواجه شد"
+    messageEn: "Transaction failed"
+    httpStatus: 500
+
+  # System Errors (خطاهای سیستم)
+  SYS_001:
+    message: "سرویس در دسترس نیست"
+    messageEn: "Service unavailable"
+    httpStatus: 503
+  SYS_002:
+    message: "خطای داخلی سرور"
+    messageEn: "Internal server error"
+    httpStatus: 500
+  SYS_003:
+    message: "زمان درخواست به پایان رسید"
+    messageEn: "Request timeout"
+    httpStatus: 504
+
+  # B2B Errors (خطاهای B2B)
+  B2B_001:
+    message: "سازمان یافت نشد"
+    messageEn: "Organization not found"
+    httpStatus: 404
+  B2B_002:
+    message: "اعتبار سازمان کافی نیست"
+    messageEn: "Insufficient organization credit"
+    httpStatus: 402
+  B2B_003:
+    message: "پیش‌فاکتور منقضی شده است"
+    messageEn: "Proforma expired"
+    httpStatus: 400
+
+  # CSRF Errors (خطاهای CSRF)
+  CSRF_001:
+    message: "توکن CSRF نامعتبر است"
+    messageEn: "Invalid CSRF token"
+    httpStatus: 403
+  CSRF_002:
+    message: "توکن CSRF یافت نشد"
+    messageEn: "CSRF token missing"
+    httpStatus: 403
+
+# API Versioning Information
+x-versioning:
+  current: 3.1.0
+  latest: 3.1.0
+  deprecated: [1.0.0, 2.0.0]
+  releases:
+    v3.1.0:
+      date: 1402-09-25
+      features:
+        - Enhanced fraud detection (تشخیص تقلب پیشرفته)
+        - Tax calculation v2 (محاسبه مالیات نسخه 2)
+        - Improved error handling (بهبود مدیریت خطا)
+        - Persian localization (بومی‌سازی فارسی)
+      breaking: false
+    v3.0.0:
+      date: 1402-07-01
+      features:
+        - Payment processing (پردازش پرداخت)
+        - Refund support (پشتیبانی استرداد)
+        - B2B features (ویژگی‌های B2B)
+      breaking: true
+    v2.0.0:
+      date: 1402-03-01
+      features:
+        - Invoice generation (صدور فاکتور)
+      breaking: true
+    v1.0.0:
+      date: 1402-01-01
+      features:
+        - Initial release (انتشار اولیه)
+
+# Rate Limiting Configuration
+x-rate-limits:
+  default:
+    requests: 100
+    window: 60
+    description: "۱۰۰ درخواست در دقیقه برای کاربران عادی"
+  authenticated:
+    requests: 1000
+    window: 60
+    description: "۱۰۰۰ درخواست در دقیقه برای کاربران احراز هویت شده"
+  admin:
+    requests: 10000
+    window: 60
+    description: "۱۰۰۰۰ درخواست در دقیقه برای مدیران"
+  login:
+    requests: 5
+    window: 300
+    description: "۵ تلاش ورود در ۵ دقیقه"
+
+# Monitoring Configuration
+x-monitoring:
+  metrics_enabled: true
+  tracing_enabled: true
+  logging_level: info
+  health_check_interval: 30
+
+# Persian Localization Info
+x-localization:
+  default_locale: fa-IR
+  supported_locales:
+    - fa-IR
+    - en-US
+  calendar: jalali
+  timezone: Asia/Tehran
+  currency: IRR
+  number_format: persian

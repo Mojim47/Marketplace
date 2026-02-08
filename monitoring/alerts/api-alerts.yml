@@ -1,0 +1,114 @@
+groups:
+  - name: api_alerts
+    interval: 30s
+    rules:
+      # Validates: Requirements 3.6 - Alert when response time exceeds 500ms
+      - alert: HighResponseTime500ms
+        expr: histogram_quantile(0.95, rate(nextgen_http_request_duration_seconds_bucket[5m])) > 0.5
+        for: 2m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "زمان پاسخ API بیش از 500ms است"
+          description: "زمان پاسخ صدک 95 برابر {{ $value | humanizeDuration }} است که بیش از حد مجاز 500ms می‌باشد"
+          runbook_url: "https://docs.nextgen.ir/runbooks/high-response-time"
+
+      - alert: CriticalResponseTime
+        expr: histogram_quantile(0.95, rate(nextgen_http_request_duration_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "زمان پاسخ API بحرانی است"
+          description: "زمان پاسخ صدک 95 برابر {{ $value | humanizeDuration }} است"
+          runbook_url: "https://docs.nextgen.ir/runbooks/critical-response-time"
+
+      - alert: HighErrorRate
+        expr: rate(nextgen_http_requests_total{status_code=~"5.."}[5m]) / rate(nextgen_http_requests_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "نرخ خطای بالا شناسایی شد"
+          description: "نرخ خطای 5xx برابر {{ $value | humanizePercentage }} است"
+          runbook_url: "https://docs.nextgen.ir/runbooks/high-error-rate"
+
+      - alert: DatabaseSlowQueries
+        expr: histogram_quantile(0.95, rate(nextgen_db_query_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "کوئری‌های کند پایگاه داده شناسایی شد"
+          description: "زمان صدک 95 کوئری‌ها برابر {{ $value | humanizeDuration }} است"
+          runbook_url: "https://docs.nextgen.ir/runbooks/slow-queries"
+
+      - alert: HighPaymentFailureRate
+        expr: rate(nextgen_payments_total{status="failed"}[10m]) / rate(nextgen_payments_total[10m]) > 0.1
+        for: 10m
+        labels:
+          severity: critical
+          team: payments
+        annotations:
+          summary: "نرخ شکست پرداخت بالا است"
+          description: "نرخ شکست پرداخت برابر {{ $value | humanizePercentage }} است"
+          runbook_url: "https://docs.nextgen.ir/runbooks/payment-failures"
+
+      - alert: LowCacheHitRate
+        expr: sum(rate(nextgen_cache_hits_total[5m])) / (sum(rate(nextgen_cache_hits_total[5m])) + sum(rate(nextgen_cache_misses_total[5m]))) < 0.7
+        for: 10m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "نرخ برخورد کش پایین است"
+          description: "نرخ برخورد کش برابر {{ $value | humanizePercentage }} است که کمتر از 70% می‌باشد"
+          runbook_url: "https://docs.nextgen.ir/runbooks/low-cache-hit"
+
+      - alert: HighMemoryUsage
+        expr: (process_resident_memory_bytes / 1024 / 1024 / 1024) > 2
+        for: 5m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "مصرف حافظه بالا است"
+          description: "مصرف حافظه برابر {{ $value | humanize }}GB است"
+          runbook_url: "https://docs.nextgen.ir/runbooks/high-memory"
+
+      - alert: ServiceDown
+        expr: up{job="nextgen-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: infrastructure
+        annotations:
+          summary: "سرویس API در دسترس نیست"
+          description: "سرویس {{ $labels.instance }} از دسترس خارج شده است"
+          runbook_url: "https://docs.nextgen.ir/runbooks/service-down"
+
+      - alert: HighOrderProcessingTime
+        expr: histogram_quantile(0.95, rate(nextgen_order_processing_seconds_bucket[5m])) > 30
+        for: 5m
+        labels:
+          severity: warning
+          team: orders
+        annotations:
+          summary: "زمان پردازش سفارش بالا است"
+          description: "زمان پردازش صدک 95 سفارشات برابر {{ $value | humanizeDuration }} است"
+          runbook_url: "https://docs.nextgen.ir/runbooks/slow-order-processing"
+
+      - alert: HighLoginFailureRate
+        expr: rate(nextgen_login_attempts_total{status="failed"}[5m]) / rate(nextgen_login_attempts_total[5m]) > 0.3
+        for: 5m
+        labels:
+          severity: warning
+          team: security
+        annotations:
+          summary: "نرخ شکست ورود بالا است"
+          description: "نرخ شکست ورود برابر {{ $value | humanizePercentage }} است - احتمال حمله brute force"
+          runbook_url: "https://docs.nextgen.ir/runbooks/login-failures"

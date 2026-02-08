@@ -1,0 +1,20 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# PNPM Workspace Configuration
+# ═══════════════════════════════════════════════════════════════════════════
+# NextGen Marketplace - Enterprise Monorepo
+# Version: 2.0
+# Package Manager: pnpm 9.x
+# ═══════════════════════════════════════════════════════════════════════════
+
+packages:
+  # Applications
+  - 'apps/*'
+  
+  # Shared Libraries
+  - 'libs/*'
+  
+  # Exclude patterns
+  - '!**/node_modules/**'
+  - '!**/dist/**'
+  - '!**/build/**'
+  - '!**/.next/**'

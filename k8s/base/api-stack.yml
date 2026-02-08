@@ -1,0 +1,895 @@
+---
+# Kubernetes Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nextgen
+  labels:
+    name: nextgen
+    environment: production
+
+---
+# Service Account for Vault Authentication with Kubernetes
+# This ServiceAccount is used by pods that need to authenticate with Vault.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: nextgen-api-vault
+  namespace: nextgen
+  labels:
+    app: api
+    component: vault-auth
+automountServiceAccountToken: true
+
+---
+# ClusterRole to allow Vault to perform TokenReview
+# This is necessary for Vault's Kubernetes authentication method to verify
+# the authenticity of service account tokens.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: nextgen-vault-auth
+rules:
+  # Allows Vault to create TokenReview requests to authenticate service account tokens
+  - apiGroups: ["authentication.k8s.io"]
+    resources: ["tokenreviews"]
+    verbs: ["create"]
+
+---
+# ClusterRoleBinding to bind the ClusterRole to the ServiceAccount.
+# This grants the 'nextgen-api-vault' ServiceAccount the necessary permissions
+# to interact with Vault's Kubernetes authentication method.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: nextgen-vault-auth-api-binding
+roleRef:
+  apiGroups: ["rbac.authorization.k8s.io"]
+  kind: ClusterRole
+  name: nextgen-vault-auth
+subjects:
+  - kind: ServiceAccount
+    name: nextgen-api-vault
+    namespace: nextgen
+
+---
+# ConfigMap for Vault Agent Configuration and Merged Application Settings
+# This ConfigMap serves multiple purposes:
+# 1. Stores the HCL configuration for the Vault Agent sidecar.
+# 2. Stores the Go template files that the Vault Agent uses to render secrets.
+# 3. Merges general application settings (NODE_ENV, LOG_LEVEL, etc.) that
+#    were previously in 'api-config' and are not sensitive.
+# 4. Stores Prometheus and Jaeger configurations.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vault-agent-config
+  namespace: nextgen
+data:
+  # HCL configuration for the Vault Agent sidecar.
+  # This configures how the agent authenticates and which secrets to render.
+  vault-agent.hcl: |
+    pid_file = "/tmp/pidfile"
+    
+    vault {
+      address = "https://vault.example.invalid"
+      retry {
+        num_retries = 5
+      }
+    }
+    
+    auto_auth {
+      method "kubernetes" {
+        mount_path = "auth/kubernetes"
+        config = {
+          role = "nextgen-api" # 🔴 ACTION REQUIRED: This role must be configured in Vault for the Kubernetes auth method.
+        }
+      }
+      
+      sink "file" {
+        config = {
+          path = "/vault/secrets/.vault-token" # Agent token is written here
+        }
+      }
+    }
+    
+    # Templates define how secrets fetched from Vault are rendered to files.
+    # The 'command' triggers a SIGHUP to the application container on secret renewal.
+    template {
+      source      = "/vault/config/database.tpl"
+      destination = "/vault/secrets/database"
+      perms       = 0644
+      command     = "pkill -HUP api || true" # SIGHUP the 'api' container to reload secrets
+    }
+    
+    template {
+      source      = "/vault/config/redis.tpl"
+      destination = "/vault/secrets/redis"
+      perms       = 0644
+      command     = "pkill -HUP api || true" # SIGHUP the 'api' container
+    }
+    
+    template {
+      source      = "/vault/config/jwt.tpl"
+      destination = "/vault/secrets/jwt"
+      perms       = 0600
+      command     = "pkill -HUP api || true" # SIGHUP the 'api' container
+    }
+    
+    template {
+      source      = "/vault/config/external-services.tpl"
+      destination = "/vault/secrets/external-services"
+      perms       = 0600
+      command     = "pkill -HUP api || true" # SIGHUP the 'api' container
+    }
+
+  # Go Template for fetching Database credentials from Vault.
+  # Renders as environment variables.
+  database.tpl: |
+    {{- with secret "nextgen/data/database" -}}
+    export DATABASE_URL="postgresql://{{ .Data.data.username }}:{{ .Data.data.password }}@{{ .Data.data.host }}:{{ .Data.data.port }}/{{ .Data.data.database }}?schema=public&connection_limit=10"
+    export DB_HOST="{{ .Data.data.host }}"
+    export DB_PORT="{{ .Data.data.port }}"
+    export DB_NAME="{{ .Data.data.database }}"
+    export DB_USER="{{ .Data.data.username }}"
+    export DB_PASSWORD="{{ .Data.data.password }}"
+    {{- end }}
+
+  # Go Template for fetching Redis credentials from Vault.
+  # Renders as environment variables.
+  redis.tpl: |
+    {{- with secret "nextgen/data/redis" -}}
+    export REDIS_HOST="{{ .Data.data.host }}"
+    export REDIS_PORT="{{ .Data.data.port }}"
+    export REDIS_PASSWORD="{{ .Data.data.password }}"
+    export REDIS_URL="redis://:{{ .Data.data.password }}@{{ .Data.data.host }}:{{ .Data.data.port }}"
+    {{- end }}
+
+  # Go Template for fetching JWT secrets from Vault.
+  # Renders as environment variables.
+  jwt.tpl: |
+    {{- with secret "nextgen/data/jwt" -}}
+    export JWT_SECRET="{{ .Data.data.secret }}"
+    export JWT_REFRESH_SECRET="{{ .Data.data.refresh_secret }}"
+    export JWT_ACCESS_EXPIRY="{{ .Data.data.access_expiry | default "15m" }}"
+    export JWT_REFRESH_EXPIRY="{{ .Data.data.refresh_expiry | default "7d" }}"
+    {{- end }}
+  
+  # Go Template for fetching external service secrets from Vault.
+  # Renders as environment variables.
+  external-services.tpl: |
+    {{- with secret "nextgen/data/external-services" -}}
+    export UNLEASH_API_TOKEN="{{ .Data.data.UNLEASH_API_TOKEN }}"
+    export STRIPE_API_KEY="{{ .Data.data.STRIPE_API_KEY }}"
+    export SMTP_PASSWORD="{{ .Data.data.SMTP_PASSWORD }}"
+    export PAYMENT_GATEWAY_API_KEY="{{ .Data.data.PAYMENT_GATEWAY_API_KEY }}"
+    export PAYMENT_GATEWAY_SECRET="{{ .Data.data.PAYMENT_GATEWAY_SECRET }}"
+    {{- end }}
+
+  # General Application Settings (non-sensitive, from old api-config)
+  NODE_ENV: "production"
+  LOG_LEVEL: "info"
+  CORS_ORIGIN: "https://example.invalid"
+  API_PREFIX: "api"
+  DATABASE_LOGGING: "false"
+  REDIS_CLUSTER_ENABLED: "true"
+  JAEGER_ENDPOINT: "https://jaeger.example.invalid"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger-collector:4318" # 🔴 ACTION REQUIRED: Update if Jaeger is deployed differently
+  UNLEASH_URL: "http://unleash:4242" # 🔴 ACTION REQUIRED: Update if Unleash is deployed differently
+
+  # Prometheus configuration (from old prometheus-config)
+  prometheus-config.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+    scrape_configs:
+      - job_name: 'kubernetes-pods'
+        kubernetes_sd_configs:
+          - role: pod
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            action: keep
+            regex: true
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+            action: replace
+            target_label: __metrics_path__
+            regex: (.+)
+          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+            action: replace
+            regex: ([^:]+)(?::\d+)?;(\d+)
+            replacement: $1:$2
+            target_label: __address__
+
+  # Jaeger configuration (from old jaeger-config)
+  jaeger-config.json: |
+    {
+      "default_strategy": {
+        "type": "probabilistic",
+        "param": 0.1
+      }
+    }
+
+---
+# ServiceAccount for API deployment (now uses the Vault-enabled SA)
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: api-service-account # Original name for the main app SA
+  namespace: nextgen
+automountServiceAccountToken: true
+
+---
+# Role for API deployment (Permissions adjusted for Vault integration)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: api-role
+  namespace: nextgen
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps"] # Now accessing 'vault-agent-config' ConfigMap
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["secrets"] # Potentially needed for other non-Vault secrets, or remove if not.
+    verbs: ["get"]
+
+---
+# RoleBinding for API deployment
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: api-rolebinding
+  namespace: nextgen
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: api-role
+subjects:
+  - kind: ServiceAccount
+    name: api-service-account
+    namespace: nextgen
+
+---
+# NetworkPolicy - Allow ingress only from ingress controller
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: api-network-policy
+  namespace: nextgen
+spec:
+  podSelector:
+    matchLabels:
+      app: api
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 3000
+    - from: # Allow internal communication within nextgen namespace
+        - podSelector:
+            matchLabels:
+              app: api # Allow API to talk to itself
+        - podSelector:
+            matchLabels:
+              app: web # Allow web to talk to API
+        - podSelector:
+            matchLabels:
+              app: admin # Allow admin to talk to API
+        - podSelector:
+            matchLabels:
+              app: vendor-portal # Allow vendor-portal to talk to API
+      ports:
+        - protocol: TCP
+          port: 3000
+  egress:
+    - to:
+        - namespaceSelector: {} # Allows egress to all namespaces by default. 🔴 ACTION REQUIRED: Refine this rule for least privilege.
+      ports:
+        - protocol: TCP
+          port: 5432  # Placeholder egress for managed PostgreSQL
+        - protocol: TCP
+          port: 6379  # Placeholder egress for managed Redis
+        - protocol: TCP
+          port: 4317  # Jaeger/OTEL (internal or external)
+        - protocol: TCP
+          port: 9090  # Prometheus (internal, if Prometheus scrapes apps directly)
+    - to:
+        - namespaceSelector: {} # Allows egress to all namespaces by default. 🔴 ACTION REQUIRED: Refine this rule for least privilege.
+      ports:
+        - protocol: UDP
+          port: 53    # DNS
+    - to: # Allow egress to Vault (explicitly from this NetworkPolicy)
+        - namespaceSelector:
+            matchLabels:
+              name: vault-system # Assumes Vault is in 'vault-system' namespace
+      ports:
+        - protocol: TCP
+          port: 8200
+
+---
+# Pod Disruption Budget for high availability
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: api-pdb
+  namespace: nextgen
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: api
+
+---
+# Deployment - Backend API (with Vault Agent Sidecar)
+# This deployment is updated to use the Vault Agent for secret injection.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: nextgen
+  labels:
+    app: api
+    version: v1
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+        version: v1
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3000"
+        prometheus.io/path: "/metrics"
+        # Explicitly disable vault.hashicorp.com/agent-inject as we are using a manual sidecar approach.
+        vault.hashicorp.com/agent-inject: "false"
+        # This annotation ensures a rolling restart when the vault-agent-config ConfigMap changes.
+        checksum/vault-agent-config: "{{ include (print $.Template.BasePath "/vault-agent-config.yaml") . | sha256sum }}"
+    spec:
+      serviceAccountName: nextgen-api-vault # Use the ServiceAccount with Vault permissions
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000 # Application user ID
+        fsGroup: 1000   # Group ID for volume permissions
+        seccompProfile:
+          type: RuntimeDefault
+      
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - api
+                topologyKey: kubernetes.io/hostname
+      
+      initContainers:
+        # The 'vault-init' container fetches initial secrets directly from Vault
+        # before the main application and Vault Agent sidecar start.
+        - name: vault-init
+          image: hashicorp/vault:1.15.2 # 🔴 ACTION REQUIRED: Use a specific, stable version of Vault image 
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - -c
+            - |
+              # Authenticate with Vault using Kubernetes Service Account token
+              vault login -method=kubernetes role=nextgen-api jwt="$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)"
+              
+              # Fetch secrets and store them in the shared memory volume.
+              # These are JSON files, which the vault-agent sidecar will use to render templates.
+              vault kv get -format=json nextgen/data/database > /vault/secrets/database.json
+              vault kv get -format=json nextgen/data/redis > /vault/secrets/redis.json
+              vault kv get -format=json nextgen/data/jwt > /vault/secrets/jwt.json
+              vault kv get -format=json nextgen/data/external-services > /vault/secrets/external-services.json
+              
+              echo "Initial secrets fetched by vault-init"
+          env:
+            - name: VAULT_ADDR
+              value: "https://vault.example.invalid"
+            - name: VAULT_SKIP_VERIFY
+              value: "true" # 🔴 ACTION REQUIRED: Disable this in production and configure proper TLS verification.
+          volumeMounts:
+            - name: vault-secrets-shared # Mount shared memory volume
+              mountPath: /vault/secrets
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 1001 # Non-root user for Vault init container
+            capabilities:
+              drop:
+                - ALL
+      
+      containers:
+        # The 'vault-agent' sidecar container runs the Vault Agent in client mode.
+        # It continually renews the Vault token and re-renders secret templates
+        # on changes or token renewals, sending SIGHUP to the main app container.
+        - name: vault-agent
+          image: hashicorp/vault:1.15.2 # 🔴 ACTION REQUIRED: Use a specific, stable version of Vault image. 
+          imagePullPolicy: IfNotPresent
+          command:
+            - vault
+            - agent
+            - -config=/vault/config/vault-agent.hcl
+            - -log-level=info # Adjust log level as needed (debug, info, warn, error)
+          env:
+            - name: VAULT_ADDR
+              value: "https://vault.example.invalid"
+            - name: VAULT_SKIP_VERIFY
+              value: "true" # 🔴 ACTION REQUIRED: Disable this in production and configure proper TLS verification.
+          volumeMounts:
+            - name: vault-agent-config-volume # Mount ConfigMap for Vault Agent HCL config and templates
+              mountPath: /vault/config
+            - name: vault-secrets-shared # Mount shared memory volume for secrets
+              mountPath: /vault/secrets
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "128Mi"
+              cpu: "100m"
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 1001 # Non-root user for Vault agent
+            capabilities:
+              drop:
+                - ALL
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - "test -f /vault/secrets/.vault-token" # Check if agent token exists
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 2
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - "test -f /vault/secrets/database && test -f /vault/secrets/redis && test -f /vault/secrets/jwt && test -f /vault/secrets/external-services" # Check if all secret files are rendered
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 2
+        
+        # Main Application Container
+        - name: api
+          image: nextgen/api:latest # This will be replaced by CI/CD pipeline
+          imagePullPolicy: IfNotPresent
+          
+          # The application's command is wrapped to source secrets before starting.
+          # The 'set -a' exports all variables for child processes.
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -a # Export all variables for current shell and future processes
+              source /vault/secrets/database
+              source /vault/secrets/redis
+              source /vault/secrets/jwt
+              source /vault/secrets/external-services
+              set +a
+              
+              # Start the main application process
+              exec node apps/api/dist/main.js
+          
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+            - name: metrics
+              containerPort: 9090
+              protocol: TCP
+          
+          # Environment variables sourced from the ConfigMap for general settings.
+          # Sensitive variables are sourced from Vault.
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: LOG_LEVEL
+              value: "info"
+            - name: API_PREFIX
+              value: "api"
+            - name: CORS_ORIGIN
+              value: "https://example.invalid"
+            # Other application specific envs from the merged ConfigMap
+            - name: DATABASE_LOGGING
+              value: "false"
+            - name: REDIS_CLUSTER_ENABLED
+              value: "true"
+            - name: JAEGER_ENDPOINT
+              value: "https://jaeger.example.invalid"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://jaeger-collector:4318" # 🔴 ACTION REQUIRED: Update if Jaeger is deployed differently
+            - name: UNLEASH_URL
+              value: "http://unleash:4242" # 🔴 ACTION REQUIRED: Update if Unleash is deployed differently
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+          
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+          
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+              httpHeaders:
+                - name: X-Probe-Type
+                  value: liveness
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: http
+              httpHeaders:
+                - name: X-Probe-Type
+                  value: readiness
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 2
+          
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 30
+          
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - ALL
+          
+          volumeMounts:
+            - name: vault-secrets-shared # Mount shared secrets volume
+              mountPath: /vault/secrets
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+            - name: cache
+              mountPath: /app/.cache
+      
+      volumes:
+        - name: vault-agent-config-volume # Mount ConfigMap for Vault Agent
+          configMap:
+            name: vault-agent-config
+            defaultMode: 0644
+        - name: vault-secrets-shared # Shared memory volume for secrets
+          emptyDir:
+            medium: Memory
+            sizeLimit: 10Mi
+        - name: tmp
+          emptyDir: {}
+        - name: cache
+          emptyDir: {}
+      
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+
+---
+# Horizontal Pod Autoscaler
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: api-hpa
+  namespace: nextgen
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: api
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 50
+          periodSeconds: 15
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 15
+        - type: Pods
+          value: 2
+          periodSeconds: 60
+
+---
+# Service for API deployment
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-service
+  namespace: nextgen
+  labels:
+    app: api
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 3000
+      protocol: TCP
+      name: http
+    - port: 9090
+      targetPort: 9090
+      protocol: TCP
+      name: metrics
+  selector:
+    app: api
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
+
+---
+# Ingress for API deployment
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: api-ingress
+  namespace: nextgen
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - api.example.com
+      secretName: api-tls-cert
+  rules:
+    - host: api.example.com
+      http:
+        paths:
+          - path: "/"
+            pathType: Prefix
+            backend:
+              service:
+                name: api-service
+                port:
+                  number: 80
+
+---
+# ServiceMonitor for Prometheus (if using Prometheus Operator)
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: api-monitor
+  namespace: nextgen
+  labels:
+    app: api
+    release: prometheus-operator # Added for Prometheus Operator discovery
+spec:
+  selector:
+    matchLabels:
+      app: api
+  endpoints:
+    - port: metrics
+      interval: 30s
+
+---
+# Role for Secret Rotation (Allows restarting the API deployment)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: secret-rotator-role
+  namespace: nextgen
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    resourceNames: ["api"]
+    verbs: ["get", "patch"]
+
+---
+# RoleBinding for Secret Rotation
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: secret-rotator-binding
+  namespace: nextgen
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: secret-rotator-role
+subjects:
+  - kind: ServiceAccount
+    name: nextgen-api-vault
+    namespace: nextgen
+
+---
+# Secret Rotation CronJob (extracted from vault-integration.yml and updated)
+# This CronJob periodically rotates secrets in Vault and triggers a rolling
+# restart of the API deployment to ensure the application picks up new secrets.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: nextgen-api-secret-rotation
+  namespace: nextgen
+  labels:
+    app: nextgen-api-secret-rotation
+spec:
+  schedule: "0 2 1 * *" # Runs at 2 AM on the 1st of every month
+  concurrencyPolicy: Forbid # Prevents concurrent job runs
+  successfulJobsHistoryLimit: 3 # Keep history of last 3 successful jobs
+  failedJobsHistoryLimit: 3   # Keep history of last 3 failed jobs
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: nextgen-api-secret-rotation
+        spec:
+          serviceAccountName: nextgen-api-vault # Use the SA with Vault permissions
+          restartPolicy: OnFailure # Restart container if it fails
+          initContainers:
+            # Inject Vault binary into shared volume
+            - name: tool-provider
+              image: hashicorp/vault:1.15.2
+              command: ["/bin/sh", "-c", "cp /bin/vault /tools/vault"]
+              volumeMounts:
+                - name: tools
+                  mountPath: /tools
+          containers:
+            - name: secret-rotator
+              # Use kubectl image as base, add vault from volume
+              image: bitnami/kubectl:1.28
+              imagePullPolicy: IfNotPresent
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -e
+                  export PATH=$PATH:/tools
+                  echo "Starting API secret rotation..."
+                  
+                  # Verify tools exist
+                  vault --version
+                  kubectl version --client
+                  
+                  # Authenticate with Vault using Kubernetes Service Account token
+                  vault login -method=kubernetes role=nextgen-api jwt="$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)"
+                  
+                  # Generate new random values for secrets
+                  NEW_DB_PASS=$(openssl rand -base64 32 | tr -d "=+/" | head -c 32)
+                  NEW_REDIS_PASS=$(openssl rand -base64 32 | tr -d "=+/" | head -c 32)
+                  NEW_JWT_SECRET=$(openssl rand -base64 64 | tr -d "=+/" | head -c 64)
+                  NEW_JWT_REFRESH_SECRET=$(openssl rand -base64 64 | tr -d "=+/" | head -c 64)
+                  NEW_UNLEASH_TOKEN=$(openssl rand -base64 32 | tr -d "=+/" | head -c 32)
+                  
+                  # Update database secret in Vault
+                  vault kv put nextgen/data/database \
+                    username="nextgen_prod_user" \
+                    password="$NEW_DB_PASS" \
+                    host="REPLACE_IN_OVERLAY" \
+                    port="5432" \
+                    database="marketplace_prod"
+                  
+                  # Update Redis secret in Vault
+                  # 🔴 ACTION REQUIRED: Update host/port to match your MANAGED REDIS service.
+                  vault kv put nextgen/data/redis \
+                    password="$NEW_REDIS_PASS" \
+                    host="your-managed-redis-endpoint.cache.cloud-provider.com" \
+                    port="6379"
+                  
+                  # Update JWT secrets in Vault
+                  vault kv put nextgen/data/jwt \
+                    secret="$NEW_JWT_SECRET" \
+                    refresh_secret="$NEW_JWT_REFRESH_SECRET" \
+                    access_expiry="15m" \
+                    refresh_expiry="7d"
+                  
+                  # Update External Services secrets in Vault (example for UNLEASH_API_TOKEN)
+                  # 🔴 ACTION REQUIRED: Add/update other external service secrets here with actual values or generation logic.
+                  vault kv put nextgen/data/external-services \
+                    UNLEASH_API_TOKEN="$NEW_UNLEASH_TOKEN" \
+                    STRIPE_API_KEY="sk_live_..." \
+                    SMTP_PASSWORD="real-smtp-password" \
+                    PAYMENT_GATEWAY_API_KEY="real-payment-key" \
+                    PAYMENT_GATEWAY_SECRET="real-payment-secret"
+                  
+                  echo "Secrets updated in Vault for API"
+                  
+                  # Trigger rolling restart of API pods to pick up new secrets.
+                  # This annotation-based rollout is picked up by Kubernetes.
+                  kubectl rollout restart deployment/api -n nextgen
+                  
+                  echo "Secret rotation and API rollout completed successfully"
+              env:
+                - name: VAULT_ADDR
+                  value: "https://vault.example.invalid"
+                - name: VAULT_SKIP_VERIFY
+                  value: "true" # 🔴 ACTION REQUIRED: Disable this in production and configure proper TLS verification.
+              resources:
+                requests:
+                  memory: "128Mi"
+                  cpu: "100m"
+                limits:
+                  memory: "256Mi"
+                  cpu: "200m"
+              volumeMounts:
+                - name: tools
+                  mountPath: /tools
+              securityContext:
+                allowPrivilegeEscalation: false
+                runAsNonRoot: true
+                runAsUser: 1001 # Non-root user
+                capabilities:
+                  drop:
+                    - ALL
+          volumes:
+            - name: tools
+              emptyDir: {}

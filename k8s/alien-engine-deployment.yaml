@@ -1,0 +1,115 @@
+# 🛸 Alien Engine Kubernetes Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alien-engine
+  namespace: nextgen-marketplace
+  labels:
+    app: alien-engine
+    component: inventory-bidding
+    tier: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: alien-engine
+  template:
+    metadata:
+      labels:
+        app: alien-engine
+        component: inventory-bidding
+        tier: backend
+    spec:
+      containers:
+      - name: alien-engine
+        image: nextgen/alien-engine:latest
+        ports:
+        - containerPort: 3000
+          name: http
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: DB_PATH
+          value: "/app/data/nextgen-alien.db"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "500m"
+          limits:
+            memory: "512Mi"
+            cpu: "1000m"
+        volumeMounts:
+        - name: alien-data
+          mountPath: /app/data
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: alien-data
+        persistentVolumeClaim:
+          claimName: alien-data-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: alien-engine-service
+  namespace: nextgen-marketplace
+  labels:
+    app: alien-engine
+spec:
+  selector:
+    app: alien-engine
+  ports:
+  - port: 3001
+    targetPort: 3000
+    protocol: TCP
+    name: http
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: alien-data-pvc
+  namespace: nextgen-marketplace
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: fast-ssd
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: alien-engine-network-policy
+  namespace: nextgen-marketplace
+spec:
+  podSelector:
+    matchLabels:
+      app: alien-engine
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: nextgen-api
+    ports:
+    - protocol: TCP
+      port: 3000
+  egress:
+  - {} # Allow all egress for now

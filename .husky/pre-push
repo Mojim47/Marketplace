@@ -1,0 +1,2 @@
+# Run tests before push
+pnpm test:unit

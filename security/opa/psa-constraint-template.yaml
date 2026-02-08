@@ -1,0 +1,67 @@
+apiVersion: templates.gatekeeper.sh/v1beta1
+kind: ConstraintTemplate
+metadata:
+  name: restrictedpsa
+spec:
+  crd:
+    spec:
+      names:
+        kind: RestrictedPSA
+      validation:
+        openAPIV3Schema:
+          type: object
+          properties:
+            exemptImages:
+              type: array
+              items:
+                type: string
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package restrictedpsa
+        
+        violation[{"msg": msg}] {
+          container := input.review.object.spec.containers[_]
+          not container.securityContext.runAsNonRoot
+          msg := sprintf("Container %v must set runAsNonRoot=true", [container.name])
+        }
+        
+        violation[{"msg": msg}] {
+          container := input.review.object.spec.containers[_]
+          not container.securityContext.readOnlyRootFilesystem
+          msg := sprintf("Container %v must set readOnlyRootFilesystem=true", [container.name])
+        }
+        
+        violation[{"msg": msg}] {
+          container := input.review.object.spec.containers[_]
+          not container.securityContext.capabilities.drop
+          msg := sprintf("Container %v must drop ALL capabilities", [container.name])
+        }
+        
+        violation[{"msg": msg}] {
+          container := input.review.object.spec.containers[_]
+          "ALL" != container.securityContext.capabilities.drop[_]
+          msg := sprintf("Container %v must drop ALL capabilities", [container.name])
+        }
+        
+        violation[{"msg": msg}] {
+          not input.review.object.spec.securityContext.seccompProfile.type
+          msg := "Pod must set seccompProfile.type=RuntimeDefault"
+        }
+        
+        violation[{"msg": msg}] {
+          input.review.object.spec.securityContext.seccompProfile.type != "RuntimeDefault"
+          msg := "Pod seccompProfile.type must be RuntimeDefault"
+        }
+        
+        violation[{"msg": msg}] {
+          container := input.review.object.spec.containers[_]
+          container.securityContext.privileged
+          msg := sprintf("Container %v cannot run as privileged", [container.name])
+        }
+        
+        violation[{"msg": msg}] {
+          container := input.review.object.spec.containers[_]
+          container.securityContext.allowPrivilegeEscalation
+          msg := sprintf("Container %v must set allowPrivilegeEscalation=false", [container.name])
+        }

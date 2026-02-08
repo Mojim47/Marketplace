@@ -1,0 +1,261 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# Enterprise-SERTA Docker Compose - Vector Database and Dependencies
+# ═══════════════════════════════════════════════════════════════════════════
+
+version: '3.8'
+
+services:
+  # ═══════════════════════════════════════════════════════════════════════
+  # Qdrant Vector Database - High-Performance Vector Search Engine
+  # ═══════════════════════════════════════════════════════════════════════
+  qdrant:
+    image: qdrant/qdrant:v1.7.4
+    container_name: enterprise-serta-qdrant
+    restart: unless-stopped
+    ports:
+      - "6333:6333"  # HTTP API
+      - "6334:6334"  # gRPC API
+    volumes:
+      - qdrant_data:/qdrant/storage
+      - ./config/qdrant.yaml:/qdrant/config/production.yaml:ro
+    environment:
+      QDRANT__SERVICE__HTTP_PORT: 6333
+      QDRANT__SERVICE__GRPC_PORT: 6334
+      QDRANT__LOG_LEVEL: INFO
+      QDRANT__STORAGE__STORAGE_PATH: /qdrant/storage
+      QDRANT__STORAGE__SNAPSHOTS_PATH: /qdrant/snapshots
+      QDRANT__STORAGE__ON_DISK_PAYLOAD: true
+      QDRANT__STORAGE__WAL__WAL_CAPACITY_MB: 32
+      QDRANT__STORAGE__WAL__WAL_SEGMENTS_AHEAD: 0
+      QDRANT__STORAGE__PERFORMANCE__MAX_SEARCH_THREADS: 4
+      QDRANT__STORAGE__PERFORMANCE__MAX_OPTIMIZATION_THREADS: 2
+      QDRANT__STORAGE__OPTIMIZERS__DELETED_THRESHOLD: 0.2
+      QDRANT__STORAGE__OPTIMIZERS__VACUUM_MIN_VECTOR_NUMBER: 1000
+      QDRANT__STORAGE__OPTIMIZERS__DEFAULT_SEGMENT_NUMBER: 2
+      QDRANT__STORAGE__OPTIMIZERS__MAX_SEGMENT_SIZE: 20000
+      QDRANT__STORAGE__OPTIMIZERS__MEMMAP_THRESHOLD: 50000
+      QDRANT__STORAGE__OPTIMIZERS__INDEXING_THRESHOLD: 10000
+      QDRANT__STORAGE__OPTIMIZERS__FLUSH_INTERVAL_SEC: 30
+      QDRANT__STORAGE__OPTIMIZERS__MAX_OPTIMIZATION_THREADS: 2
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - serta-network
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '2.0'
+        reservations:
+          memory: 1G
+          cpus: '0.5'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
+
+  # ═══════════════════════════════════════════════════════════════════════
+  # Redis - Caching and Session Storage for Analysis Results
+  # ═══════════════════════════════════════════════════════════════════════
+  redis:
+    image: redis:7-alpine
+    container_name: enterprise-serta-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+      - ./config/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    command: redis-server /usr/local/etc/redis/redis.conf
+    environment:
+      REDIS_PASSWORD: serta_redis_2024
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - serta-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 128M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  # ═══════════════════════════════════════════════════════════════════════
+  # PostgreSQL - Metadata and Analysis Results Storage
+  # ═══════════════════════════════════════════════════════════════════════
+  postgres:
+    image: postgres:16-alpine
+    container_name: enterprise-serta-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: enterprise_serta
+      POSTGRES_USER: serta
+      POSTGRES_PASSWORD: serta_postgres_2024
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=en_US.UTF-8"
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./config/init-db.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U serta -d enterprise_serta"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - serta-network
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
+
+  # ═══════════════════════════════════════════════════════════════════════
+  # Grafana - Analysis Results Visualization and Dashboards
+  # ═══════════════════════════════════════════════════════════════════════
+  grafana:
+    image: grafana/grafana:10.2.3
+    container_name: enterprise-serta-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: serta_admin_2024
+      GF_USERS_ALLOW_SIGN_UP: false
+      GF_INSTALL_PLUGINS: grafana-piechart-panel,grafana-worldmap-panel
+      GF_FEATURE_TOGGLES_ENABLE: publicDashboards
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./config/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./config/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - serta-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 128M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  # ═══════════════════════════════════════════════════════════════════════
+  # Enterprise-SERTA API Server (Optional - for web interface)
+  # ═══════════════════════════════════════════════════════════════════════
+  serta-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: enterprise-serta-api
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      NODE_ENV: production
+      PORT: 8080
+      QDRANT_URL: http://qdrant:6333
+      REDIS_URL: redis://redis:6379
+      POSTGRES_URL: postgresql://serta:serta_postgres_2024@postgres:5432/enterprise_serta
+      LOG_LEVEL: info
+    volumes:
+      - ./results:/app/results
+      - ./config:/app/config:ro
+    depends_on:
+      - qdrant
+      - redis
+      - postgres
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - serta-network
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.25'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Networks and Volumes
+# ═══════════════════════════════════════════════════════════════════════════
+
+networks:
+  serta-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  qdrant_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/qdrant
+  
+  redis_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/redis
+  
+  postgres_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/postgres
+  
+  grafana_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/grafana

@@ -1,0 +1,204 @@
+groups:
+  - name: nextgen_critical_alerts
+    rules:
+      # System Health
+      - alert: ServiceDown
+        expr: up == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "Service {{ $labels.job }} has been down for more than 30 seconds"
+
+      # Performance Alerts
+      - alert: HighLatency
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="nextgen-api"}[5m])) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High API latency detected"
+          description: "95th percentile latency is {{ $value }}s, above 100ms threshold"
+
+      - alert: CriticalLatency
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="nextgen-api"}[5m])) > 0.2
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "CRITICAL: API latency above 200ms"
+          description: "95th percentile latency is {{ $value }}s, immediate action required"
+
+      # Error Rate Alerts
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) * 100 > 5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value }}%, above 5% threshold"
+
+      - alert: CriticalErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) * 100 > 10
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "CRITICAL: Error rate above 10%"
+          description: "Error rate is {{ $value }}%, immediate rollback required"
+
+  - name: nextgen_security_alerts
+    rules:
+      # Security Violations
+      - alert: SecurityViolationSpike
+        expr: rate(security_violations_total[5m]) > 10
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Security violation spike detected"
+          description: "{{ $value }} security violations per second, investigating required"
+
+      - alert: CriticalSecurityViolation
+        expr: rate(security_violations_total{type="sql_injection"}[5m]) > 1 or rate(security_violations_total{type="command_injection"}[5m]) > 1
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "CRITICAL: SQL/Command injection attempts"
+          description: "Critical security violations detected: {{ $labels.type }}"
+
+      # Tenant Isolation
+      - alert: CrossTenantAccessAttempt
+        expr: increase(cross_tenant_access_attempts_total[5m]) > 0
+        for: 0s
+        labels:
+          severity: critical
+        annotations:
+          summary: "CRITICAL: Cross-tenant access attempt"
+          description: "Potential tenant isolation breach detected"
+
+      - alert: RLSPolicyViolation
+        expr: increase(rls_policy_violations_total[5m]) > 0
+        for: 0s
+        labels:
+          severity: critical
+        annotations:
+          summary: "CRITICAL: RLS policy violation"
+          description: "Row-Level Security policy violation detected"
+
+  - name: nextgen_performance_alerts
+    rules:
+      # Cache Performance
+      - alert: LowCacheHitRate
+        expr: rate(cache_hits_total[5m]) / (rate(cache_hits_total[5m]) + rate(cache_misses_total[5m])) * 100 < 70
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low cache hit rate"
+          description: "Cache hit rate is {{ $value }}%, below 70% threshold"
+
+      # Database Performance
+      - alert: SlowDatabaseQueries
+        expr: histogram_quantile(0.95, rate(db_query_duration_seconds_bucket[5m])) > 0.1
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Slow database queries detected"
+          description: "95th percentile DB query time is {{ $value }}s"
+
+      # Memory Usage
+      - alert: HighMemoryUsage
+        expr: process_resident_memory_bytes{job="nextgen-api"} / 1024 / 1024 > 512
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is {{ $value }}MB, above 512MB threshold"
+
+      - alert: CriticalMemoryUsage
+        expr: process_resident_memory_bytes{job="nextgen-api"} / 1024 / 1024 > 1024
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "CRITICAL: Memory usage above 1GB"
+          description: "Memory usage is {{ $value }}MB, potential memory leak"
+
+  - name: nextgen_business_alerts
+    rules:
+      # Revenue Impact
+      - alert: ZeroRevenue
+        expr: sum(rate(order_events_total[10m])) == 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No orders in last 10 minutes"
+          description: "Revenue stream may be impacted"
+
+      # Search Performance
+      - alert: HighFailedSearchRate
+        expr: rate(search_events_total{results_count="0"}[5m]) / rate(search_events_total[5m]) * 100 > 30
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High failed search rate"
+          description: "{{ $value }}% of searches return no results"
+
+  - name: nextgen_infrastructure_alerts
+    rules:
+      # ClickHouse
+      - alert: ClickHouseDown
+        expr: up{job="clickhouse"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "ClickHouse is down"
+          description: "Analytics system unavailable"
+
+      # KeyDB
+      - alert: KeyDBDown
+        expr: up{job="keydb"} == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "KeyDB is down"
+          description: "Cache system unavailable, performance will degrade"
+
+      # PostgreSQL
+      - alert: PostgreSQLDown
+        expr: up{job="postgres"} == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "PostgreSQL is down"
+          description: "Primary database unavailable"
+
+      # Disk Space
+      - alert: LowDiskSpace
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 20
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low disk space"
+          description: "Disk space is {{ $value }}% available"
+
+      - alert: CriticalDiskSpace
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 10
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "CRITICAL: Disk space below 10%"
+          description: "Immediate cleanup required"

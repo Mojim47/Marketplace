@@ -1,0 +1,229 @@
+# Prometheus Recording Rules & SLO Configuration
+# File: prometheus/recording-rules.yml
+
+---
+global:
+  evaluation_interval: 15s
+
+rule_files:
+  - 'recording-rules.yml'
+  - 'alert-rules.yml'
+
+---
+# Recording Rules for SLO/SLA Calculation
+groups:
+  - name: slo_sla_rules
+    interval: 30s
+    rules:
+      # Request Rate (per second)
+      - record: http:request:rate1m
+        expr: rate(http_requests_total[1m])
+        labels:
+          slo: 'true'
+
+      - record: http:request:rate5m
+        expr: rate(http_requests_total[5m])
+
+      - record: http:request:rate30m
+        expr: rate(http_requests_total[30m])
+
+      # Success Rate (percentage)
+      - record: http:success:rate1m
+        expr: |
+          100 * (
+            sum(rate(http_requests_total{status_code=~"2.."}[1m]))
+            /
+            sum(rate(http_requests_total[1m]))
+          )
+        labels:
+          slo: 'true'
+
+      - record: http:success:rate5m
+        expr: |
+          100 * (
+            sum(rate(http_requests_total{status_code=~"2.."}[5m]))
+            /
+            sum(rate(http_requests_total[5m]))
+          )
+
+      - record: http:success:rate30m
+        expr: |
+          100 * (
+            sum(rate(http_requests_total{status_code=~"2.."}[30m]))
+            /
+            sum(rate(http_requests_total[30m]))
+          )
+
+      # Error Rate (percentage)
+      - record: http:error:rate1m
+        expr: |
+          100 * (
+            sum(rate(http_requests_total{status_code=~"5.."}[1m]))
+            /
+            sum(rate(http_requests_total[1m]))
+          )
+        labels:
+          slo: 'true'
+
+      - record: http:error:rate5m
+        expr: |
+          100 * (
+            sum(rate(http_requests_total{status_code=~"5.."}[5m]))
+            /
+            sum(rate(http_requests_total[5m]))
+          )
+
+      # Latency Percentiles
+      - record: http:latency:p50
+        expr: |
+          histogram_quantile(0.50,
+            sum(rate(http_request_duration_ms_bucket[5m])) by (le)
+          )
+        labels:
+          slo: 'true'
+
+      - record: http:latency:p95
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(http_request_duration_ms_bucket[5m])) by (le)
+          )
+        labels:
+          slo: 'true'
+
+      - record: http:latency:p99
+        expr: |
+          histogram_quantile(0.99,
+            sum(rate(http_request_duration_ms_bucket[5m])) by (le)
+          )
+        labels:
+          slo: 'true'
+
+      # Availability (uptime)
+      - record: availability:percent
+        expr: |
+          100 * (
+            1 - (sum(increase(http_requests_total{status_code=~"5.."}[1h])))
+              / sum(increase(http_requests_total[1h]))
+          )
+        labels:
+          slo: 'true'
+
+      # Database Performance
+      - record: db:query:rate1m
+        expr: rate(db_queries_total[1m])
+
+      - record: db:query:latency:p95
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(db_query_duration_ms_bucket[5m])) by (le, query_type)
+          )
+        labels:
+          slo: 'true'
+
+      - record: db:connection:pool:utilization
+        expr: |
+          (db_connection_pool_active / db_connection_pool_size) * 100
+
+      # Cache Performance
+      - record: cache:hit:ratio
+        expr: |
+          100 * (
+            sum(rate(cache_hits_total[5m]))
+            /
+            (sum(rate(cache_hits_total[5m])) + sum(rate(cache_misses_total[5m])))
+          )
+        labels:
+          slo: 'true'
+
+      # Payment Processing
+      - record: payment:success:rate1m
+        expr: |
+          100 * (
+            sum(rate(payments_processed_total[1m]))
+            /
+            (sum(rate(payments_processed_total[1m])) + sum(rate(payments_failed_total[1m])))
+          )
+        labels:
+          slo: 'true'
+
+      - record: payment:latency:p95
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(payment_processing_duration_ms_bucket[5m])) by (le)
+          )
+        labels:
+          slo: 'true'
+
+      # System Health
+      - record: system:memory:utilization
+        expr: |
+          (memory_usage_bytes{type="heap_used"} / memory_usage_bytes{type="heap_total"}) * 100
+
+      - record: system:cpu:utilization
+        expr: |
+          100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+
+  # Error Budget Calculation
+  - name: error_budget
+    interval: 1m
+    rules:
+      # SLO: 99.9% availability (error budget: 43.2 minutes per month)
+      - record: slo:error:budget:available
+        expr: |
+          100 * (0.999 - (1 - availability:percent / 100))
+        labels:
+          slo_target: '99.9'
+          slo_window: 'monthly'
+
+      # SLO: 99.0% availability (error budget: 7.2 hours per month)
+      - record: slo:error:budget:available:99
+        expr: |
+          100 * (0.99 - (1 - availability:percent / 100))
+        labels:
+          slo_target: '99.0'
+          slo_window: 'monthly'
+
+      # Error budget consumed (percentage)
+      - record: slo:error:budget:consumed
+        expr: |
+          100 * (
+            (1 - availability:percent / 100)
+            / (1 - 0.999)
+          )
+        labels:
+          slo_target: '99.9'
+
+  # Throughput Metrics
+  - name: throughput_metrics
+    interval: 30s
+    rules:
+      - record: throughput:requests:per:second
+        expr: sum(rate(http_requests_total[1m]))
+
+      - record: throughput:requests:per:minute
+        expr: sum(rate(http_requests_total[5m])) * 60
+
+      - record: throughput:requests:per:hour
+        expr: sum(rate(http_requests_total[30m])) * 3600
+
+      - record: throughput:by:endpoint
+        expr: sum(rate(http_requests_total[1m])) by (path)
+
+      - record: throughput:by:method
+        expr: sum(rate(http_requests_total[1m])) by (method)
+
+  # Apdex Score (Application Performance Index)
+  - name: apdex_metrics
+    interval: 1m
+    rules:
+      # Apdex Threshold: 0.5s (satisfied), 2.0s (tolerated)
+      - record: apdex:score
+        expr: |
+          (
+            sum(rate(http_request_duration_ms_bucket{le="500"}[5m]))
+            + (sum(rate(http_request_duration_ms_bucket{le="2000"}[5m])) - sum(rate(http_request_duration_ms_bucket{le="500"}[5m]))) / 2
+          )
+          /
+          sum(rate(http_request_duration_ms_bucket{le="+Inf"}[5m]))
+        labels:
+          slo: 'true'

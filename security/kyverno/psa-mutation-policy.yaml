@@ -1,0 +1,53 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: mutate-psa-compliance
+  annotations:
+    policies.kyverno.io/title: Mutate Pod Security Standards
+    policies.kyverno.io/category: Pod Security Standards
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/description: >-
+      Automatically mutates Deployments to comply with restricted PSA
+spec:
+  validationFailureAction: enforce
+  background: true
+  rules:
+  - name: set-security-context
+    match:
+      any:
+      - resources:
+          kinds:
+          - Deployment
+    exclude:
+      any:
+      - resources:
+          namespaces:
+          - kube-system
+          - kyverno
+          - gatekeeper-system
+    mutate:
+      patchStrategicMerge:
+        spec:
+          template:
+            spec:
+              securityContext:
+                runAsNonRoot: true
+                runAsUser: 65534
+                runAsGroup: 65534
+                fsGroup: 65534
+                seccompProfile:
+                  type: RuntimeDefault
+              containers:
+              - (name): "*"
+                securityContext:
+                  runAsNonRoot: true
+                  runAsUser: 65534
+                  runAsGroup: 65534
+                  readOnlyRootFilesystem: true
+                  allowPrivilegeEscalation: false
+                  privileged: false
+                  capabilities:
+                    drop:
+                    - ALL
+                  seccompProfile:
+                    type: RuntimeDefault

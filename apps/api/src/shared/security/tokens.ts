@@ -1,0 +1,11 @@
+/**
+ * Security module provider tokens
+ */
+export const SECURITY_TOKENS = {
+  JWT_MANAGER: 'JWT_MANAGER',
+  RATE_LIMITER: 'RATE_LIMITER',
+  CSRF_MANAGER: 'CSRF_MANAGER',
+  BRUTE_FORCE: 'BRUTE_FORCE',
+  SECURITY_HEADERS: 'SECURITY_HEADERS',
+  WAF_SERVICE: 'WAF_SERVICE',
+} as const;

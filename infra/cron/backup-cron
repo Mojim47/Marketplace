@@ -1,0 +1,56 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# NextGen Marketplace - Backup Cron Configuration
+# ═══════════════════════════════════════════════════════════════════════════
+# Install: sudo cp backup-cron /etc/cron.d/nextgen-backup
+# Requirements: 9.1 - Automated daily backups of PostgreSQL database
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Environment variables for backup script
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+# PostgreSQL connection settings (override with actual values)
+PGHOST=localhost
+PGPORT=5432
+PGDATABASE=nextgen_db
+PGUSER=nextgen
+# PGPASSWORD should be set via secrets management, not in cron file
+
+# Backup settings
+BACKUP_BASE_DIR=/var/backups/nextgen
+ENCRYPTION_KEY_FILE=/etc/nextgen/backup.key
+
+# MinIO settings (optional - for remote backup)
+# MINIO_ENDPOINT=minio.example.com
+# MINIO_PORT=9000
+# MINIO_ACCESS_KEY=minioadmin
+# MINIO_SECRET_KEY=minio_secret
+# MINIO_BUCKET=nextgen-marketplace
+
+# Notification settings (optional)
+# SLACK_WEBHOOK_URL=https://hooks.slack.com/services/xxx
+# DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/xxx
+
+# ───────────────────────────────────────────────────────────────────────────
+# Backup Schedule
+# ───────────────────────────────────────────────────────────────────────────
+
+# Daily backup at 02:00 AM (Tehran time)
+0 2 * * * root /opt/nextgen/scripts/backup-automated.sh >> /var/log/nextgen/backup.log 2>&1
+
+# Weekly full backup verification at 03:00 AM on Sundays
+0 3 * * 0 root /opt/nextgen/scripts/verify-backup.sh --latest >> /var/log/nextgen/backup-verify.log 2>&1
+
+# Monthly backup integrity check at 04:00 AM on 1st of month
+0 4 1 * * root /opt/nextgen/scripts/verify-backup.sh --all >> /var/log/nextgen/backup-verify.log 2>&1
+
+# Clean old logs weekly at 05:00 AM on Mondays
+0 5 * * 1 root find /var/log/nextgen -name "*.log" -mtime +30 -delete
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Notes:
+# - Ensure PGPASSWORD is set via environment or .pgpass file
+# - Encryption key must be backed up separately and securely
+# - Monitor /var/log/nextgen/backup.log for issues
+# - Test restore procedure monthly
+# ═══════════════════════════════════════════════════════════════════════════

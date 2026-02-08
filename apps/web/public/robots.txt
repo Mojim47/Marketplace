@@ -1,0 +1,29 @@
+# See https://www.robotstxt.org/robotstxt.html for documentation on how to use the robots.txt file
+#
+# To allow all robots to crawl your site, use the following:
+# User-agent: *
+# Allow: /
+#
+# To disallow all robots from crawling your site, use the following:
+# User-agent: *
+# Disallow: /
+
+# Block sensitive and user-specific pages from being indexed
+User-agent: *
+Disallow: /admin/
+Disallow: /api/
+Disallow: /cart/
+Disallow: /wishlist/
+Disallow: /login
+Disallow: /register
+Disallow: /account/
+Disallow: /checkout/
+Disallow: /orders/
+
+# Allow crawling of public pages
+Allow: /
+Allow: /products/
+Allow: /shop/
+
+# Point to the sitemap for better crawling (update with your actual domain)
+Sitemap: https://www.your-nextgen-marketplace.com/sitemap.xml

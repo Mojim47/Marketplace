@@ -1,0 +1,122 @@
+{
+  "name": "نکست‌جن مارکت - NextGen Marketplace",
+  "short_name": "نکست‌جن",
+  "description": "فروشگاه آنلاین با قابلیت AR و خرید سریع",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4F46E5",
+  "orientation": "portrait-primary",
+  "lang": "fa",
+  "dir": "rtl",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/home.png",
+      "sizes": "1080x2340",
+      "type": "image/png",
+      "platform": "android",
+      "label": "صفحه اصلی"
+    },
+    {
+      "src": "/screenshots/products.png",
+      "sizes": "1080x2340",
+      "type": "image/png",
+      "platform": "android",
+      "label": "لیست محصولات"
+    },
+    {
+      "src": "/screenshots/cart.png",
+      "sizes": "1080x2340",
+      "type": "image/png",
+      "platform": "android",
+      "label": "سبد خرید"
+    }
+  ],
+  "categories": ["shopping", "productivity"],
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "سبد خرید",
+      "short_name": "سبد",
+      "description": "مشاهده سبد خرید",
+      "url": "/cart",
+      "icons": [{ "src": "/icons/cart-icon.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "خرید سریع",
+      "short_name": "خرید",
+      "description": "خرید سریع با ماتریس",
+      "url": "/quick-buy",
+      "icons": [{ "src": "/icons/quick-buy-icon.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "پروفایل",
+      "short_name": "حساب",
+      "description": "حساب کاربری",
+      "url": "/dashboard",
+      "icons": [{ "src": "/icons/profile-icon.png", "sizes": "192x192" }]
+    }
+  ],
+  "related_applications": [],
+  "share_target": {
+    "action": "/share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  }
+}

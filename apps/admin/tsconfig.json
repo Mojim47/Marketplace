@@ -1,0 +1,40 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "declaration": false,
+    "declarationMap": false,
+    "outDir": "dist",
+    "skipLibCheck": true,
+    "exactOptionalPropertyTypes": false,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@nextgen/ui": ["../../libs/ui/src/index.ts"],
+      "@nextgen/ui/*": ["../../libs/ui/src/*"],
+      "@nextgen/types": ["../../libs/types/src/dtos/index.ts"],
+      "@nextgen/types/*": ["../../libs/types/src/dtos/*"],
+      "@nextgen/ai": ["../../libs/ai/src/index.ts"],
+      "@nextgen/ai/*": ["../../libs/ai/src/*"],
+      "@nextgen/admin-core": ["../../libs/admin-core/src/index.ts"],
+      "@nextgen/admin-core/*": ["../../libs/admin-core/src/*"],
+      "@nextgen/invoice": ["../../libs/invoice/src/index.ts"],
+      "@nextgen/invoice/*": ["../../libs/invoice/src/*"]
+    },
+    "allowJs": true,
+    "noEmit": true,
+    "incremental": true,
+    "module": "esnext",
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "strictNullChecks": true,
+    "types": ["node", "react", "react-dom"]
+  },
+  "include": ["next-env.d.ts", "src", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules", ".next", "out", "dist"]
+}

@@ -1,0 +1,23 @@
+{
+  "name": "@nextgen/admin",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --port 3003",
+    "build": "next build",
+    "start": "next start --port 3003",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@nextgen/types": "workspace:*",
+    "@nextgen/auth": "workspace:*",
+    "next": "^14.2.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.3"
+  }
+}

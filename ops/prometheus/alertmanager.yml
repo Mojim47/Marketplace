@@ -1,0 +1,133 @@
+# Alertmanager Configuration
+# File: ops/prometheus/alertmanager.yml
+
+---
+global:
+  resolve_timeout: 5m
+  slack_api_url: '${SLACK_WEBHOOK_URL}'
+  pagerduty_url: 'https://events.pagerduty.com/v2/enqueue'
+
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+route:
+  receiver: 'default'
+  group_by: ['alertname', 'cluster', 'service', 'severity']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 12h
+
+  # Sub-routes for different severity levels
+  routes:
+    # Critical alerts - immediate notification
+    - match:
+        severity: critical
+      receiver: 'pagerduty-critical'
+      group_wait: 0s
+      group_interval: 5m
+      repeat_interval: 1h
+
+    # Warning alerts - Slack notification
+    - match:
+        severity: warning
+      receiver: 'slack-warnings'
+      group_wait: 30s
+      group_interval: 30m
+      repeat_interval: 6h
+
+    # SLO violations - dedicated channel
+    - match:
+        slo: 'true'
+      receiver: 'slack-slo'
+      group_wait: 10s
+      group_interval: 15m
+      repeat_interval: 4h
+
+    # DLQ alerts - high priority
+    - match:
+        component: dlq
+      receiver: 'pagerduty-dlq'
+      group_wait: 5s
+      group_interval: 10m
+      repeat_interval: 2h
+
+receivers:
+  # Default receiver
+  - name: 'default'
+    slack_configs:
+      - channel: '#alerts'
+        title: 'Alert: {{ .GroupLabels.alertname }}'
+        text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+
+  # Critical alerts to PagerDuty
+  - name: 'pagerduty-critical'
+    pagerduty_configs:
+      - service_key: '${PAGERDUTY_SERVICE_KEY}'
+        description: '{{ .GroupLabels.alertname }}'
+        details:
+          firing: '{{ range .Alerts.Firing }}{{ .Labels.instance }} {{ .Annotations.description }}\n{{ end }}'
+          resolved: '{{ range .Alerts.Resolved }}{{ .Labels.instance }}\n{{ end }}'
+        client: 'Prometheus'
+        client_url: '{{ .ExternalURL }}'
+
+  # Critical DLQ alerts
+  - name: 'pagerduty-dlq'
+    pagerduty_configs:
+      - service_key: '${PAGERDUTY_DLQ_SERVICE_KEY}'
+        description: 'DLQ Alert: {{ .GroupLabels.alertname }}'
+
+  # Warning alerts to Slack
+  - name: 'slack-warnings'
+    slack_configs:
+      - channel: '#alerts-warnings'
+        title: '⚠️ {{ .GroupLabels.alertname }}'
+        text: '{{ range .Alerts }}{{ .Annotations.description }}\nDashboard: {{ .Annotations.dashboard }}{{ end }}'
+        color: '{{ if eq .Status "firing" }}warning{{ else }}good{{ end }}'
+
+  # SLO violations
+  - name: 'slack-slo'
+    slack_configs:
+      - channel: '#slo-violations'
+        title: '📊 SLO Violation: {{ .GroupLabels.alertname }}'
+        text: |
+          Service: {{ .GroupLabels.service }}
+          {{ range .Alerts }}
+          Description: {{ .Annotations.description }}
+          Runbook: {{ .Annotations.runbook }}
+          {{ end }}
+        color: 'danger'
+
+  # Email for critical issues
+  - name: 'email-oncall'
+    email_configs:
+      - to: '${ONCALL_EMAIL}'
+        from: 'alerts@example.com'
+        smarthost: '${SMTP_HOST}:{{ $smtp_port }}'
+        auth_username: '${SMTP_USER}'
+        auth_password: '${SMTP_PASSWORD}'
+        headers:
+          Subject: 'Critical Alert: {{ .GroupLabels.alertname }}'
+        html: |
+          <h2>{{ .GroupLabels.alertname }}</h2>
+          <p>{{ range .Alerts }}{{ .Annotations.description }}<br/>{{ end }}</p>
+          <p><a href="{{ .ExternalURL }}">View in Prometheus</a></p>
+
+inhibit_rules:
+  # Inhibit warning alerts if critical alert is firing
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'cluster', 'service']
+
+  # Don't alert on HighLatencyP95 if already firing ServiceUnavailable
+  - source_match:
+      alertname: 'ServiceUnavailable'
+    target_match:
+      alertname: 'HighLatencyP95'
+
+  # Inhibit low-priority alerts during outages
+  - source_match:
+      alertname: 'AvailabilitySLOViolation'
+    target_match_re:
+      alertname: '^(HighErrorRate|HighLatency).*'

@@ -1,0 +1,264 @@
+# ServiceAccount for Vendor Portal deployment
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vendor-portal-service-account
+  namespace: nextgen
+---
+# NetworkPolicy - Allow ingress only from ingress controller
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: vendor-portal-network-policy
+  namespace: nextgen
+spec:
+  podSelector:
+    matchLabels:
+      app: vendor-portal
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+        - podSelector: # Allow communication from any pod in the 'nextgen' namespace for internal services
+            matchLabels: {}
+      ports:
+        - protocol: TCP
+          port: 3000
+  egress:
+    # Allow DNS
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - protocol: UDP
+          port: 53
+    # Allow traffic to the API service
+    - to:
+        - podSelector:
+            matchLabels:
+              app: api
+      ports:
+        - protocol: TCP
+          port: 80 # The api-service port
+    # Allow outbound to standard HTTP/HTTPS ports for external services (CDNs, analytics, etc.)
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8 # Exclude private networks if using strict internal DNS
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+      ports:
+        - protocol: TCP
+          port: 80
+        - protocol: TCP
+          port: 443
+
+---
+# Pod Disruption Budget for high availability
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: vendor-portal-pdb
+  namespace: nextgen
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: vendor-portal
+---
+# Deployment - Frontend Vendor Portal App
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vendor-portal
+  namespace: nextgen
+  labels:
+    app: vendor-portal
+    version: v1
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: vendor-portal
+  template:
+    metadata:
+      labels:
+        app: vendor-portal
+        version: v1
+    spec:
+      serviceAccountName: vendor-portal-service-account
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1004
+        fsGroup: 1004
+        seccompProfile:
+          type: RuntimeDefault
+      
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - vendor-portal
+                topologyKey: kubernetes.io/hostname
+      
+      containers:
+        - name: vendor-portal
+          image: nextgen/vendor-portal:latest
+          imagePullPolicy: IfNotPresent
+          
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: PORT
+              value: "3000"
+            - name: NEXT_PUBLIC_API_URL
+              value: "https://api.example.com"
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - ALL
+          
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      
+      volumes:
+        - name: tmp
+          emptyDir: {}
+---
+# Horizontal Pod Autoscaler
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: vendor-portal-hpa
+  namespace: nextgen
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: vendor-portal
+  minReplicas: 2
+  maxReplicas: 4
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 75
+---
+# Service for Vendor Portal deployment
+apiVersion: v1
+kind: Service
+metadata:
+  name: vendor-portal-service
+  namespace: nextgen
+  labels:
+    app: vendor-portal
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 3000
+      name: http
+    - port: 9090
+      targetPort: 3000
+      name: metrics
+  selector:
+    app: vendor-portal
+---
+# Ingress for Vendor Portal deployment
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vendor-portal-ingress
+  namespace: nextgen
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - vendor.example.com
+      secretName: vendor-portal-tls-cert
+  rules:
+    - host: vendor.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: vendor-portal-service
+                port:
+                  number: 80
+---
+# ServiceMonitor for Prometheus
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: vendor-portal-monitor
+  namespace: nextgen
+  labels:
+    app: vendor-portal
+    release: prometheus-operator # Added for Prometheus Operator discovery
+spec:
+  selector:
+    matchLabels:
+      app: vendor-portal
+  endpoints:
+    - port: metrics
+      path: /api/metrics
+      interval: 30s

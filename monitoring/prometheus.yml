@@ -1,0 +1,54 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# NextGen Marketplace - Prometheus Configuration
+# ═══════════════════════════════════════════════════════════════════════════
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'nextgen-marketplace'
+    environment: 'development'
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+rule_files:
+  - '/etc/prometheus/alerts.yaml'
+
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    metrics_path: /metrics
+
+  # NextGen API metrics
+  - job_name: 'nextgen-api'
+    static_configs:
+      - targets: ['host.docker.internal:3000']
+    metrics_path: /metrics
+    scrape_interval: 10s
+    scrape_timeout: 5s
+
+  # NextGen Worker metrics
+  - job_name: 'nextgen-worker'
+    static_configs:
+      - targets: ['host.docker.internal:3002']
+    metrics_path: /metrics
+    scrape_interval: 10s
+
+  # MinIO metrics
+  - job_name: 'minio'
+    static_configs:
+      - targets: ['minio:9000']
+    metrics_path: /minio/v2/metrics/cluster
+    scheme: http
+
+  # Meilisearch health
+  - job_name: 'meilisearch'
+    static_configs:
+      - targets: ['meilisearch:7700']
+    metrics_path: /metrics
+    scrape_interval: 30s

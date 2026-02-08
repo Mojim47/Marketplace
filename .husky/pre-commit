@@ -1,0 +1,20 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "🔍 Running detect-secrets scan..."
+detect-secrets() {
+  detect-secrets-launcher "$@"
+}
+detect-secrets scan --baseline .secrets.baseline > .secrets.scan
+if [ $? -ne 0 ]; then
+  echo "❌ CRITICAL: New secrets detected! Commit blocked."
+  echo "Review the findings in .secrets.scan"
+  exit 1
+fi
+echo "✅ No new secrets detected."
+
+# Run Biome check on staged files
+pnpm biome check --staged --no-errors-on-unmatched
+
+# Run TypeScript type checking
+pnpm typecheck

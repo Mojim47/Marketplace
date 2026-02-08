@@ -1,0 +1,45 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "declaration": false,
+    "declarationMap": false,
+    "outDir": "dist",
+    "skipLibCheck": true,
+    "exactOptionalPropertyTypes": false,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"],
+      "@/config/*": ["../../libs/config/src/*"],
+      "@nextgen/ui": ["../../libs/ui/src/index.ts"],
+      "@nextgen/ui/*": ["../../libs/ui/src/*"],
+      "@nextgen/types": ["../../libs/types/src/dtos/index.ts"],
+      "@nextgen/types/*": ["../../libs/types/src/dtos/*"],
+      "@nextgen/ai": ["../../libs/ai/src/index.ts"],
+      "@nextgen/ai/*": ["../../libs/ai/src/*"],
+      "@nextgen/ai/tts-persian": ["../../libs/ai/tts-persian/src/index.ts"],
+      "@nextgen/ai/tts-persian/*": ["../../libs/ai/tts-persian/src/*"],
+      "@nextgen/ar": ["../../libs/ar/src/index.ts"],
+      "@nextgen/ar/*": ["../../libs/ar/src/*"],
+      "@nextgen/auth": ["../../libs/auth/src/index.ts"],
+      "@nextgen/auth/*": ["../../libs/auth/src/*"],
+      "@nextgen/admin-core": ["../../libs/admin-core/src/index.ts"],
+      "@nextgen/admin-core/*": ["../../libs/admin-core/src/*"]
+    },
+    "allowJs": true,
+    "noEmit": true,
+    "incremental": true,
+    "module": "esnext",
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "strictNullChecks": true,
+    "types": ["node", "react", "react-dom"]
+  },
+  "include": ["app", "lib", "src", "next-env.d.ts", ".next/types/**/*.ts"],
+  "exclude": ["node_modules", ".next", "out", "dist"]
+}

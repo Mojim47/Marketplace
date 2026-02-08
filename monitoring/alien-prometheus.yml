@@ -1,0 +1,28 @@
+# 🛸 Alien Engine Prometheus Configuration
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  # Alien Engine metrics
+  - job_name: 'alien-engine'
+    static_configs:
+      - targets: ['alien-engine:3000']
+    scrape_interval: 5s
+    metrics_path: '/metrics'
+    
+  # Main API metrics (for comparison)
+  - job_name: 'nextgen-api'
+    static_configs:
+      - targets: ['api:3000']
+    scrape_interval: 15s
+    metrics_path: '/metrics'
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']

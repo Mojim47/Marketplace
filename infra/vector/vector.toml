@@ -1,0 +1,170 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# NextGen Marketplace - Vector Log Processing Configuration
+# ═══════════════════════════════════════════════════════════════════════════
+# Purpose: Collect and process search logs for ClickHouse analytics
+# ═══════════════════════════════════════════════════════════════════════════
+
+[api]
+enabled = true
+address = "0.0.0.0:8686"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# SOURCES - Data Input
+# ═══════════════════════════════════════════════════════════════════════════
+
+# HTTP endpoint for search events from the application
+[sources.search_events_http]
+type = "http_server"
+address = "0.0.0.0:8080"
+path = "/search-events"
+method = ["POST"]
+headers = ["Content-Type"]
+
+# File source for application logs (fallback)
+[sources.app_logs]
+type = "file"
+include = ["/var/log/nextgen/*.log"]
+read_from = "beginning"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# TRANSFORMS - Data Processing
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Parse search events JSON
+[transforms.parse_search_events]
+type = "remap"
+inputs = ["search_events_http"]
+source = '''
+# Parse the incoming JSON
+. = parse_json!(.message)
+
+# Add timestamp if not present
+if !exists(.timestamp) {
+  .timestamp = now()
+}
+
+# Normalize query text
+if exists(.query) {
+  .query_normalized = downcase(strip_whitespace(.query))
+}
+
+# Detect query language (Persian vs English)
+if exists(.query) {
+  if match(.query, r'[\u0600-\u06FF]') {
+    .query_language = "fa"
+  } else if match(.query, r'[a-zA-Z]') {
+    .query_language = "en"
+  } else {
+    .query_language = "mixed"
+  }
+}
+
+# Convert IP to proper format
+if exists(.ip_address) && is_string(.ip_address) {
+  .ip_address = parse_ipv4!(.ip_address)
+}
+
+# Set defaults
+.search_engine = "typesense"
+.api_version = "v1"
+'''
+
+# Filter failed searches
+[transforms.failed_searches]
+type = "filter"
+inputs = ["parse_search_events"]
+condition = '.total_results == 0'
+
+# Filter successful searches
+[transforms.successful_searches]
+type = "filter"
+inputs = ["parse_search_events"]
+condition = '.total_results > 0'
+
+# Process product impressions
+[transforms.product_impressions]
+type = "remap"
+inputs = ["successful_searches"]
+source = '''
+# Extract product impressions from search results
+if exists(.results) && is_array(.results) {
+  impressions = []
+  
+  for_each(array!(.results)) -> |_index, product| {
+    impression = {
+      "event_id": .event_id,
+      "timestamp": .timestamp,
+      "search_event_id": .event_id,
+      "query": .query,
+      "product_id": product.id,
+      "product_name": product.name,
+      "product_price": product.price,
+      "vendor_id": product.vendor_id,
+      "category_id": product.category_id,
+      "position": _index + 1,
+      "page": .page || 1,
+      "relevance_score": product.score || 0.0,
+      "was_clicked": 0
+    }
+    impressions = push(impressions, impression)
+  }
+  
+  .impressions = impressions
+}
+'''
+
+# ═══════════════════════════════════════════════════════════════════════════
+# SINKS - Data Output to ClickHouse
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Search events to ClickHouse
+[sinks.clickhouse_search_events]
+type = "clickhouse"
+inputs = ["parse_search_events"]
+endpoint = "http://clickhouse:8123"
+database = "nextgen_analytics"
+table = "search_events"
+auth.strategy = "basic"
+auth.user = "analytics"
+auth.password = "clickhouse_secret_2024"
+compression = "gzip"
+batch.max_events = 1000
+batch.timeout_secs = 10
+
+# Failed searches to ClickHouse
+[sinks.clickhouse_failed_searches]
+type = "clickhouse"
+inputs = ["failed_searches"]
+endpoint = "http://clickhouse:8123"
+database = "nextgen_analytics"
+table = "failed_searches"
+auth.strategy = "basic"
+auth.user = "analytics"
+auth.password = "clickhouse_secret_2024"
+compression = "gzip"
+batch.max_events = 500
+batch.timeout_secs = 5
+
+# Product impressions to ClickHouse (from array)
+[sinks.clickhouse_product_impressions]
+type = "clickhouse"
+inputs = ["product_impressions"]
+endpoint = "http://clickhouse:8123"
+database = "nextgen_analytics"
+table = "product_impressions"
+auth.strategy = "basic"
+auth.user = "analytics"
+auth.password = "clickhouse_secret_2024"
+compression = "gzip"
+batch.max_events = 2000
+batch.timeout_secs = 15
+
+# ═══════════════════════════════════════════════════════════════════════════
+# HEALTH CHECKS & MONITORING
+# ═══════════════════════════════════════════════════════════════════════════
+
+[sinks.console_debug]
+type = "console"
+inputs = ["parse_search_events"]
+target = "stdout"
+encoding.codec = "json"

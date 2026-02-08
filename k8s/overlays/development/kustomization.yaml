@@ -1,0 +1,178 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+patches:
+  - target:
+      kind: ConfigMap
+      name: vault-agent-config
+    patch: |-
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: vault-agent-config
+        namespace: nextgen
+      data:
+        CORS_ORIGIN: "http://localhost:3000,http://localhost:3001"
+        JAEGER_ENDPOINT: "http://jaeger-collector.dev:4317"
+        vault-agent.hcl: |
+          pid_file = "/tmp/pidfile"
+          
+          vault {
+            address = "http://vault.dev:8200"
+            retry {
+              num_retries = 5
+            }
+          }
+          
+          auto_auth {
+            method "kubernetes" {
+              mount_path = "auth/kubernetes"
+              config = {
+                role = "nextgen-api" # 🔴 ACTION REQUIRED: This role must be configured in Vault for the Kubernetes auth method.
+              }
+            }
+            
+            sink "file" {
+              config = {
+                path = "/vault/secrets/.vault-token" # Agent token is written here
+              }
+            }
+          }
+          
+          # Templates define how secrets fetched from Vault are rendered to files.
+          # The 'command' triggers a SIGHUP to the application container on secret renewal.
+          template {
+            source      = "/vault/config/database.tpl"
+            destination = "/vault/secrets/database"
+            perms       = 0644
+            command     = "pkill -HUP api || true" # SIGHUP the 'api' container to reload secrets
+          }
+          
+          template {
+            source      = "/vault/config/redis.tpl"
+            destination = "/vault/secrets/redis"
+            perms       = 0644
+            command     = "pkill -HUP api || true" # SIGHUP the 'api' container
+          }
+          
+          template {
+            source      = "/vault/config/jwt.tpl"
+            destination = "/vault/secrets/jwt"
+            perms       = 0600
+            command     = "pkill -HUP api || true" # SIGHUP the 'api' container
+          }
+          
+          template {
+            source      = "/vault/config/external-services.tpl"
+            destination = "/vault/secrets/external-services"
+            perms       = 0600
+            command     = "pkill -HUP api || true" # SIGHUP the 'api' container
+          }
+  - target:
+      kind: Deployment
+      name: api
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: api
+        namespace: nextgen
+      spec:
+        template:
+          spec:
+            initContainers:
+              - name: vault-init
+                env:
+                  - name: VAULT_ADDR
+                    value: "http://vault.dev:8200"
+            containers:
+              - name: api
+                env:
+                  - name: CORS_ORIGIN
+                    value: "http://localhost:3000,http://localhost:3001"
+                  - name: JAEGER_ENDPOINT
+                    value: "http://jaeger-collector.dev:4317"
+              - name: vault-agent
+                env:
+                  - name: VAULT_ADDR
+                    value: "http://vault.dev:8200"
+  - target:
+      kind: CronJob
+      name: nextgen-api-secret-rotation
+    patch: |-
+      apiVersion: batch/v1
+      kind: CronJob
+      metadata:
+        name: nextgen-api-secret-rotation
+        namespace: nextgen
+      spec:
+        jobTemplate:
+          spec:
+            template:
+              spec:
+                containers:
+                  - name: secret-rotator
+                    command:
+                      - /bin/sh
+                      - -c
+                      - |
+                        set -e
+                        export PATH=$PATH:/tools
+                        echo "Starting API secret rotation..."
+                        
+                        # Verify tools exist
+                        vault --version
+                        kubectl version --client
+                        
+                        # Authenticate with Vault using Kubernetes Service Account token
+                        vault login -method=kubernetes role=nextgen-api jwt="$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)"
+                        
+                        # Generate new random values for secrets
+                        NEW_DB_PASS=$(openssl rand -base64 32 | tr -d "=+/" | head -c 32)
+                        NEW_REDIS_PASS=$(openssl rand -base64 32 | tr -d "=+/" | head -c 32)
+                        NEW_JWT_SECRET=$(openssl rand -base64 64 | tr -d "=+/" | head -c 64)
+                        NEW_JWT_REFRESH_SECRET=$(openssl rand -base64 64 | tr -d "=+/" | head -c 64)
+                        NEW_UNLEASH_TOKEN=$(openssl rand -base64 32 | tr -d "=+/" | head -c 32)
+                        
+                        # Update database secret in Vault
+                        vault kv put nextgen/data/database \
+                          username="nextgen_prod_user" \
+                          password="$NEW_DB_PASS" \
+                          host="postgres.dev.internal" \
+                          port="5432" \
+                          database="marketplace_prod"
+                        
+                        # Update Redis secret in Vault
+                        # 🔴 ACTION REQUIRED: Update host/port to match your MANAGED REDIS service.
+                        vault kv put nextgen/data/redis \
+                          password="$NEW_REDIS_PASS" \
+                          host="your-managed-redis-endpoint.cache.cloud-provider.com" \
+                          port="6379"
+                        
+                        # Update JWT secrets in Vault
+                        vault kv put nextgen/data/jwt \
+                          secret="$NEW_JWT_SECRET" \
+                          refresh_secret="$NEW_JWT_REFRESH_SECRET" \
+                          access_expiry="15m" \
+                          refresh_expiry="7d"
+                        
+                        # Update External Services secrets in Vault (example for UNLEASH_API_TOKEN)
+                        # 🔴 ACTION REQUIRED: Add/update other external service secrets here with actual values or generation logic.
+                        vault kv put nextgen/data/external-services \
+                          UNLEASH_API_TOKEN="$NEW_UNLEASH_TOKEN" \
+                          STRIPE_API_KEY="sk_live_..." \
+                          SMTP_PASSWORD="real-smtp-password" \
+                          PAYMENT_GATEWAY_API_KEY="real-payment-key" \
+                          PAYMENT_GATEWAY_SECRET="real-payment-secret"
+                        
+                        echo "Secrets updated in Vault for API"
+                        
+                        # Trigger rolling restart of API pods to pick up new secrets.
+                        # This annotation-based rollout is picked up by Kubernetes.
+                        kubectl rollout restart deployment/api -n nextgen
+                        
+                        echo "Secret rotation and API rollout completed successfully"
+                    env:
+                      - name: VAULT_ADDR
+                        value: "http://vault.dev:8200"

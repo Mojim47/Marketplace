@@ -1,0 +1,52 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-migration-{{ .Values.app.version | replace "." "-" }}
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  concurrencyPolicy: Forbid
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+        app: migration
+    spec:
+      restartPolicy: Never
+      initContainers:
+      - name: checksum-validator
+        image: {{ .Values.migration.image }}
+        command: ["/bin/sh"]
+        args:
+        - -c
+        - |
+          CURRENT_CHECKSUM=$(find prisma/migrations -name "*.sql" -exec sha256sum {} \; | sort | sha256sum | cut -d' ' -f1)
+          EXPECTED_CHECKSUM="{{ .Values.migration.checksum }}"
+          if [ "$CURRENT_CHECKSUM" != "$EXPECTED_CHECKSUM" ]; then
+            echo "MIGRATION CHECKSUM MISMATCH: $CURRENT_CHECKSUM != $EXPECTED_CHECKSUM"
+            exit 1
+          fi
+          echo "Checksum validated: $CURRENT_CHECKSUM"
+        volumeMounts:
+        - name: migrations
+          mountPath: /app/prisma/migrations
+      containers:
+      - name: migrate
+        image: {{ .Values.migration.image }}
+        command: ["npx", "prisma", "migrate", "deploy"]
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: url
+        volumeMounts:
+        - name: migrations
+          mountPath: /app/prisma/migrations
+      volumes:
+      - name: migrations
+        configMap:
+          name: migration-files

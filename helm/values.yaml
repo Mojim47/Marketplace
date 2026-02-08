@@ -1,0 +1,301 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# NextGen Marketplace - Helm Values Configuration
+# ═══════════════════════════════════════════════════════════════════════════
+# 
+# This file contains default values for the NextGen Marketplace Helm chart.
+# Override these values in your environment-specific values files:
+# - values-staging.yaml
+# - values-production.yaml
+#
+# Usage:
+#   helm install nextgen ./helm -f helm/values-production.yaml
+# ═══════════════════════════════════════════════════════════════════════════
+
+# ═══════════════════════════════════════════════════════════════════════════
+# GLOBAL SETTINGS
+# ═══════════════════════════════════════════════════════════════════════════
+global:
+  # Environment: staging, production
+  environment: production
+  
+  # Image registry
+  imageRegistry: registry.marketplace.ir
+  imagePullPolicy: IfNotPresent
+  
+  # Namespace
+  namespace: nextgen
+  
+  # Domain configuration
+  domain: marketplace.ir
+  apiDomain: api.marketplace.ir
+  adminDomain: admin.marketplace.ir
+  vendorDomain: vendor.marketplace.ir
+  
+  # TLS
+  tlsEnabled: true
+  tlsClusterIssuer: letsencrypt-prod
+
+# ═══════════════════════════════════════════════════════════════════════════
+# API SERVICE
+# ═══════════════════════════════════════════════════════════════════════════
+api:
+  name: api
+  image:
+    repository: nextgen/api
+    tag: "1.0.0"
+  
+  replicas: 3
+  
+  resources:
+    requests:
+      cpu: 500m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilization: 75
+    targetMemoryUtilization: 80
+  
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 3001
+  
+  ingress:
+    enabled: true
+    annotations:
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+      nginx.ingress.kubernetes.io/rate-limit: "100"
+      nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+  
+  env:
+    NODE_ENV: production
+    LOG_LEVEL: info
+    API_PREFIX: /api
+    DATABASE_LOGGING: "false"
+    REDIS_CLUSTER_ENABLED: "true"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# WEB FRONTEND
+# ═══════════════════════════════════════════════════════════════════════════
+web:
+  name: web
+  image:
+    repository: nextgen/web
+    tag: "1.0.0"
+  
+  replicas: 2
+  
+  resources:
+    requests:
+      cpu: 300m
+      memory: 256Mi
+    limits:
+      cpu: 700m
+      memory: 512Mi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 8
+    targetCPUUtilization: 75
+  
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 3000
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ADMIN PANEL
+# ═══════════════════════════════════════════════════════════════════════════
+admin:
+  name: admin
+  image:
+    repository: nextgen/admin
+    tag: "1.0.0"
+  
+  replicas: 2
+  
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 4
+    targetCPUUtilization: 75
+
+# ═══════════════════════════════════════════════════════════════════════════
+# WORKER SERVICE
+# ═══════════════════════════════════════════════════════════════════════════
+worker:
+  name: worker
+  image:
+    repository: nextgen/worker
+    tag: "1.0.0"
+  
+  replicas: 2
+  
+  resources:
+    requests:
+      cpu: 300m
+      memory: 512Mi
+    limits:
+      cpu: 800m
+      memory: 1Gi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 6
+    targetCPUUtilization: 80
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ML SERVICE
+# ═══════════════════════════════════════════════════════════════════════════
+mlService:
+  enabled: true
+  name: ml-service
+  image:
+    repository: nextgen/ml-service
+    tag: "1.0.0"
+  
+  replicas: 1
+  
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+
+# ═══════════════════════════════════════════════════════════════════════════
+# DATABASE (External - Managed PostgreSQL)
+# ═══════════════════════════════════════════════════════════════════════════
+database:
+  # Use external managed database in production
+  external: true
+  
+  # Connection details (override via secrets)
+  host: "postgres.marketplace.ir"
+  port: 5432
+  name: "nextgen_production"
+  
+  # Connection pool
+  poolMin: 5
+  poolMax: 20
+  
+  # SSL mode
+  sslMode: require
+
+# ═══════════════════════════════════════════════════════════════════════════
+# REDIS (External - Managed Redis)
+# ═══════════════════════════════════════════════════════════════════════════
+redis:
+  # Use external managed Redis in production
+  external: true
+  
+  # Connection details (override via secrets)
+  host: "redis.marketplace.ir"
+  port: 6379
+  
+  # Cluster mode
+  clusterEnabled: true
+
+# ═══════════════════════════════════════════════════════════════════════════
+# VAULT (HashiCorp Vault)
+# ═══════════════════════════════════════════════════════════════════════════
+vault:
+  enabled: true
+  address: "https://vault.marketplace.ir:8200"
+  
+  # Kubernetes auth
+  authPath: auth/kubernetes
+  role: nextgen-api
+  
+  # Secret paths
+  secretPaths:
+    database: nextgen/data/database
+    redis: nextgen/data/redis
+    jwt: nextgen/data/jwt
+    smtp: nextgen/data/smtp
+    payment: nextgen/data/payment
+    moodian: nextgen/data/moodian
+
+# ═══════════════════════════════════════════════════════════════════════════
+# OBSERVABILITY
+# ═══════════════════════════════════════════════════════════════════════════
+observability:
+  # Prometheus
+  prometheus:
+    enabled: true
+    serviceMonitor: true
+  
+  # Jaeger/OpenTelemetry
+  tracing:
+    enabled: true
+    endpoint: "http://jaeger-collector.observability:4317"
+  
+  # Logging
+  logging:
+    level: info
+    format: json
+
+# ═══════════════════════════════════════════════════════════════════════════
+# FEATURE FLAGS (Unleash)
+# ═══════════════════════════════════════════════════════════════════════════
+featureFlags:
+  enabled: true
+  url: "http://unleash.nextgen:4242"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# SECURITY
+# ═══════════════════════════════════════════════════════════════════════════
+security:
+  # Pod Security Standards
+  podSecurityStandard: restricted
+  
+  # Network Policies
+  networkPolicies:
+    enabled: true
+  
+  # Service Mesh (Istio)
+  serviceMesh:
+    enabled: false
+  
+  # Rate Limiting
+  rateLimiting:
+    enabled: true
+    requestsPerMinute: 100
+
+# ═══════════════════════════════════════════════════════════════════════════
+# MIGRATION JOB
+# ═══════════════════════════════════════════════════════════════════════════
+migration:
+  enabled: true
+  image:
+    repository: nextgen/api
+    tag: "1.0.0"
+  
+  # Checksum for tracking migration versions
+  checksum: "v1.0.0-initial"
+  
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi

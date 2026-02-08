@@ -1,0 +1,53 @@
+{
+  "standard": "IEEE 7000-2021",
+  "testDate": "2025-12-11T19:03:21.316Z",
+  "model": "MediaPipe Face Landmark Detection",
+  "threshold": "1.0% FAR",
+  "overallFAR": "0.15",
+  "compliant": true,
+  "results": [
+    {
+      "group": "Light Skin (I-II)",
+      "tested": 100,
+      "failures": 0,
+      "far": "0.00",
+      "status": "PASS"
+    },
+    {
+      "group": "Medium Skin (III-IV)",
+      "tested": 100,
+      "failures": 0,
+      "far": "0.00",
+      "status": "PASS"
+    },
+    {
+      "group": "Dark Skin (V-VI)",
+      "tested": 100,
+      "failures": 0,
+      "far": "0.00",
+      "status": "PASS"
+    },
+    {
+      "group": "Male",
+      "tested": 150,
+      "failures": 1,
+      "far": "0.67",
+      "status": "PASS"
+    },
+    {
+      "group": "Female",
+      "tested": 150,
+      "failures": 0,
+      "far": "0.00",
+      "status": "PASS"
+    },
+    {
+      "group": "Elderly (65+)",
+      "tested": 50,
+      "failures": 0,
+      "far": "0.00",
+      "status": "PASS"
+    }
+  ],
+  "recommendations": ["Continue monitoring", "Maintain dataset diversity"]
+}

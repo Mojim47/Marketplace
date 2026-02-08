@@ -1,0 +1,10 @@
+﻿{
+  "signature": "DEMO_SIG_ODI0MDAyNDg1",
+  "header": { "kid": "gs1-2025", "typ": "JWT", "alg": "ES256" },
+  "payload": {
+    "serial": "SN-2025-001",
+    "iss": "nextgen-market.ir",
+    "gtin": "1234567890128",
+    "iat": 1765493156
+  }
+}

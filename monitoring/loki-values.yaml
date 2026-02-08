@@ -1,0 +1,87 @@
+# Values for loki-stack Helm Chart
+# This configures Loki for log aggregation and Promtail for log collection
+
+loki:
+  # Basic Loki configuration
+  # For production, consider configuring persistent storage and a more robust
+  # deployment (e.g., microservices mode).
+  service:
+    type: ClusterIP
+  
+  # Configuration for Loki's storage, compaction, and retention.
+  # 🔴 ACTION REQUIRED: Adjust these settings based on your log volume and retention needs.
+  config:
+    chunk_store_config:
+      max_look_back_period: 30d
+    compactor:
+      compaction_interval: 10m
+    ingester:
+      max_transfer_rate: 50M
+      chunk_idle_period: 5m
+      chunk_retain_period: 30s
+    limits_config:
+      enforce_metric_name: false
+      max_global_streams_per_user: 0
+    schema_config:
+      configs:
+        - from: "2020-10-27"
+          store: "boltdb-shipper"
+          object_store: "filesystem" # Use "s3", "gcs" for cloud storage
+          schema: "v11"
+          index:
+            prefix: "index_"
+            period: "24h"
+    storage_config:
+      boltdb_shipper:
+        active_index_directory: /var/loki/index
+        cache_location: /var/loki/cache
+        retention_period: 30d # 🔴 ACTION REQUIRED: Adjust index retention
+        shared_store: filesystem # 🔴 ACTION REQUIRED: Use "s3", "gcs" for cloud storage
+      filesystem:
+        directory: /var/loki/chunks
+    table_manager:
+      retention_deletes_enabled: true
+      retention_period: 30d # 🔴 ACTION REQUIRED: Adjust chunk retention
+
+promtail:
+  enabled: true
+  # Deploy Promtail as a DaemonSet to collect logs from all nodes
+  daemonset:
+    enabled: true
+    # Configure Promtail to discover and scrape logs from pods in the 'nextgen' namespace
+    config:
+      clients:
+        - url: http://loki:3100/loki/api/v1/push
+      scrape_configs:
+        - job_name: kubernetes-pods-nextgen
+          kubernetes_sd_configs:
+            - role: pod
+              namespaces:
+                names: ["nextgen"] # Scrape logs only from the 'nextgen' namespace
+          relabel_configs:
+            - source_labels:
+                - __meta_kubernetes_pod_label_app_kubernetes_io_name
+              target_label: job
+            - action: replace
+              source_labels:
+                - __meta_kubernetes_pod_uid
+              target_label: __path__
+              replacement: /var/log/pods/*$1/*.log
+            - action: labelmap
+              regex: __meta_kubernetes_pod_label_(.+)
+            - action: replace
+              source_labels:
+                - __meta_kubernetes_namespace
+              target_label: namespace
+            - action: replace
+              source_labels:
+                - __meta_kubernetes_pod_name
+              target_label: pod_name
+            - action: replace
+              source_labels:
+                - __meta_kubernetes_container_name
+              target_label: container_name
+            - action: drop
+              regex: ^$
+              source_labels:
+                - __path__
