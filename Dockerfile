@@ -39,6 +39,7 @@ COPY package.json pnpm-workspace.yaml ./
 COPY pnpm-lock.yaml ./
 COPY apps/api/package.json ./apps/api/
 COPY apps/web/package.json ./apps/web/
+COPY apps/worker/package.json ./apps/worker/
 COPY apps/admin/package.json ./apps/admin/
 COPY apps/vendor-portal/package.json ./apps/vendor-portal/
 
@@ -80,7 +81,19 @@ EXPOSE 3000
 HEALTHCHECK --interval=15s --timeout=5s --retries=5 CMD node -e "require('http').get('http://localhost:3000/livez', res => process.exit(res.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
 CMD ["node", "apps/web/server.js"]
 
-# Stage 6: Admin Runner - Final image for the Admin App
+# Stage 6: Worker Runner - Final image for the Worker
+FROM base AS worker
+WORKDIR /app
+RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
+COPY --from=builder --chown=nextjs:nodejs /app/apps/worker/dist ./apps/worker/dist
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nextjs:nodejs /app/package.json ./
+USER nextjs
+HEALTHCHECK --interval=15s --timeout=5s --retries=5 CMD node -e "require('http').get('http://localhost:3000/livez', res => process.exit(res.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
+CMD ["node", "apps/worker/dist/main.js"]
+
+# Stage 7: Admin Runner - Final image for the Admin App
 FROM base AS admin
 WORKDIR /app
 RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
