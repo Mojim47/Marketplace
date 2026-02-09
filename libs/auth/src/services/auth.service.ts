@@ -11,28 +11,29 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { Injectable, Logger } from '@nestjs/common';
-import { PrismaClient, UserRole } from '@prisma/client';
 import { AuthenticationError } from '@nextgen/errors';
-import { PasswordService } from './password.service';
-import { TokenService } from './token.service';
-import { SessionService } from './session.service';
-import { RateLimitService } from './rate-limit.service';
-import { LockoutService } from './lockout.service';
-import { TotpService } from './totp.service';
-import { AuthAuditService, AuditContext } from './audit.service';
+import type { PrismaClient } from '@prisma/client';
 import type {
+  AuthenticatedUser,
   LoginRequest,
   LoginResponse,
-  RegisterRequest,
-  RefreshTokenRequest,
-  RefreshTokenResponse,
   LogoutRequest,
   PasswordChangeRequest,
-  PasswordResetRequest,
   PasswordResetConfirm,
+  PasswordResetRequest,
+  RefreshTokenRequest,
+  RefreshTokenResponse,
+  RegisterRequest,
   TotpSetupResponse,
-  AuthenticatedUser,
+  UserRole,
 } from '../types';
+import type { AuditContext, AuthAuditService } from './audit.service';
+import type { LockoutService } from './lockout.service';
+import type { PasswordService } from './password.service';
+import type { RateLimitService } from './rate-limit.service';
+import type { SessionService } from './session.service';
+import type { TokenService } from './token.service';
+import type { TotpService } from './totp.service';
 
 @Injectable()
 export class AuthService {
@@ -46,7 +47,7 @@ export class AuthService {
     private readonly rateLimitService: RateLimitService,
     private readonly lockoutService: LockoutService,
     private readonly totpService: TotpService,
-    private readonly auditService: AuthAuditService,
+    private readonly auditService: AuthAuditService
   ) {}
 
   /**
@@ -58,7 +59,7 @@ export class AuthService {
     // Rate limiting check
     const rateLimitKey = `${tenant_slug}:${email}`;
     const rateLimit = await this.rateLimitService.checkAndIncrement('login', rateLimitKey);
-    
+
     if (!rateLimit.allowed) {
       await this.auditService.logLoginFailed(context, 'RATE_LIMITED');
       throw AuthenticationError.rateLimited(rateLimit.retry_after || 60);
@@ -95,7 +96,10 @@ export class AuthService {
     });
 
     if (!user) {
-      await this.auditService.logLoginFailed({ ...context, tenant_id: tenant.id }, 'USER_NOT_FOUND');
+      await this.auditService.logLoginFailed(
+        { ...context, tenant_id: tenant.id },
+        'USER_NOT_FOUND'
+      );
       throw AuthenticationError.invalidCredentials();
     }
 
@@ -122,7 +126,7 @@ export class AuthService {
 
     // Verify password
     const passwordValid = await this.passwordService.verify(password, user.password_hash);
-    
+
     if (!passwordValid) {
       const lockout = await this.lockoutService.recordFailedAttempt(user.id);
       await this.auditService.logLoginFailed(userContext, 'INVALID_PASSWORD', {
@@ -138,24 +142,16 @@ export class AuthService {
     }
 
     // Check 2FA
-    if (user.totp_enabled) {
-      if (!totp_code) {
-        return {
-          access_token: '',
-          refresh_token: '',
-          token_type: 'Bearer',
-          expires_in: 0,
-          user: { id: user.id, email: user.email, roles: [] },
-          requires_2fa: true,
-        };
-      }
-
-      const totpValid = await this.totpService.verify(user.id, totp_code);
-      if (!totpValid) {
-        await this.auditService.logTotpVerified(userContext, false);
-        throw AuthenticationError.invalidTotp();
-      }
-      await this.auditService.logTotpVerified(userContext, true);
+    const requiresTotp = await this.checkTotp(user, totp_code, userContext);
+    if (requiresTotp) {
+      return {
+        access_token: '',
+        refresh_token: '',
+        token_type: 'Bearer',
+        expires_in: 0,
+        user: { id: user.id, email: user.email, roles: [] },
+        requires_2fa: true,
+      };
     }
 
     // Reset failed attempts on successful login
@@ -172,7 +168,7 @@ export class AuthService {
     });
 
     // Get user roles
-    const roles = user.roles.map(r => r.role);
+    const roles = user.roles.map((r: { role: UserRole }) => r.role);
     const scopes = this.tokenService.getDefaultScopes(roles);
 
     // Generate tokens
@@ -223,11 +219,42 @@ export class AuthService {
     };
   }
 
+  private async checkTotp(
+    user: { id: string; email: string; totp_enabled: boolean },
+    totpCode: string | undefined,
+    context: AuditContext
+  ): Promise<boolean> {
+    if (!user.totp_enabled) {
+      return false;
+    }
+    if (!totpCode) {
+      return true;
+    }
+
+    const totpValid = await this.totpService.verify(user.id, totpCode);
+    if (!totpValid) {
+      await this.auditService.logTotpVerified(context, false);
+      throw AuthenticationError.invalidTotp();
+    }
+    await this.auditService.logTotpVerified(context, true);
+    return false;
+  }
+
   /**
    * Register a new user
    */
   async register(request: RegisterRequest, context: AuditContext): Promise<LoginResponse> {
-    const { email, password, tenant_slug, phone, first_name, last_name, first_name_fa, last_name_fa, national_id } = request;
+    const {
+      email,
+      password,
+      tenant_slug,
+      phone,
+      first_name,
+      last_name,
+      first_name_fa,
+      last_name_fa,
+      national_id,
+    } = request;
 
     // Rate limiting
     const rateLimit = await this.rateLimitService.checkAndIncrement('register', context.ip_address);
@@ -306,7 +333,7 @@ export class AuthService {
       data: {
         user_id: user.id,
         tenant_id: tenant.id,
-        role: UserRole.CUSTOMER,
+        role: 'CUSTOMER' as UserRole,
         is_active: true,
       },
     });
@@ -314,7 +341,7 @@ export class AuthService {
     // Login the user
     return this.login(
       { email, password, tenant_slug },
-      { ...context, user_id: user.id, tenant_id: tenant.id },
+      { ...context, user_id: user.id, tenant_id: tenant.id }
     );
   }
 
@@ -323,11 +350,11 @@ export class AuthService {
    */
   async refreshToken(
     request: RefreshTokenRequest,
-    context: AuditContext,
+    context: AuditContext
   ): Promise<RefreshTokenResponse> {
     try {
       const { payload, newTokenPair } = await this.tokenService.verifyAndRotateRefreshToken(
-        request.refresh_token,
+        request.refresh_token
       );
 
       // Update session activity
@@ -358,7 +385,7 @@ export class AuthService {
   async logout(
     request: LogoutRequest,
     user: AuthenticatedUser,
-    context: AuditContext,
+    context: AuditContext
   ): Promise<void> {
     const userContext: AuditContext = {
       ...context,
@@ -376,11 +403,11 @@ export class AuthService {
       // Revoke current session only
       await this.sessionService.terminateSession(user.session_id);
       await this.tokenService.revokeSession(user.session_id);
-      
+
       if (request.refresh_token) {
         await this.tokenService.blacklistToken(request.refresh_token);
       }
-      
+
       await this.auditService.logLogout(userContext, false);
     }
   }
@@ -391,7 +418,7 @@ export class AuthService {
   async changePassword(
     request: PasswordChangeRequest,
     user: AuthenticatedUser,
-    context: AuditContext,
+    context: AuditContext
   ): Promise<void> {
     const userContext: AuditContext = {
       ...context,
@@ -412,7 +439,7 @@ export class AuthService {
     // Verify current password
     const currentValid = await this.passwordService.verify(
       request.current_password,
-      dbUser.password_hash,
+      dbUser.password_hash
     );
 
     if (!currentValid) {
@@ -442,16 +469,13 @@ export class AuthService {
   /**
    * Request password reset
    */
-  async requestPasswordReset(
-    request: PasswordResetRequest,
-    context: AuditContext,
-  ): Promise<void> {
+  async requestPasswordReset(request: PasswordResetRequest, context: AuditContext): Promise<void> {
     // Rate limiting
     const rateLimit = await this.rateLimitService.checkAndIncrement(
       'password_reset',
-      request.email,
+      request.email
     );
-    
+
     if (!rateLimit.allowed) {
       // Don't reveal rate limiting to prevent enumeration
       return;
@@ -464,7 +488,9 @@ export class AuthService {
       where: { slug: request.tenant_slug },
     });
 
-    if (!tenant) return;
+    if (!tenant) {
+      return;
+    }
 
     const user = await this.prisma.user.findUnique({
       where: {
@@ -475,7 +501,9 @@ export class AuthService {
       },
     });
 
-    if (!user) return;
+    if (!user) {
+      return;
+    }
 
     // Generate reset token (in production, send via email)
     // This is a placeholder - implement email sending
@@ -488,10 +516,7 @@ export class AuthService {
   /**
    * Confirm password reset
    */
-  async confirmPasswordReset(
-    request: PasswordResetConfirm,
-    context: AuditContext,
-  ): Promise<void> {
+  confirmPasswordReset(request: PasswordResetConfirm, _context: AuditContext): void {
     // Validate new password
     const validation = this.passwordService.validate(request.new_password);
     if (!validation.valid) {
@@ -506,20 +531,16 @@ export class AuthService {
   /**
    * Setup TOTP for user
    */
-  async setupTotp(user: AuthenticatedUser): Promise<TotpSetupResponse> {
+  setupTotp(user: AuthenticatedUser): Promise<TotpSetupResponse> {
     return this.totpService.generateSetup(user.id, user.email);
   }
 
   /**
    * Enable TOTP after verification
    */
-  async enableTotp(
-    user: AuthenticatedUser,
-    code: string,
-    context: AuditContext,
-  ): Promise<boolean> {
+  async enableTotp(user: AuthenticatedUser, code: string, context: AuditContext): Promise<boolean> {
     const success = await this.totpService.verifyAndEnable(user.id, code);
-    
+
     if (success) {
       await this.auditService.logTotpEnabled({
         ...context,
@@ -537,7 +558,7 @@ export class AuthService {
   async disableTotp(
     user: AuthenticatedUser,
     password: string,
-    context: AuditContext,
+    context: AuditContext
   ): Promise<void> {
     // Verify password first
     const dbUser = await this.prisma.user.findUnique({
@@ -565,7 +586,7 @@ export class AuthService {
   /**
    * Get user's active sessions
    */
-  async getSessions(user: AuthenticatedUser) {
+  getSessions(user: AuthenticatedUser) {
     return this.sessionService.getUserSessions(user.id);
   }
 
@@ -575,7 +596,7 @@ export class AuthService {
   async terminateSession(
     user: AuthenticatedUser,
     sessionId: string,
-    context: AuditContext,
+    context: AuditContext
   ): Promise<void> {
     // Verify session belongs to user
     const session = await this.sessionService.getSession(sessionId);
@@ -586,12 +607,16 @@ export class AuthService {
     await this.sessionService.terminateSession(sessionId);
     await this.tokenService.revokeSession(sessionId);
 
-    await this.auditService.log('SESSION_TERMINATED', {
-      ...context,
-      user_id: user.id,
-      tenant_id: user.tenant_id,
-      session_id: sessionId,
-    }, true);
+    await this.auditService.log(
+      'SESSION_TERMINATED',
+      {
+        ...context,
+        user_id: user.id,
+        tenant_id: user.tenant_id,
+        session_id: sessionId,
+      },
+      true
+    );
   }
 
   /**
@@ -619,7 +644,7 @@ export class AuthService {
       return null;
     }
 
-    const roles = user.roles.map(r => r.role);
+    const roles = user.roles.map((r: { role: UserRole }) => r.role);
     const scopes = this.tokenService.getDefaultScopes(roles);
 
     return {

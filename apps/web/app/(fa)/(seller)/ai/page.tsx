@@ -1,7 +1,6 @@
 ﻿"use client";
 
 import { useState } from "react";
-import { AIService, IranDemandPredictionStrategy } from "@nextgen/ai";
 import { Button, Container, GlassCard, Pill, SectionTitle } from "@/components/ui";
 
 export default function AIDemandPage() {
@@ -10,10 +9,13 @@ export default function AIDemandPage() {
   const [inflation, setInflation] = useState("0.45");
   const [output, setOutput] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   async function runPrediction() {
     setError("");
     setOutput("");
+    setLoading(true);
+
     const sales = history
       .split(",")
       .map((s) => Number.parseInt(s.trim(), 10))
@@ -26,19 +28,29 @@ export default function AIDemandPage() {
 
     if (sales.length === 0) {
       setError("حداقل یک مقدار فروش معتبر وارد کنید.");
+      setLoading(false);
       return;
     }
 
     try {
-      const svc = new AIService(new IranDemandPredictionStrategy());
-      const res = await svc.predict({
-        salesHistoryIrr: sales,
-        importIndex: imports,
-        inflationRate: Number.isFinite(inflationRate) ? inflationRate : 0,
+      const res = await fetch("/api/ai/predict", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          salesHistoryIrr: sales,
+          importIndex: imports,
+          inflationRate: Number.isFinite(inflationRate) ? inflationRate : 0,
+        }),
       });
-      setOutput(res.localizedText);
+      const data = await res.json();
+      if (!res.ok || !data?.ok) {
+        throw new Error(data?.message || "خطای ناشناخته");
+      }
+      setOutput(data.localizedText || "");
     } catch (err) {
       setError(err instanceof Error ? err.message : "خطای ناشناخته");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -50,10 +62,10 @@ export default function AIDemandPage() {
             <p className="text-xs text-slate-300">AI Demand Studio</p>
             <SectionTitle className="text-3xl text-white">پیش‌بینی تقاضا با مدل ترکیبی</SectionTitle>
           </div>
-          <Pill>On-device Ready</Pill>
+          <Pill>AI Verified</Pill>
         </div>
         <p className="mt-4 text-sm text-slate-300">
-          این محاسبه بدون ارسال داده به سرور انجام می‌شود و خروجی قابل اتکا برای تصمیم‌گیری فروشنده ارائه می‌دهد.
+          این محاسبه با پردازش امن و کنترل‌شده انجام می‌شود و خروجی قابل اتکا برای تصمیم‌گیری فروشنده ارائه می‌دهد.
         </p>
       </GlassCard>
 
@@ -86,7 +98,7 @@ export default function AIDemandPage() {
             />
           </label>
 
-          <Button onClick={runPrediction}>محاسبه هوشمند</Button>
+          <Button loading={loading} onClick={runPrediction}>محاسبه هوشمند</Button>
 
           {error ? <div className="text-sm text-red-300">{error}</div> : null}
         </GlassCard>

@@ -1,0 +1,32 @@
+﻿[
+  {
+    "path": "/",
+    "resourceSizes": [
+      { "resourceType": "script", "budget": 150 }
+    ]
+  },
+  {
+    "path": "/checkout",
+    "resourceSizes": [
+      { "resourceType": "script", "budget": 150 }
+    ]
+  },
+  {
+    "path": "/profile",
+    "resourceSizes": [
+      { "resourceType": "script", "budget": 150 }
+    ]
+  },
+  {
+    "path": "/orders",
+    "resourceSizes": [
+      { "resourceType": "script", "budget": 150 }
+    ]
+  },
+  {
+    "path": "/login",
+    "resourceSizes": [
+      { "resourceType": "script", "budget": 200 }
+    ]
+  }
+]

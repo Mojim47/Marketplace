@@ -1,0 +1,35 @@
+﻿{
+  "version": "1.0.0",
+  "events": {
+    "page_view": {
+      "description": "Page view event",
+      "required": ["path", "locale"]
+    },
+    "cta_click": {
+      "description": "CTA click event",
+      "required": ["label", "location"]
+    },
+    "flow_start": {
+      "description": "Critical flow started",
+      "required": ["flow"]
+    },
+    "flow_complete": {
+      "description": "Critical flow completed",
+      "required": ["flow", "status"]
+    },
+    "error_shown": {
+      "description": "User visible error",
+      "required": ["code"]
+    }
+  },
+  "redact": [
+    "authorization",
+    "cookie",
+    "set-cookie",
+    "token",
+    "access_token",
+    "refresh_token",
+    "password",
+    "secret"
+  ]
+}

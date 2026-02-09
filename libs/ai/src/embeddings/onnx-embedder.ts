@@ -1,7 +1,7 @@
-import { InferenceSession, Tensor } from "onnxruntime-node";
-import { Tokenizer } from "@huggingface/tokenizers";
-import fs from "node:fs";
-import path from "node:path";
+import fs from 'node:fs';
+import path from 'node:path';
+import { Tokenizer } from '@huggingface/tokenizers';
+import { InferenceSession, Tensor } from 'onnxruntime-node';
 
 export interface OnnxEmbedderConfig {
   modelPath: string;
@@ -34,15 +34,15 @@ export class OnnxEmbedder {
     }
 
     this.session = await InferenceSession.create(modelPath, {
-      executionProviders: ["cpu"],
+      executionProviders: ['cpu'],
     });
 
-    const tokenizerJson = JSON.parse(fs.readFileSync(tokenizerPath, "utf-8"));
+    const tokenizerJson = JSON.parse(fs.readFileSync(tokenizerPath, 'utf-8'));
     const configPath =
       this.config.tokenizerConfigPath ??
-      path.join(path.dirname(tokenizerPath), "tokenizer_config.json");
+      path.join(path.dirname(tokenizerPath), 'tokenizer_config.json');
     const tokenizerConfig = fs.existsSync(configPath)
-      ? JSON.parse(fs.readFileSync(configPath, "utf-8"))
+      ? JSON.parse(fs.readFileSync(configPath, 'utf-8'))
       : {};
     this.tokenizer = new Tokenizer(tokenizerJson, tokenizerConfig);
     const tokenizerAny = this.tokenizer as unknown as {
@@ -67,17 +67,22 @@ export class OnnxEmbedder {
 
   async embed(text: string): Promise<Float32Array> {
     if (!this.session || !this.tokenizer) {
-      throw new Error("OnnxEmbedder is not initialized. Call ready() first.");
+      throw new Error('OnnxEmbedder is not initialized. Call ready() first.');
     }
 
     const encoding = this.tokenizer.encode(text);
     const ids = encoding.ids;
-    const mask = encoding.attentionMask ?? new Array(ids.length).fill(1);
+    const encodingAny = encoding as unknown as {
+      attention_mask?: number[];
+      attentionMask?: number[];
+    };
+    const mask =
+      encodingAny.attention_mask ?? encodingAny.attentionMask ?? new Array(ids.length).fill(1);
     const tokenTypes = new Array(ids.length).fill(0);
 
-    const inputIds = new Tensor("int64", toBigInt64(ids), [1, ids.length]);
-    const attentionMask = new Tensor("int64", toBigInt64(mask), [1, mask.length]);
-    const tokenTypeIds = new Tensor("int64", toBigInt64(tokenTypes), [1, tokenTypes.length]);
+    const inputIds = new Tensor('int64', toBigInt64(ids), [1, ids.length]);
+    const attentionMask = new Tensor('int64', toBigInt64(mask), [1, mask.length]);
+    const tokenTypeIds = new Tensor('int64', toBigInt64(tokenTypes), [1, tokenTypes.length]);
 
     const outputs = await this.session.run({
       input_ids: inputIds,
@@ -91,7 +96,7 @@ export class OnnxEmbedder {
       (Object.values(outputs)[0] as Tensor);
 
     if (!outputTensor) {
-      throw new Error("Embedding output not found in ONNX inference result.");
+      throw new Error('Embedding output not found in ONNX inference result.');
     }
 
     let vector: Float32Array;
@@ -102,7 +107,7 @@ export class OnnxEmbedder {
         outputTensor.data as Float32Array,
         mask,
         outputTensor.dims[1],
-        outputTensor.dims[2],
+        outputTensor.dims[2]
       );
     }
 
@@ -114,7 +119,9 @@ export class OnnxEmbedder {
 }
 
 function resolvePath(value: string): string {
-  if (path.isAbsolute(value)) return value;
+  if (path.isAbsolute(value)) {
+    return value;
+  }
   return path.resolve(process.cwd(), value);
 }
 
@@ -130,14 +137,16 @@ function meanPool(
   data: Float32Array,
   mask: number[],
   seqLen: number,
-  hiddenSize: number,
+  hiddenSize: number
 ): Float32Array {
   const pooled = new Float32Array(hiddenSize);
   let validTokens = 0;
 
   for (let tokenIndex = 0; tokenIndex < seqLen; tokenIndex += 1) {
     const isValid = mask[tokenIndex] ?? 0;
-    if (!isValid) continue;
+    if (!isValid) {
+      continue;
+    }
     validTokens += 1;
     const offset = tokenIndex * hiddenSize;
     for (let i = 0; i < hiddenSize; i += 1) {
@@ -145,7 +154,9 @@ function meanPool(
     }
   }
 
-  if (validTokens === 0) return pooled;
+  if (validTokens === 0) {
+    return pooled;
+  }
   for (let i = 0; i < hiddenSize; i += 1) {
     pooled[i] /= validTokens;
   }

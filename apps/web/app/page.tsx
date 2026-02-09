@@ -1,4 +1,4 @@
-﻿import { Button, Container, GlassCard, KpiCard, Pill, SectionTitle } from "@/components/ui";
+import { Button, Container, GlassCard, KpiCard, Pill, SectionTitle } from "@/components/ui";
 
 export default function HomePage() {
   return (
@@ -7,25 +7,25 @@ export default function HomePage() {
         <header className="flex flex-col gap-10">
           <div className="flex flex-wrap gap-3">
             <Pill>تجارت هوشمند AI + AR</Pill>
-            <Pill>پردازش روی دستگاه</Pill>
-            <Pill>استاندارد سازمانی</Pill>
+            <Pill>پردازش روي دستگاه</Pill>
+            <Pill>استاندارد سازماني</Pill>
           </div>
 
           <div className="grid gap-10 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
             <div className="space-y-6">
               <h1 className="section-title text-4xl leading-tight text-white sm:text-5xl lg:text-6xl">
-                بازار نسل بعد با تجربه‌ای فراتر از ترندهای امروز
+                بازار نسل بعد با تجربه‌اي فراتر از ترندهاي امروز
               </h1>
               <p className="text-base leading-7 text-[color:var(--ink-muted)] sm:text-lg">
-                NextGen Marketplace تجربه‌ای یکپارچه از جست‌وجوی هوشمند، پیشنهاددهی دقیق، و نمایش واقعیت افزوده را با تکیه بر قدرت دستگاه کاربر ارائه می‌کند.
+                NextGen Marketplace تجربه‌اي يکپارچه از جست‌وجوي هوشمند، پيشنهاددهي دقيق، و نمايش واقعيت افزوده را با تکيه بر قدرت دستگاه کاربر ارائه مي‌کند.
               </p>
               <div className="flex flex-wrap gap-4">
-                <Button>شروع تجربه هوشمند</Button>
-                <Button variant="outline">مشاهده نمونه‌ها</Button>
+                <Button loading={false}>شروع تجربه هوشمند</Button>
+                <Button loading={false} variant="outline">مشاهده نمونه‌ها</Button>
               </div>
               <div className="grid grid-cols-3 gap-4 text-center">
-                <KpiCard label="افزایش تعامل" value="+42%" className="text-center" />
-                <KpiCard label="نرخ تبدیل" value="1.6x" className="text-center" />
+                <KpiCard label="افزايش تعامل" value="+42%" className="text-center" />
+                <KpiCard label="نرخ تبديل" value="1.6x" className="text-center" />
                 <KpiCard label="پاسخ جست‌وجو" value="98ms" className="text-center" />
               </div>
             </div>
@@ -37,7 +37,7 @@ export default function HomePage() {
                   <span className="text-emerald-300">Online</span>
                 </div>
                 <div className="rounded-2xl bg-slate-900/60 p-4">
-                  <p className="text-sm text-slate-200">"گوشی پرچم‌دار با دوربین حرفه‌ای"</p>
+                  <p className="text-sm text-slate-200">"گوشي پرچم‌دار با دوربين حرفه‌اي"</p>
                   <div className="mt-4 space-y-2">
                     {[
                       { name: "Galaxy Ultra 5G", score: "شباهت 93%" },
@@ -55,7 +55,7 @@ export default function HomePage() {
                   </div>
                 </div>
                 <div className="rounded-2xl border border-dashed border-white/20 p-4 text-xs text-slate-300">
-                  رتبه‌بندی معنایی با Embedding واقعی و بدون هرگونه داده‌سازی مصنوعی انجام می‌شود.
+                  رتبه‌بندي معنايي با Embedding واقعي و بدون هرگونه داده‌سازي مصنوعي انجام مي‌شود.
                 </div>
               </div>
             </GlassCard>
@@ -65,16 +65,16 @@ export default function HomePage() {
         <section className="mt-16 grid gap-6 lg:grid-cols-3">
           {[
             {
-              title: "هوش تصمیم‌ساز",
-              desc: "مدل‌های پیش‌بینی تقاضا و پیشنهاددهی که رفتار مشتری را در لحظه تحلیل می‌کنند.",
+              title: "هوش تصميم‌ساز",
+              desc: "مدل‌هاي پيش‌بيني تقاضا و پيشنهاددهي که رفتار مشتري را در لحظه تحليل مي‌کنند.",
             },
             {
-              title: "AR واقعی",
-              desc: "نمایش محصولات در فضای واقعی با WebXR و پشتیبانی کامل iOS/Android.",
+              title: "AR واقعي",
+              desc: "نمايش محصولات در فضاي واقعي با WebXR و پشتيباني کامل iOS/Android.",
             },
             {
-              title: "حریم داده",
-              desc: "پردازش محلی و امن داده‌ها بدون ارسال اطلاعات حساس به سرویس‌های خارجی.",
+              title: "حريم داده",
+              desc: "پردازش محلي و امن داده‌ها بدون ارسال اطلاعات حساس به سرويس‌هاي خارجي.",
             },
           ].map((item) => (
             <GlassCard key={item.title} className="rounded-3xl p-6">
@@ -87,15 +87,16 @@ export default function HomePage() {
         <section className="mt-16 rounded-3xl border border-white/10 bg-slate-900/60 p-8">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <SectionTitle className="text-3xl text-white">اکوسیستم یکپارچه فروشنده</SectionTitle>
+              <SectionTitle className="text-3xl text-white">اکوسيستم يکپارچه فروشنده</SectionTitle>
               <p className="mt-2 text-sm text-slate-300">
-                داشبورد فروشنده با پیش‌بینی فروش، پیشنهاد قیمت، و هشدارهای هوشمند.
+                داشبورد فروشنده با پيش‌بيني فروش، پيشنهاد قيمت، و هشدارهاي هوشمند.
               </p>
             </div>
-            <Button variant="ghost">درخواست دموی سازمانی</Button>
+            <Button loading={false} variant="ghost">درخواست دموي سازماني</Button>
           </div>
         </section>
       </Container>
     </div>
   );
 }
+

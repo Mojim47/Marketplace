@@ -1,0 +1,2 @@
+﻿2026-02-08 | moji | tests/ui/playwright/web.checkout.visual.spec.ts-snapshots/web-checkout-web-win32.png; tests/ui/playwright/admin.visual.spec.ts-snapshots/admin-login-admin-win32.png | Phase C baseline sync after UI governance gates
+2026-02-08 | moji | tests/ui/playwright/web.profile.visual.spec.ts-snapshots/web-profile-web-win32.png; tests/ui/playwright/web.profile.visual.spec.ts-snapshots/web-orders-web-win32.png | Phase D PR-1 baseline sync after UI governance gates

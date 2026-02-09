@@ -10,8 +10,19 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { Injectable, Logger } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import type { PrismaClient } from '@prisma/client';
 import type { AuthAction, AuthAuditEntry } from '../types';
+
+type AuditLogRecord = {
+  action: string;
+  user_id: string | null;
+  tenant_id: string | null;
+  ip_address: string | null;
+  user_agent: string | null;
+  success: boolean;
+  metadata: unknown;
+  created_at: Date;
+};
 
 export interface AuditContext {
   user_id?: string;
@@ -34,7 +45,7 @@ export class AuthAuditService {
     action: AuthAction,
     context: AuditContext,
     success: boolean,
-    metadata?: Record<string, unknown>,
+    metadata?: Record<string, unknown>
   ): Promise<void> {
     const entry: AuthAuditEntry = {
       action,
@@ -61,7 +72,7 @@ export class AuthAuditService {
         success,
         ip_address: context.ip_address,
         user_agent: context.user_agent,
-        metadata: entry.metadata as any,
+        metadata: entry.metadata as Record<string, unknown>,
       },
     });
 
@@ -101,7 +112,7 @@ export class AuthAuditService {
   async logLoginFailed(
     context: AuditContext,
     reason: string,
-    metadata?: Record<string, unknown>,
+    metadata?: Record<string, unknown>
   ): Promise<void> {
     await this.log('LOGIN_FAILED', context, false, { reason, ...metadata });
   }
@@ -191,7 +202,7 @@ export class AuthAuditService {
   async logSuspiciousActivity(
     context: AuditContext,
     type: string,
-    details: Record<string, unknown>,
+    details: Record<string, unknown>
   ): Promise<void> {
     await this.log('SUSPICIOUS_ACTIVITY', context, false, { type, ...details });
   }
@@ -199,12 +210,8 @@ export class AuthAuditService {
   /**
    * Get recent auth events for a user
    */
-  async getRecentEvents(
-    userId: string,
-    tenantId: string,
-    limit = 50,
-  ): Promise<AuthAuditEntry[]> {
-    const logs = await this.prisma.auditLog.findMany({
+  async getRecentEvents(userId: string, tenantId: string, limit = 50): Promise<AuthAuditEntry[]> {
+    const logs = (await this.prisma.auditLog.findMany({
       where: {
         user_id: userId,
         tenant_id: tenantId,
@@ -212,9 +219,9 @@ export class AuthAuditService {
       },
       orderBy: { created_at: 'desc' },
       take: limit,
-    });
+    })) as AuditLogRecord[];
 
-    return logs.map(log => ({
+    return logs.map((log: AuditLogRecord) => ({
       action: log.action as AuthAction,
       user_id: log.user_id || undefined,
       tenant_id: log.tenant_id || undefined,
@@ -229,10 +236,7 @@ export class AuthAuditService {
   /**
    * Get failed login attempts for an IP
    */
-  async getFailedAttemptsFromIp(
-    ipAddress: string,
-    since: Date,
-  ): Promise<number> {
+  getFailedAttemptsFromIp(ipAddress: string, since: Date): Promise<number> {
     return this.prisma.auditLog.count({
       where: {
         ip_address: ipAddress,
@@ -245,18 +249,12 @@ export class AuthAuditService {
   /**
    * Check for suspicious activity patterns
    */
-  private async checkSuspiciousActivity(
-    context: AuditContext,
-    action: AuthAction,
-  ): Promise<void> {
+  private async checkSuspiciousActivity(context: AuditContext, action: AuthAction): Promise<void> {
     const oneHourAgo = new Date(Date.now() - 3600000);
 
     // Check for multiple failed logins from same IP
     if (action === 'LOGIN_FAILED') {
-      const failedCount = await this.getFailedAttemptsFromIp(
-        context.ip_address,
-        oneHourAgo,
-      );
+      const failedCount = await this.getFailedAttemptsFromIp(context.ip_address, oneHourAgo);
 
       if (failedCount >= 10) {
         await this.logSuspiciousActivity(context, 'BRUTE_FORCE_ATTEMPT', {
@@ -268,7 +266,7 @@ export class AuthAuditService {
 
     // Check for login from new location (simplified)
     if (action === 'LOGIN_SUCCESS' && context.user_id) {
-      const recentLogins = await this.prisma.auditLog.findMany({
+      const recentLogins = (await this.prisma.auditLog.findMany({
         where: {
           user_id: context.user_id,
           action: 'LOGIN_SUCCESS',
@@ -276,9 +274,9 @@ export class AuthAuditService {
         },
         select: { ip_address: true },
         distinct: ['ip_address'],
-      });
+      })) as Array<{ ip_address: string }>;
 
-      const knownIps = new Set(recentLogins.map(l => l.ip_address));
+      const knownIps = new Set(recentLogins.map((log) => log.ip_address));
       if (!knownIps.has(context.ip_address) && knownIps.size > 0) {
         await this.logSuspiciousActivity(context, 'NEW_LOCATION_LOGIN', {
           new_ip: this.maskIp(context.ip_address),
@@ -297,7 +295,7 @@ export class AuthAuditService {
       return `${parts[0]}.${parts[1]}.*.*`;
     }
     // IPv6
-    return ip.substring(0, 10) + '***';
+    return `${ip.substring(0, 10)}***`;
   }
 
   /**

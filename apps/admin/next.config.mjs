@@ -16,6 +16,7 @@ const apiTarget = normalizeTarget(process.env.ADMIN_API_PROXY_TARGET || process.
 const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',
+  distDir: process.env.NEXT_DIST_DIR || '.next',
   experimental: {
     typedRoutes: true
   },

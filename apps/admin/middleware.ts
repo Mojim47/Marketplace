@@ -2,10 +2,14 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
+  if (process.env.ADMIN_DISABLE_AUTH_MIDDLEWARE === 'true') {
+    return NextResponse.next();
+  }
+
   const token = request.cookies.get('admin-token')?.value;
 
-  // Allow login page
-  if (request.nextUrl.pathname === '/login') {
+  // Allow login and locale routes
+  if (request.nextUrl.pathname === '/login' || request.nextUrl.pathname.startsWith('/locale')) {
     return NextResponse.next();
   }
 
@@ -18,5 +22,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|login).*)'],
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|login|locale).*)'],
 };

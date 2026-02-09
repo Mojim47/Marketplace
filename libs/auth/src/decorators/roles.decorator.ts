@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { SetMetadata } from '@nestjs/common';
-import type { UserRole } from '@prisma/client';
+import type { UserRole } from '../types';
 
 export const REQUIRED_ROLES_KEY = 'requiredRoles';
 
@@ -14,5 +14,4 @@ export const REQUIRED_ROLES_KEY = 'requiredRoles';
  * @Get('admin/users')
  * getUsers() {}
  */
-export const RequireRoles = (...roles: UserRole[]) =>
-  SetMetadata(REQUIRED_ROLES_KEY, roles);
+export const RequireRoles = (...roles: UserRole[]) => SetMetadata(REQUIRED_ROLES_KEY, roles);

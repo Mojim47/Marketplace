@@ -2,6 +2,7 @@ import './globals.css';
 import { Vazirmatn, Fraunces } from 'next/font/google';
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
+import { cookies } from 'next/headers';
 
 const vazirmatn = Vazirmatn({
   subsets: ['latin', 'arabic'],
@@ -21,9 +22,13 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
+  const locale = cookies().get('NG_LOCALE')?.value ?? 'fa';
+  const isRtl = locale.startsWith('fa');
   return (
-    <html lang="fa" dir="rtl">
-      <body className={`${vazirmatn.variable} ${fraunces.variable} antialiased`}>{children}</body>
+    <html lang={isRtl ? 'fa' : 'en'} dir={isRtl ? 'rtl' : 'ltr'} data-locale={locale}>
+      <body className={`${vazirmatn.variable} ${fraunces.variable} antialiased`}>
+        <main className="min-h-screen">{children}</main>
+      </body>
     </html>
   );
 }

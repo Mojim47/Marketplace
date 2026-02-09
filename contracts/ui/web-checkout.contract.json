@@ -1,0 +1,9 @@
+{
+  "name": "web_checkout_flow",
+  "routes": ["/cart", "/checkout", "/checkout/success"],
+  "requiredTestIds": {
+    "/cart": ["cart-title", "cart-items", "cart-summary", "cart-checkout-cta"],
+    "/checkout": ["checkout-title", "checkout-form", "checkout-summary", "checkout-submit"],
+    "/checkout/success": ["checkout-success-title"]
+  }
+}

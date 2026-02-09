@@ -1,0 +1,8 @@
+{
+  "name": "admin_login_flow",
+  "routes": ["/login", "/"],
+  "requiredTestIds": {
+    "/login": ["admin-login-title", "admin-login-form", "admin-login-email", "admin-login-password", "admin-login-submit"],
+    "/": ["admin-dashboard-title"]
+  }
+}

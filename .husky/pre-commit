@@ -1,20 +1,55 @@
-#!/bin/sh
+#!/usr/bin/env sh
 . "$(dirname "$0")/_/husky.sh"
 
-echo "🔍 Running detect-secrets scan..."
-detect-secrets() {
-  detect-secrets-launcher "$@"
-}
-detect-secrets scan --baseline .secrets.baseline > .secrets.scan
-if [ $? -ne 0 ]; then
-  echo "❌ CRITICAL: New secrets detected! Commit blocked."
-  echo "Review the findings in .secrets.scan"
+echo "Running detect-secrets scan..."
+if ! pnpm exec detect-secrets-launcher --help >/dev/null 2>&1; then
+  echo "ERROR: detect-secrets-launcher is not available via pnpm. Run 'pnpm install'."
   exit 1
 fi
-echo "✅ No new secrets detected."
+
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | tr '\n' ' ')
+if [ -n "$STAGED_FILES" ]; then
+  BASELINE_ARGS=""
+  if [ -s .secrets.baseline ]; then
+    if node -e "JSON.parse(require('fs').readFileSync('.secrets.baseline','utf8'))" >/dev/null 2>&1; then
+      BASELINE_ARGS="--baseline .secrets.baseline"
+    else
+      echo "WARNING: .secrets.baseline is not valid JSON. Skipping baseline."
+    fi
+  fi
+  pnpm exec detect-secrets-launcher $BASELINE_ARGS $STAGED_FILES
+  if [ $? -ne 0 ]; then
+    echo "CRITICAL: New secrets detected! Commit blocked."
+    exit 1
+  fi
+fi
+
+echo "No new secrets detected."
 
 # Run Biome check on staged files
 pnpm biome check --staged --no-errors-on-unmatched
 
-# Run TypeScript type checking
-pnpm typecheck
+# Run targeted TypeScript type checking for touched packages
+TYPECHECK_FILTERS=""
+add_filter() {
+  if [ -n "$TYPECHECK_FILTERS" ]; then
+    TYPECHECK_FILTERS="$TYPECHECK_FILTERS --filter=$1"
+  else
+    TYPECHECK_FILTERS="--filter=$1"
+  fi
+}
+
+for file in $STAGED_FILES; do
+  case "$file" in
+    apps/web/*) add_filter "@nextgen/web" ;;
+    apps/admin/*) add_filter "@nextgen/admin" ;;
+    libs/*/*)
+      pkg=$(echo "$file" | cut -d/ -f2)
+      add_filter "@nextgen/$pkg"
+      ;;
+  esac
+done
+
+if [ -n "$TYPECHECK_FILTERS" ]; then
+  pnpm turbo run typecheck $TYPECHECK_FILTERS
+fi

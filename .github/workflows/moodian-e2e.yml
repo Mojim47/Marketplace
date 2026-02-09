@@ -1,0 +1,96 @@
+name: "Moodian E2E Gate"
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: "20.18.1"
+  PNPM_VERSION: "9.15.1"
+  MOODIAN_PRIVATE_KEY: ${{ secrets.MOODIAN_PRIVATE_KEY }}
+  MOODIAN_PUBLIC_KEY: ${{ secrets.MOODIAN_PUBLIC_KEY }}
+
+jobs:
+  moodian-e2e:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: nextgen_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v4
+
+      - name: "Setup pnpm"
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: "Setup Node.js"
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: "Install deps"
+        run: pnpm install --frozen-lockfile
+
+      - name: "Require signing keys (fail fast)"
+        run: |
+          if [ -z "${MOODIAN_PRIVATE_KEY}" ] || [ -z "${MOODIAN_PUBLIC_KEY}" ]; then
+            echo "❌ MOODIAN_PRIVATE_KEY / MOODIAN_PUBLIC_KEY must be set in repo/org secrets."
+            exit 1
+          fi
+
+      - name: "PAN leak gate"
+        run: bash scripts/ci/check-pan-leaks.sh
+
+      - name: "Prisma generate"
+        run: pnpm prisma generate --schema=prisma/schema.prisma
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/nextgen_test
+
+      - name: "Run moodian e2e test"
+        run: pnpm vitest run --config vitest.e2e.config.ts
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://test:test@localhost:5432/nextgen_test
+          REDIS_URL: redis://localhost:6379
+          FEATURE_MOODIAN_V2: "true"
+          MOODIAN_PRIVATE_KEY: ${{ env.MOODIAN_PRIVATE_KEY }}
+          MOODIAN_PUBLIC_KEY: ${{ env.MOODIAN_PUBLIC_KEY }}
+          JWT_SECRET: test-jwt-secret-for-ci-pipeline-minimum-32-chars
+          JWT_REFRESH_SECRET: test-refresh-secret-for-ci-pipeline-32-chars
+
+      - name: "Upload e2e artifacts"
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: moodian-e2e-logs
+          path: |
+            **/test-results/**/*.xml
+            **/vitest*.log
+            coverage/
+          retention-days: 14
