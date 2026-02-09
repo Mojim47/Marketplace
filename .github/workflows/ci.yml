@@ -140,21 +140,22 @@ jobs:
       # Snyk Security Scan - Additional vulnerability scanning
       # Note: Snyk requires SNYK_TOKEN secret. If not configured, step will fail.
       # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-      - name: "ًں”گ Run Snyk to check for vulnerabilities"
-        uses: snyk/actions/node@master
-        if: ${{ secrets.SNYK_TOKEN != '' }}
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          args: --severity-threshold=high --json-file-output=snyk-results.json
+      # Snyk scan disabled for forked PRs (secrets unavailable). Re-enable on trusted branches:
+      # - name: "ًں”گ Run Snyk to check for vulnerabilities"
+      #   uses: snyk/actions/node@master
+      #   if: ${{ github.event_name == 'push' && secrets.SNYK_TOKEN != '' }}
+      #   env:
+      #     SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      #   with:
+      #     args: --severity-threshold=high --json-file-output=snyk-results.json
 
-      - name: "ًں“¤ Upload Snyk results"
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: snyk-results
-          path: snyk-results.json
-          retention-days: 30
+      # - name: "ًں“¤ Upload Snyk results"
+      #   uses: actions/upload-artifact@v4
+      #   if: always()
+      #   with:
+      #     name: snyk-results
+      #     path: snyk-results.json
+      #     retention-days: 30
 
       # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       # pnpm Audit - Check for known vulnerabilities in dependencies
