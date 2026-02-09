@@ -15,6 +15,8 @@ env:
 
 jobs:
   moodian-e2e:
+    # Only run when signing keys are available (skip for forks/PRs without secrets)
+    if: ${{ secrets.MOODIAN_PRIVATE_KEY != '' && secrets.MOODIAN_PUBLIC_KEY != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false) }}
     runs-on: ubuntu-latest
     services:
       postgres:
