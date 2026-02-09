@@ -1,0 +1,12 @@
+groups:
+  - name: moodian-dlq
+    rules:
+      - alert: MoodianDLQNonEmpty
+        expr: |
+          sum by (queue) (redis_list_length{queue=~"bull:moodian-submit-dlq:wait"}) > 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Moodian DLQ has messages"
+          description: "Dead-letter queue for moodian-submit is non-empty. Investigate failed invoice submissions."

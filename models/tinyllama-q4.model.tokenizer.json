@@ -1,0 +1,5 @@
+{
+  "type": "dummy-tokenizer",
+  "version": "0.0.1",
+  "note": "Placeholder tokenizer manifest for hashing; replace with real tokenizer when available."
+}

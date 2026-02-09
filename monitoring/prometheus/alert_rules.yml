@@ -202,3 +202,27 @@ groups:
         annotations:
           summary: "CRITICAL: Disk space below 10%"
           description: "Immediate cleanup required"
+
+  - name: moodian_sla_alerts
+    rules:
+      - alert: MoodianInvoiceStalled24h
+        expr: |
+          sum by (tenant_id) (moodian_invoices_pending_24h) > 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Moodian invoices pending >24h"
+          description: "One or more invoices have not been sent/confirmed within 24h. tenant={{ $labels.tenant_id }}"
+
+  - name: moodian_dlq_alerts
+    rules:
+      - alert: MoodianDLQNonEmpty
+        expr: |
+          sum by (queue) (redis_list_length{queue=~\"bull:moodian-submit-dlq:wait\"}) > 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Moodian DLQ has messages"
+          description: "Dead-letter queue for moodian-submit is non-empty. Investigate failed invoice submissions."

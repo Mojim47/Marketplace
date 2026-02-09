@@ -1,4 +1,6 @@
 import { useEffect, useMemo } from "react";
+import { ARAsyncScheduler } from "./scheduler";
+import { emitTelemetry } from "@nextgen/observability";
 
 export interface ARViewerProps {
   modelId: string;
@@ -33,8 +35,36 @@ export function ARViewer({
   exposure = 1,
 }: ARViewerProps) {
   useEffect(() => {
-    import("@google/model-viewer");
-  }, []);
+    const scheduler = new ARAsyncScheduler({
+      maxConcurrent: 2,
+      queueLimit: 25,
+      onDrop: (metric) => {
+        emitTelemetry({
+          traceId: metric.jobId,
+          stage: "ar-scheduler",
+          status: "error",
+          latencyMs: metric.durationMs ?? 0,
+          metadata: { error: metric.error, meta: metric.metadata },
+        });
+      },
+    });
+
+    const { cancel } = scheduler.enqueue({
+      id: `model-viewer-${modelId}`,
+      deadlineAt: Date.now() + 5000,
+      execute: async () => {
+        await import("@google/model-viewer");
+        emitTelemetry({
+          traceId: `mv-${modelId}`,
+          stage: "ar-scheduler",
+          status: "ok",
+          latencyMs: 1,
+        });
+      },
+    });
+
+    return () => cancel();
+  }, [modelId]);
 
   const resolvedModel = useMemo(() => resolveModelUrl(modelId, modelUrl), [modelId, modelUrl]);
 

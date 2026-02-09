@@ -1,0 +1,14 @@
+{
+  "generatedAt": "2026-02-08T22:35:30.763Z",
+  "models": [
+    {
+      "name": "tinyllama-q4.model",
+      "file": "tinyllama-q4.model.onnx",
+      "sha256": "ef9f03b6c2025769620566ec072a6372095c5917085cda14e8fe088f1cb8a1ed",
+      "sizeBytes": 188,
+      "tokenizerHash": "b24cd60042b3b262c9f74261bfe694193687263d1487210ee0750f549c7a4da9",
+      "approvedBy": "Sara K.",
+      "updatedAt": "2026-02-08T22:35:30.761Z"
+    }
+  ]
+}

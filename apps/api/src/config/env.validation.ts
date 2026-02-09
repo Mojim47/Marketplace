@@ -60,6 +60,11 @@ class EnvironmentVariables {
   @IsOptional()
   DATABASE_LOGGING = 'false';
 
+  @IsString()
+  @IsIn(['true', 'false'])
+  @IsOptional()
+  FEATURE_MOODIAN_V2 = 'false';
+
   // ============================================
   // Redis Configuration
   // ============================================
@@ -171,12 +176,16 @@ class EnvironmentVariables {
   // ============================================
   
   @IsString()
-  @ValidateIf(o => o.NODE_ENV === 'production')
+  @ValidateIf(o => o.NODE_ENV === 'production' || o.FEATURE_MOODIAN_V2 === 'true')
   MOODIAN_API_KEY?: string;
 
   @IsString()
-  @ValidateIf(o => o.NODE_ENV === 'production')
+  @ValidateIf(o => o.NODE_ENV === 'production' || o.FEATURE_MOODIAN_V2 === 'true')
   MOODIAN_PRIVATE_KEY?: string;
+
+  @IsString()
+  @ValidateIf(o => o.NODE_ENV === 'production' || o.FEATURE_MOODIAN_V2 === 'true')
+  MOODIAN_PUBLIC_KEY?: string;
 
   // ============================================
   // CORS Configuration

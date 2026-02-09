@@ -10,21 +10,26 @@
  */
 
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { PaymentController } from './payment.controller';
 import { PaymentService, PAYMENT_AUDIT_SERVICE } from './payment.service';
 import { PaymentSecurityService } from './payment-security.service';
 import { PaymentAuditService } from './payment-audit.service';
 import { DatabaseModule } from '../database/database.module';
 import { CircuitBreakerService } from '@nextgen/resilience';
+import { TaxModule } from '../shared/tax/tax.module';
+import { QueueModule } from '@nextgen/queue';
+import { ElectronicSignatureService } from '@nextgen/moodian/electronic-signature.service';
 
 @Module({
-  imports: [DatabaseModule],
+  imports: [DatabaseModule, ConfigModule, TaxModule.forRoot(), QueueModule],
   controllers: [PaymentController],
   providers: [
     PaymentService,
     PaymentSecurityService,
     PaymentAuditService,
     CircuitBreakerService,
+    ElectronicSignatureService,
     {
       provide: PAYMENT_AUDIT_SERVICE,
       useClass: PaymentAuditService,

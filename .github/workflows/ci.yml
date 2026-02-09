@@ -56,11 +56,17 @@ jobs:
       - name: "ًں“¥ Install dependencies"
         run: pnpm install --frozen-lockfile
 
+      - name: "📦 Verify model manifest (ONNX hash gate)"
+        run: pnpm model:verify
+
       - name: "ًں”چ Run Biome lint & format check"
         run: pnpm run check
 
       - name: "ًں“‌ Run TypeScript check"
         run: pnpm run typecheck
+
+      - name: "PAN leak gate (fail-fast)"
+        run: bash scripts/ci/check-pan-leaks.sh
 
   # â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
   # STAGE 2: Security Scanning (Trivy + Snyk)

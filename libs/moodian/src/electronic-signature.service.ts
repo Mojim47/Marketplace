@@ -30,6 +30,15 @@ export class ElectronicSignatureService {
     this.publicKey = this.configService.get<string>('MOODIAN_PUBLIC_KEY', '');
     this.keyId = this.configService.get<string>('MOODIAN_KEY_ID', 'default-key');
 
+    const moodianV2Enabled =
+      this.configService.get<string>('FEATURE_MOODIAN_V2', 'false') === 'true';
+
+    if (moodianV2Enabled && (!this.privateKey || !this.publicKey)) {
+      throw new Error(
+        'Moodian v2 enabled but MOODIAN_PRIVATE_KEY or MOODIAN_PUBLIC_KEY is missing. Startup aborted.',
+      );
+    }
+
     if (!this.privateKey) {
       this.logger.warn('Private key not configured. Signature operations will fail.');
     }

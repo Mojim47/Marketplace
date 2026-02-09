@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AI_AR_TelemetryEvent",
+  "type": "object",
+  "required": ["traceId", "stage", "status", "latencyMs"],
+  "properties": {
+    "traceId": { "type": "string", "minLength": 8 },
+    "spanId": { "type": "string" },
+    "stage": { "type": "string", "minLength": 2 },
+    "status": { "type": "string", "enum": ["ok", "error"] },
+    "latencyMs": { "type": "number", "minimum": 0 },
+    "deviceProfile": {
+      "type": "object",
+      "properties": {
+        "gpuTier": { "type": "string" },
+        "fps": { "type": "number" },
+        "ua": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "piiFlag": { "type": "boolean", "default": false },
+    "metadata": { "type": "object", "additionalProperties": true },
+    "timestamp": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false
+}

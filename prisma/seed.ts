@@ -253,6 +253,7 @@ async function main() {
     data: {
       id: 'payment_1',
       tenant_id: tenant.id,
+      user_id: regularUser.id,
       order_id: order.id,
       amount: 27250000,
       status: 'PENDING',

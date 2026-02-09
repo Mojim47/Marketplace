@@ -9,13 +9,22 @@
  * Requirements: 4.1, 4.2, 4.3, 4.4, 4.5
  */
 
-import { Injectable, BadRequestException, NotFoundException, Logger, Inject } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, Logger, Inject, OnModuleInit } from '@nestjs/common';
+import crypto from 'crypto';
+import { Gauge } from 'prom-client';
 import { PrismaService } from '../database/prisma.service';
+import { PaymentGateway, InvoiceStatus } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { ZarinPalService, PaymentRequestData } from '@nextgen/payment';
 import { PaymentSecurityService, generateIdempotencyKey, generateRequestHash } from './payment-security.service';
 import { CircuitBreakerService } from '@nextgen/resilience';
 import CircuitBreaker from 'opossum';
+import { ConfigService } from '@nestjs/config';
+import { TaxService } from '../shared/tax/tax.service';
+import { ElectronicSignatureService } from '@nextgen/moodian/electronic-signature.service';
+import { SUIDGeneratorService } from '@nextgen/moodian/suid-generator.service';
+import { QueueService } from '@nextgen/queue';
+import { QUEUE_NAMES } from '@nextgen/queue/queue.constants';
 import { 
   CreatePaymentDto, 
   VerifyPaymentDto, 
@@ -54,7 +63,7 @@ const ERROR_MESSAGES = {
 };
 
 @Injectable()
-export class PaymentService {
+export class PaymentService implements OnModuleInit {
   private readonly logger = new Logger(PaymentService.name);
   private readonly zarinpalService: ZarinPalService;
   private readonly requestBreaker: CircuitBreaker;
@@ -62,15 +71,28 @@ export class PaymentService {
   private readonly refundBreaker: CircuitBreaker;
   private readonly breakerMessage =
     'سرويس پرداخت در حال حاضر در دسترس نيست. لطفاً چند دقيقه ديگر تلاش کنيد.';
+  private readonly suidGenerator = new SUIDGeneratorService();
+  private readonly signatureService: ElectronicSignatureService;
+  private slaMonitorHandle: NodeJS.Timeout | null = null;
+  private readonly slaGauge = new Gauge({
+    name: 'moodian_invoices_pending_24h',
+    help: 'Number of invoices older than 24h not delivered',
+    labelNames: ['tenant_id'],
+  });
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly securityService: PaymentSecurityService,
     private readonly circuitBreakerService: CircuitBreakerService,
     @Inject(PAYMENT_AUDIT_SERVICE) private readonly auditService: PaymentAuditService,
+    private readonly taxService: TaxService,
+    private readonly configService: ConfigService,
+    signatureService: ElectronicSignatureService,
+    private readonly queueService: QueueService,
   ) {
     // Initialize ZarinPal service
     this.zarinpalService = new ZarinPalService();
+    this.signatureService = signatureService;
     this.logger.log('PaymentService initialized with ZarinPal integration');
 
     const breakerOptions = {
@@ -109,7 +131,7 @@ export class PaymentService {
 
     // Find the order
     const order = await this.prisma.order.findFirst({
-      where: { id: orderId, userId },
+      where: { id: orderId, user_id: userId },
       include: { user: true },
     });
 
@@ -169,15 +191,17 @@ export class PaymentService {
       // Create payment transaction record
       const transaction = await this.prisma.paymentTransaction.create({
         data: {
-          userId,
-          orderId,
+          user_id: userId,
+          order_id: orderId,
+          tenant_id: order.tenant_id,
+          transaction_type: 'PAYMENT',
           authority: zarinpalResponse.authority,
           amount: new Decimal(amountInRials),
           description: paymentData.description,
           mobile: order.customerPhone,
           email: order.customerEmail,
-          callbackUrl: finalCallbackUrl,
-          gateway: 'zarinpal',
+          callback_url: finalCallbackUrl,
+          gateway: PaymentGateway.ZARINPAL,
           status: 'pending',
         },
       });
@@ -251,11 +275,11 @@ export class PaymentService {
     }
 
     // Check if already verified
-    if (transaction.status === 'paid' && transaction.refId) {
+    if (transaction.status === 'paid' && transaction.ref_id) {
       return {
         success: true,
-        refId: transaction.refId,
-        cardPan: transaction.cardPan || undefined,
+        refId: transaction.ref_id,
+        cardPan: transaction.card_pan || undefined,
         message: 'اين تراکنش قبلاً تاييد شده است',
       };
     }
@@ -266,14 +290,14 @@ export class PaymentService {
         where: { authority },
         data: {
           status: 'failed',
-          errorMessage: ERROR_MESSAGES.PAYMENT_CANCELLED,
+          error_message: ERROR_MESSAGES.PAYMENT_CANCELLED,
         },
       });
 
       // Log audit event
       if (this.auditService) {
         await this.auditService.logPaymentFailure(
-          transaction.userId,
+          transaction.user_id,
           transaction.id,
           transaction.amount.toNumber(),
           ERROR_MESSAGES.PAYMENT_CANCELLED,
@@ -302,17 +326,17 @@ export class PaymentService {
           where: { authority },
           data: {
             status: 'paid',
-            refId: verifyResponse.refId,
-            cardPan: verifyResponse.cardPan || null,
-            cardHash: verifyResponse.cardHash || null,
-            feeType: verifyResponse.feeType || null,
+            ref_id: verifyResponse.refId,
+            card_pan: this.maskPan(verifyResponse.cardPan),
+            card_hash: verifyResponse.cardHash || null,
+            fee_type: verifyResponse.feeType || null,
             fee: verifyResponse.fee ? new Decimal(verifyResponse.fee) : null,
-            paidAt: new Date(),
-            verifiedAt: new Date(),
+            paid_at: new Date(),
+            verified_at: new Date(),
           },
         }),
         this.prisma.order.update({
-          where: { id: transaction.orderId! },
+          where: { id: transaction.order_id! },
           data: {
             paymentStatus: 'COMPLETED',
             status: 'CONFIRMED',
@@ -325,13 +349,16 @@ export class PaymentService {
       // Log audit event
       if (this.auditService) {
         await this.auditService.logPaymentSuccess(
-          transaction.userId,
+          transaction.user_id,
           transaction.id,
           transaction.amount.toNumber(),
           verifyResponse.refId,
           ipAddress,
         );
       }
+
+      // Gate 2: create invoice + submit to Moodian behind feature flag
+      await this.issueInvoiceAndSubmit(transaction, verifyResponse);
 
       return {
         success: true,
@@ -347,14 +374,14 @@ export class PaymentService {
         where: { authority },
         data: {
           status: 'failed',
-          errorMessage: error.message,
+          error_message: error.message,
         },
       });
 
       // Log audit event
       if (this.auditService) {
         await this.auditService.logPaymentFailure(
-          transaction.userId,
+          transaction.user_id,
           transaction.id,
           transaction.amount.toNumber(),
           error.message,
@@ -390,7 +417,7 @@ export class PaymentService {
     }
 
     // Validate transaction status
-    if (transaction.status !== 'paid' || !transaction.refId) {
+    if (transaction.status !== 'paid' || !transaction.ref_id) {
       throw new BadRequestException(ERROR_MESSAGES.REFUND_NOT_ALLOWED);
     }
 
@@ -407,7 +434,7 @@ export class PaymentService {
       // Request refund from ZarinPal
       await this.circuitBreakerService.fire(
         this.refundBreaker,
-        [transaction.refId, refundAmountTomans],
+        [transaction.ref_id, refundAmountTomans],
         this.breakerMessage,
       );
 
@@ -416,14 +443,14 @@ export class PaymentService {
         where: { id: transactionId },
         data: {
           status: 'refunded',
-          errorMessage: reason || 'استرداد وجه',
+          error_message: reason || 'استرداد وجه',
         },
       });
 
       // Update order status if full refund
-      if (refundAmountRials === transaction.amount.toNumber() && transaction.orderId) {
+      if (refundAmountRials === transaction.amount.toNumber() && transaction.order_id) {
         await this.prisma.order.update({
-          where: { id: transaction.orderId },
+          where: { id: transaction.order_id },
           data: {
             paymentStatus: 'REFUNDED',
             status: 'CANCELLED',
@@ -439,7 +466,7 @@ export class PaymentService {
           userId,
           transactionId,
           refundAmountRials,
-          transaction.refId,
+          transaction.ref_id,
           ipAddress,
         );
       }
@@ -459,7 +486,7 @@ export class PaymentService {
    */
   async getTransaction(transactionId: string, userId: string): Promise<TransactionDetailsResponse> {
     const transaction = await this.prisma.paymentTransaction.findFirst({
-      where: { id: transactionId, userId },
+      where: { id: transactionId, user_id: userId },
     });
 
     if (!transaction) {
@@ -472,9 +499,28 @@ export class PaymentService {
       status: transaction.status,
       gateway: transaction.gateway,
       refId: transaction.refId || undefined,
-      createdAt: transaction.createdAt,
-      paidAt: transaction.paidAt || undefined,
+      createdAt: transaction.created_at,
+      paidAt: transaction.paid_at || undefined,
     };
+  }
+
+  async onModuleInit() {
+    if (this.isMoodianV2Enabled()) {
+      this.queueService.registerWorker(
+        QUEUE_NAMES.MOODIAN_SUBMIT,
+        async (job) => this.processMoodianJob(job),
+        {
+          concurrency: 3,
+          deadLetterQueue: QUEUE_NAMES.MOODIAN_SUBMIT_DLQ,
+        },
+      );
+      // SLA watchdog: flag invoices older than 24h
+      this.slaMonitorHandle = setInterval(() => {
+        this.monitorSla().catch((err) =>
+          this.logger.error(`SLA monitor error: ${err.message}`),
+        );
+      }, 10 * 60 * 1000); // every 10 minutes
+    }
   }
 
   /**
@@ -489,12 +535,12 @@ export class PaymentService {
 
     const [transactions, total] = await Promise.all([
       this.prisma.paymentTransaction.findMany({
-        where: { userId },
-        orderBy: { createdAt: 'desc' },
+        where: { user_id: userId },
+        orderBy: { created_at: 'desc' },
         skip,
         take: limit,
       }),
-      this.prisma.paymentTransaction.count({ where: { userId } }),
+      this.prisma.paymentTransaction.count({ where: { user_id: userId } }),
     ]);
 
     return {
@@ -503,9 +549,9 @@ export class PaymentService {
         amount: t.amount.toNumber(),
         status: t.status,
         gateway: t.gateway,
-        refId: t.refId || undefined,
-        createdAt: t.createdAt,
-        paidAt: t.paidAt || undefined,
+        refId: t.ref_id || undefined,
+        createdAt: t.created_at,
+        paidAt: t.paid_at || undefined,
       })),
       total,
     };
@@ -523,6 +569,243 @@ export class PaymentService {
    */
   isSandboxMode(): boolean {
     return this.zarinpalService.isSandbox();
+  }
+
+  private maskPan(pan?: string | null): string | null {
+    if (!pan) return null;
+    const digits = pan.replace(/\D/g, '');
+    if (digits.length < 10) return '****';
+    const first6 = digits.slice(0, 6);
+    const last4 = digits.slice(-4);
+    return `${first6}******${last4}`;
+  }
+
+  /**
+   * Feature flag check for Moodian v2 flow
+   */
+  private isMoodianV2Enabled(): boolean {
+    return this.configService.get<string>('FEATURE_MOODIAN_V2', 'false') === 'true';
+  }
+
+  /**
+   * Gate 2: after successful payment, issue invoice, sign, and submit to Moodian
+   */
+  private async issueInvoiceAndSubmit(transaction: any, verifyResponse: any): Promise<void> {
+    if (!this.isMoodianV2Enabled()) {
+      return;
+    }
+
+    const order = await this.prisma.order.findFirst({
+      where: { id: transaction.order_id },
+      include: { items: true, tenant: true, user: true },
+    });
+
+    if (!order) {
+      this.logger.warn(`Order ${transaction.order_id} not found for invoice issuance`);
+      return;
+    }
+
+    // Idempotency: avoid duplicate invoices per order
+    const existingInvoice = await this.prisma.invoice.findFirst({
+      where: { order_id: order.id },
+    });
+    if (existingInvoice) {
+      this.logger.debug(`Invoice already exists for order ${order.id}, skipping Moodian submission`);
+      return;
+    }
+
+    const invoiceDate = new Date();
+    const sellerTaxId = order.tenant?.tax_id || '00000000000000';
+    let suid: string;
+    try {
+      suid = this.suidGenerator.generateSUID(sellerTaxId, invoiceDate).suid;
+    } catch (error) {
+      this.logger.error(`Failed to generate SUID for order ${order.id}: ${error.message}`);
+      return;
+    }
+
+    const invoiceNumber = order.order_number || `INV-${Date.now()}`;
+    const subtotal = order.subtotal ?? new Decimal(0);
+    const discount = order.discount_amount ?? new Decimal(0);
+    const vat = order.tax_amount ?? new Decimal(0);
+    const total = order.total ?? new Decimal(0);
+
+    const itemsSnapshot = order.items.map((item: any) => ({
+      id: item.id,
+      productId: item.product_id,
+      productSku: item.product_sku,
+      name: item.product_name,
+      quantity: item.quantity,
+      total: item.total,
+    }));
+
+    const { signature, signedAt } = this.signatureService.sign({
+      orderId: order.id,
+      suid,
+      invoiceNumber,
+      total,
+    });
+
+    const invoice = await this.prisma.invoice.create({
+      data: {
+        tenant_id: order.tenant_id,
+        order_id: order.id,
+        payment_id: transaction.payment_id ?? null,
+        invoice_number: invoiceNumber,
+        suid,
+        invoice_type: 1,
+        invoice_pattern: 1,
+        seller_tax_id: sellerTaxId,
+        buyer_tax_id: order.user?.national_id || null,
+        buyer_postal_code: null,
+        status: (InvoiceStatus as any)?.SENT_TO_MOODIAN ?? 'SENT_TO_MOODIAN',
+        subtotal,
+        discount_amount: discount,
+        vat_amount: vat,
+        total_amount: total,
+        invoice_date: invoiceDate,
+        jalali_date: 0,
+        buyer_info: {
+          userId: order.user_id,
+          nationalId: order.user?.national_id ?? null,
+          phone: order.user?.phone ?? null,
+        },
+        items: itemsSnapshot,
+        electronic_sign: signature,
+        signed_at: signedAt,
+      },
+    });
+
+    await this.recordInvoiceAudit(invoice.id, 'SENT_TO_MOODIAN', {
+      suid,
+      invoiceNumber,
+      orderId: order.id,
+      total,
+    });
+
+    // Persist invoice line items for audit
+    await this.prisma.invoiceItem.createMany({
+      data: order.items.map((item: any) => ({
+        invoice_id: invoice.id,
+        product_id: item.product_id,
+        title: item.product_name,
+        quantity: item.quantity,
+        unit_price: new Decimal(item.total).div(item.quantity || 1),
+        discount_amount: new Decimal(0),
+        total_amount: item.total,
+        vat_rate: order.tax_amount && order.total
+          ? Number(new Decimal(order.tax_amount).div(order.total).mul(100).toFixed(2))
+          : 9,
+        vat_amount: order.tax_amount && order.total
+          ? new Decimal(item.total).mul(order.tax_amount).div(order.total)
+          : new Decimal(item.total).mul(0.09),
+      })),
+      skipDuplicates: true,
+    });
+
+    // Async submit to Moodian/SENA with retry handled inside TaxService
+    const queueName = (QUEUE_NAMES as any)?.MOODIAN_SUBMIT ?? 'moodian-submit';
+    this.logger.debug(`Enqueue Moodian submit job ${invoice.id} queue=${queueName}`);
+    const job = await this.queueService.addJob(
+      queueName,
+      'submit-invoice',
+      { invoiceId: invoice.id },
+      { jobId: invoice.id, attempts: 5, backoff: { type: 'exponential', delay: 2000 } },
+    );
+    this.logger.debug(`Enqueued job ${job?.id ?? 'n/a'} on ${queueName}`);
+  }
+
+  private async processMoodianJob(job: any) {
+    const invoiceId = job.data.invoiceId as string;
+    const invoice = await this.prisma.invoice.findUnique({ where: { id: invoiceId } });
+    if (!invoice) return;
+
+    try {
+      const submission = await this.taxService.submitInvoice({
+        id: invoice.id,
+        serial: invoice.invoice_number,
+        total: Number(invoice.total_amount),
+        createdAt: invoice.invoice_date,
+      });
+
+      const statusMap: Record<string, InvoiceStatus> = {
+        CONFIRMED: InvoiceStatus.MOODIAN_CONFIRMED,
+        PENDING: InvoiceStatus.SENT_TO_MOODIAN,
+        REJECTED: InvoiceStatus.MOODIAN_REJECTED,
+      };
+
+      await this.prisma.invoice.update({
+        where: { id: invoice.id },
+        data: {
+          status: statusMap[submission.status] ?? InvoiceStatus.SENT_TO_MOODIAN,
+          moodian_reference_number: submission.senaRefId ?? null,
+          moodian_sent_at: new Date(),
+          moodian_confirmed_at:
+            submission.status === 'CONFIRMED' ? new Date() : null,
+          retry_count: submission.status === 'CONFIRMED' ? 0 : invoice.retry_count + 1,
+        },
+      });
+
+      await this.recordInvoiceAudit(invoice.id, submission.status, submission);
+    } catch (error) {
+      this.logger.error(`Moodian submit failed for invoice ${invoiceId}: ${error.message}`);
+      await this.prisma.invoice.update({
+        where: { id: invoice.id },
+        data: {
+          status: InvoiceStatus.DRAFT,
+          error_message: error.message,
+          retry_count: invoice.retry_count + 1,
+          last_retry_at: new Date(),
+        },
+      });
+      await this.recordInvoiceAudit(invoice.id, 'SUBMIT_FAILED', { error: error.message });
+      throw error;
+    }
+  }
+
+  private async recordInvoiceAudit(invoiceId: string, event: string, payload: any) {
+    const prev = await this.prisma.invoiceAudit.findFirst({
+      where: { invoice_id: invoiceId },
+      orderBy: { created_at: 'desc' },
+    });
+    const prevHash = prev?.hash ?? '';
+    const hash = this.hashEvent(prevHash, payload);
+    await this.prisma.invoiceAudit.create({
+      data: {
+        invoice_id: invoiceId,
+        event,
+        payload,
+        prev_hash: prevHash || null,
+        hash,
+      },
+    });
+  }
+
+  private hashEvent(prevHash: string, payload: any): string {
+    return crypto
+      .createHash('sha256')
+      .update(prevHash + JSON.stringify(payload))
+      .digest('hex');
+  }
+
+  private async monitorSla() {
+    const threshold = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const late = await this.prisma.invoice.findMany({
+      where: {
+        status: { in: [InvoiceStatus.DRAFT, InvoiceStatus.ISSUED, InvoiceStatus.SENT_TO_MOODIAN] },
+        created_at: { lt: threshold },
+      },
+      select: { id: true, invoice_number: true, status: true, created_at: true, tenant_id: true },
+    });
+
+    if (late.length > 0) {
+      this.logger.error(`SLA breach: ${late.length} invoices older than 24h not delivered`);
+      this.slaGauge.reset();
+      for (const inv of late) {
+        await this.recordInvoiceAudit(inv.id, 'SLA_BREACH_24H', inv);
+        this.slaGauge.inc({ tenant_id: inv.tenant_id ?? 'unknown' });
+      }
+    }
   }
 }
 

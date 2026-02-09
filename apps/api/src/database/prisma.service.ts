@@ -1,5 +1,6 @@
 import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common'
 import { PrismaClient } from '@prisma/client'
+import { ensureMaskedPan } from '../payment/pan.guard'
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
@@ -11,6 +12,15 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
         ? ['query', 'info', 'warn', 'error']
         : ['warn', 'error'],
       errorFormat: 'pretty',
+    })
+
+    // Global PAN redaction guard for payment_transactions
+    this.$use(async (params, next) => {
+      if (params.model === 'PaymentTransaction' && params.action) {
+        const data: any = params.args?.data;
+        if (data && data.card_pan) ensureMaskedPan(data.card_pan);
+      }
+      return next(params)
     })
   }
 

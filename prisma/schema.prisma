@@ -242,6 +242,8 @@ model User {
   dealer_profile   DealerProfile?
   executor_profile ExecutorProfile?
   orders           Order[]
+  payments         Payment[]
+  payment_transactions PaymentTransaction[]
   addresses        Address[]
   sessions         Session[]
   order_idempotencies OrderIdempotency[]
@@ -619,6 +621,7 @@ model Order {
   items    OrderItem[]
   payments Payment[]
   invoices Invoice[]
+  payment_transactions PaymentTransaction[]
   order_idempotencies OrderIdempotency[]
 
   @@unique([tenant_id, order_number])
@@ -680,39 +683,97 @@ model OrderIdempotency {
 
 model Payment {
   id        String @id @default(cuid())
-  order_id  String
   tenant_id String
+  user_id   String
+  order_id  String
 
-  // Amount
-  amount Decimal @db.Decimal(15, 2)
+  // Amounts
+  amount   Decimal @db.Decimal(15, 2)
+  currency String  @default("IRR") @db.VarChar(10)
 
   // Gateway
-  gateway       PaymentGateway
-  gateway_ref   String?        @db.VarChar(100) // Authority/RefID
-  gateway_track String?        @db.VarChar(100) // Tracking code
+  gateway                PaymentGateway
+  gateway_ref            String? @db.VarChar(100) // Authority / RefID
+  gateway_track          String? @db.VarChar(100) // Tracking code
+  gateway_payment_url    String? @db.VarChar(500)
+  gateway_response       Json?
+  gateway_transaction_id String? @db.VarChar(100)
 
   // Status
-  status PaymentStatus @default(PENDING)
+  status       PaymentStatus @default(PENDING)
+  completed_at DateTime?
 
   // Verification
   verified_at DateTime?
   card_pan    String?   @db.VarChar(20) // Masked card number
 
   // Metadata
-  metadata      Json    @default("{}")
+  description   String?  @db.VarChar(512)
+  metadata      Json     @default("{}")
   error_message String?
+  created_by    String?
+  updated_by    String?
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
   order Order @relation(fields: [order_id], references: [id])
+  user  User  @relation(fields: [user_id], references: [id])
+
+  transactions PaymentTransaction[]
+  invoices     Invoice[]
 
   @@index([order_id])
   @@index([tenant_id, status])
   @@index([tenant_id, gateway])
   @@index([tenant_id, created_at])
   @@index([gateway_ref])
+  @@index([user_id])
   @@map("payments")
+}
+
+model PaymentTransaction {
+  id         String          @id @default(cuid())
+  payment_id String?
+  tenant_id  String?
+  user_id    String
+  order_id   String
+
+  transaction_type String   @db.VarChar(20) // PAYMENT | REFUND | CHARGEBACK
+  gateway          PaymentGateway
+  authority        String?  @db.VarChar(100)
+  ref_id           String?  @db.VarChar(100)
+  card_pan         String?  @db.VarChar(30)
+  card_hash        String?  @db.VarChar(100)
+  fee_type         String?  @db.VarChar(30)
+  fee              Decimal? @db.Decimal(15, 2)
+
+  amount      Decimal @db.Decimal(15, 2)
+  description String? @db.VarChar(512)
+  mobile      String? @db.VarChar(20)
+  email       String? @db.VarChar(255)
+  callback_url String? @db.VarChar(500)
+
+  status        String   @db.VarChar(30) // pending/paid/failed/refunded
+  error_message String?
+  metadata      Json     @default("{}")
+
+  paid_at      DateTime?
+  verified_at  DateTime?
+  processed_at DateTime?
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  payment Payment? @relation(fields: [payment_id], references: [id])
+  order   Order   @relation(fields: [order_id], references: [id])
+  user    User    @relation(fields: [user_id], references: [id])
+
+  @@index([payment_id])
+  @@index([order_id])
+  @@index([tenant_id, status])
+  @@index([tenant_id, created_at])
+  @@unique([authority])
+  @@map("payment_transactions")
 }
 
 model ProformaInvoice {
@@ -756,27 +817,43 @@ model ProformaInvoice {
 // ═══════════════════════════════════════════════════════════════════════════
 
 model Invoice {
-  id        String @id @default(cuid())
-  order_id  String
-  tenant_id String
+  id         String @id @default(cuid())
+  tenant_id  String
+  order_id   String
+  payment_id String?
 
   // Invoice Identity
-  invoice_number String  @db.VarChar(20)
-  serial_number  String? @db.VarChar(20)
+  invoice_number  String  @db.VarChar(30)
+  serial_number   String? @db.VarChar(30)
+  suid            String  @unique @db.VarChar(30) // Systematic Unique Invoice Identifier
+  invoice_type    Int     @default(1) // 1=Sale
+  invoice_pattern Int     @default(1) // 1=Normal, 2=Draft
 
-  // Moodian
-  suid             String? @unique @db.VarChar(30) // Unique Invoice ID from Moodian
-  tax_id           String? @db.VarChar(30) // شماره منحصر به فرد مالیاتی
-  reference_number String? @db.VarChar(30)
+  // Parties
+  seller_tax_id     String  @db.VarChar(20)
+  buyer_tax_id      String? @db.VarChar(20)
+  buyer_postal_code String? @db.VarChar(20)
 
   // Status
-  status InvoiceStatus @default(DRAFT)
+  status                      InvoiceStatus @default(DRAFT)
+  moodian_reference_number    String?       @db.VarChar(50)
+  moodian_confirmation_reference String?    @db.VarChar(50)
+  moodian_response            Json?
+  error_message               String?
+  retry_count                 Int           @default(0)
+  last_retry_at               DateTime?
+  moodian_sent_at             DateTime?
+  moodian_confirmed_at        DateTime?
 
   // Amounts
-  subtotal   Decimal @db.Decimal(15, 2)
-  discount   Decimal @default(0) @db.Decimal(15, 2)
-  tax_amount Decimal @db.Decimal(15, 2)
-  total      Decimal @db.Decimal(15, 2)
+  subtotal        Decimal @db.Decimal(15, 2)
+  discount_amount Decimal @default(0) @db.Decimal(15, 2)
+  vat_amount      Decimal @default(0) @db.Decimal(15, 2)
+  total_amount    Decimal @db.Decimal(15, 2)
+
+  // Dates
+  invoice_date DateTime
+  jalali_date  Int
 
   // Buyer Info (snapshot)
   buyer_info Json @default("{}")
@@ -784,25 +861,65 @@ model Invoice {
   // Items (snapshot)
   items Json @default("[]")
 
-  // Moodian Response
-  moodian_response     Json?
-  moodian_sent_at      DateTime?
-  moodian_confirmed_at DateTime?
-
-  // QR Code
-  qr_code String?
+  // QR / Signature
+  qr_code         String?
+  electronic_sign String?
+  signed_at       DateTime?
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  order  Order  @relation(fields: [order_id], references: [id])
-  tenant Tenant @relation(fields: [tenant_id], references: [id])
+  order        Order        @relation(fields: [order_id], references: [id])
+  tenant       Tenant       @relation(fields: [tenant_id], references: [id])
+  payment      Payment?     @relation(fields: [payment_id], references: [id])
+  invoice_items InvoiceItem[]
+  invoice_audits InvoiceAudit[]
 
   @@unique([tenant_id, invoice_number])
+  @@unique([order_id])
   @@index([tenant_id, status])
   @@index([tenant_id, created_at])
   @@index([suid])
   @@map("invoices")
+}
+
+model InvoiceItem {
+  id               String  @id @default(cuid())
+  invoice_id       String
+  product_id       String
+  service_goods_id String  @default("001") @db.VarChar(20)
+  title            String
+  quantity         Int
+  unit_price       Decimal @db.Decimal(15, 2)
+  discount_amount  Decimal @default(0) @db.Decimal(15, 2)
+  total_amount     Decimal @db.Decimal(15, 2)
+  vat_rate         Int     @default(9)
+  vat_amount       Decimal @default(0) @db.Decimal(15, 2)
+  tax_code         String? @db.VarChar(30)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  invoice Invoice @relation(fields: [invoice_id], references: [id])
+
+  @@index([invoice_id])
+  @@index([product_id])
+  @@map("invoice_items")
+}
+
+model InvoiceAudit {
+  id         String   @id @default(cuid())
+  invoice_id String
+  event      String   @db.VarChar(50)
+  payload    Json
+  prev_hash  String?  @db.VarChar(128)
+  hash       String   @db.VarChar(128)
+  created_at DateTime @default(now())
+
+  invoice Invoice @relation(fields: [invoice_id], references: [id])
+
+  @@index([invoice_id])
+  @@map("invoice_audits")
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

@@ -69,6 +69,8 @@
     "payment:test-zarinpal": "ts-node scripts/payment/test-zarinpal.ts",
     "payment:test-moodian": "ts-node scripts/payment/test-moodian.ts",
     "payment:test-all": "pnpm payment:test-zarinpal && pnpm payment:test-moodian",
+    "model:hash": "ts-node scripts/ai/register-model.ts --write",
+    "model:verify": "ts-node scripts/ai/register-model.ts --verify",
     "grafana:open": "open http://localhost:3000 || start http://localhost:3000",
     "prometheus:open": "open http://localhost:9090 || start http://localhost:9090",
     "alertmanager:open": "open http://localhost:9093",

@@ -15,12 +15,25 @@ route:
     - match:
         severity: warning
       receiver: telegram
+    - matchers:
+        - alertname="MoodianInvoiceStalled24h"
+      receiver: moodian-slack
+    - matchers:
+        - alertname="MoodianDLQNonEmpty"
+      receiver: moodian-slack
 
 receivers:
   - name: 'telegram'
     webhook_configs:
       - url: 'http://api:3001/webhooks/alerts'
         send_resolved: true
+  - name: 'moodian-slack'
+    slack_configs:
+      - api_url: ${SLACK_WEBHOOK_URL}
+        channel: '#moodian-alerts'
+        send_resolved: true
+        title: '{{ .CommonLabels.alertname }} {{ .Status }}'
+        text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
 
 inhibit_rules:
   - source_match:

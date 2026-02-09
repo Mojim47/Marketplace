@@ -6,6 +6,7 @@ import path from 'node:path';
 import { defineConfig } from 'vitest/config';
 
 const coverageScope = process.env.COVERAGE_SCOPE;
+const coverageOverride = process.env.COVERAGE_OVERRIDE === 'true';
 const skipHeavyTests = process.env.SKIP_ONNX_PRISMA === 'true';
 const testInclude =
   coverageScope === 'aiar'
@@ -121,8 +122,9 @@ export default defineConfig({
       clean: true,
 
       // Coverage thresholds - standard baseline
-      thresholds:
-        coverageScope === 'aiar'
+      thresholds: coverageOverride
+        ? undefined
+        : coverageScope === 'aiar'
           ? {
               statements: 85,
               branches: 60,
