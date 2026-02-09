@@ -256,9 +256,12 @@ export class StorageHealthChecker implements DependencyChecker {
   private readonly port: number;
 
   constructor() {
-    const endpoint = process.env.MINIO_ENDPOINT;
-    const accessKey = process.env.MINIO_ROOT_USER || process.env.MINIO_ACCESS_KEY;
-    const secretKey = process.env.MINIO_ROOT_PASSWORD || process.env.MINIO_SECRET_KEY;
+    const sanitize = (value?: string) =>
+      value && value !== 'undefined' && value.trim().length > 0 ? value : undefined;
+
+    const endpoint = sanitize(process.env.MINIO_ENDPOINT);
+    const accessKey = sanitize(process.env.MINIO_ROOT_USER || process.env.MINIO_ACCESS_KEY);
+    const secretKey = sanitize(process.env.MINIO_ROOT_PASSWORD || process.env.MINIO_SECRET_KEY);
 
     this.host = endpoint || 'unknown';
     this.port = Number.parseInt(process.env.MINIO_API_PORT || process.env.MINIO_PORT || '9000', 10);

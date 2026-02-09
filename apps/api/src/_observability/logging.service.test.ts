@@ -18,6 +18,11 @@ const uuid = () =>
     .tuple(hexString(8), hexString(4), hexString(4), hexString(4), hexString(12))
     .map(([a, b, c, d, e]) => `${a}-${b}-${c}-${d}-${e}`);
 
+const firstArg = (spy: ReturnType<typeof vi.spyOn>) => {
+  expect(spy).toHaveBeenCalled();
+  return spy.mock.calls[0]?.[0] as string;
+};
+
 /**
  * Property-Based Tests for Logging Service
  *
@@ -86,7 +91,7 @@ describe('LoggingService', () => {
               expect(consoleSpy.error).toHaveBeenCalled();
 
               // Parse the logged JSON
-              const loggedJson = consoleSpy.error.mock.calls[0][0] as string;
+              const loggedJson = firstArg(consoleSpy.error);
               const logEntry: StructuredLogEntry = JSON.parse(loggedJson);
 
               // Verify correlation ID is present
@@ -131,7 +136,7 @@ describe('LoggingService', () => {
               // Verify all logs include correlation ID
               for (const spy of [consoleSpy.log, consoleSpy.warn, consoleSpy.debug]) {
                 if (spy.mock.calls.length > 0) {
-                  const loggedJson = spy.mock.calls[0][0] as string;
+                  const loggedJson = firstArg(spy);
                   const logEntry: StructuredLogEntry = JSON.parse(loggedJson);
                   expect(logEntry.correlationId).toBe(correlationId);
                 }
@@ -165,7 +170,7 @@ describe('LoggingService', () => {
             correlationStorage.run(context, () => {
               loggingService.log(message, contextName);
 
-              const loggedJson = consoleSpy.log.mock.calls[0][0] as string;
+              const loggedJson = firstArg(consoleSpy.log);
 
               // Should be valid JSON
               expect(() => JSON.parse(loggedJson)).not.toThrow();
@@ -208,7 +213,7 @@ describe('LoggingService', () => {
 
               loggingService.error('Error occurred', error, 'TestContext');
 
-              const loggedJson = consoleSpy.error.mock.calls[0][0] as string;
+              const loggedJson = firstArg(consoleSpy.error);
               const logEntry: StructuredLogEntry = JSON.parse(loggedJson);
 
               // Error details should be complete
@@ -234,7 +239,7 @@ describe('LoggingService', () => {
           // Log without correlation context
           loggingService.log(message, 'TestContext');
 
-          const loggedJson = consoleSpy.log.mock.calls[0][0] as string;
+          const loggedJson = firstArg(consoleSpy.log);
           const logEntry: StructuredLogEntry = JSON.parse(loggedJson);
 
           // Should be valid but without correlation ID
@@ -261,17 +266,17 @@ describe('LoggingService', () => {
           fc.integer({ min: 100, max: 599 }),
           fc.integer({ min: 1, max: 10000 }),
           (correlationId, method, url, statusCode, duration) => {
-            const context: CorrelationContext = {
-              correlationId,
-              requestId: correlationId,
-              timestamp: Date.now(),
-            };
+              const context: CorrelationContext = {
+                correlationId,
+                requestId: correlationId,
+                timestamp: Date.now(),
+              };
 
-            correlationStorage.run(context, () => {
-              loggingService.logRequest(method, url, statusCode, duration);
+              correlationStorage.run(context, () => {
+                loggingService.logRequest(method, url, statusCode, duration);
 
-              const loggedJson = consoleSpy.log.mock.calls[0][0] as string;
-              const logEntry: StructuredLogEntry = JSON.parse(loggedJson);
+                const loggedJson = firstArg(consoleSpy.log);
+                const logEntry: StructuredLogEntry = JSON.parse(loggedJson);
 
               // Should include correlation ID
               expect(logEntry.correlationId).toBe(correlationId);

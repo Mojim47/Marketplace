@@ -39,12 +39,20 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   constructor(private readonly authService: AuthService) {
     // Get config from environment directly since we can't inject before super()
-    const publicKey = process.env.JWT_PUBLIC_KEY;
+    const rawPublicKey = process.env.JWT_PUBLIC_KEY;
+    const publicKey =
+      rawPublicKey && rawPublicKey !== 'undefined' && rawPublicKey.trim().length > 0
+        ? rawPublicKey
+        : '';
     const nodeEnv = process.env.NODE_ENV || 'development';
     const secret =
       process.env.JWT_SECRET || (nodeEnv !== 'production' ? process.env.JWT_SECRET_DEV : undefined);
     const issuer = process.env.JWT_ISSUER || 'nextgen-marketplace';
     const audience = process.env.JWT_AUDIENCE || 'nextgen-api';
+
+    if (nodeEnv === 'production' && !publicKey) {
+      throw new Error('FATAL: JWT_PUBLIC_KEY must be defined in production environment');
+    }
 
     // Build strategy options based on available keys
     let strategyOptions: StrategyOptionsWithoutRequest;

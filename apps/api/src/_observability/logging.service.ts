@@ -137,6 +137,7 @@ export class LoggingService {
     const entry = this.createLogEntry('info', message, context, metadata);
 
     if (process.env.LOG_FORMAT === 'json') {
+      console.log(this.formatAsJson(entry));
     } else {
       const prefix = entry.correlationId ? `[${entry.correlationId}] ` : '';
       this.logger.log(`${prefix}${message}`, context);
@@ -201,6 +202,7 @@ export class LoggingService {
     const entry = this.createLogEntry('verbose', message, context, metadata);
 
     if (process.env.LOG_FORMAT === 'json') {
+      console.debug(this.formatAsJson(entry));
     } else {
       const prefix = entry.correlationId ? `[${entry.correlationId}] ` : '';
       this.logger.verbose(`${prefix}${message}`, context);
@@ -233,6 +235,7 @@ export class LoggingService {
     );
 
     if (process.env.LOG_FORMAT === 'json') {
+      console.log(this.formatAsJson(entry));
     } else {
       const prefix = entry.correlationId ? `[${entry.correlationId}] ` : '';
       this.logger.log(`${prefix}${method} ${url} ${statusCode} - ${duration}ms`);
