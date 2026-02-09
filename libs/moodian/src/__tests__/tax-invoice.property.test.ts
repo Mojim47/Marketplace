@@ -34,12 +34,13 @@ function calculateAmounts(
 } {
   // Calculate subtotal from items
   const subtotal = items.reduce((sum, item) => {
-    const itemTotal = item.quantity * item.unitPrice - item.discountAmount;
+    // Prevent negative item totals (discount cannot exceed line amount)
+    const itemTotal = Math.max(0, item.quantity * item.unitPrice - item.discountAmount);
     return sum + itemTotal;
   }, 0);
 
   // Apply discount
-  const taxableAmount = subtotal - discountAmount;
+  const taxableAmount = Math.max(0, subtotal - discountAmount);
 
   // Calculate VAT (9%)
   const taxAmount = Math.round(taxableAmount * (VAT_RATE / 100));
@@ -136,9 +137,10 @@ describe('TaxInvoiceService Property Tests', () => {
         fc.property(fc.array(taxInvoiceItemArbitrary, { minLength: 1, maxLength: 10 }), (items) => {
           const result = calculateAmounts(items, 0);
 
-          // Subtotal should be sum of (quantity * unitPrice - discount) for each item
+          // Subtotal should be sum of non-negative line totals
           const expectedSubtotal = items.reduce((sum, item) => {
-            return sum + (item.quantity * item.unitPrice - item.discountAmount);
+            const lineTotal = Math.max(0, item.quantity * item.unitPrice - item.discountAmount);
+            return sum + lineTotal;
           }, 0);
 
           expect(result.subtotal).toBe(expectedSubtotal);
@@ -155,8 +157,9 @@ describe('TaxInvoiceService Property Tests', () => {
           (items, discountAmount) => {
             const result = calculateAmounts(items, discountAmount);
 
-            // Taxable amount should be subtotal minus discount
-            expect(result.taxableAmount).toBe(result.subtotal - discountAmount);
+            // Taxable amount should be subtotal minus discount, never negative
+            const expectedTaxable = Math.max(0, result.subtotal - discountAmount);
+            expect(result.taxableAmount).toBe(expectedTaxable);
           }
         ),
         { numRuns: 100 }
@@ -328,9 +331,10 @@ describe('TaxInvoiceService Property Tests', () => {
         fc.property(fc.array(taxInvoiceItemArbitrary, { minLength: 2, maxLength: 20 }), (items) => {
           const result = calculateAmounts(items, 0);
 
-          // Subtotal should be sum of all items
+          // Subtotal should be sum of all non-negative line totals
           const expectedSubtotal = items.reduce((sum, item) => {
-            return sum + (item.quantity * item.unitPrice - item.discountAmount);
+            const lineTotal = Math.max(0, item.quantity * item.unitPrice - item.discountAmount);
+            return sum + lineTotal;
           }, 0);
 
           expect(result.subtotal).toBe(expectedSubtotal);
@@ -356,8 +360,8 @@ describe('TaxInvoiceService Property Tests', () => {
           (item) => {
             const result = calculateAmounts([item], 0);
 
-            // Subtotal should account for item discount
-            const expectedSubtotal = item.quantity * item.unitPrice - item.discountAmount;
+            // Subtotal should account for item discount but never go negative
+            const expectedSubtotal = Math.max(0, item.quantity * item.unitPrice - item.discountAmount);
             expect(result.subtotal).toBe(expectedSubtotal);
           }
         ),
