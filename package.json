@@ -140,8 +140,9 @@
     "@types/compression": "^1.7.5",
     "@types/cookie-parser": "^1.4.10",
     "@types/dompurify": "^3.0.5",
+    "@types/express": "^5.0.6",
     "@types/jsdom": "^21.1.6",
-    "@types/node": "^20.3.1",
+    "@types/node": "^20.19.27",
     "@types/passport-jwt": "^4.0.0",
     "@types/qrcode": "^1.5.0",
     "@types/uuid": "^9.0.0",
@@ -168,8 +169,15 @@
   },
   "pnpm": {
     "peerDependencyRules": {
-      "ignoreMissing": ["@types/react", "react", "react-dom"]
+      "ignoreMissing": [
+        "@types/react",
+        "react",
+        "react-dom"
+      ]
     }
   },
-  "workspaces": ["apps/*", "libs/*"]
+  "workspaces": [
+    "apps/*",
+    "libs/*"
+  ]
 }

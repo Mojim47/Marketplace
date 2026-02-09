@@ -31,13 +31,15 @@ ENV BUILD_DATE=${BUILD_DATE}
 ENV VCS_REF=${VCS_REF}
 
 RUN npm install -g pnpm
-# Install native build prerequisites for alpine (required by ssh2/argon2/cpu-features)
+# Install native build prerequisites for alpine (required by ssh2/argon2/cpu-features/Prisma)
 RUN apk add --no-cache \
     python3 \
     make \
     g++ \
     gcc \
     libc-dev \
+    libc6-compat \
+    openssl \
     openssl-dev
 
 # Stage 2: Dependencies - Install all dependencies
