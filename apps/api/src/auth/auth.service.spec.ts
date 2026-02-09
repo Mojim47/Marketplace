@@ -15,17 +15,28 @@ const createService = () => {
     get: vi.fn(),
   } as any;
 
-  const service = new AuthService(prisma, jwtService, configService);
-  (service as any)._lockoutService = {
+  const lockoutService = {
     recordLoginAttempt: vi.fn().mockResolvedValue({
       allowed: true,
       remainingAttempts: 5,
       message: 'ok',
     }),
     clearFailedAttempts: vi.fn(),
-  };
+  } as any;
 
-  return { service, prisma, jwtService };
+  const totpService = {
+    verify: vi.fn().mockReturnValue({ valid: true }),
+  } as any;
+
+  const service = new AuthService(
+    prisma,
+    jwtService,
+    configService,
+    lockoutService,
+    totpService,
+  );
+
+  return { service, prisma, jwtService, lockoutService };
 };
 
 describe('AuthService.signIn', () => {

@@ -2,6 +2,7 @@
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { GenericContainer } from 'testcontainers';
+import { execSync } from 'node:child_process';
 import Redis from 'ioredis';
 import { PrismaClient } from '@prisma/client';
 import { DistributedLockService } from '@nextgen/cache';
@@ -16,7 +17,21 @@ const pgUser = 'testuser';
 const pgPassword = 'testpass';
 const pgDb = 'testdb';
 
-describe('Orders Lock Integration (Redis/Prisma)', () => {
+const hasContainerRuntime = (): boolean => {
+  if (process.env.ENABLE_TESTCONTAINERS === 'true') {
+    return true;
+  }
+  try {
+    execSync('docker info', { stdio: 'ignore', timeout: 4000 });
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const describeIfRuntime = hasContainerRuntime() ? describe : describe.skip;
+
+describeIfRuntime('Orders Lock Integration (Redis/Prisma)', () => {
   beforeAll(async () => {
     redisContainer = await new GenericContainer('redis:7-alpine')
       .withExposedPorts(6379)
