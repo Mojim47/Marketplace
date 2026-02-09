@@ -1,4 +1,4 @@
-import { Button, Container, GlassCard, KpiCard, Pill, SectionTitle } from "@/components/ui";
+import { Button, Container, GlassCard, KpiCard, Pill, SectionTitle } from '@/components/ui';
 
 export default function HomePage() {
   return (
@@ -17,11 +17,14 @@ export default function HomePage() {
                 بازار نسل بعد با تجربه‌اي فراتر از ترندهاي امروز
               </h1>
               <p className="text-base leading-7 text-[color:var(--ink-muted)] sm:text-lg">
-                NextGen Marketplace تجربه‌اي يکپارچه از جست‌وجوي هوشمند، پيشنهاددهي دقيق، و نمايش واقعيت افزوده را با تکيه بر قدرت دستگاه کاربر ارائه مي‌کند.
+                NextGen Marketplace تجربه‌اي يکپارچه از جست‌وجوي هوشمند، پيشنهاددهي دقيق، و نمايش
+                واقعيت افزوده را با تکيه بر قدرت دستگاه کاربر ارائه مي‌کند.
               </p>
               <div className="flex flex-wrap gap-4">
                 <Button loading={false}>شروع تجربه هوشمند</Button>
-                <Button loading={false} variant="outline">مشاهده نمونه‌ها</Button>
+                <Button loading={false} variant="outline">
+                  مشاهده نمونه‌ها
+                </Button>
               </div>
               <div className="grid grid-cols-3 gap-4 text-center">
                 <KpiCard label="افزايش تعامل" value="+42%" className="text-center" />
@@ -40,9 +43,9 @@ export default function HomePage() {
                   <p className="text-sm text-slate-200">"گوشي پرچم‌دار با دوربين حرفه‌اي"</p>
                   <div className="mt-4 space-y-2">
                     {[
-                      { name: "Galaxy Ultra 5G", score: "شباهت 93%" },
-                      { name: "iPhone Pro Max", score: "شباهت 89%" },
-                      { name: "Xperia Camera", score: "شباهت 82%" },
+                      { name: 'Galaxy Ultra 5G', score: 'شباهت 93%' },
+                      { name: 'iPhone Pro Max', score: 'شباهت 89%' },
+                      { name: 'Xperia Camera', score: 'شباهت 82%' },
                     ].map((item) => (
                       <div
                         key={item.name}
@@ -65,16 +68,16 @@ export default function HomePage() {
         <section className="mt-16 grid gap-6 lg:grid-cols-3">
           {[
             {
-              title: "هوش تصميم‌ساز",
-              desc: "مدل‌هاي پيش‌بيني تقاضا و پيشنهاددهي که رفتار مشتري را در لحظه تحليل مي‌کنند.",
+              title: 'هوش تصميم‌ساز',
+              desc: 'مدل‌هاي پيش‌بيني تقاضا و پيشنهاددهي که رفتار مشتري را در لحظه تحليل مي‌کنند.',
             },
             {
-              title: "AR واقعي",
-              desc: "نمايش محصولات در فضاي واقعي با WebXR و پشتيباني کامل iOS/Android.",
+              title: 'AR واقعي',
+              desc: 'نمايش محصولات در فضاي واقعي با WebXR و پشتيباني کامل iOS/Android.',
             },
             {
-              title: "حريم داده",
-              desc: "پردازش محلي و امن داده‌ها بدون ارسال اطلاعات حساس به سرويس‌هاي خارجي.",
+              title: 'حريم داده',
+              desc: 'پردازش محلي و امن داده‌ها بدون ارسال اطلاعات حساس به سرويس‌هاي خارجي.',
             },
           ].map((item) => (
             <GlassCard key={item.title} className="rounded-3xl p-6">
@@ -92,11 +95,12 @@ export default function HomePage() {
                 داشبورد فروشنده با پيش‌بيني فروش، پيشنهاد قيمت، و هشدارهاي هوشمند.
               </p>
             </div>
-            <Button loading={false} variant="ghost">درخواست دموي سازماني</Button>
+            <Button loading={false} variant="ghost">
+              درخواست دموي سازماني
+            </Button>
           </div>
         </section>
       </Container>
     </div>
   );
 }
-

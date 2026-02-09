@@ -2,10 +2,10 @@
  * ???????????????????????????????????????????????????????????????????????????
  * NextGen Marketplace - Security Headers Interceptor
  * ???????????????????????????????????????????????????????????????????????????
- * 
+ *
  * Adds comprehensive security headers to all API responses using
  * SecurityHeadersManager from libs/security.
- * 
+ *
  * Features:
  * - Content-Security-Policy (CSP)
  * - Strict-Transport-Security (HSTS)
@@ -14,36 +14,35 @@
  * - Referrer-Policy
  * - Permissions-Policy
  * - Cross-Origin headers
- * 
+ *
  * @module @nextgen/api/interceptors
  * Requirements: 1.5
  */
 
 import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
+  type CallHandler,
+  type ExecutionContext,
   Inject,
+  Injectable,
+  type NestInterceptor,
   Optional,
 } from '@nestjs/common';
-import { Observable } from 'rxjs';
-import { Response } from 'express';
 import {
-  SecurityHeadersManager,
-  createSecurityHeadersManager,
-  createProductionSecurityHeaders,
+  type SecurityHeadersManager,
   createDevelopmentSecurityHeaders,
+  createProductionSecurityHeaders,
 } from '@nextgen/security';
+import type { Response } from 'express';
+import type { Observable } from 'rxjs';
 import { SECURITY_TOKENS } from '../../shared/security/tokens';
 
 /**
  * Security Headers Interceptor
- * 
+ *
  * Applies comprehensive security headers to all HTTP responses.
  * Uses SecurityHeadersManager from libs/security for consistent
  * header configuration across the application.
- * 
+ *
  * @example
  * // Global registration in AppModule
  * providers: [
@@ -52,7 +51,7 @@ import { SECURITY_TOKENS } from '../../shared/security/tokens';
  *     useClass: SecurityHeadersInterceptor,
  *   },
  * ]
- * 
+ *
  * @example
  * // Controller-level registration
  * @UseInterceptors(SecurityHeadersInterceptor)
@@ -66,7 +65,7 @@ export class SecurityHeadersInterceptor implements NestInterceptor {
   constructor(
     @Optional()
     @Inject(SECURITY_TOKENS.SECURITY_HEADERS)
-    injectedManager?: SecurityHeadersManager,
+    injectedManager?: SecurityHeadersManager
   ) {
     // Use injected manager if available, otherwise create default
     if (injectedManager) {
@@ -85,10 +84,10 @@ export class SecurityHeadersInterceptor implements NestInterceptor {
    */
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const response = context.switchToHttp().getResponse<Response>();
-    
+
     // Apply security headers before response is sent
     this.applySecurityHeaders(response);
-    
+
     return next.handle();
   }
 
@@ -128,7 +127,7 @@ export class SecurityHeadersInterceptor implements NestInterceptor {
  * Factory function to create SecurityHeadersInterceptor with custom config
  */
 export function createSecurityHeadersInterceptor(
-  manager?: SecurityHeadersManager,
+  manager?: SecurityHeadersManager
 ): SecurityHeadersInterceptor {
   const interceptor = new SecurityHeadersInterceptor(manager);
   return interceptor;

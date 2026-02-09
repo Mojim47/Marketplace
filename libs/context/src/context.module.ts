@@ -2,9 +2,9 @@
 // Context Module - Multi-Tenant Context Management Module
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { Module, Global } from '@nestjs/common';
-import { ContextService } from './context.service';
+import { Global, Module } from '@nestjs/common';
 import { ContextMiddleware } from './context.middleware';
+import { ContextService } from './context.service';
 
 @Global()
 @Module({

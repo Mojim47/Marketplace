@@ -4,7 +4,8 @@
 
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import type React from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '../../utils/cn';
 
 export interface PieDataPoint {
@@ -28,7 +29,6 @@ export interface PieChartProps {
   rtl?: boolean;
   className?: string;
 }
-
 
 export const PieChart: React.FC<PieChartProps> = ({
   data,
@@ -81,62 +81,116 @@ export const PieChart: React.FC<PieChartProps> = ({
       const labelX = center + labelRadius * Math.cos(midAngle);
       const labelY = center + labelRadius * Math.sin(midAngle);
 
-      return { ...d, path, startAngle, endAngle, labelX, labelY, percentage: (d.value / total) * 100 };
+      return {
+        ...d,
+        path,
+        startAngle,
+        endAngle,
+        labelX,
+        labelY,
+        percentage: (d.value / total) * 100,
+      };
     });
   }, [data, total, radius, innerRadius, center, donut]);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) { setIsVisible(true); observer.disconnect(); }
-    }, { threshold: 0.1 });
-    if (containerRef.current) observer.observe(containerRef.current);
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1 }
+    );
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
     return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
-    if (!isVisible || !animate) { setAnimationProgress(1); return undefined; }
+    if (!isVisible || !animate) {
+      setAnimationProgress(1);
+      return undefined;
+    }
     const startTime = performance.now();
     let frame: number;
     const animateFn = (time: number) => {
       const progress = Math.min((time - startTime) / animationDuration, 1);
-      setAnimationProgress(1 - Math.pow(1 - progress, 3));
-      if (progress < 1) frame = requestAnimationFrame(animateFn);
+      setAnimationProgress(1 - (1 - progress) ** 3);
+      if (progress < 1) {
+        frame = requestAnimationFrame(animateFn);
+      }
     };
     frame = requestAnimationFrame(animateFn);
     return () => cancelAnimationFrame(frame);
   }, [isVisible, animate, animationDuration]);
 
   if (data.length === 0) {
-    return <div className={cn('flex items-center justify-center', className)} style={{ width: size, height: size }}>
-      <p className="text-[var(--color-text-tertiary)]">No data</p>
-    </div>;
+    return (
+      <div
+        className={cn('flex items-center justify-center', className)}
+        style={{ width: size, height: size }}
+      >
+        <p className="text-[var(--color-text-tertiary)]">No data</p>
+      </div>
+    );
   }
 
   return (
-    <div ref={containerRef} className={cn('flex items-center gap-6', className)} dir={rtl ? 'rtl' : 'ltr'}>
+    <div
+      ref={containerRef}
+      className={cn('flex items-center gap-6', className)}
+      dir={rtl ? 'rtl' : 'ltr'}
+    >
       <div className="relative" style={{ width: size, height: size }}>
         <svg viewBox={`0 0 ${size} ${size}`} className="w-full h-full">
           {slices.map((slice, i) => (
-            <path key={i} d={slice.path} fill={slice.color}
+            <path
+              key={i}
+              d={slice.path}
+              fill={slice.color}
               opacity={hoveredIndex === null || hoveredIndex === i ? 1 : 0.5}
               transform={`rotate(${-90 + 360 * (1 - animationProgress)}, ${center}, ${center})`}
               className="transition-opacity duration-200 cursor-pointer"
-              onMouseEnter={() => setHoveredIndex(i)} onMouseLeave={() => setHoveredIndex(null)} />
+              onMouseEnter={() => setHoveredIndex(i)}
+              onMouseLeave={() => setHoveredIndex(null)}
+            />
           ))}
-          {showLabels && animationProgress === 1 && slices.map((slice, i) => slice.percentage > 5 && (
-            <text key={i} x={slice.labelX} y={slice.labelY} textAnchor="middle" dominantBaseline="middle"
-              className="text-xs font-medium fill-white pointer-events-none">
-              {slice.percentage.toFixed(0)}%
-            </text>
-          ))}
+          {showLabels &&
+            animationProgress === 1 &&
+            slices.map(
+              (slice, i) =>
+                slice.percentage > 5 && (
+                  <text
+                    key={i}
+                    x={slice.labelX}
+                    y={slice.labelY}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    className="text-xs font-medium fill-white pointer-events-none"
+                  >
+                    {slice.percentage.toFixed(0)}%
+                  </text>
+                )
+            )}
         </svg>
 
         {showTooltip && hoveredIndex !== null && (
-          <div className={cn('absolute px-3 py-2 rounded-lg bg-[var(--color-surface-default)] shadow-lg border border-[var(--color-border-light)] text-sm pointer-events-none z-10')}
-            style={{ left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}>
-            <p className="font-medium text-[var(--color-text-primary)]">{formatValue(slices[hoveredIndex].value)}</p>
+          <div
+            className={cn(
+              'absolute px-3 py-2 rounded-lg bg-[var(--color-surface-default)] shadow-lg border border-[var(--color-border-light)] text-sm pointer-events-none z-10'
+            )}
+            style={{ left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}
+          >
+            <p className="font-medium text-[var(--color-text-primary)]">
+              {formatValue(slices[hoveredIndex].value)}
+            </p>
             <p className="text-[var(--color-text-tertiary)]">
-              {rtl && slices[hoveredIndex].labelFa ? slices[hoveredIndex].labelFa : slices[hoveredIndex].label}
+              {rtl && slices[hoveredIndex].labelFa
+                ? slices[hoveredIndex].labelFa
+                : slices[hoveredIndex].label}
             </p>
           </div>
         )}
@@ -145,10 +199,21 @@ export const PieChart: React.FC<PieChartProps> = ({
       {showLegend && (
         <div className="flex flex-col gap-2">
           {slices.map((slice, i) => (
-            <div key={i} className="flex items-center gap-2 cursor-pointer"
-              onMouseEnter={() => setHoveredIndex(i)} onMouseLeave={() => setHoveredIndex(null)}>
+            <div
+              key={i}
+              className="flex items-center gap-2 cursor-pointer"
+              onMouseEnter={() => setHoveredIndex(i)}
+              onMouseLeave={() => setHoveredIndex(null)}
+            >
               <div className="w-3 h-3 rounded-full" style={{ backgroundColor: slice.color }} />
-              <span className={cn('text-sm', hoveredIndex === i ? 'text-[var(--color-text-primary)] font-medium' : 'text-[var(--color-text-secondary)]')}>
+              <span
+                className={cn(
+                  'text-sm',
+                  hoveredIndex === i
+                    ? 'text-[var(--color-text-primary)] font-medium'
+                    : 'text-[var(--color-text-secondary)]'
+                )}
+              >
                 {rtl && slice.labelFa ? slice.labelFa : slice.label}
               </span>
             </div>

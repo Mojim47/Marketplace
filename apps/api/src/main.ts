@@ -1,20 +1,20 @@
 ﻿import 'tsconfig-paths/register';
-import { Logger, ValidationPipe, VersioningType, BadRequestException } from '@nestjs/common';
-import { NestFactory } from '@nestjs/core';
+import { BadRequestException, Logger, ValidationPipe, VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { NestFactory } from '@nestjs/core';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import 'reflect-metadata';
-import { loadEnvFiles, validateEnv, EnvironmentValidationService } from '@nextgen/config';
+import { EnvironmentValidationService, loadEnvFiles, validateEnv } from '@nextgen/config';
+import type { ValidationError } from 'class-validator';
 import { AppModule } from './app.module';
 import { UserRateLimitGuard } from './common/guards/user-rate-limit.guard';
-import { ValidationError } from 'class-validator';
 
 // Environment validation service is provided by @nextgen/config
 
 /**
  * Custom exception factory for ValidationPipe
- * 
+ *
  * Security features:
  * - Does not expose internal field names in production
  * - Provides generic error messages
@@ -23,10 +23,10 @@ import { ValidationError } from 'class-validator';
 function createValidationExceptionFactory(logger: Logger) {
   return (errors: ValidationError[]) => {
     const isProduction = process.env.NODE_ENV === 'production';
-    
+
     // Log detailed errors server-side
     if (errors.length > 0) {
-      const errorDetails = errors.map(err => ({
+      const errorDetails = errors.map((err) => ({
         field: err.property,
         constraints: err.constraints,
         value: typeof err.value === 'string' ? '[REDACTED]' : typeof err.value,
@@ -44,9 +44,7 @@ function createValidationExceptionFactory(logger: Logger) {
     }
 
     // Detailed messages in development
-    const messages = errors.flatMap(err => 
-      Object.values(err.constraints || {})
-    );
+    const messages = errors.flatMap((err) => Object.values(err.constraints || {}));
 
     return new BadRequestException({
       statusCode: 400,
@@ -60,31 +58,31 @@ async function bootstrap() {
   loadEnvFiles();
   validateEnv({ service: 'api' });
   const logger = new Logger('Bootstrap');
-  
+
   // ???????????????????????????????????????????????????????????????????????????
   // CRITICAL: Environment Validation at Startup
   // Requirements: 5.2, 5.6 - Refuse to start if any required variables are missing
   // ???????????????????????????????????????????????????????????????????????????
-  
+
   if (EnvironmentValidationService) {
     logger.log('?? Validating environment configuration...');
-    
+
     const envValidator = new EnvironmentValidationService('api');
     const validationResult = envValidator.validateAtStartup();
-    
+
     if (!validationResult.success) {
       logger.error('? Environment validation failed! Application cannot start.');
       logger.error('');
-      
+
       // Log detailed validation report
       const report = envValidator.generateValidationReport();
       console.error(report);
-      
+
       // Requirements: 5.6 - Exit with non-zero code on validation failure
       logger.error('?? Fix the above environment issues and restart the application.');
       process.exit(1);
     }
-    
+
     // Log warnings if any
     if (validationResult.warnings && validationResult.warnings.length > 0) {
       logger.warn(`??  Found ${validationResult.warnings.length} environment warning(s):`);
@@ -94,13 +92,13 @@ async function bootstrap() {
       });
       logger.warn('');
     }
-    
+
     logger.log('? Environment validation passed! Starting application...');
   } else {
     logger.warn('??  Environment validation service not available, proceeding without validation');
     logger.warn('   This should only happen during development with missing dependencies');
   }
-  
+
   const app = await NestFactory.create(AppModule, {
     logger: ['error', 'warn', 'log'],
   });
@@ -113,7 +111,7 @@ async function bootstrap() {
   const HOST = configService.get<string>('API_HOST') || '0.0.0.0';
   const isProduction = configService.get<string>('NODE_ENV') === 'production';
   const corsOriginsRaw = configService.get<string>('CORS_ORIGINS');
-  
+
   // Requirements: 12.1, 12.2 - CORS_ORIGINS must be configured in production
   if (isProduction && !corsOriginsRaw) {
     logger.error('? CORS_ORIGINS is required in production environment');
@@ -121,19 +119,22 @@ async function bootstrap() {
     logger.error('   Example: CORS_ORIGINS=https://example.com,https://admin.example.com');
     process.exit(1);
   }
-  
+
   // In non-production, warn but allow localhost for development
   if (!corsOriginsRaw) {
     logger.warn('?? CORS_ORIGINS not configured - using localhost for development only');
   }
-  
+
   // Parse and validate CORS origins
-  const corsOrigins = corsOriginsRaw 
-    ? corsOriginsRaw.split(',').map(origin => origin.trim()).filter(Boolean)
+  const corsOrigins = corsOriginsRaw
+    ? corsOriginsRaw
+        .split(',')
+        .map((origin) => origin.trim())
+        .filter(Boolean)
     : ['http://localhost:3000'];
-  
+
   // Requirements: 12.3 - Validate CORS origins format
-  const invalidOrigins = corsOrigins.filter(origin => {
+  const invalidOrigins = corsOrigins.filter((origin) => {
     // Check if origin is a valid URL format
     try {
       const url = new URL(origin);
@@ -146,7 +147,7 @@ async function bootstrap() {
       return true; // Invalid URL format
     }
   });
-  
+
   if (invalidOrigins.length > 0) {
     logger.error(`? Invalid CORS origins detected: ${invalidOrigins.join(', ')}`);
     if (isProduction) {
@@ -154,7 +155,7 @@ async function bootstrap() {
       process.exit(1);
     }
   }
-  
+
   logger.log(`?? CORS configured with origins: ${corsOrigins.join(', ')}`);
 
   app.enableCors({
@@ -164,7 +165,7 @@ async function bootstrap() {
         callback(null, true);
         return;
       }
-      
+
       // Check if origin is in allowed list
       if (corsOrigins.includes(origin)) {
         callback(null, true);
@@ -180,10 +181,10 @@ async function bootstrap() {
   });
 
   app.use(helmet());
-  
+
   /**
    * Strict ValidationPipe Configuration
-   * 
+   *
    * Security features:
    * - whitelist: Strip properties not in DTO
    * - forbidNonWhitelisted: Reject requests with extra properties
@@ -192,17 +193,19 @@ async function bootstrap() {
    * - transformOptions.enableImplicitConversion: Type coercion
    * - Custom exception factory for secure error messages
    */
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,
-    forbidNonWhitelisted: true,
-    forbidUnknownValues: true,
-    transform: true,
-    transformOptions: {
-      enableImplicitConversion: true,
-    },
-    exceptionFactory: createValidationExceptionFactory(new Logger('Validation')),
-  }));
-  
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      forbidUnknownValues: true,
+      transform: true,
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
+      exceptionFactory: createValidationExceptionFactory(new Logger('Validation')),
+    })
+  );
+
   app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
 
   // Swagger API Documentation
@@ -223,7 +226,7 @@ async function bootstrap() {
           description: 'Enter JWT token',
           in: 'header',
         },
-        'JWT-auth',
+        'JWT-auth'
       )
       .addTag('health', 'Health check endpoints')
       .addTag('auth', 'Authentication and authorization')
@@ -239,10 +242,10 @@ async function bootstrap() {
       .build();
 
     const document = SwaggerModule.createDocument(app, swaggerConfig, {
-      operationIdFactory: (controllerKey: string, methodKey: string) => methodKey,
+      operationIdFactory: (_controllerKey: string, methodKey: string) => methodKey,
       deepScanRoutes: true,
     });
-    
+
     SwaggerModule.setup('api/docs', app, document, {
       swaggerOptions: {
         persistAuthorization: true,
@@ -252,13 +255,13 @@ async function bootstrap() {
       },
       customSiteTitle: 'NextGen API Documentation',
     });
-    logger.log(`?? Swagger UI enabled at /api/docs`);
+    logger.log('?? Swagger UI enabled at /api/docs');
   } else {
-    logger.log(`?? Swagger UI disabled in production (set ENABLE_SWAGGER=true to enable)`);
+    logger.log('?? Swagger UI disabled in production (set ENABLE_SWAGGER=true to enable)');
   }
 
   await app.listen(PORT, HOST);
-  
+
   logger.log(`? API: http://${HOST}:${PORT}`);
   logger.log(`?? Docs: http://${HOST}:${PORT}/api/docs`);
 }
@@ -268,5 +271,3 @@ bootstrap().catch((error: Error) => {
   logger.error('Failed to start', error.stack);
   process.exit(1);
 });
-
-

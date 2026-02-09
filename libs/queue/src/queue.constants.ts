@@ -11,4 +11,4 @@ export const QUEUE_NAMES = {
   EMBEDDING_GENERATION: 'embedding-generation-queue',
 } as const;
 
-export type QueueName = typeof QUEUE_NAMES[keyof typeof QUEUE_NAMES];
+export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];

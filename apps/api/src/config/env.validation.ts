@@ -1,23 +1,23 @@
+import { Logger } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
-import { 
-  IsString, 
-  IsNumber, 
-  IsBoolean, 
-  IsOptional, 
-  MinLength, 
-  validateSync, 
+import {
+  IsBoolean,
   IsIn,
+  IsNumber,
+  IsOptional,
+  IsString,
   IsUrl,
   Matches,
+  MinLength,
   ValidateIf,
+  validateSync,
 } from 'class-validator';
-import { Logger } from '@nestjs/common';
 
 const logger = new Logger('EnvValidation');
 
 /**
  * ?? Zero-Trust Environment Validation
- * 
+ *
  * Security principles:
  * - All critical secrets MUST be provided - no defaults for sensitive values
  * - Fail fast on missing secrets in production
@@ -28,7 +28,7 @@ class EnvironmentVariables {
   // ============================================
   // Core Application Settings
   // ============================================
-  
+
   @IsString()
   @IsIn(['development', 'staging', 'production', 'test'])
   NODE_ENV!: string;
@@ -48,10 +48,10 @@ class EnvironmentVariables {
   // ============================================
   // Database Configuration
   // ============================================
-  
+
   @IsString()
-  @Matches(/^postgres(ql)?:\/\//, { 
-    message: 'DATABASE_URL must be a valid PostgreSQL connection string' 
+  @Matches(/^postgres(ql)?:\/\//, {
+    message: 'DATABASE_URL must be a valid PostgreSQL connection string',
   })
   DATABASE_URL!: string;
 
@@ -63,41 +63,41 @@ class EnvironmentVariables {
   // ============================================
   // Redis Configuration
   // ============================================
-  
+
   @IsString()
-  @Matches(/^redis(s)?:\/\//, { 
-    message: 'REDIS_URL must be a valid Redis connection string' 
+  @Matches(/^redis(s)?:\/\//, {
+    message: 'REDIS_URL must be a valid Redis connection string',
   })
   REDIS_URL!: string;
 
   // ============================================
   // JWT Authentication Secrets
   // ============================================
-  
+
   @IsString()
-  @MinLength(64, { 
-    message: 'JWT_SECRET must be at least 64 characters for production security' 
+  @MinLength(64, {
+    message: 'JWT_SECRET must be at least 64 characters for production security',
   })
-  @ValidateIf(o => o.NODE_ENV === 'production')
+  @ValidateIf((o) => o.NODE_ENV === 'production')
   JWT_SECRET!: string;
 
   @IsString()
-  @MinLength(32, { 
-    message: 'JWT_SECRET must be at least 32 characters' 
+  @MinLength(32, {
+    message: 'JWT_SECRET must be at least 32 characters',
   })
-  @ValidateIf(o => o.NODE_ENV !== 'production')
+  @ValidateIf((o) => o.NODE_ENV !== 'production')
   JWT_SECRET_DEV?: string;
 
   @IsString()
-  @MinLength(64, { 
-    message: 'JWT_REFRESH_SECRET must be at least 64 characters for production security' 
+  @MinLength(64, {
+    message: 'JWT_REFRESH_SECRET must be at least 64 characters for production security',
   })
-  @ValidateIf(o => o.NODE_ENV === 'production')
+  @ValidateIf((o) => o.NODE_ENV === 'production')
   JWT_REFRESH_SECRET!: string;
 
   @IsString()
   @MinLength(32)
-  @ValidateIf(o => o.NODE_ENV !== 'production')
+  @ValidateIf((o) => o.NODE_ENV !== 'production')
   JWT_REFRESH_SECRET_DEV?: string;
 
   @IsString()
@@ -119,41 +119,41 @@ class EnvironmentVariables {
   // ============================================
   // RSA Keys for JWT (Production)
   // ============================================
-  
+
   @IsString()
-  @ValidateIf(o => o.NODE_ENV === 'production')
+  @ValidateIf((o) => o.NODE_ENV === 'production')
   @Matches(/^-----BEGIN (RSA )?PRIVATE KEY-----/, {
-    message: 'JWT_PRIVATE_KEY must be a valid RSA private key in PEM format'
+    message: 'JWT_PRIVATE_KEY must be a valid RSA private key in PEM format',
   })
   JWT_PRIVATE_KEY?: string;
 
   @IsString()
-  @ValidateIf(o => o.NODE_ENV === 'production')
+  @ValidateIf((o) => o.NODE_ENV === 'production')
   @Matches(/^-----BEGIN (RSA )?PUBLIC KEY-----/, {
-    message: 'JWT_PUBLIC_KEY must be a valid RSA public key in PEM format'
+    message: 'JWT_PUBLIC_KEY must be a valid RSA public key in PEM format',
   })
   JWT_PUBLIC_KEY?: string;
 
   // ============================================
   // TOTP/2FA Configuration
   // ============================================
-  
+
   @IsString()
-  @MinLength(32, { 
-    message: 'TOTP_ENCRYPTION_KEY must be at least 32 characters' 
+  @MinLength(32, {
+    message: 'TOTP_ENCRYPTION_KEY must be at least 32 characters',
   })
-  @ValidateIf(o => o.NODE_ENV === 'production')
+  @ValidateIf((o) => o.NODE_ENV === 'production')
   TOTP_ENCRYPTION_KEY?: string;
 
   // ============================================
   // Payment Gateway (ZarinPal)
   // ============================================
-  
+
   @IsString()
-  @MinLength(36, { 
-    message: 'ZARINPAL_MERCHANT_ID must be a valid merchant ID' 
+  @MinLength(36, {
+    message: 'ZARINPAL_MERCHANT_ID must be a valid merchant ID',
   })
-  @ValidateIf(o => o.NODE_ENV === 'production')
+  @ValidateIf((o) => o.NODE_ENV === 'production')
   ZARINPAL_MERCHANT_ID?: string;
 
   @IsString()
@@ -163,32 +163,32 @@ class EnvironmentVariables {
 
   @IsString()
   @MinLength(32)
-  @ValidateIf(o => o.NODE_ENV === 'production')
+  @ValidateIf((o) => o.NODE_ENV === 'production')
   ZARINPAL_WEBHOOK_SECRET?: string;
 
   // ============================================
   // Moodian Tax Integration
   // ============================================
-  
+
   @IsString()
-  @ValidateIf(o => o.NODE_ENV === 'production')
+  @ValidateIf((o) => o.NODE_ENV === 'production')
   MOODIAN_API_KEY?: string;
 
   @IsString()
-  @ValidateIf(o => o.NODE_ENV === 'production')
+  @ValidateIf((o) => o.NODE_ENV === 'production')
   MOODIAN_PRIVATE_KEY?: string;
 
   // ============================================
   // CORS Configuration
   // ============================================
-  
+
   @IsString()
   CORS_ORIGINS!: string;
 
   // ============================================
   // Logging & Monitoring
   // ============================================
-  
+
   @IsBoolean()
   @IsOptional()
   DEBUG = false;
@@ -205,7 +205,7 @@ class EnvironmentVariables {
   // ============================================
   // Observability
   // ============================================
-  
+
   @IsString()
   @IsOptional()
   @IsUrl({}, { message: 'JAEGER_ENDPOINT must be a valid URL' })
@@ -218,7 +218,7 @@ class EnvironmentVariables {
   // ============================================
   // Email Configuration
   // ============================================
-  
+
   @IsString()
   @IsOptional()
   SMTP_HOST?: string;
@@ -227,60 +227,60 @@ class EnvironmentVariables {
   SMTP_PORT?: number | string;
 
   @IsString()
-  @ValidateIf(o => o.SMTP_HOST)
+  @ValidateIf((o) => o.SMTP_HOST)
   SMTP_USER?: string;
 
   @IsString()
-  @ValidateIf(o => o.SMTP_HOST)
+  @ValidateIf((o) => o.SMTP_HOST)
   SMTP_PASSWORD?: string;
 
   // ============================================
   // SMS Configuration (Kavenegar)
   // ============================================
-  
+
   @IsString()
-  @ValidateIf(o => o.NODE_ENV === 'production')
+  @ValidateIf((o) => o.NODE_ENV === 'production')
   KAVENEGAR_API_KEY?: string;
 
   // ============================================
   // Feature Flags (Unleash)
   // ============================================
-  
+
   @IsString()
   @IsOptional()
   @IsUrl({}, { message: 'UNLEASH_URL must be a valid URL' })
   UNLEASH_URL?: string;
 
   @IsString()
-  @ValidateIf(o => o.UNLEASH_URL)
+  @ValidateIf((o) => o.UNLEASH_URL)
   UNLEASH_API_TOKEN?: string;
 
   // ============================================
   // Vault Configuration
   // ============================================
-  
+
   @IsString()
   @IsOptional()
   @IsUrl({}, { message: 'VAULT_ADDR must be a valid URL' })
   VAULT_ADDR?: string;
 
   @IsString()
-  @ValidateIf(o => o.VAULT_ADDR)
+  @ValidateIf((o) => o.VAULT_ADDR)
   VAULT_TOKEN?: string;
 
   // ============================================
   // Session Configuration
   // ============================================
-  
+
   @IsString()
   @MinLength(32)
-  @ValidateIf(o => o.NODE_ENV === 'production')
+  @ValidateIf((o) => o.NODE_ENV === 'production')
   SESSION_SECRET?: string;
 
   // ============================================
   // Rate Limiting
   // ============================================
-  
+
   @IsOptional()
   RATE_LIMIT_TTL?: number | string;
 
@@ -310,7 +310,7 @@ const PRODUCTION_REQUIRED_SECRETS = [
  */
 function validateProductionSecrets(config: Record<string, unknown>): string[] {
   const errors: string[] = [];
-  
+
   if (config.NODE_ENV !== 'production') {
     return errors;
   }
@@ -364,7 +364,7 @@ function checkForWeakSecrets(config: Record<string, unknown>): string[] {
 
 /**
  * Validate environment configuration
- * 
+ *
  * Features:
  * - Class-validator based validation
  * - Production-specific secret requirements
@@ -390,7 +390,7 @@ export function validate(config: Record<string, unknown>) {
 
   // Check production secrets
   const productionErrors = validateProductionSecrets(config);
-  
+
   // Check for weak secrets
   const weakSecretWarnings = checkForWeakSecrets(config);
 
@@ -401,15 +401,15 @@ export function validate(config: Record<string, unknown>) {
 
   // Combine all errors
   const allErrors: string[] = [];
-  
+
   if (errors.length > 0) {
-    allErrors.push(...errors.map(e => Object.values(e.constraints || {}).join(', ')));
+    allErrors.push(...errors.map((e) => Object.values(e.constraints || {}).join(', ')));
   }
-  
+
   allErrors.push(...productionErrors);
 
   if (allErrors.length > 0) {
-    const errorMessage = `Environment validation failed:\n${allErrors.map(e => `  - ${e}`).join('\n')}`;
+    const errorMessage = `Environment validation failed:\n${allErrors.map((e) => `  - ${e}`).join('\n')}`;
     logger.error(errorMessage);
     throw new Error(errorMessage);
   }

@@ -1,37 +1,32 @@
-﻿import type { AuthenticatedUser } from '../common/types/authenticated-user.type';
-import {
-  Controller,
-  Get,
-  Post,
-  Put,
-  Delete,
+﻿import {
   Body,
-  Param,
-  Query,
-  UseGuards,
+  Controller,
+  DefaultValuePipe,
+  Delete,
+  Get,
   HttpCode,
   HttpStatus,
-  ParseUUIDPipe,
+  Param,
   ParseIntPipe,
-  DefaultValuePipe,
+  ParseUUIDPipe,
+  Post,
+  Put,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
 import {
-  ApiTags,
-  ApiOperation,
   ApiBearerAuth,
-  ApiResponse,
+  ApiOperation,
   ApiParam,
   ApiQuery,
+  ApiResponse,
+  ApiTags,
 } from '@nestjs/swagger';
-import { InventoryService } from '@nextgen/inventory';
-import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import type { InventoryService } from '@nextgen/inventory';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import {
-  UpsertInventoryDto,
-  UpdateStockDto,
-  ReserveStockDto,
-  BulkStockCheckDto,
-} from './dto';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import type { AuthenticatedUser } from '../common/types/authenticated-user.type';
+import type { BulkStockCheckDto, ReserveStockDto, UpdateStockDto, UpsertInventoryDto } from './dto';
 
 @ApiTags('marketplace/inventory')
 @Controller('marketplace/inventory')
@@ -46,7 +41,7 @@ export class InventoryController {
   async getStock(
     @Param('variantId', ParseUUIDPipe) variantId: string,
     @CurrentUser() user: AuthenticatedUser,
-    @Query('warehouseId') warehouseId?: string,
+    @Query('warehouseId') warehouseId?: string
   ) {
     return this.inventoryService.getStock(variantId, user.vendorId, warehouseId);
   }
@@ -54,10 +49,7 @@ export class InventoryController {
   @Post('stock')
   @ApiOperation({ summary: 'ايجاد/بروزرساني موجودي' })
   @ApiResponse({ status: 201, description: 'موجودي ثبت شد' })
-  async upsertStock(
-    @CurrentUser() user: AuthenticatedUser,
-    @Body() dto: UpsertInventoryDto,
-  ) {
+  async upsertStock(@CurrentUser() user: AuthenticatedUser, @Body() dto: UpsertInventoryDto) {
     return this.inventoryService.upsertInventoryItem({
       ...dto,
       sellerId: user.vendorId,
@@ -70,14 +62,14 @@ export class InventoryController {
   async updateStock(
     @Param('variantId', ParseUUIDPipe) variantId: string,
     @CurrentUser() user: AuthenticatedUser,
-    @Body() dto: UpdateStockDto,
+    @Body() dto: UpdateStockDto
   ) {
     return this.inventoryService.updateStock(
       variantId,
       user.vendorId,
       dto.quantity,
       user.id,
-      dto.reason,
+      dto.reason
     );
   }
 
@@ -93,7 +85,7 @@ export class InventoryController {
   @ApiQuery({ name: 'limit', required: false, type: Number })
   async getMovementHistory(
     @Param('inventoryItemId', ParseUUIDPipe) inventoryItemId: string,
-    @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit: number,
+    @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit: number
   ) {
     return this.inventoryService.getMovementHistory(inventoryItemId, limit);
   }
@@ -115,7 +107,7 @@ export class InventoryController {
   @ApiParam({ name: 'reservationId', description: 'شناسه رزرو' })
   async releaseReservation(
     @Param('reservationId', ParseUUIDPipe) reservationId: string,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser
   ) {
     await this.inventoryService.releaseReservation(reservationId, user.id);
   }
@@ -126,7 +118,7 @@ export class InventoryController {
   @ApiParam({ name: 'reservationId', description: 'شناسه رزرو' })
   async confirmReservation(
     @Param('reservationId', ParseUUIDPipe) reservationId: string,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser
   ) {
     await this.inventoryService.confirmReservation(reservationId, user.id);
     return { success: true };
@@ -143,4 +135,3 @@ export class InventoryController {
     return this.inventoryService.checkBulkStock({ items: dto.items });
   }
 }
-

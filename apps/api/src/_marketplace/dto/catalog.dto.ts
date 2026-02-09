@@ -1,104 +1,106 @@
+import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
-  IsString,
+  IsArray,
+  IsBoolean,
   IsNumber,
   IsOptional,
-  IsArray,
+  IsString,
   IsUUID,
-  IsBoolean,
-  Min,
   Max,
+  Min,
   ValidateNested,
-  IsObject,
 } from 'class-validator';
-import { Type } from 'class-transformer';
-import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 
 export class AttributeDefinitionDto {
-  @ApiProperty({ description: 'äÇã æíŽí' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ ï¿½íŽï¿½' })
   @IsString()
   name: string;
 
-  @ApiProperty({ description: 'äæÚ æíŽí', enum: ['string', 'number', 'boolean', 'select', 'multiselect'] })
+  @ApiProperty({
+    description: 'ï¿½ï¿½ï¿½ ï¿½íŽï¿½',
+    enum: ['string', 'number', 'boolean', 'select', 'multiselect'],
+  })
   @IsString()
   type: string;
 
-  @ApiPropertyOptional({ description: 'ÇáÒÇãí' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsBoolean()
   required?: boolean;
 
-  @ApiPropertyOptional({ description: 'ÒíäååÇ (ÈÑÇí select/multiselect)' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ select/multiselect)' })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
   options?: string[];
 
-  @ApiPropertyOptional({ description: 'ãÞÏÇÑ íÔÝÑÖ' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ôï¿½ï¿½ï¿½' })
   @IsOptional()
   defaultValue?: any;
 }
 
 export class CreateCategoryDto {
-  @ApiProperty({ description: 'äÇã ÏÓÊåÈäÏí' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsString()
   name: string;
 
-  @ApiPropertyOptional({ description: 'ÇÓáÇ' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½Ç' })
   @IsOptional()
   @IsString()
   slug?: string;
 
-  @ApiPropertyOptional({ description: 'ÊæÖíÍÇÊ' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsString()
   description?: string;
 
-  @ApiPropertyOptional({ description: 'ÊÕæíÑ' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsString()
   image?: string;
 
-  @ApiPropertyOptional({ description: 'Âí˜æä' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsString()
   icon?: string;
 
-  @ApiPropertyOptional({ description: 'ÔäÇÓå æÇáÏ' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsUUID()
   parentId?: string;
 
-  @ApiPropertyOptional({ description: 'ÊÑÊíÈ äãÇíÔ' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsNumber()
   @Min(0)
   order?: number;
 
-  @ApiPropertyOptional({ description: 'ÊÎÝíÝ ãÌÑí' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsNumber()
   @Min(0)
   @Max(100)
   executorDiscount?: number;
 
-  @ApiPropertyOptional({ type: [AttributeDefinitionDto], description: 'ÇÓ˜íãÇí æíŽíåÇ' })
+  @ApiPropertyOptional({ type: [AttributeDefinitionDto], description: 'ï¿½Ó˜ï¿½ï¿½ï¿½ï¿½ ï¿½íŽï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => AttributeDefinitionDto)
   attributeSchema?: AttributeDefinitionDto[];
 
-  @ApiPropertyOptional({ description: 'ÚäæÇä ãÊÇ' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsString()
   metaTitle?: string;
 
-  @ApiPropertyOptional({ description: 'ÊæÖíÍÇÊ ãÊÇ' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsString()
   metaDescription?: string;
 
-  @ApiPropertyOptional({ description: '˜áãÇÊ ˜áíÏí' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
@@ -106,14 +108,14 @@ export class CreateCategoryDto {
 }
 
 export class UpdateCategoryDto extends PartialType(CreateCategoryDto) {
-  @ApiPropertyOptional({ description: 'ÝÚÇá/ÛíÑÝÚÇá' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½/ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
 }
 
 export class MoveCategoryDto {
-  @ApiPropertyOptional({ description: 'ÔäÇÓå æÇáÏ ÌÏíÏ (null ÈÑÇí ÑíÔå)' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (null ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)' })
   @IsOptional()
   @IsUUID()
   newParentId?: string;

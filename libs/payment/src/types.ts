@@ -44,7 +44,9 @@ export class StaticCurrencyConverter implements CurrencyConverter {
     private rates: Record<string, number> = { IRR: 1, USD: 1 / 580000, EUR: 1 / 620000 }
   ) {}
   convert(amount: number, from: string, to: string): number {
-    if (!this.rates[from] || !this.rates[to]) throw new Error('unsupported-currency');
+    if (!this.rates[from] || !this.rates[to]) {
+      throw new Error('unsupported-currency');
+    }
     const base = amount / this.rates[from]!;
     return +(base * this.rates[to]!).toFixed(2);
   }

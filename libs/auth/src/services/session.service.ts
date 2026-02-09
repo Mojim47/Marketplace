@@ -8,12 +8,12 @@
 // - Idle timeout
 // ═══════════════════════════════════════════════════════════════════════════
 
+import { createHash, randomBytes } from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { PrismaClient } from '@prisma/client';
+import type { ConfigService } from '@nestjs/config';
+import type { PrismaClient } from '@prisma/client';
 import { Redis } from 'ioredis';
-import { createHash, randomBytes } from 'crypto';
-import type { SessionInfo, AuthConfig } from '../types';
+import type { AuthConfig, SessionInfo } from '../types';
 
 export interface CreateSessionOptions {
   user_id: string;
@@ -46,7 +46,7 @@ export class SessionService {
 
   constructor(
     private readonly prisma: PrismaClient,
-    private readonly configService: ConfigService,
+    private readonly configService: ConfigService
   ) {
     this.config = this.configService.get<AuthConfig['session']>('auth.session', {
       max_concurrent_sessions: 5,
@@ -91,17 +91,10 @@ export class SessionService {
 
     // Store session in Redis
     const ttl = Math.ceil(absoluteTimeout / 1000);
-    await this.redis.setex(
-      `${this.SESSION_PREFIX}${sessionId}`,
-      ttl,
-      JSON.stringify(sessionData),
-    );
+    await this.redis.setex(`${this.SESSION_PREFIX}${sessionId}`, ttl, JSON.stringify(sessionData));
 
     // Add to user's session list
-    await this.redis.sadd(
-      `${this.USER_SESSIONS_PREFIX}${options.user_id}`,
-      sessionId,
-    );
+    await this.redis.sadd(`${this.USER_SESSIONS_PREFIX}${options.user_id}`, sessionId);
 
     // Store in database for persistence
     const tokenHash = createHash('sha256').update(sessionId).digest('hex');
@@ -148,7 +141,7 @@ export class SessionService {
     }
 
     const session: SessionMetadata = JSON.parse(data);
-    
+
     // Check if session has expired
     if (session.expires_at < Date.now()) {
       await this.terminateSession(sessionId);
@@ -190,11 +183,7 @@ export class SessionService {
 
     const ttl = await this.redis.ttl(`${this.SESSION_PREFIX}${sessionId}`);
     if (ttl > 0) {
-      await this.redis.setex(
-        `${this.SESSION_PREFIX}${sessionId}`,
-        ttl,
-        JSON.stringify(session),
-      );
+      await this.redis.setex(`${this.SESSION_PREFIX}${sessionId}`, ttl, JSON.stringify(session));
     }
   }
 
@@ -205,12 +194,9 @@ export class SessionService {
     const data = await this.redis.get(`${this.SESSION_PREFIX}${sessionId}`);
     if (data) {
       const session: SessionMetadata = JSON.parse(data);
-      
+
       // Remove from user's session list
-      await this.redis.srem(
-        `${this.USER_SESSIONS_PREFIX}${session.user_id}`,
-        sessionId,
-      );
+      await this.redis.srem(`${this.USER_SESSIONS_PREFIX}${session.user_id}`, sessionId);
     }
 
     // Remove from Redis
@@ -270,10 +256,10 @@ export class SessionService {
   async validateSession(
     sessionId: string,
     deviceFingerprint?: string,
-    ipAddress?: string,
+    ipAddress?: string
   ): Promise<{ valid: boolean; reason?: string }> {
     const session = await this.getSession(sessionId);
-    
+
     if (!session) {
       return { valid: false, reason: 'Session not found or expired' };
     }
@@ -303,9 +289,9 @@ export class SessionService {
   /**
    * Enforce concurrent session limit
    */
-  private async enforceSessionLimit(userId: string, tenantId: string): Promise<void> {
+  private async enforceSessionLimit(userId: string, _tenantId: string): Promise<void> {
     const sessionIds = await this.redis.smembers(`${this.USER_SESSIONS_PREFIX}${userId}`);
-    
+
     // Clean up expired sessions first
     const validSessions: string[] = [];
     for (const sessionId of sessionIds) {
@@ -318,7 +304,7 @@ export class SessionService {
     // If still over limit, remove oldest sessions
     if (validSessions.length >= this.config.max_concurrent_sessions) {
       const sessionsToRemove = validSessions.length - this.config.max_concurrent_sessions + 1;
-      
+
       // Get session details to find oldest
       const sessionDetails: Array<{ id: string; created_at: number }> = [];
       for (const sessionId of validSessions) {

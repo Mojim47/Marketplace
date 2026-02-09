@@ -25,11 +25,11 @@
         ],
         "fieldConfig": {
           "defaults": {
-            "color": {"mode": "palette-classic"},
+            "color": { "mode": "palette-classic" },
             "unit": "s"
           }
         },
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 }
       },
       {
         "id": 2,
@@ -55,13 +55,13 @@
         ],
         "fieldConfig": {
           "defaults": {
-            "color": {"mode": "palette-classic"},
+            "color": { "mode": "palette-classic" },
             "custom": {
               "axisLabel": "Events/sec"
             }
           }
         },
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 }
       },
       {
         "id": 3,
@@ -81,7 +81,7 @@
             }
           }
         },
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 }
       },
       {
         "id": 4,
@@ -101,7 +101,7 @@
             }
           }
         },
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 }
       },
       {
         "id": 5,
@@ -115,11 +115,11 @@
         ],
         "fieldConfig": {
           "defaults": {
-            "color": {"mode": "palette-classic"},
+            "color": { "mode": "palette-classic" },
             "unit": "currencyIRR"
           }
         },
-        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16}
+        "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 }
       },
       {
         "id": 6,
@@ -133,10 +133,10 @@
         ],
         "fieldConfig": {
           "defaults": {
-            "color": {"mode": "palette-classic"}
+            "color": { "mode": "palette-classic" }
           }
         },
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24}
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 }
       },
       {
         "id": 7,
@@ -158,10 +158,10 @@
         ],
         "fieldConfig": {
           "defaults": {
-            "color": {"mode": "palette-classic"}
+            "color": { "mode": "palette-classic" }
           }
         },
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24}
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 }
       },
       {
         "id": 8,
@@ -187,14 +187,11 @@
               "mode": "thresholds"
             },
             "thresholds": {
-              "steps": [
-                {"color": "red", "value": 0},
-                {"color": "green", "value": 1}
-              ]
+              "steps": [{ "color": "red", "value": 0 }, { "color": "green", "value": 1 }]
             }
           }
         },
-        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 32}
+        "gridPos": { "h": 8, "w": 24, "x": 0, "y": 32 }
       }
     ],
     "time": {

@@ -2,10 +2,10 @@
  * ???????????????????????????????????????????????????????????????????????????
  * NextGen Marketplace - Rate Limit Guard
  * ???????????????????????????????????????????????????????????????????????????
- * 
+ *
  * Rate limiting guard using sliding window algorithm with Redis support.
  * Limits requests per IP/user to prevent abuse and DDoS attacks.
- * 
+ *
  * Features:
  * - Sliding window rate limiting
  * - IP-based and user-based limiting
@@ -13,24 +13,29 @@
  * - Burst allowance
  * - Rate limit headers in response
  * - Persian error messages
- * 
+ *
  * @module @nextgen/api/shared/security
  * Requirements: 1.3
  */
 
 import {
-  Injectable,
   CanActivate,
   ExecutionContext,
   HttpException,
   HttpStatus,
   Inject,
+  Injectable,
   Logger,
   SetMetadata,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import {
+  InMemoryRateLimiter,
+  RATE_LIMIT_TIERS,
+  RateLimitTier,
+  RedisRateLimiter,
+} from '@nextgen/security';
 import { Request, Response } from 'express';
-import { InMemoryRateLimiter, RedisRateLimiter, RateLimitTier, RATE_LIMIT_TIERS } from '@nextgen/security';
 import { SECURITY_TOKENS } from '../tokens';
 
 // Metadata key for custom rate limit tier
@@ -38,7 +43,7 @@ export const RATE_LIMIT_TIER_KEY = 'rateLimitTier';
 
 /**
  * Decorator to specify custom rate limit tier for an endpoint
- * 
+ *
  * @example
  * @RateLimitTier(RATE_LIMIT_TIERS.LOGIN)
  * @Post('login')
@@ -48,7 +53,7 @@ export const RateLimitTier = (tier: RateLimitTier) => SetMetadata(RATE_LIMIT_TIE
 
 /**
  * Decorator to skip rate limiting for an endpoint
- * 
+ *
  * @example
  * @SkipRateLimit()
  * @Get('health')
@@ -66,16 +71,16 @@ interface AuthenticatedRequest extends Request {
 
 /**
  * Rate Limit Guard
- * 
+ *
  * Enforces rate limiting on API endpoints using sliding window algorithm.
  * Default limit: 100 requests per minute per IP.
- * 
+ *
  * @example
  * // Apply globally in AppModule
  * providers: [
  *   { provide: APP_GUARD, useClass: RateLimitGuard }
  * ]
- * 
+ *
  * @example
  * // Apply custom tier to endpoint
  * @RateLimitTier(RATE_LIMIT_TIERS.LOGIN)
@@ -89,7 +94,7 @@ export class RateLimitGuard implements CanActivate {
   constructor(
     @Inject(SECURITY_TOKENS.RATE_LIMITER)
     private readonly rateLimiter: InMemoryRateLimiter | RedisRateLimiter,
-    private readonly reflector: Reflector,
+    private readonly reflector: Reflector
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -135,11 +140,11 @@ export class RateLimitGuard implements CanActivate {
           statusCode: HttpStatus.TOO_MANY_REQUESTS,
           error: 'Too Many Requests',
           message: result.blocked
-            ? `ÔãÇ Èå Ïáíá ${result.blockReason} ãÓÏæÏ ÔÏåÇíÏ. áØİÇğ ${result.retryAfter} ËÇäíå ÏíÑ ÊáÇÔ ˜äíÏ.`
-            : `ÊÚÏÇÏ ÏÑÎæÇÓÊåÇí ÔãÇ ÈíÔ ÇÒ ÍÏ ãÌÇÒ ÇÓÊ. áØİÇğ ${result.retryAfter} ËÇäíå ÏíÑ ÊáÇÔ ˜äíÏ.`,
+            ? `ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ${result.blockReason} ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½. ï¿½ï¿½ï¿½ï¿½ï¿½ ${result.retryAfter} ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.`
+            : `ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Êï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½. ï¿½ï¿½ï¿½ï¿½ï¿½ ${result.retryAfter} ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.`,
           retryAfter: result.retryAfter || result.resetIn,
         },
-        HttpStatus.TOO_MANY_REQUESTS,
+        HttpStatus.TOO_MANY_REQUESTS
       );
     }
 
@@ -190,9 +195,7 @@ export class RateLimitGuard implements CanActivate {
   private extractClientIP(request: Request): string {
     const forwardedFor = request.headers['x-forwarded-for'];
     if (forwardedFor) {
-      const ips = Array.isArray(forwardedFor) 
-        ? forwardedFor[0] 
-        : forwardedFor.split(',')[0];
+      const ips = Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor.split(',')[0];
       return ips.trim();
     }
 
@@ -211,7 +214,7 @@ export class RateLimitGuard implements CanActivate {
     response: Response,
     limit: number,
     remaining: number,
-    resetIn: number,
+    resetIn: number
   ): void {
     response.setHeader('X-RateLimit-Limit', limit);
     response.setHeader('X-RateLimit-Remaining', remaining);
@@ -224,7 +227,7 @@ export class RateLimitGuard implements CanActivate {
   private logRateLimitExceeded(
     request: AuthenticatedRequest,
     identifier: string,
-    tierName: string,
+    tierName: string
   ): void {
     const logData = {
       event: 'RATE_LIMIT_EXCEEDED',

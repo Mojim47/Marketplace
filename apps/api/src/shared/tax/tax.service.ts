@@ -2,29 +2,29 @@
  * ???????????????????????????????????????????????????????????????????????????
  * NextGen Marketplace - Tax Service
  * ???????????????????????????????????????????????????????????????????????????
- * 
+ *
  * Service for Iranian tax authority (Moodian/SENA) integration.
- * 
+ *
  * Features:
  * - Submit invoices to Moodian
  * - Poll invoice status
  * - Generate VAT reports
  * - Store submission history in database
- * 
+ *
  * @module @nextgen/api/shared/tax
  * Requirements: 9.1, 9.2, 9.3
  */
 
-import { Injectable, Inject, OnModuleInit, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
-  SenaIntegrationService,
+  IranTaxReportStrategy,
   SenaClient,
+  SenaIntegrationService,
   SenaRepo,
   SenaSubmission,
-  IranTaxReportStrategy,
-  TaxReportGenerator,
   TaxReport,
+  TaxReportGenerator,
 } from '@nextgen/tax';
 
 // Provider tokens
@@ -66,7 +66,7 @@ export class DatabaseSenaRepo implements SenaRepo {
   }
 
   async findPending(): Promise<SenaSubmission[]> {
-    return Array.from(this.submissions.values()).filter(s => s.status === 'PENDING');
+    return Array.from(this.submissions.values()).filter((s) => s.status === 'PENDING');
   }
 }
 
@@ -87,7 +87,7 @@ export class HttpSenaClient implements SenaClient {
     this.isProduction = this.configService.get<string>('NODE_ENV') === 'production';
     this.baseUrl = this.configService.getOrThrow<string>('MOODIAN_API_URL');
     this.apiKey = this.configService.getOrThrow<string>('MOODIAN_API_KEY');
-    
+
     this.logger.log(`HttpSenaClient initialized with baseUrl: ${this.baseUrl}`);
   }
 
@@ -108,7 +108,7 @@ export class HttpSenaClient implements SenaClient {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`,
+          Authorization: `Bearer ${this.apiKey}`,
         },
         body: JSON.stringify({
           invoiceId: invoice.id,
@@ -124,9 +124,11 @@ export class HttpSenaClient implements SenaClient {
       }
 
       const data = await response.json();
-      
-      this.logger.log(`Invoice ${invoice.id} submitted successfully. RefId: ${data.refId || data.senaRefId}`);
-      
+
+      this.logger.log(
+        `Invoice ${invoice.id} submitted successfully. RefId: ${data.refId || data.senaRefId}`
+      );
+
       return {
         status: this.mapStatus(data.status),
         senaRefId: data.refId || data.senaRefId,
@@ -145,7 +147,7 @@ export class HttpSenaClient implements SenaClient {
       const response = await fetch(`${this.baseUrl}/invoice/status/${refId}`, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
+          Authorization: `Bearer ${this.apiKey}`,
         },
       });
 
@@ -155,9 +157,9 @@ export class HttpSenaClient implements SenaClient {
       }
 
       const data = await response.json();
-      
+
       this.logger.log(`Status for ${refId}: ${data.status}`);
-      
+
       return {
         status: this.mapStatus(data.status),
       };
@@ -170,7 +172,7 @@ export class HttpSenaClient implements SenaClient {
    */
   private async executeWithRetry<T>(
     operation: () => Promise<T>,
-    operationName: string,
+    operationName: string
   ): Promise<T> {
     let lastError: Error | undefined;
 
@@ -179,7 +181,7 @@ export class HttpSenaClient implements SenaClient {
         return await operation();
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
-        
+
         if (attempt < this.maxRetries - 1) {
           const delayMs = this.baseDelayMs * Math.pow(2, attempt);
           this.logger.warn(
@@ -190,7 +192,9 @@ export class HttpSenaClient implements SenaClient {
       }
     }
 
-    this.logger.error(`All ${this.maxRetries} attempts failed for ${operationName}: ${lastError?.message}`);
+    this.logger.error(
+      `All ${this.maxRetries} attempts failed for ${operationName}: ${lastError?.message}`
+    );
     throw lastError;
   }
 
@@ -199,14 +203,14 @@ export class HttpSenaClient implements SenaClient {
    */
   private mapStatus(apiStatus: string): 'PENDING' | 'CONFIRMED' | 'REJECTED' {
     const statusMap: Record<string, 'PENDING' | 'CONFIRMED' | 'REJECTED'> = {
-      'SUCCESS': 'CONFIRMED',
-      'CONFIRMED': 'CONFIRMED',
-      'APPROVED': 'CONFIRMED',
-      'PENDING': 'PENDING',
-      'PROCESSING': 'PENDING',
-      'FAILED': 'REJECTED',
-      'REJECTED': 'REJECTED',
-      'ERROR': 'REJECTED',
+      SUCCESS: 'CONFIRMED',
+      CONFIRMED: 'CONFIRMED',
+      APPROVED: 'CONFIRMED',
+      PENDING: 'PENDING',
+      PROCESSING: 'PENDING',
+      FAILED: 'REJECTED',
+      REJECTED: 'REJECTED',
+      ERROR: 'REJECTED',
     };
 
     return statusMap[apiStatus?.toUpperCase()] || 'PENDING';
@@ -216,7 +220,7 @@ export class HttpSenaClient implements SenaClient {
    * Delay helper for retry logic
    */
   private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
 
@@ -234,7 +238,7 @@ export class TaxService implements OnModuleInit {
     @Inject(TAX_TOKENS.SENA_CLIENT)
     private readonly senaClient: SenaClient,
     @Inject(TAX_TOKENS.SENA_REPO)
-    private readonly senaRepo: SenaRepo,
+    private readonly senaRepo: SenaRepo
   ) {}
 
   onModuleInit() {
@@ -244,7 +248,7 @@ export class TaxService implements OnModuleInit {
   }
 
   /**
-   * ÇÑÓÇá İÇ˜ÊæÑ Èå ÓÇãÇäå ãæÏíÇä
+   * ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ç˜ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
    * Requirements: 9.1
    */
   async submitInvoice(invoice: {
@@ -258,7 +262,7 @@ export class TaxService implements OnModuleInit {
   }
 
   /**
-   * ÈÑÑÓí æÖÚíÊ İÇ˜ÊæÑ ÏÑ ãæÏíÇä
+   * ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ç˜ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
    * Requirements: 9.2
    */
   async pollStatus(invoiceId: string): Promise<SenaSubmission> {
@@ -267,7 +271,7 @@ export class TaxService implements OnModuleInit {
   }
 
   /**
-   * ÏÑíÇİÊ æÖÚíÊ İÇ˜ÊæÑ ÇÒ ÏíÊÇÈíÓ
+   * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ç˜ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
    * Requirements: 9.2
    */
   async getSubmission(invoiceId: string): Promise<SenaSubmission | null> {
@@ -275,19 +279,19 @@ export class TaxService implements OnModuleInit {
   }
 
   /**
-   * ÊæáíÏ ÒÇÑÔ ãÇáíÇÊí
+   * ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
    * Requirements: 9.3
    */
   generateReport(
     period: string,
-    invoices: Array<{ id: string; total: number; taxAmount: number; date: string }>,
+    invoices: Array<{ id: string; total: number; taxAmount: number; date: string }>
   ): TaxReport {
     this.logger.log(`Generating tax report for period ${period}`);
     return this.reportGenerator.run(period, invoices);
   }
 
   /**
-   * ÏÑíÇİÊ åãå ÇÑÓÇáåÇí ÏÑ ÇäÊÙÇÑ
+   * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
    */
   async getPendingSubmissions(): Promise<SenaSubmission[]> {
     if ('findPending' in this.senaRepo) {
@@ -297,7 +301,7 @@ export class TaxService implements OnModuleInit {
   }
 
   /**
-   * ÈåÑæÒÑÓÇäí æÖÚíÊ åãå ÇÑÓÇáåÇí ÏÑ ÇäÊÙÇÑ
+   * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
    */
   async refreshPendingStatuses(): Promise<{ updated: number; failed: number }> {
     const pending = await this.getPendingSubmissions();

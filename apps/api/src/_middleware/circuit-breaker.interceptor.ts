@@ -2,29 +2,29 @@
  * ???????????????????????????????????????????????????????????????????????????
  * Circuit Breaker - Production-Ready Implementation
  * ???????????????????????????????????????????????????????????????????????????
- * 
+ *
  * Features:
  * - Three states: CLOSED, OPEN, HALF_OPEN
  * - Configurable failure threshold and reset timeout
  * - Half-open state with limited test requests
  * - Metrics for monitoring circuit state changes
  * - NestJS interceptor integration
- * 
+ *
  * Security Requirements:
  * - REQ 5.6: Circuit breaker for downstream services
  * ???????????????????????????????????????????????????????????????????????????
  */
 
 import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
+  type CallHandler,
+  type ExecutionContext,
   HttpException,
   HttpStatus,
+  Injectable,
   Logger,
+  type NestInterceptor,
 } from '@nestjs/common';
-import { Observable, throwError, of } from 'rxjs';
+import { type Observable, throwError } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 
 /**
@@ -144,7 +144,7 @@ export class CircuitBreaker {
       onFailure: config.onFailure || (() => {}),
       onSuccess: config.onSuccess || (() => {}),
     } as Required<CircuitBreakerConfig>;
-    
+
     this.lastStateChange = this.config.clock();
   }
 
@@ -208,7 +208,7 @@ export class CircuitBreaker {
     if (!this.canExecute()) {
       const retryAfter = Math.max(0, Math.ceil((this.nextTry - now) / 1000));
       throw new CircuitBreakerError(
-        `ãÏÇÑ ${this.config.name} ÈÇÒ ÇÓÊ. áØİÇğ ${retryAfter} ËÇäíå ÏíÑ ÊáÇÔ ˜äíÏ.`,
+        `ï¿½ï¿½ï¿½ï¿½ ${this.config.name} ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½. ï¿½ï¿½ï¿½ï¿½ï¿½ ${retryAfter} ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.`,
         this.config.name,
         this.state,
         retryAfter
@@ -247,7 +247,7 @@ export class CircuitBreaker {
       fn(),
       new Promise<T>((_, reject) => {
         setTimeout(() => {
-          reject(new Error(`ÏÑÎæÇÓÊ Ó ÇÒ ${timeoutMs}ms ãäŞÖí ÔÏ`));
+          reject(new Error(`ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ ${timeoutMs}ms ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½`));
         }, timeoutMs);
       }),
     ]);
@@ -272,7 +272,7 @@ export class CircuitBreaker {
     }
 
     this.logger.debug(
-      `[${this.config.name}] ÏÑÎæÇÓÊ ãæİŞ - æÖÚíÊ: ${this.state}, ãæİŞíÊåÇí ãÊæÇáí: ${this.consecutiveSuccesses}`
+      `[${this.config.name}] ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ - ï¿½ï¿½ï¿½ï¿½ï¿½: ${this.state}, ï¿½ï¿½ï¿½ï¿½ï¿½Êï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½: ${this.consecutiveSuccesses}`
     );
   }
 
@@ -289,7 +289,7 @@ export class CircuitBreaker {
     this.config.onFailure(error, this.config.name);
 
     this.logger.warn(
-      `[${this.config.name}] ÏÑÎæÇÓÊ äÇãæİŞ - æÖÚíÊ: ${this.state}, ÎØÇåÇí ãÊæÇáí: ${this.consecutiveFailures}`,
+      `[${this.config.name}] ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ - ï¿½ï¿½ï¿½ï¿½ï¿½: ${this.state}, ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½: ${this.consecutiveFailures}`,
       error.message
     );
 
@@ -312,7 +312,9 @@ export class CircuitBreaker {
    */
   private transitionTo(newState: CircuitState): void {
     const oldState = this.state;
-    if (oldState === newState) return;
+    if (oldState === newState) {
+      return;
+    }
 
     const now = this.config.clock();
     this.state = newState;
@@ -337,9 +339,7 @@ export class CircuitBreaker {
 
     this.config.onStateChange(oldState, newState, this.config.name);
 
-    this.logger.log(
-      `[${this.config.name}] ÊÛííÑ æÖÚíÊ ãÏÇÑ: ${oldState} -> ${newState}`
-    );
+    this.logger.log(`[${this.config.name}] ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: ${oldState} -> ${newState}`);
   }
 
   /**
@@ -350,8 +350,8 @@ export class CircuitBreaker {
     this.consecutiveFailures = 0;
     this.consecutiveSuccesses = 0;
     this.halfOpenRequests = 0;
-    
-    this.logger.log(`[${this.config.name}] ãÏÇÑ Èå ÕæÑÊ ÏÓÊí ÈÇÒäÔÇäí ÔÏ`);
+
+    this.logger.log(`[${this.config.name}] ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½`);
   }
 
   /**
@@ -359,9 +359,9 @@ export class CircuitBreaker {
    */
   trip(reason?: string): void {
     this.transitionTo(CircuitState.OPEN);
-    
+
     this.logger.warn(
-      `[${this.config.name}] ãÏÇÑ Èå ÕæÑÊ ÏÓÊí ÈÇÒ ÔÏ${reason ? `: ${reason}` : ''}`
+      `[${this.config.name}] ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½${reason ? `: ${reason}` : ''}`
     );
   }
 }
@@ -378,13 +378,13 @@ export class CircuitBreakerRegistry {
    */
   getOrCreate(config: CircuitBreakerConfig): CircuitBreaker {
     let circuit = this.circuits.get(config.name);
-    
+
     if (!circuit) {
       circuit = new CircuitBreaker(config);
       this.circuits.set(config.name, circuit);
-      this.logger.log(`ãÏÇÑ ÌÏíÏ ÇíÌÇÏ ÔÏ: ${config.name}`);
+      this.logger.log(`ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½: ${config.name}`);
     }
-    
+
     return circuit;
   }
 
@@ -400,11 +400,11 @@ export class CircuitBreakerRegistry {
    */
   getAllMetrics(): Record<string, CircuitBreakerMetrics> {
     const metrics: Record<string, CircuitBreakerMetrics> = {};
-    
+
     for (const [name, circuit] of this.circuits) {
       metrics[name] = circuit.getMetrics();
     }
-    
+
     return metrics;
   }
 
@@ -415,7 +415,7 @@ export class CircuitBreakerRegistry {
     for (const circuit of this.circuits.values()) {
       circuit.reset();
     }
-    this.logger.log('ÊãÇã ãÏÇÑåÇ ÈÇÒäÔÇäí ÔÏäÏ');
+    this.logger.log('ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½');
   }
 }
 
@@ -436,7 +436,7 @@ export class CircuitBreakerInterceptor implements NestInterceptor {
     private readonly config?: Partial<CircuitBreakerConfig>
   ) {}
 
-  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+  intercept(_context: ExecutionContext, next: CallHandler): Observable<any> {
     const circuit = circuitBreakerRegistry.getOrCreate({
       name: this.circuitName,
       failureThreshold: this.config?.failureThreshold ?? 5,
@@ -453,18 +453,19 @@ export class CircuitBreakerInterceptor implements NestInterceptor {
         (metrics.lastStateChange + (this.config?.resetTimeoutMs ?? 30000) - Date.now()) / 1000
       );
 
-      return throwError(() =>
-        new HttpException(
-          {
-            statusCode: HttpStatus.SERVICE_UNAVAILABLE,
-            error: 'Service Unavailable',
-            message: `ÓÑæíÓ ${this.circuitName} ãæŞÊÇğ ÏÑ ÏÓÊÑÓ äíÓÊ. áØİÇğ ${retryAfter} ËÇäíå ÏíÑ ÊáÇÔ ˜äíÏ.`,
-            messageEn: `Service ${this.circuitName} is temporarily unavailable. Please try again in ${retryAfter} seconds.`,
-            retryAfter,
-            circuitState: metrics.state,
-          },
-          HttpStatus.SERVICE_UNAVAILABLE
-        )
+      return throwError(
+        () =>
+          new HttpException(
+            {
+              statusCode: HttpStatus.SERVICE_UNAVAILABLE,
+              error: 'Service Unavailable',
+              message: `ï¿½ï¿½ï¿½ï¿½ï¿½ ${this.circuitName} ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½. ï¿½ï¿½ï¿½ï¿½ï¿½ ${retryAfter} ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.`,
+              messageEn: `Service ${this.circuitName} is temporarily unavailable. Please try again in ${retryAfter} seconds.`,
+              retryAfter,
+              circuitState: metrics.state,
+            },
+            HttpStatus.SERVICE_UNAVAILABLE
+          )
       );
     }
 
@@ -483,15 +484,8 @@ export class CircuitBreakerInterceptor implements NestInterceptor {
 /**
  * Decorator for applying circuit breaker to a method
  */
-export function WithCircuitBreaker(
-  circuitName: string,
-  config?: Partial<CircuitBreakerConfig>
-) {
-  return function (
-    target: any,
-    propertyKey: string,
-    descriptor: PropertyDescriptor
-  ) {
+export function WithCircuitBreaker(circuitName: string, config?: Partial<CircuitBreakerConfig>) {
+  return (_target: any, _propertyKey: string, descriptor: PropertyDescriptor) => {
     const originalMethod = descriptor.value;
 
     descriptor.value = async function (...args: any[]) {

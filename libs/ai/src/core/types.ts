@@ -8,7 +8,7 @@ export interface PredictionInput {
 export interface PredictionResult {
   forecastIrr: number;
   confidence: number;
-  trend: "up" | "down" | "flat";
+  trend: 'up' | 'down' | 'flat';
   diagnostics: {
     recentAverage: number;
     volatility: number;

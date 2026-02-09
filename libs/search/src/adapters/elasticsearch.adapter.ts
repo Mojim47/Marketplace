@@ -6,21 +6,26 @@
 
 import { Client } from '@elastic/elasticsearch';
 import type {
-  ISearchProvider,
-  SearchSchema,
-  SearchQuery,
-  SearchResult,
-  SearchHit,
-  FilterCondition,
   AggregationQuery,
   AggregationResult,
-  Suggestion,
-  IndexStats,
-  SearchHealthCheck,
   ElasticsearchConfig,
   FieldDefinition,
+  FilterCondition,
+  ISearchProvider,
+  IndexStats,
+  SearchHealthCheck,
+  SearchHit,
+  SearchQuery,
+  SearchResult,
+  SearchSchema,
+  Suggestion,
 } from '../interfaces/search.interface';
-import { SearchProviderType, FilterOperator, FieldType, AggregationType } from '../interfaces/search.interface';
+import {
+  AggregationType,
+  FieldType,
+  FilterOperator,
+  SearchProviderType,
+} from '../interfaces/search.interface';
 
 /**
  * Elasticsearch search adapter
@@ -79,8 +84,12 @@ export class ElasticsearchAdapter implements ISearchProvider {
     };
 
     if (field.type === FieldType.TEXT) {
-      if (field.analyzer) mapping.analyzer = field.analyzer;
-      if (field.searchable === false) mapping.index = false;
+      if (field.analyzer) {
+        mapping.analyzer = field.analyzer;
+      }
+      if (field.searchable === false) {
+        mapping.index = false;
+      }
       // Add keyword subfield for sorting/aggregations
       mapping.fields = { keyword: { type: 'keyword', ignore_above: 256 } };
     }
@@ -88,7 +97,8 @@ export class ElasticsearchAdapter implements ISearchProvider {
     if (field.nested && field.type === FieldType.NESTED) {
       mapping.properties = {};
       for (const [nestedName, nestedDef] of Object.entries(field.nested)) {
-        (mapping.properties as Record<string, unknown>)[nestedName] = this.buildFieldMapping(nestedDef);
+        (mapping.properties as Record<string, unknown>)[nestedName] =
+          this.buildFieldMapping(nestedDef);
       }
     }
 
@@ -101,7 +111,7 @@ export class ElasticsearchAdapter implements ISearchProvider {
 
   async createIndex(index: string, schema: SearchSchema): Promise<void> {
     const fullName = this.getFullIndexName(index);
-    
+
     await this.client.indices.create({
       index: fullName,
       body: {
@@ -128,12 +138,14 @@ export class ElasticsearchAdapter implements ISearchProvider {
 
   async getIndexSchema(index: string): Promise<SearchSchema | null> {
     const fullName = this.getFullIndexName(index);
-    
+
     try {
       const response = await this.client.indices.getMapping({ index: fullName });
       const mapping = response[fullName]?.mappings;
-      
-      if (!mapping) return null;
+
+      if (!mapping) {
+        return null;
+      }
 
       // Convert ES mapping back to SearchSchema (simplified)
       const fields: Record<string, FieldDefinition> = {};
@@ -172,7 +184,7 @@ export class ElasticsearchAdapter implements ISearchProvider {
 
   async updateIndexSettings(index: string, settings: SearchSchema['settings']): Promise<void> {
     const fullName = this.getFullIndexName(index);
-    
+
     await this.client.indices.putSettings({
       index: fullName,
       body: {
@@ -186,9 +198,13 @@ export class ElasticsearchAdapter implements ISearchProvider {
   // Document Operations
   // ═══════════════════════════════════════════════════════════════════════
 
-  async index<T extends Record<string, unknown>>(index: string, id: string, document: T): Promise<void> {
+  async index<T extends Record<string, unknown>>(
+    index: string,
+    id: string,
+    document: T
+  ): Promise<void> {
     const fullName = this.getFullIndexName(index);
-    
+
     await this.client.index({
       index: fullName,
       id,
@@ -202,7 +218,7 @@ export class ElasticsearchAdapter implements ISearchProvider {
     documents: Array<{ id: string; doc: T }>
   ): Promise<{ success: number; failed: number; errors?: string[] }> {
     const fullName = this.getFullIndexName(index);
-    
+
     const operations = documents.flatMap(({ id, doc }) => [
       { index: { _index: fullName, _id: id } },
       doc,
@@ -234,7 +250,7 @@ export class ElasticsearchAdapter implements ISearchProvider {
 
   async get<T>(index: string, id: string): Promise<T | null> {
     const fullName = this.getFullIndexName(index);
-    
+
     try {
       const response = await this.client.get<T>({
         index: fullName,
@@ -251,7 +267,7 @@ export class ElasticsearchAdapter implements ISearchProvider {
 
   async delete(index: string, id: string): Promise<boolean> {
     const fullName = this.getFullIndexName(index);
-    
+
     try {
       const response = await this.client.delete({
         index: fullName,
@@ -267,9 +283,13 @@ export class ElasticsearchAdapter implements ISearchProvider {
     }
   }
 
-  async update<T extends Record<string, unknown>>(index: string, id: string, partial: Partial<T>): Promise<void> {
+  async update<T extends Record<string, unknown>>(
+    index: string,
+    id: string,
+    partial: Partial<T>
+  ): Promise<void> {
     const fullName = this.getFullIndexName(index);
-    
+
     await this.client.update({
       index: fullName,
       id,
@@ -280,13 +300,13 @@ export class ElasticsearchAdapter implements ISearchProvider {
 
   async deleteByQuery(index: string, filters: FilterCondition[]): Promise<number> {
     const fullName = this.getFullIndexName(index);
-    
+
     const response = await this.client.deleteByQuery({
       index: fullName,
       refresh: true,
       query: {
         bool: {
-          filter: filters.map(f => this.buildFilterClause(f)),
+          filter: filters.map((f) => this.buildFilterClause(f)),
         },
       },
     });
@@ -316,8 +336,12 @@ export class ElasticsearchAdapter implements ISearchProvider {
         must.push({
           multi_match: {
             query: query.query,
-            fields: query.fields.map(f => query.boost?.[f] ? `${f}^${query.boost[f]}` : f),
-            fuzziness: query.fuzzy ? (typeof query.fuzzy === 'object' ? query.fuzzy.maxEdits || 'AUTO' : 'AUTO') : undefined,
+            fields: query.fields.map((f) => (query.boost?.[f] ? `${f}^${query.boost[f]}` : f)),
+            fuzziness: query.fuzzy
+              ? typeof query.fuzzy === 'object'
+                ? query.fuzzy.maxEdits || 'AUTO'
+                : 'AUTO'
+              : undefined,
           },
         });
       } else {
@@ -349,7 +373,7 @@ export class ElasticsearchAdapter implements ISearchProvider {
 
     // Sort
     if (query.sort && query.sort.length > 0) {
-      body.sort = query.sort.map(s => ({
+      body.sort = query.sort.map((s) => ({
         [s.field]: { order: s.order, mode: s.mode },
       }));
     }
@@ -362,9 +386,7 @@ export class ElasticsearchAdapter implements ISearchProvider {
     // Highlighting
     if (query.highlight) {
       body.highlight = {
-        fields: Object.fromEntries(
-          (query.highlight.fields || ['*']).map(f => [f, {}])
-        ),
+        fields: Object.fromEntries((query.highlight.fields || ['*']).map((f) => [f, {}])),
         pre_tags: [query.highlight.preTag || '<em>'],
         post_tags: [query.highlight.postTag || '</em>'],
         fragment_size: query.highlight.fragmentSize || 150,
@@ -375,7 +397,7 @@ export class ElasticsearchAdapter implements ISearchProvider {
     // Aggregations for facets
     if (query.facets) {
       body.aggs = Object.fromEntries(
-        query.facets.map(f => [f, { terms: { field: `${f}.keyword`, size: 100 } }])
+        query.facets.map((f) => [f, { terms: { field: `${f}.keyword`, size: 100 } }])
       );
     }
 
@@ -389,7 +411,7 @@ export class ElasticsearchAdapter implements ISearchProvider {
       ...body,
     });
 
-    const hits: SearchHit<T>[] = response.hits.hits.map(hit => ({
+    const hits: SearchHit<T>[] = response.hits.hits.map((hit) => ({
       id: hit._id,
       document: hit._source as T,
       score: hit._score || undefined,
@@ -397,18 +419,29 @@ export class ElasticsearchAdapter implements ISearchProvider {
       sortValues: hit.sort,
     }));
 
-    const total = typeof response.hits.total === 'number'
-      ? response.hits.total
-      : response.hits.total?.value || 0;
+    const total =
+      typeof response.hits.total === 'number'
+        ? response.hits.total
+        : response.hits.total?.value || 0;
 
-    const facets = query.facets ? Object.fromEntries(
-      query.facets.map(f => {
-        const agg = (response.aggregations as Record<string, { buckets: Array<{ key: string; doc_count: number }> }>)?.[f];
-        return [f, {
-          buckets: agg?.buckets.map(b => ({ value: b.key, count: b.doc_count })) || [],
-        }];
-      })
-    ) : undefined;
+    const facets = query.facets
+      ? Object.fromEntries(
+          query.facets.map((f) => {
+            const agg = (
+              response.aggregations as Record<
+                string,
+                { buckets: Array<{ key: string; doc_count: number }> }
+              >
+            )?.[f];
+            return [
+              f,
+              {
+                buckets: agg?.buckets.map((b) => ({ value: b.key, count: b.doc_count })) || [],
+              },
+            ];
+          })
+        )
+      : undefined;
 
     return {
       hits,
@@ -425,7 +458,7 @@ export class ElasticsearchAdapter implements ISearchProvider {
     });
   }
 
-  async autocomplete(index: string, field: string, prefix: string, limit: number = 10): Promise<string[]> {
+  async autocomplete(index: string, field: string, prefix: string, limit = 10): Promise<string[]> {
     const fullName = this.getFullIndexName(index);
 
     const response = await this.client.search({
@@ -442,11 +475,17 @@ export class ElasticsearchAdapter implements ISearchProvider {
       },
     });
 
-    const agg = (response.aggregations as { suggestions?: { buckets: Array<{ key: string }> } })?.suggestions;
-    return agg?.buckets.map(b => b.key) || [];
+    const agg = (response.aggregations as { suggestions?: { buckets: Array<{ key: string }> } })
+      ?.suggestions;
+    return agg?.buckets.map((b) => b.key) || [];
   }
 
-  async fuzzySearch<T>(index: string, field: string, term: string, fuzziness: number = 2): Promise<SearchResult<T>> {
+  async fuzzySearch<T>(
+    index: string,
+    field: string,
+    term: string,
+    fuzziness = 2
+  ): Promise<SearchResult<T>> {
     return this.search<T>(index, {
       query: term,
       fields: [field],
@@ -469,7 +508,7 @@ export class ElasticsearchAdapter implements ISearchProvider {
       },
     });
 
-    const hits: SearchHit<T>[] = response.hits.hits.map(hit => ({
+    const hits: SearchHit<T>[] = response.hits.hits.map((hit) => ({
       id: hit._id,
       document: hit._source as T,
       score: hit._score || undefined,
@@ -477,7 +516,10 @@ export class ElasticsearchAdapter implements ISearchProvider {
 
     return {
       hits,
-      total: typeof response.hits.total === 'number' ? response.hits.total : response.hits.total?.value || 0,
+      total:
+        typeof response.hits.total === 'number'
+          ? response.hits.total
+          : response.hits.total?.value || 0,
       took: response.took,
     };
   }
@@ -508,9 +550,10 @@ export class ElasticsearchAdapter implements ISearchProvider {
         return { prefix: { [field]: value } };
       case FilterOperator.EXISTS:
         return value ? { exists: { field } } : { bool: { must_not: { exists: { field } } } };
-      case FilterOperator.RANGE:
+      case FilterOperator.RANGE: {
         const range = value as { from?: number; to?: number };
         return { range: { [field]: { gte: range.from, lte: range.to } } };
+      }
       default:
         return { match_all: {} };
     }
@@ -534,9 +577,12 @@ export class ElasticsearchAdapter implements ISearchProvider {
       aggs,
     });
 
-    return aggregations.map(agg => {
+    return aggregations.map((agg) => {
       const name = agg.name || agg.field;
-      const result = (response.aggregations as Record<string, unknown>)?.[name] as Record<string, unknown>;
+      const result = (response.aggregations as Record<string, unknown>)?.[name] as Record<
+        string,
+        unknown
+      >;
       return this.parseAggregationResult(name, agg.type, result);
     });
   }
@@ -570,24 +616,37 @@ export class ElasticsearchAdapter implements ISearchProvider {
     }
   }
 
-  private parseAggregationResult(name: string, type: AggregationType, result: Record<string, unknown>): AggregationResult {
-    if (!result) return { name };
+  private parseAggregationResult(
+    name: string,
+    type: AggregationType,
+    result: Record<string, unknown>
+  ): AggregationResult {
+    if (!result) {
+      return { name };
+    }
 
     switch (type) {
       case AggregationType.TERMS:
       case AggregationType.RANGE:
       case AggregationType.DATE_HISTOGRAM:
-      case AggregationType.HISTOGRAM:
-        const buckets = (result.buckets as Array<{ key: string | number; doc_count: number; from?: number; to?: number }>) || [];
+      case AggregationType.HISTOGRAM: {
+        const buckets =
+          (result.buckets as Array<{
+            key: string | number;
+            doc_count: number;
+            from?: number;
+            to?: number;
+          }>) || [];
         return {
           name,
-          buckets: buckets.map(b => ({
+          buckets: buckets.map((b) => ({
             key: b.key,
             count: b.doc_count,
             from: b.from,
             to: b.to,
           })),
         };
+      }
       case AggregationType.STATS:
         return {
           name,
@@ -604,7 +663,7 @@ export class ElasticsearchAdapter implements ISearchProvider {
     }
   }
 
-  async suggest(index: string, field: string, text: string, limit: number = 5): Promise<Suggestion[]> {
+  async suggest(index: string, field: string, text: string, limit = 5): Promise<Suggestion[]> {
     const fullName = this.getFullIndexName(index);
 
     const response = await this.client.search({
@@ -621,9 +680,14 @@ export class ElasticsearchAdapter implements ISearchProvider {
       },
     });
 
-    const suggestions = (response.suggest as { suggestions?: Array<{ options: Array<{ text: string; _score: number }> }> })?.suggestions?.[0]?.options || [];
-    
-    return suggestions.map(s => ({
+    const suggestions =
+      (
+        response.suggest as {
+          suggestions?: Array<{ options: Array<{ text: string; _score: number }> }>;
+        }
+      )?.suggestions?.[0]?.options || [];
+
+    return suggestions.map((s) => ({
       text: s.text,
       score: s._score,
     }));

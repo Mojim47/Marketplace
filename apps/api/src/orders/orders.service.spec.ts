@@ -1,8 +1,12 @@
-import { describe, it, expect } from 'vitest';
-import { OrdersService } from './orders.service';
-import { BadRequestException, ConflictException, ServiceUnavailableException } from '@nestjs/common';
-import { ResourceLockedError, ExecutionError } from 'redlock';
+import {
+  BadRequestException,
+  ConflictException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
+import { ExecutionError, ResourceLockedError } from 'redlock';
+import { describe, expect, it } from 'vitest';
 import { MetricsService } from '../monitoring/metrics.service';
+import { OrdersService } from './orders.service';
 
 class SerialLockService {
   lastCall: { resources: string[]; ttl: number; settings?: Record<string, unknown> } | null = null;
@@ -21,7 +25,10 @@ class SerialLockService {
     const current = new Promise<void>((resolve) => {
       release = resolve;
     });
-    this.queues.set(key, previous.then(() => current));
+    this.queues.set(
+      key,
+      previous.then(() => current)
+    );
 
     await previous;
     try {
@@ -48,13 +55,18 @@ class InMemoryStateService {
 
   async setState<T>(key: string, value: T, options?: { ttlSeconds?: number }): Promise<boolean> {
     const ttlMs = (options?.ttlSeconds ?? 3600) * 1000;
-    this.store.set(key, { value: JSON.parse(JSON.stringify(value)), expiresAt: Date.now() + ttlMs });
+    this.store.set(key, {
+      value: JSON.parse(JSON.stringify(value)),
+      expiresAt: Date.now() + ttlMs,
+    });
     return true;
   }
 
   async getState<T>(key: string): Promise<T | null> {
     const entry = this.store.get(key);
-    if (!entry) return null;
+    if (!entry) {
+      return null;
+    }
     if (entry.expiresAt <= Date.now()) {
       this.store.delete(key);
       return null;
@@ -92,7 +104,10 @@ const createPrismaFake = (stock: number) => {
     product: {
       findUnique: async () => ({ id: 'product-1', name: 'Test Product', stock: state.stock }),
       findMany: async () => [{ id: 'product-1', name: 'Test Product', stock: state.stock }],
-      updateMany: async ({ where, data }: { where: { stock: { gte: number } }; data: { stock: { decrement: number } } }) => {
+      updateMany: async ({
+        where,
+        data,
+      }: { where: { stock: { gte: number } }; data: { stock: { decrement: number } } }) => {
         if (state.stock >= where.stock.gte) {
           state.stock -= data.stock.decrement;
           return { count: 1 };
@@ -125,7 +140,9 @@ const createPrismaFake = (stock: number) => {
 
 const getCounterValue = async (metrics: MetricsService, name: string) => {
   const metric = metrics.getRegistry().getSingleMetric(name) as any;
-  if (!metric) return 0;
+  if (!metric) {
+    return 0;
+  }
   const result = await metric.get();
   const values = (result.values || []) as Array<{ value: number }>;
   return values.reduce((sum, v) => sum + v.value, 0);
@@ -184,7 +201,9 @@ describe('OrdersService - Locking & Concurrency', () => {
       items: [{ ...baseOrderData.items[0], quantity: 2 }],
     };
 
-    await expect(service.create('user-1', mutated as any, 'idem-2')).rejects.toBeInstanceOf(BadRequestException);
+    await expect(service.create('user-1', mutated as any, 'idem-2')).rejects.toBeInstanceOf(
+      BadRequestException
+    );
   });
 
   it('passes lock resources and settings for SLA-safe behavior', async () => {
@@ -210,15 +229,22 @@ describe('OrdersService - Locking & Concurrency', () => {
     const { prisma } = createPrismaFake(10);
     const metrics = new MetricsService();
     const stateService = new InMemoryStateService();
-    const service = new OrdersService(prisma, {
-      using: async () => {
-        throw new ResourceLockedError('locked');
-      },
-      isLockConflict: (error: unknown) => error instanceof ResourceLockedError,
-      isLockInfrastructureError: () => false,
-    } as any, metrics, stateService as any);
+    const service = new OrdersService(
+      prisma,
+      {
+        using: async () => {
+          throw new ResourceLockedError('locked');
+        },
+        isLockConflict: (error: unknown) => error instanceof ResourceLockedError,
+        isLockInfrastructureError: () => false,
+      } as any,
+      metrics,
+      stateService as any
+    );
 
-    await expect(service.create('user-1', baseOrderData as any)).rejects.toBeInstanceOf(ConflictException);
+    await expect(service.create('user-1', baseOrderData as any)).rejects.toBeInstanceOf(
+      ConflictException
+    );
 
     expect(await getCounterValue(metrics, 'order_lock_conflicts_total')).toBe(1);
   });
@@ -227,15 +253,22 @@ describe('OrdersService - Locking & Concurrency', () => {
     const { prisma } = createPrismaFake(10);
     const metrics = new MetricsService();
     const stateService = new InMemoryStateService();
-    const service = new OrdersService(prisma, {
-      using: async () => {
-        throw new ExecutionError('infra', [] as any);
-      },
-      isLockConflict: () => false,
-      isLockInfrastructureError: (error: unknown) => error instanceof ExecutionError,
-    } as any, metrics, stateService as any);
+    const service = new OrdersService(
+      prisma,
+      {
+        using: async () => {
+          throw new ExecutionError('infra', [] as any);
+        },
+        isLockConflict: () => false,
+        isLockInfrastructureError: (error: unknown) => error instanceof ExecutionError,
+      } as any,
+      metrics,
+      stateService as any
+    );
 
-    await expect(service.create('user-1', baseOrderData as any)).rejects.toBeInstanceOf(ServiceUnavailableException);
+    await expect(service.create('user-1', baseOrderData as any)).rejects.toBeInstanceOf(
+      ServiceUnavailableException
+    );
 
     expect(await getCounterValue(metrics, 'order_lock_infra_errors_total')).toBe(1);
   });
@@ -255,7 +288,7 @@ describe('OrdersService - Locking & Concurrency', () => {
     expect(await getCounterValue(metrics, 'order_sla_breaches_total')).toBe(1);
 
     if (prev === undefined) {
-      delete process.env.ORDER_CREATE_SLA_MS;
+      process.env.ORDER_CREATE_SLA_MS = undefined;
     } else {
       process.env.ORDER_CREATE_SLA_MS = prev;
     }

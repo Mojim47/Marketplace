@@ -13,7 +13,9 @@ const authConfig = {
       authorize: async (creds) => {
         const email = creds?.email;
         const password = creds?.password;
-        if (!email || !password) return null;
+        if (!email || !password) {
+          return null;
+        }
         try {
           // Lemma: login() is the ISO-compliant gateway anchored in libs/auth
           const user = await login(email, password);
@@ -28,7 +30,9 @@ const authConfig = {
   callbacks: {
     // Corollary: JWT encodes the identity tensor
     async jwt({ token, user }) {
-      if (user) token.role = user.role;
+      if (user) {
+        token.role = user.role;
+      }
       return token;
     },
     async session({ session, token }) {

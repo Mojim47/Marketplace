@@ -9,9 +9,9 @@
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
-import { describe, it, expect } from 'vitest';
 import * as fc from 'fast-check';
-import { TaxInvoiceItem } from '../interfaces';
+import { describe, expect, it } from 'vitest';
+import type { TaxInvoiceItem } from '../interfaces';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Constants
@@ -361,7 +361,10 @@ describe('TaxInvoiceService Property Tests', () => {
             const result = calculateAmounts([item], 0);
 
             // Subtotal should account for item discount but never go negative
-            const expectedSubtotal = Math.max(0, item.quantity * item.unitPrice - item.discountAmount);
+            const expectedSubtotal = Math.max(
+              0,
+              item.quantity * item.unitPrice - item.discountAmount
+            );
             expect(result.subtotal).toBe(expectedSubtotal);
           }
         ),

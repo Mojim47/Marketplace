@@ -1,9 +1,18 @@
-﻿import { Controller, Post, UseInterceptors, UploadedFile, UseGuards, Get, Res, Body } from '@nestjs/common';
+﻿import type { BulkService } from '@libs/bulk';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Res,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { BulkService } from '@libs/bulk';
-import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
-import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { Response } from 'express';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import type { AuthenticatedUser } from '../common/types/authenticated-user.type';
 
 @Controller('bulk')
@@ -20,7 +29,10 @@ export class BulkController {
   @Get('template')
   async template(@Res() res: Response) {
     const buffer = this.bulk.generateExcelTemplate();
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    );
     res.setHeader('Content-Disposition', 'attachment; filename=bulk-order-template.xlsx');
     res.send(buffer);
   }
@@ -30,4 +42,3 @@ export class BulkController {
     return this.bulk.bulkApproveProformas(dto.ids, user.id);
   }
 }
-

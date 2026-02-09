@@ -4,19 +4,18 @@
 // Provides convenient methods for common storage operations
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import * as path from 'path';
-import * as crypto from 'crypto';
+import * as crypto from 'node:crypto';
+import * as path from 'node:path';
+import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
+import type { StorageFactory } from '../factory/storage.factory';
 import type {
-  IStorageProvider,
   FileMetadata,
-  UploadOptions,
+  IStorageProvider,
   ListOptions,
   ListResult,
-  SignedUrlOptions,
   StorageHealthCheck,
+  UploadOptions,
 } from '../interfaces/storage.interface';
-import { StorageFactory } from '../factory/storage.factory';
 
 /**
  * File upload result with additional metadata
@@ -59,7 +58,9 @@ export class StorageService implements OnModuleInit {
     try {
       this.provider = this.factory.createFromEnv('STORAGE', 'default');
       await this.provider.ensureBucket();
-      this.logger.log(`Storage initialized: ${this.provider.providerType} / ${this.provider.bucket}`);
+      this.logger.log(
+        `Storage initialized: ${this.provider.providerType} / ${this.provider.bucket}`
+      );
     } catch (error) {
       this.logger.warn(`Storage initialization skipped: ${(error as Error).message}`);
     }
@@ -97,7 +98,7 @@ export class StorageService implements OnModuleInit {
     options?: FileUploadOptions
   ): Promise<UploadResult> {
     const ext = path.extname(originalName).toLowerCase();
-    const baseName = path.basename(originalName, ext);
+    const _baseName = path.basename(originalName, ext);
 
     // Generate filename
     let filename: string;
@@ -142,9 +143,7 @@ export class StorageService implements OnModuleInit {
     files: Array<{ data: Buffer | NodeJS.ReadableStream; name: string }>,
     options?: FileUploadOptions
   ): Promise<UploadResult[]> {
-    return Promise.all(
-      files.map(file => this.uploadFile(file.data, file.name, options))
-    );
+    return Promise.all(files.map((file) => this.uploadFile(file.data, file.name, options)));
   }
 
   /**
@@ -261,7 +260,7 @@ export class StorageService implements OnModuleInit {
    */
   async getSignedUrl(
     key: string,
-    expiresIn: number = 3600,
+    expiresIn = 3600,
     method: 'GET' | 'PUT' | 'DELETE' = 'GET'
   ): Promise<string> {
     return this.provider.getSignedUrl(key, { expiresIn, method });
@@ -274,11 +273,7 @@ export class StorageService implements OnModuleInit {
    * @param expiresIn - Expiration time in seconds (default: 3600)
    * @returns Signed upload URL
    */
-  async getSignedUploadUrl(
-    key: string,
-    contentType: string,
-    expiresIn: number = 3600
-  ): Promise<string> {
+  async getSignedUploadUrl(key: string, contentType: string, expiresIn = 3600): Promise<string> {
     return this.provider.getSignedUrl(key, {
       expiresIn,
       method: 'PUT',
@@ -310,9 +305,11 @@ export class StorageService implements OnModuleInit {
    */
   async deleteDirectory(prefix: string): Promise<number> {
     const files = await this.listAllFiles(prefix);
-    const keys = files.map(f => f.key);
-    
-    if (keys.length === 0) return 0;
+    const keys = files.map((f) => f.key);
+
+    if (keys.length === 0) {
+      return 0;
+    }
 
     const failed = await this.provider.deleteMany(keys);
     return keys.length - failed.length;
@@ -342,8 +339,8 @@ export class StorageService implements OnModuleInit {
   private sanitizePath(pathStr: string): string {
     return pathStr
       .split('/')
-      .map(segment => this.sanitizeFilename(segment))
-      .filter(segment => segment && segment !== '.' && segment !== '..')
+      .map((segment) => this.sanitizeFilename(segment))
+      .filter((segment) => segment && segment !== '.' && segment !== '..')
       .join('/');
   }
 

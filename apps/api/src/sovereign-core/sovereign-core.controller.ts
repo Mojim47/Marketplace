@@ -8,17 +8,17 @@
  */
 
 import {
-  Controller,
-  Post,
-  Get,
-  Body,
-  Param,
-  Request,
-  ForbiddenException,
   BadRequestException,
+  Body,
+  Controller,
+  ForbiddenException,
+  Get,
+  Param,
+  Post,
+  Request,
 } from '@nestjs/common';
-import { RiskEngine } from './risk-engine.service';
 import { PrismaClient } from '@prisma/client';
+import type { RiskEngine } from './risk-engine.service';
 
 type UserRole = 'ADMIN' | 'CUSTOMER' | 'VENDOR' | 'INSTALLER' | 'SUPPORT' | 'EXECUTOR';
 
@@ -67,74 +67,65 @@ export class SovereignCoreController {
     }
   ) {
     const installerId = req.user.sub || req.user.id;
+    // Validate that installer is EXECUTOR/INSTALLER
+    const installer = await prisma.user.findUnique({
+      where: { id: installerId },
+      select: { role: true, executorProfile: true },
+    });
 
-    try {
-      // Validate that installer is EXECUTOR/INSTALLER
-      const installer = await prisma.user.findUnique({
-        where: { id: installerId },
-        select: { role: true, executorProfile: true },
-      });
-
-      if (!installer || installer.role !== UserRoleEnum.EXECUTOR) {
-        throw new ForbiddenException(
-          'Only users with INSTALLER/EXECUTOR role can register warranties'
-        );
-      }
-
-      // Validate serial number uniqueness
-      const existingWarranty = await prisma.warrantyRegistry.findUnique({
-        where: { serialNumber: body.serialNumber },
-      });
-
-      if (existingWarranty) {
-        throw new BadRequestException(
-          `Serial number ${body.serialNumber} is already registered`
-        );
-      }
-
-      // Validate installation project exists and belongs to installer
-      const project = await prisma.installationProject.findUnique({
-        where: { id: body.installationProjectId },
-      });
-
-      if (!project || project.installerId !== installerId) {
-        throw new BadRequestException(
-          'Invalid installation project or unauthorized access'
-        );
-      }
-
-      // Calculate expiration date
-      const warrantyMonths = body.warrantyMonths || 12;
-      const startsAt = new Date();
-      const expiresAt = new Date();
-      expiresAt.setMonth(expiresAt.getMonth() + warrantyMonths);
-
-      // Create warranty registry
-      const warranty = await prisma.warrantyRegistry.create({
-        data: {
-          productId: body.productId,
-          serialNumber: body.serialNumber,
-          activatedBy: installerId,
-          installationProjectId: body.installationProjectId,
-          customerId: body.customerId,
-          customerName: body.customerName,
-          customerMobile: body.customerMobile,
-          customerAddress: body.customerAddress,
-          warrantyMonths,
-          startsAt,
-          expiresAt,
-          status: WarrantyStatusEnum.ACTIVE,
-        },
-      });
-
-      return {
-        success: true,
-        warranty,
-        message: 'Warranty registered successfully',
-      };
-    } catch (error: any) {
-      throw error;
+    if (!installer || installer.role !== UserRoleEnum.EXECUTOR) {
+      throw new ForbiddenException(
+        'Only users with INSTALLER/EXECUTOR role can register warranties'
+      );
     }
+
+    // Validate serial number uniqueness
+    const existingWarranty = await prisma.warrantyRegistry.findUnique({
+      where: { serialNumber: body.serialNumber },
+    });
+
+    if (existingWarranty) {
+      throw new BadRequestException(`Serial number ${body.serialNumber} is already registered`);
+    }
+
+    // Validate installation project exists and belongs to installer
+    const project = await prisma.installationProject.findUnique({
+      where: { id: body.installationProjectId },
+    });
+
+    if (!project || project.installerId !== installerId) {
+      throw new BadRequestException('Invalid installation project or unauthorized access');
+    }
+
+    // Calculate expiration date
+    const warrantyMonths = body.warrantyMonths || 12;
+    const startsAt = new Date();
+    const expiresAt = new Date();
+    expiresAt.setMonth(expiresAt.getMonth() + warrantyMonths);
+
+    // Create warranty registry
+    const warranty = await prisma.warrantyRegistry.create({
+      data: {
+        productId: body.productId,
+        serialNumber: body.serialNumber,
+        activatedBy: installerId,
+        installationProjectId: body.installationProjectId,
+        customerId: body.customerId,
+        customerName: body.customerName,
+        customerMobile: body.customerMobile,
+        customerAddress: body.customerAddress,
+        warrantyMonths,
+        startsAt,
+        expiresAt,
+        status: WarrantyStatusEnum.ACTIVE,
+      },
+    });
+
+    return {
+      success: true,
+      warranty,
+      message: 'Warranty registered successfully',
+    };
   }
 
   /**
@@ -143,46 +134,42 @@ export class SovereignCoreController {
    */
   @Get('warranty/:serialNumber')
   async getWarranty(@Param('serialNumber') serialNumber: string) {
-    try {
-      const warranty = await prisma.warrantyRegistry.findUnique({
-        where: { serialNumber },
-        include: {
-          product: {
-            select: {
-              id: true,
-              name: true,
-              sku: true,
-            },
-          },
-          installer: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              mobile: true,
-            },
-          },
-          installationProject: {
-            select: {
-              id: true,
-              projectName: true,
-              status: true,
-            },
+    const warranty = await prisma.warrantyRegistry.findUnique({
+      where: { serialNumber },
+      include: {
+        product: {
+          select: {
+            id: true,
+            name: true,
+            sku: true,
           },
         },
-      });
+        installer: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            mobile: true,
+          },
+        },
+        installationProject: {
+          select: {
+            id: true,
+            projectName: true,
+            status: true,
+          },
+        },
+      },
+    });
 
-      if (!warranty) {
-        throw new BadRequestException('Warranty not found');
-      }
-
-      return {
-        success: true,
-        warranty,
-      };
-    } catch (error: any) {
-      throw error;
+    if (!warranty) {
+      throw new BadRequestException('Warranty not found');
     }
+
+    return {
+      success: true,
+      warranty,
+    };
   }
 
   /**
@@ -209,21 +196,17 @@ export class SovereignCoreController {
       relatedChequeId?: string;
     }
   ) {
-    try {
-      const result = await this.riskEngine.processFinancialEvent({
-        organizationId: body.organizationId,
-        eventType: body.eventType as any,
-        impactValue: body.impactValue,
-        description: body.description,
-        relatedOrderId: body.relatedOrderId,
-        relatedProformaId: body.relatedProformaId,
-        relatedChequeId: body.relatedChequeId,
-      });
+    const result = await this.riskEngine.processFinancialEvent({
+      organizationId: body.organizationId,
+      eventType: body.eventType as any,
+      impactValue: body.impactValue,
+      description: body.description,
+      relatedOrderId: body.relatedOrderId,
+      relatedProformaId: body.relatedProformaId,
+      relatedChequeId: body.relatedChequeId,
+    });
 
-      return result;
-    } catch (error: any) {
-      throw error;
-    }
+    return result;
   }
 
   /**
@@ -242,32 +225,25 @@ export class SovereignCoreController {
     }
   ) {
     const userId = req.user.sub || req.user.id;
+    // Get voucher's organization
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { organizationId: true },
+    });
 
-    try {
-      // Get voucher's organization
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { organizationId: true },
-      });
-
-      if (!user?.organizationId) {
-        throw new ForbiddenException(
-          'User must belong to an organization to vouch'
-        );
-      }
-
-      const result = await this.riskEngine.vouchForOrganization({
-        voucherOrganizationId: user.organizationId,
-        voucheeOrganizationId: body.voucheeOrganizationId,
-        vouchAmount: body.vouchAmount,
-        riskSharePercentage: body.riskSharePercentage,
-        expirationDays: body.expirationDays,
-      });
-
-      return result;
-    } catch (error: any) {
-      throw error;
+    if (!user?.organizationId) {
+      throw new ForbiddenException('User must belong to an organization to vouch');
     }
+
+    const result = await this.riskEngine.vouchForOrganization({
+      voucherOrganizationId: user.organizationId,
+      voucheeOrganizationId: body.voucheeOrganizationId,
+      vouchAmount: body.vouchAmount,
+      riskSharePercentage: body.riskSharePercentage,
+      expirationDays: body.expirationDays,
+    });
+
+    return result;
   }
 
   /**
@@ -276,20 +252,16 @@ export class SovereignCoreController {
    */
   @Get('risk/profile/:organizationId')
   async getRiskProfile(@Param('organizationId') organizationId: string) {
-    try {
-      const profile = await this.riskEngine.getRiskProfile(organizationId);
+    const profile = await this.riskEngine.getRiskProfile(organizationId);
 
-      if (!profile) {
-        throw new BadRequestException('Risk profile not found');
-      }
-
-      return {
-        success: true,
-        profile,
-      };
-    } catch (error: any) {
-      throw error;
+    if (!profile) {
+      throw new BadRequestException('Risk profile not found');
     }
+
+    return {
+      success: true,
+      profile,
+    };
   }
 
   /**
@@ -305,15 +277,11 @@ export class SovereignCoreController {
       defaultAmount: number;
     }
   ) {
-    try {
-      const result = await this.riskEngine.processVoucheeDefault(
-        body.voucheeOrganizationId,
-        body.defaultAmount
-      );
+    const result = await this.riskEngine.processVoucheeDefault(
+      body.voucheeOrganizationId,
+      body.defaultAmount
+    );
 
-      return result;
-    } catch (error: any) {
-      throw error;
-    }
+    return result;
   }
 }

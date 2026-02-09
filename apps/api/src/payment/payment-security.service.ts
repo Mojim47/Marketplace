@@ -1,6 +1,6 @@
-import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { createHash, createHmac, timingSafeEqual } from 'crypto';
 import { randomUUID } from 'crypto';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 
 /**
  * Payment data that should never be stored
@@ -93,15 +93,15 @@ const CARD_BRANDS: Record<string, RegExp> = {
 export function maskCardNumber(cardNumber: string): string {
   // Remove spaces and dashes
   const cleaned = cardNumber.replace(/[\s-]/g, '');
-  
+
   if (cleaned.length < 13) {
     return '****';
   }
-  
+
   const firstSix = cleaned.slice(0, 6);
   const lastFour = cleaned.slice(-4);
   const maskedMiddle = '*'.repeat(cleaned.length - 10);
-  
+
   return `${firstSix}${maskedMiddle}${lastFour}`;
 }
 
@@ -118,13 +118,13 @@ export function getCardLastFour(cardNumber: string): string {
  */
 export function detectCardBrand(cardNumber: string): string | null {
   const cleaned = cardNumber.replace(/[\s-]/g, '');
-  
+
   for (const [brand, pattern] of Object.entries(CARD_BRANDS)) {
     if (pattern.test(cleaned)) {
       return brand;
     }
   }
-  
+
   return null;
 }
 
@@ -133,8 +133,8 @@ export function detectCardBrand(cardNumber: string): string | null {
  */
 export function containsSensitiveData(data: unknown): boolean {
   const str = typeof data === 'string' ? data : JSON.stringify(data);
-  
-  return Object.values(SENSITIVE_PATTERNS).some(pattern => pattern.test(str));
+
+  return Object.values(SENSITIVE_PATTERNS).some((pattern) => pattern.test(str));
 }
 
 /**
@@ -143,19 +143,29 @@ export function containsSensitiveData(data: unknown): boolean {
  */
 export function sanitizePaymentData(data: Record<string, unknown>): Record<string, unknown> {
   const sensitiveKeys = [
-    'cardNumber', 'card_number', 'pan',
-    'cvv', 'cvc', 'cvv2', 'cvc2',
-    'pin', 'password', 'secret',
-    'expiry', 'exp_date', 'expiration',
-    'track1', 'track2',
+    'cardNumber',
+    'card_number',
+    'pan',
+    'cvv',
+    'cvc',
+    'cvv2',
+    'cvc2',
+    'pin',
+    'password',
+    'secret',
+    'expiry',
+    'exp_date',
+    'expiration',
+    'track1',
+    'track2',
   ];
-  
+
   const sanitized: Record<string, unknown> = {};
-  
+
   for (const [key, value] of Object.entries(data)) {
     const lowerKey = key.toLowerCase();
-    
-    if (sensitiveKeys.some(sk => lowerKey.includes(sk.toLowerCase()))) {
+
+    if (sensitiveKeys.some((sk) => lowerKey.includes(sk.toLowerCase()))) {
       sanitized[key] = '[REDACTED]';
     } else if (typeof value === 'string' && containsSensitiveData(value)) {
       sanitized[key] = '[CONTAINS_SENSITIVE_DATA]';
@@ -165,18 +175,14 @@ export function sanitizePaymentData(data: Record<string, unknown>): Record<strin
       sanitized[key] = value;
     }
   }
-  
+
   return sanitized;
 }
 
 /**
  * Generate idempotency key from request data
  */
-export function generateIdempotencyKey(
-  userId: string,
-  orderId: string,
-  amount: number,
-): string {
+export function generateIdempotencyKey(userId: string, orderId: string, amount: number): string {
   const data = `${userId}:${orderId}:${amount}`;
   return createHash('sha256').update(data).digest('hex');
 }
@@ -195,21 +201,16 @@ export function generateRequestHash(request: Record<string, unknown>): string {
 export function verifyWebhookSignature(
   payload: string,
   signature: string,
-  secret: string,
+  secret: string
 ): boolean {
   if (!signature || !secret) {
     return false;
   }
-  
-  const expectedSignature = createHmac('sha256', secret)
-    .update(payload)
-    .digest('hex');
-  
+
+  const expectedSignature = createHmac('sha256', secret).update(payload).digest('hex');
+
   try {
-    return timingSafeEqual(
-      Buffer.from(signature),
-      Buffer.from(expectedSignature),
-    );
+    return timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature));
   } catch {
     return false;
   }
@@ -218,10 +219,7 @@ export function verifyWebhookSignature(
 /**
  * Verify webhook timestamp to prevent replay attacks
  */
-export function verifyWebhookTimestamp(
-  timestamp: number,
-  toleranceSeconds: number = 300,
-): boolean {
+export function verifyWebhookTimestamp(timestamp: number, toleranceSeconds: number = 300): boolean {
   const now = Math.floor(Date.now() / 1000);
   const diff = Math.abs(now - timestamp);
   return diff <= toleranceSeconds;
@@ -234,35 +232,35 @@ export function verifyWebhookCallback(
   data: PaymentCallbackData,
   rawPayload: string,
   signature: string | undefined,
-  secret: string,
+  secret: string
 ): WebhookVerificationResult {
   // Verify signature if provided
   if (signature) {
     const signatureValid = verifyWebhookSignature(rawPayload, signature, secret);
     if (!signatureValid) {
-      return { valid: false, reason: 'ÇãÖÇí äÇãÚÊÈÑ' };
+      return { valid: false, reason: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' };
     }
   }
-  
+
   // Verify timestamp if provided
   if (data.timestamp) {
     const timestampValid = verifyWebhookTimestamp(data.timestamp);
     if (!timestampValid) {
-      return { valid: false, reason: 'ÒãÇä ÏÑÎæÇÓÊ ãäÞÖí ÔÏå' };
+      return { valid: false, reason: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½' };
     }
   }
-  
+
   // Verify required fields
   if (!data.authority) {
-    return { valid: false, reason: 'ÔäÇÓå ÊÑÇ˜äÔ ÇáÒÇãí ÇÓÊ' };
+    return { valid: false, reason: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ç˜ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½' };
   }
-  
+
   return { valid: true, timestamp: data.timestamp };
 }
 
 /**
  * Payment Security Service
- * 
+ *
  * Features:
  * - Sensitive data masking and sanitization
  * - Idempotency key management
@@ -279,7 +277,7 @@ export class PaymentSecurityService {
 
   constructor() {
     this.webhookSecret = process.env.ZARINPAL_WEBHOOK_SECRET || '';
-    
+
     if (!this.webhookSecret && process.env.NODE_ENV === 'production') {
       this.logger.warn('ZARINPAL_WEBHOOK_SECRET not configured');
     }
@@ -290,14 +288,14 @@ export class PaymentSecurityService {
    */
   maskPaymentData(data: SensitivePaymentData): MaskedPaymentData {
     const masked: MaskedPaymentData = {};
-    
+
     if (data.cardNumber || data.fullCardNumber) {
       const cardNumber = data.cardNumber || data.fullCardNumber || '';
       masked.maskedCardNumber = maskCardNumber(cardNumber);
       masked.cardLastFour = getCardLastFour(cardNumber);
       masked.cardBrand = detectCardBrand(cardNumber) || undefined;
     }
-    
+
     return masked;
   }
 
@@ -313,27 +311,25 @@ export class PaymentSecurityService {
    */
   async checkIdempotency(
     idempotencyKey: string,
-    requestHash: string,
+    requestHash: string
   ): Promise<{ isDuplicate: boolean; response?: unknown }> {
     const record = this.idempotencyCache.get(idempotencyKey);
-    
+
     if (!record) {
       return { isDuplicate: false };
     }
-    
+
     // Check if expired
     if (record.expiresAt < new Date()) {
       this.idempotencyCache.delete(idempotencyKey);
       return { isDuplicate: false };
     }
-    
+
     // Check if request hash matches
     if (record.requestHash !== requestHash) {
-      throw new BadRequestException(
-        '˜áíÏ í˜ÊÇÓÇÒí ÈÇ ÏÑÎæÇÓÊ ãÊÝÇæÊí ÇÓÊÝÇÏå ÔÏå ÇÓÊ'
-      );
+      throw new BadRequestException('ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½');
     }
-    
+
     this.logger.log(`Returning cached response for idempotency key: ${idempotencyKey}`);
     return { isDuplicate: true, response: record.response };
   }
@@ -344,7 +340,7 @@ export class PaymentSecurityService {
   async storeIdempotentResponse(
     idempotencyKey: string,
     requestHash: string,
-    response: unknown,
+    response: unknown
   ): Promise<void> {
     const record: IdempotencyRecord = {
       key: idempotencyKey,
@@ -353,7 +349,7 @@ export class PaymentSecurityService {
       createdAt: new Date(),
       expiresAt: new Date(Date.now() + this.idempotencyTTL),
     };
-    
+
     this.idempotencyCache.set(idempotencyKey, record);
   }
 
@@ -363,14 +359,9 @@ export class PaymentSecurityService {
   verifyCallback(
     data: PaymentCallbackData,
     rawPayload: string,
-    signature?: string,
+    signature?: string
   ): WebhookVerificationResult {
-    return verifyWebhookCallback(
-      data,
-      rawPayload,
-      signature,
-      this.webhookSecret,
-    );
+    return verifyWebhookCallback(data, rawPayload, signature, this.webhookSecret);
   }
 
   /**
@@ -388,17 +379,17 @@ export class PaymentSecurityService {
     if (amount < 1000) {
       return false;
     }
-    
+
     // Maximum 500,000,000 Rials (50 million Tomans)
     if (amount > 500000000) {
       return false;
     }
-    
+
     // Must be positive integer
     if (!Number.isInteger(amount) || amount <= 0) {
       return false;
     }
-    
+
     return true;
   }
 
@@ -408,18 +399,18 @@ export class PaymentSecurityService {
   cleanupExpiredRecords(): number {
     const now = new Date();
     let cleaned = 0;
-    
+
     for (const [key, record] of this.idempotencyCache.entries()) {
       if (record.expiresAt < now) {
         this.idempotencyCache.delete(key);
         cleaned++;
       }
     }
-    
+
     if (cleaned > 0) {
       this.logger.log(`Cleaned up ${cleaned} expired idempotency records`);
     }
-    
+
     return cleaned;
   }
 }

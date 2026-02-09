@@ -7,125 +7,44 @@
     "rootDir": "./src",
     "baseUrl": "./src",
     "paths": {
-      "@nextgen/ui": [
-        "../../libs/ui/src/index.ts"
-      ],
-      "@nextgen/ui/*": [
-        "../../libs/ui/src/*"
-      ],
-      "@nextgen/types": [
-        "../../libs/types/src/index.ts"
-      ],
-      "@nextgen/types/*": [
-        "../../libs/types/src/*"
-      ],
-      "@nextgen/auth": [
-        "../../libs/auth/src/index.ts"
-      ],
-      "@nextgen/auth/*": [
-        "../../libs/auth/src/*"
-      ],
-      "@nextgen/ai": [
-        "../../libs/ai/src/index.ts"
-      ],
-      "@nextgen/ai/*": [
-        "../../libs/ai/src/*"
-      ],
-      "@nextgen/ar": [
-        "../../libs/ar/src/index.ts"
-      ],
-      "@nextgen/ar/*": [
-        "../../libs/ar/src/*"
-      ],
-      "@nextgen/admin-core": [
-        "../../libs/admin-core/src/index.ts"
-      ],
-      "@nextgen/admin-core/*": [
-        "../../libs/admin-core/src/*"
-      ],
-      "@nextgen/invoice": [
-        "../../libs/invoice/src/index.ts"
-      ],
-      "@nextgen/invoice/*": [
-        "../../libs/invoice/src/*"
-      ],
-      "@nextgen/payment": [
-        "../../libs/payment/src/index.ts"
-      ],
-      "@nextgen/payment/*": [
-        "../../libs/payment/src/*"
-      ],
-      "@nextgen/fraud": [
-        "../../libs/fraud/src/index.ts"
-      ],
-      "@nextgen/fraud/*": [
-        "../../libs/fraud/src/*"
-      ],
-      "@nextgen/queue": [
-        "../../libs/queue/src/index.ts"
-      ],
-      "@nextgen/queue/*": [
-        "../../libs/queue/src/*"
-      ],
-      "@nextgen/storage": [
-        "../../libs/storage/src/index.ts"
-      ],
-      "@nextgen/storage/*": [
-        "../../libs/storage/src/*"
-      ],
-      "@nextgen/search": [
-        "../../libs/search/src/index.ts"
-      ],
-      "@nextgen/search/*": [
-        "../../libs/search/src/*"
-      ],
-      "@nextgen/security": [
-        "../../libs/security/src/index.ts"
-      ],
-      "@nextgen/security/*": [
-        "../../libs/security/src/*"
-      ],
-      "@nextgen/cooperation": [
-        "../../libs/cooperation/src/index.ts"
-      ],
-      "@nextgen/cooperation/*": [
-        "../../libs/cooperation/src/*"
-      ],
-      "@nextgen/tax": [
-        "../../libs/tax/src/index.ts"
-      ],
-      "@nextgen/tax/*": [
-        "../../libs/tax/src/*"
-      ],
-      "@libs/warehouse": [
-        "../../libs/warehouse/src/index.ts"
-      ],
-      "@libs/warehouse/*": [
-        "../../libs/warehouse/src/*"
-      ],
-      "@libs/workflow": [
-        "../../libs/workflow/src/index.ts"
-      ],
-      "@libs/workflow/*": [
-        "../../libs/workflow/src/*"
-      ],
-      "@nextgen/prisma": [
-        "../../libs/prisma/src/index.ts"
-      ]
+      "@nextgen/ui": ["../../libs/ui/src/index.ts"],
+      "@nextgen/ui/*": ["../../libs/ui/src/*"],
+      "@nextgen/types": ["../../libs/types/src/index.ts"],
+      "@nextgen/types/*": ["../../libs/types/src/*"],
+      "@nextgen/auth": ["../../libs/auth/src/index.ts"],
+      "@nextgen/auth/*": ["../../libs/auth/src/*"],
+      "@nextgen/ai": ["../../libs/ai/src/index.ts"],
+      "@nextgen/ai/*": ["../../libs/ai/src/*"],
+      "@nextgen/ar": ["../../libs/ar/src/index.ts"],
+      "@nextgen/ar/*": ["../../libs/ar/src/*"],
+      "@nextgen/admin-core": ["../../libs/admin-core/src/index.ts"],
+      "@nextgen/admin-core/*": ["../../libs/admin-core/src/*"],
+      "@nextgen/invoice": ["../../libs/invoice/src/index.ts"],
+      "@nextgen/invoice/*": ["../../libs/invoice/src/*"],
+      "@nextgen/payment": ["../../libs/payment/src/index.ts"],
+      "@nextgen/payment/*": ["../../libs/payment/src/*"],
+      "@nextgen/fraud": ["../../libs/fraud/src/index.ts"],
+      "@nextgen/fraud/*": ["../../libs/fraud/src/*"],
+      "@nextgen/queue": ["../../libs/queue/src/index.ts"],
+      "@nextgen/queue/*": ["../../libs/queue/src/*"],
+      "@nextgen/storage": ["../../libs/storage/src/index.ts"],
+      "@nextgen/storage/*": ["../../libs/storage/src/*"],
+      "@nextgen/search": ["../../libs/search/src/index.ts"],
+      "@nextgen/search/*": ["../../libs/search/src/*"],
+      "@nextgen/security": ["../../libs/security/src/index.ts"],
+      "@nextgen/security/*": ["../../libs/security/src/*"],
+      "@nextgen/cooperation": ["../../libs/cooperation/src/index.ts"],
+      "@nextgen/cooperation/*": ["../../libs/cooperation/src/*"],
+      "@nextgen/tax": ["../../libs/tax/src/index.ts"],
+      "@nextgen/tax/*": ["../../libs/tax/src/*"],
+      "@libs/warehouse": ["../../libs/warehouse/src/index.ts"],
+      "@libs/warehouse/*": ["../../libs/warehouse/src/*"],
+      "@libs/workflow": ["../../libs/workflow/src/index.ts"],
+      "@libs/workflow/*": ["../../libs/workflow/src/*"],
+      "@nextgen/prisma": ["../../libs/prisma/src/index.ts"]
     },
-    "types": [
-      "node",
-      "dotenv",
-      "uuid"
-    ]
+    "types": ["node", "dotenv", "uuid"]
   },
-  "include": [
-    "src/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "**/*.test.ts",
-    "**/*.spec.ts"
-  ]
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"]
 }

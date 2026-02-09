@@ -2,29 +2,38 @@
  * ???????????????????????????????????????????????????????????????????????????
  * NextGen Marketplace - Payment DTOs
  * ???????????????????????????????????????????????????????????????????????????
- * 
+ *
  * Data Transfer Objects for payment operations.
- * 
+ *
  * Requirements: 4.1, 4.2, 4.3, 4.4, 4.5
  */
 
-import { IsString, IsNumber, IsOptional, IsUUID, Min, IsUrl, IsEmail, Matches } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsEmail,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUUID,
+  IsUrl,
+  Matches,
+  Min,
+} from 'class-validator';
 
 /**
  * DTO for creating a new payment request
  */
 export class CreatePaymentDto {
-  @ApiProperty({ description: 'ÔäÇÓå ÓİÇÑÔ', example: 'clxyz123...' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½', example: 'clxyz123...' })
   @IsUUID()
   orderId: string;
 
-  @ApiPropertyOptional({ description: 'ÂÏÑÓ ÈÇÒÔÊ Ó ÇÒ ÑÏÇÎÊ' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Òï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsUrl()
   callbackUrl?: string;
 
-  @ApiPropertyOptional({ description: 'ÊæÖíÍÇÊ ÑÏÇÎÊ' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsString()
   description?: string;
@@ -34,11 +43,11 @@ export class CreatePaymentDto {
  * DTO for verifying a payment callback
  */
 export class VerifyPaymentDto {
-  @ApiProperty({ description: '˜Ï ÇÊæÑíÊí ÒÑíäÇá' })
+  @ApiProperty({ description: 'ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½äï¿½ï¿½' })
   @IsString()
   authority: string;
 
-  @ApiProperty({ description: 'æÖÚíÊ ÑÏÇÎÊ ÇÒ ÒÑíäÇá', example: 'OK' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½äï¿½ï¿½', example: 'OK' })
   @IsString()
   status: string;
 }
@@ -47,17 +56,17 @@ export class VerifyPaymentDto {
  * DTO for refund request
  */
 export class RefundPaymentDto {
-  @ApiProperty({ description: 'ÔäÇÓå ÊÑÇ˜äÔ' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ç˜ï¿½ï¿½' })
   @IsString()
   transactionId: string;
 
-  @ApiPropertyOptional({ description: 'ãÈáÛ ÇÓÊÑÏÇÏ (ÇÎÊíÇÑí - íÔİÑÖ ˜á ãÈáÛ)' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ - ï¿½ï¿½Ôï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)' })
   @IsOptional()
   @IsNumber()
   @Min(1000)
   amount?: number;
 
-  @ApiPropertyOptional({ description: 'Ïáíá ÇÓÊÑÏÇÏ' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsString()
   reason?: string;
@@ -67,13 +76,13 @@ export class RefundPaymentDto {
  * Response for payment request
  */
 export class PaymentRequestResponse {
-  @ApiProperty({ description: 'ÂÏÑÓ ÑÏÇÎÊ' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   paymentUrl: string;
 
-  @ApiProperty({ description: '˜Ï ÇÊæÑíÊí' })
+  @ApiProperty({ description: 'ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   authority: string;
 
-  @ApiProperty({ description: 'ÔäÇÓå ÊÑÇ˜äÔ' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ç˜ï¿½ï¿½' })
   transactionId: string;
 }
 
@@ -81,16 +90,16 @@ export class PaymentRequestResponse {
  * Response for payment verification
  */
 export class PaymentVerifyResponse {
-  @ApiProperty({ description: 'ãæİŞíÊ ÑÏÇÎÊ' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   success: boolean;
 
-  @ApiPropertyOptional({ description: 'ÔãÇÑå ãÑÌÚ' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½' })
   refId?: string;
 
-  @ApiPropertyOptional({ description: 'ÔãÇÑå ˜ÇÑÊ ãÇÓ˜ ÔÏå' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ó˜ ï¿½ï¿½ï¿½' })
   cardPan?: string;
 
-  @ApiPropertyOptional({ description: 'íÇã ÎØÇ' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½' })
   message?: string;
 }
 
@@ -98,24 +107,24 @@ export class PaymentVerifyResponse {
  * Response for transaction details
  */
 export class TransactionDetailsResponse {
-  @ApiProperty({ description: 'ÔäÇÓå ÊÑÇ˜äÔ' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ç˜ï¿½ï¿½' })
   id: string;
 
-  @ApiProperty({ description: 'ãÈáÛ' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½' })
   amount: number;
 
-  @ApiProperty({ description: 'æÖÚíÊ' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½' })
   status: string;
 
-  @ApiProperty({ description: 'ÏÑÇå ÑÏÇÎÊ' })
+  @ApiProperty({ description: 'ï¿½Ñï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   gateway: string;
 
-  @ApiPropertyOptional({ description: 'ÔãÇÑå ãÑÌÚ' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½' })
   refId?: string;
 
-  @ApiProperty({ description: 'ÊÇÑíÎ ÇíÌÇÏ' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
   createdAt: Date;
 
-  @ApiPropertyOptional({ description: 'ÊÇÑíÎ ÑÏÇÎÊ' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   paidAt?: Date;
 }

@@ -1,1 +1,1 @@
-export * from "./ARViewer";
+export * from './ARViewer';

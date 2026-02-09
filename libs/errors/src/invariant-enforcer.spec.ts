@@ -4,15 +4,14 @@
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ValidationError } from './errors';
 import {
-  InvariantEnforcer,
   AuthInvariantEnforcer,
-  PaymentInvariantEnforcer,
   ErrorInvariantEnforcer,
+  InvariantEnforcer,
+  PaymentInvariantEnforcer,
 } from './invariant-enforcer';
-import { AuthenticationError, BusinessRuleError, ValidationError, InternalError } from './errors';
-import { AppError } from './app-error';
 
 // Helper to check error type by name (works around instanceof issues with custom errors)
 const expectToThrowErrorType = (fn: () => void, errorName: string) => {
@@ -206,10 +205,11 @@ describe('InvariantEnforcer', () => {
 
       it('should throw when authorities mismatch', () => {
         expectToThrowErrorType(
-          () => PaymentInvariantEnforcer.verifyIdempotencyKeyBinding(
-            { key: 'key-1', authority: 'auth-1' },
-            { key: 'key-1', authority: 'auth-2' }
-          ),
+          () =>
+            PaymentInvariantEnforcer.verifyIdempotencyKeyBinding(
+              { key: 'key-1', authority: 'auth-1' },
+              { key: 'key-1', authority: 'auth-2' }
+            ),
           'BusinessRuleError'
         );
       });

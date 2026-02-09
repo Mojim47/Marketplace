@@ -1,103 +1,101 @@
-import {
-  IsString,
-  IsNumber,
-  IsOptional,
-  IsArray,
-  IsUUID,
-  IsEnum,
-  Min,
-  Max,
-  ValidateNested,
-  IsObject,
-} from 'class-validator';
-import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import {
+  IsArray,
+  IsNumber,
+  IsObject,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Max,
+  Min,
+} from 'class-validator';
 
 export class CreateProductDto {
-  @ApiProperty({ description: 'äÇã ãÍÕæá' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsString()
   name: string;
 
-  @ApiProperty({ description: 'SKU ãÍÕæá' })
+  @ApiProperty({ description: 'SKU ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsString()
   sku: string;
 
-  @ApiProperty({ description: 'ÔäÇÓå ÏÓÊåÈäÏí' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsUUID()
   categoryId: string;
 
-  @ApiPropertyOptional({ description: 'ÊæÖíÍÇÊ ãÍÕæá' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsString()
   description?: string;
 
-  @ApiPropertyOptional({ description: 'ÊæÖíÍÇÊ ˜æÊÇå' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsString()
   shortDescription?: string;
 
-  @ApiProperty({ description: 'ŞíãÊ' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½' })
   @IsNumber()
   @Min(0)
   price: number;
 
-  @ApiPropertyOptional({ description: 'ŞíãÊ ÊãÇã ÔÏå' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsNumber()
   @Min(0)
   costPrice?: number;
 
-  @ApiPropertyOptional({ description: 'ŞíãÊ ãŞÇíÓåÇí' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsNumber()
   @Min(0)
   compareAtPrice?: number;
 
-  @ApiPropertyOptional({ description: 'ãæÌæÏí' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsNumber()
   @Min(0)
   stock?: number;
 
-  @ApiPropertyOptional({ description: 'ÈÑäÏ' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsString()
   brand?: string;
 
-  @ApiPropertyOptional({ description: 'ÊåÇ' })
+  @ApiPropertyOptional({ description: 'Êï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
   tags?: string[];
 
-  @ApiPropertyOptional({ description: 'ÊÕÇæíÑ' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
   images?: string[];
 
-  @ApiPropertyOptional({ description: 'æííåÇí ãÍÕæá' })
+  @ApiPropertyOptional({ description: 'ï¿½íï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsObject()
   attributes?: Record<string, any>;
 
-  @ApiPropertyOptional({ description: 'ÚäæÇä ãÊÇ' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsString()
   metaTitle?: string;
 
-  @ApiPropertyOptional({ description: 'ÊæÖíÍÇÊ ãÊÇ' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsString()
   metaDescription?: string;
 
-  @ApiPropertyOptional({ description: '˜áãÇÊ ˜áíÏí' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
   keywords?: string[];
 
-  @ApiPropertyOptional({ description: 'ÇÓáÇ' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½Ç' })
   @IsOptional()
   @IsString()
   slug?: string;
@@ -106,51 +104,54 @@ export class CreateProductDto {
 export class UpdateProductDto extends PartialType(CreateProductDto) {}
 
 export class ProductSearchDto {
-  @ApiPropertyOptional({ description: 'ÚÈÇÑÊ ÌÓÊÌæ' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsString()
   query?: string;
 
-  @ApiPropertyOptional({ description: 'ÔäÇÓå ÏÓÊåÈäÏí' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsUUID()
   categoryId?: string;
 
-  @ApiPropertyOptional({ description: 'ÍÏÇŞá ŞíãÊ' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsNumber()
   @Min(0)
   @Type(() => Number)
   minPrice?: number;
 
-  @ApiPropertyOptional({ description: 'ÍÏÇ˜ËÑ ŞíãÊ' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½Ç˜ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsNumber()
   @Type(() => Number)
   maxPrice?: number;
 
-  @ApiPropertyOptional({ description: 'İŞØ ãæÌæÏ' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   inStock?: boolean;
 
-  @ApiPropertyOptional({ description: 'ãÑÊÈÓÇÒí ÈÑ ÇÓÇÓ', enum: ['createdAt', 'price', 'name', 'rating'] })
+  @ApiPropertyOptional({
+    description: 'ï¿½ï¿½ï¿½Èï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½',
+    enum: ['createdAt', 'price', 'name', 'rating'],
+  })
   @IsOptional()
   @IsString()
   sortBy?: string;
 
-  @ApiPropertyOptional({ description: 'ÊÑÊíÈ', enum: ['asc', 'desc'] })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½', enum: ['asc', 'desc'] })
   @IsOptional()
   @IsString()
   sortOrder?: 'asc' | 'desc';
 
-  @ApiPropertyOptional({ description: 'ÕİÍå' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsNumber()
   @Min(1)
   @Type(() => Number)
   page?: number;
 
-  @ApiPropertyOptional({ description: 'ÊÚÏÇÏ ÏÑ ÕİÍå' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsNumber()
   @Min(1)
@@ -160,27 +161,27 @@ export class ProductSearchDto {
 }
 
 export class CreateVariantDto {
-  @ApiProperty({ description: 'äÇã æÇÑíÇäÊ' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsString()
   name: string;
 
-  @ApiProperty({ description: 'SKU æÇÑíÇäÊ' })
+  @ApiProperty({ description: 'SKU ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsString()
   sku: string;
 
-  @ApiPropertyOptional({ description: 'ŞíãÊ' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsNumber()
   @Min(0)
   price?: number;
 
-  @ApiPropertyOptional({ description: 'ãæÌæÏí' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsNumber()
   @Min(0)
   stock?: number;
 
-  @ApiPropertyOptional({ description: 'æííåÇí æÇÑíÇäÊ' })
+  @ApiPropertyOptional({ description: 'ï¿½íï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsObject()
   variantAttributes?: Record<string, any>;

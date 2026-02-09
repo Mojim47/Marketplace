@@ -1,28 +1,26 @@
 import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
+  type CallHandler,
+  type ExecutionContext,
   Inject,
+  Injectable,
+  type NestInterceptor,
 } from '@nestjs/common';
-import { Observable } from 'rxjs';
-import { tap, catchError } from 'rxjs/operators';
+import type { Observable } from 'rxjs';
+import { catchError, tap } from 'rxjs/operators';
 import { MetricsService } from '../../monitoring/metrics.service';
 
 /**
  * Metrics Interceptor
- * 
+ *
  * Automatically tracks HTTP request metrics:
  * - Request duration (histogram with p50, p95, p99 percentiles)
  * - Request count by method, route, and status code
- * 
+ *
  * Validates: Requirements 7.1, 7.2
  */
 @Injectable()
 export class MetricsInterceptor implements NestInterceptor {
-  constructor(
-    @Inject(MetricsService) private readonly metricsService: MetricsService,
-  ) {}
+  constructor(@Inject(MetricsService) private readonly metricsService: MetricsService) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const request = context.switchToHttp().getRequest();
@@ -39,7 +37,7 @@ export class MetricsInterceptor implements NestInterceptor {
         const statusCode = error.status || 500;
         this.recordMetrics(method, routePath, statusCode, startTime);
         throw error;
-      }),
+      })
     );
   }
 
@@ -47,7 +45,7 @@ export class MetricsInterceptor implements NestInterceptor {
     method: string,
     route: string,
     statusCode: number,
-    startTime: bigint,
+    startTime: bigint
   ): void {
     const endTime = process.hrtime.bigint();
     const durationSeconds = Number(endTime - startTime) / 1e9;
@@ -55,7 +53,7 @@ export class MetricsInterceptor implements NestInterceptor {
     // Record request duration for latency percentiles (p50, p95, p99)
     this.metricsService.httpRequestDuration.observe(
       { method, route, status_code: statusCode.toString() },
-      durationSeconds,
+      durationSeconds
     );
 
     // Increment request counter

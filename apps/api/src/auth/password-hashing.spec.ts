@@ -1,15 +1,15 @@
 /**
  * Property-Based Tests for Password Hashing Configuration
- * 
+ *
  * Feature: backend-production-audit
  * Property 1: Password Hashing Security
- * 
+ *
  * Tests that the Argon2id configuration meets OWASP security requirements.
  * These tests verify the configuration without requiring the argon2 native module.
  */
 
-import { describe, it, expect } from 'vitest';
 import * as fc from 'fast-check';
+import { describe, expect, it } from 'vitest';
 
 /**
  * Argon2id Configuration - OWASP Recommended Settings
@@ -17,10 +17,10 @@ import * as fc from 'fast-check';
  */
 const ARGON2_CONFIG = {
   type: 2, // argon2id (0=argon2d, 1=argon2i, 2=argon2id)
-  memoryCost: 65536,  // 64 MiB - OWASP minimum recommendation
-  timeCost: 3,        // 3 iterations - OWASP minimum recommendation
-  parallelism: 4,     // 4 threads
-  hashLength: 32,     // 256-bit hash output
+  memoryCost: 65536, // 64 MiB - OWASP minimum recommendation
+  timeCost: 3, // 3 iterations - OWASP minimum recommendation
+  parallelism: 4, // 4 threads
+  hashLength: 32, // 256-bit hash output
 };
 
 /**
@@ -28,21 +28,22 @@ const ARGON2_CONFIG = {
  * https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html
  */
 const OWASP_MINIMUM = {
-  memoryCost: 19456,  // 19 MiB minimum (we use 64 MiB)
-  timeCost: 2,        // 2 iterations minimum (we use 3)
-  parallelism: 1,     // 1 thread minimum (we use 4)
+  memoryCost: 19456, // 19 MiB minimum (we use 64 MiB)
+  timeCost: 2, // 2 iterations minimum (we use 3)
+  parallelism: 1, // 1 thread minimum (we use 4)
 };
 
 /**
  * Argon2id hash format regex
  * Format: $argon2id$v=19$m=<memory>,t=<time>,p=<parallelism>$<salt>$<hash>
  */
-const ARGON2ID_HASH_REGEX = /^\$argon2id\$v=\d+\$m=\d+,t=\d+,p=\d+\$[A-Za-z0-9+/]+\$[A-Za-z0-9+/]+$/;
+const ARGON2ID_HASH_REGEX =
+  /^\$argon2id\$v=\d+\$m=\d+,t=\d+,p=\d+\$[A-Za-z0-9+/]+\$[A-Za-z0-9+/]+$/;
 
 describe('Password Hashing Configuration - Property 1: Password Hashing Security', () => {
   /**
    * **Validates: Requirements 1.1**
-   * 
+   *
    * Verify that Argon2id configuration meets OWASP minimum requirements
    */
   describe('OWASP Compliance', () => {
@@ -116,18 +117,15 @@ describe('Password Hashing Configuration - Property 1: Password Hashing Security
      */
     it('should return consistent configuration values', () => {
       fc.assert(
-        fc.property(
-          fc.integer({ min: 1, max: 1000 }),
-          (iterations) => {
-            for (let i = 0; i < iterations; i++) {
-              expect(ARGON2_CONFIG.type).toBe(2);
-              expect(ARGON2_CONFIG.memoryCost).toBe(65536);
-              expect(ARGON2_CONFIG.timeCost).toBe(3);
-              expect(ARGON2_CONFIG.parallelism).toBe(4);
-              expect(ARGON2_CONFIG.hashLength).toBe(32);
-            }
+        fc.property(fc.integer({ min: 1, max: 1000 }), (iterations) => {
+          for (let i = 0; i < iterations; i++) {
+            expect(ARGON2_CONFIG.type).toBe(2);
+            expect(ARGON2_CONFIG.memoryCost).toBe(65536);
+            expect(ARGON2_CONFIG.timeCost).toBe(3);
+            expect(ARGON2_CONFIG.parallelism).toBe(4);
+            expect(ARGON2_CONFIG.hashLength).toBe(32);
           }
-        ),
+        }),
         { numRuns: 100 }
       );
     });
@@ -166,12 +164,9 @@ describe('Password Validation Rules', () => {
    */
   it('should accept passwords with minimum length of 8 characters', () => {
     fc.assert(
-      fc.property(
-        fc.string({ minLength: 8, maxLength: 128 }),
-        (password) => {
-          expect(password.length).toBeGreaterThanOrEqual(8);
-        }
-      ),
+      fc.property(fc.string({ minLength: 8, maxLength: 128 }), (password) => {
+        expect(password.length).toBeGreaterThanOrEqual(8);
+      }),
       { numRuns: 100 }
     );
   });
@@ -181,13 +176,10 @@ describe('Password Validation Rules', () => {
    */
   it('should reject passwords exceeding 128 characters', () => {
     fc.assert(
-      fc.property(
-        fc.string({ minLength: 129, maxLength: 256 }),
-        (password) => {
-          expect(password.length).toBeGreaterThan(128);
-          // In real implementation, this would be rejected
-        }
-      ),
+      fc.property(fc.string({ minLength: 129, maxLength: 256 }), (password) => {
+        expect(password.length).toBeGreaterThan(128);
+        // In real implementation, this would be rejected
+      }),
       { numRuns: 100 }
     );
   });

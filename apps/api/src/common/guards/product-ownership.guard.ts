@@ -12,14 +12,14 @@
  */
 
 import {
-  Injectable,
-  CanActivate,
-  ExecutionContext,
+  type CanActivate,
+  type ExecutionContext,
   ForbiddenException,
-  NotFoundException,
+  Injectable,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
-import { PrismaService } from '../../database/prisma.service';
+import type { PrismaService } from '../../database/prisma.service';
 
 @Injectable()
 export class ProductOwnershipGuard implements CanActivate {
@@ -35,19 +35,19 @@ export class ProductOwnershipGuard implements CanActivate {
     // User not authenticated
     if (!user) {
       this.logUnauthorizedAccess(request, 'NO_USER', undefined, productId);
-      throw new ForbiddenException('ÏÓÊÑÓí ÛíÑãÌÇÒ');
+      throw new ForbiddenException('ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½');
     }
 
     // User must have vendorId
     if (!user.vendorId) {
       this.logUnauthorizedAccess(request, 'NO_VENDOR_ID', user.id, productId);
-      throw new ForbiddenException('ÏÓÊÑÓí ÝÑæÔäÏå ÇáÒÇãí ÇÓÊ');
+      throw new ForbiddenException('ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½');
     }
 
     // Product ID must be provided
     if (!productId) {
       this.logUnauthorizedAccess(request, 'NO_PRODUCT_ID', user.id, undefined);
-      throw new ForbiddenException('ÏÓÊÑÓí ÛíÑãÌÇÒ');
+      throw new ForbiddenException('ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½');
     }
 
     // Fetch product to check ownership
@@ -59,13 +59,13 @@ export class ProductOwnershipGuard implements CanActivate {
     // Product not found
     if (!product) {
       this.logUnauthorizedAccess(request, 'PRODUCT_NOT_FOUND', user.id, productId);
-      throw new NotFoundException('ãÍÕæá íÇÝÊ äÔÏ');
+      throw new NotFoundException('ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½');
     }
 
     // Check ownership: product.vendorId === user.vendorId
     if (product.vendorId !== user.vendorId) {
       this.logUnauthorizedAccess(request, 'NOT_OWNER', user.id, productId);
-      throw new ForbiddenException('ÔãÇ ãÇá˜ Çíä ãÍÕæá äíÓÊíÏ');
+      throw new ForbiddenException('ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½');
     }
 
     return true;
@@ -78,7 +78,7 @@ export class ProductOwnershipGuard implements CanActivate {
     request: any,
     reason: string,
     userId?: string,
-    productId?: string,
+    productId?: string
   ): void {
     const logData = {
       event: 'UNAUTHORIZED_PRODUCT_ACCESS',

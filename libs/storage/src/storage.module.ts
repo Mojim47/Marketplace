@@ -2,9 +2,9 @@
 // Storage Module - NestJS Module for Storage Abstraction
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { Module, DynamicModule, Global, Provider } from '@nestjs/common';
-import type { StorageConfig } from './interfaces/storage.interface';
+import { type DynamicModule, Module, type Provider } from '@nestjs/common';
 import { StorageFactory } from './factory/storage.factory';
+import type { StorageConfig } from './interfaces/storage.interface';
 import { StorageService } from './services/storage.service';
 
 /**
@@ -53,12 +53,12 @@ export class StorageModule {
         provide: StorageService,
         useFactory: (factory: StorageFactory) => {
           const service = new StorageService(factory);
-          
+
           if (options.config) {
             const provider = factory.create(options.config, 'default');
             service.setProvider(provider);
           }
-          
+
           return service;
         },
         inject: [StorageFactory],
@@ -90,12 +90,12 @@ export class StorageModule {
         provide: StorageService,
         useFactory: async (factory: StorageFactory, moduleOptions: StorageModuleOptions) => {
           const service = new StorageService(factory);
-          
+
           if (moduleOptions.config) {
             const provider = factory.create(moduleOptions.config, 'default');
             service.setProvider(provider);
           }
-          
+
           return service;
         },
         inject: [StorageFactory, 'STORAGE_MODULE_OPTIONS'],

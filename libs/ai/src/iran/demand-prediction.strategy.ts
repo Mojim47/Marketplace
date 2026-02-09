@@ -1,11 +1,11 @@
-import type { PredictionInput, PredictionResult, PredictionStrategy } from "../core/types";
-import { clamp, holtLinearForecast, linearTrend, mean, stddev } from "../core/utils/math";
+import type { PredictionInput, PredictionResult, PredictionStrategy } from '../core/types';
+import { clamp, holtLinearForecast, linearTrend, mean, stddev } from '../core/utils/math';
 
 export class IranDemandPredictionStrategy implements PredictionStrategy {
   async predict(input: PredictionInput): Promise<PredictionResult> {
     const history = input.salesHistoryIrr.filter((v) => Number.isFinite(v) && v > 0);
     if (history.length === 0) {
-      throw new Error("salesHistoryIrr must include at least one positive value");
+      throw new Error('salesHistoryIrr must include at least one positive value');
     }
 
     const inflationRate = Number.isFinite(input.inflationRate) ? (input.inflationRate ?? 0) : 0;
@@ -27,16 +27,16 @@ export class IranDemandPredictionStrategy implements PredictionStrategy {
     const lengthBoost = clamp(history.length / 12, 0.5, 1);
     const confidence = clamp(confidenceRaw * lengthBoost, 0.35, 0.95);
 
-    const trend: PredictionResult["trend"] =
-      trendSlope > 0 ? "up" : trendSlope < 0 ? "down" : "flat";
+    const trend: PredictionResult['trend'] =
+      trendSlope > 0 ? 'up' : trendSlope < 0 ? 'down' : 'flat';
 
     const localizedText = [
-      `پیش‌بینی تقاضا (ماه آینده): ${boundedForecast.toLocaleString("fa-IR")} ریال`,
-      `روند: ${trend === "up" ? "صعودی" : trend === "down" ? "نزولی" : "ثابت"}`,
-      `میانگین اخیر: ${Math.round(recentAvg).toLocaleString("fa-IR")} ریال`,
-      `نوسان: ${Math.round(volatility).toLocaleString("fa-IR")} ریال`,
+      `پیش‌بینی تقاضا (ماه آینده): ${boundedForecast.toLocaleString('fa-IR')} ریال`,
+      `روند: ${trend === 'up' ? 'صعودی' : trend === 'down' ? 'نزولی' : 'ثابت'}`,
+      `میانگین اخیر: ${Math.round(recentAvg).toLocaleString('fa-IR')} ریال`,
+      `نوسان: ${Math.round(volatility).toLocaleString('fa-IR')} ریال`,
       `اعتماد مدل: ${Math.round(confidence * 100)}٪`,
-    ].join("\n");
+    ].join('\n');
 
     return {
       forecastIrr: boundedForecast,

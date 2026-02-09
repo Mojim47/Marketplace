@@ -1,17 +1,17 @@
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { randomUUID } from 'crypto';
+import { randomUUID } from 'node:crypto';
+import { Injectable, type OnModuleDestroy, type OnModuleInit } from '@nestjs/common';
 
 /**
  * Distributed Tracing Service
- * 
+ *
  * Provides trace ID propagation across services:
  * - Generates and propagates trace IDs
  * - Extracts trace IDs from incoming headers
  * - Adds trace IDs to outgoing requests
- * 
+ *
  * Note: For full OpenTelemetry integration, configure the SDK
  * in a separate instrumentation file loaded before the app.
- * 
+ *
  * Validates: Requirements 7.4
  */
 @Injectable()
@@ -21,15 +21,13 @@ export class TracingService implements OnModuleInit, OnModuleDestroy {
   private currentSpanId: string | null = null;
 
   constructor() {
-    this.serviceName = process.env['OTEL_SERVICE_NAME'] || 'nextgen-api';
+    this.serviceName = process.env.OTEL_SERVICE_NAME || 'nextgen-api';
   }
 
   async onModuleInit(): Promise<void> {
-    const otlpEndpoint = process.env['OTEL_EXPORTER_OTLP_ENDPOINT'];
+    const otlpEndpoint = process.env.OTEL_EXPORTER_OTLP_ENDPOINT;
     if (otlpEndpoint) {
-      console.log(`TracingService: Ready for ${this.serviceName}, OTLP endpoint: ${otlpEndpoint}`);
     } else {
-      console.log('TracingService: No OTEL_EXPORTER_OTLP_ENDPOINT configured, using local trace IDs');
     }
   }
 
@@ -85,9 +83,11 @@ export class TracingService implements OnModuleInit, OnModuleDestroy {
    * Extract trace context from headers for propagation
    * Supports W3C Trace Context and Jaeger formats
    */
-  static extractTraceIdFromHeaders(headers: Record<string, string | string[] | undefined>): string | null {
+  static extractTraceIdFromHeaders(
+    headers: Record<string, string | string[] | undefined>
+  ): string | null {
     // W3C Trace Context format: traceparent header
-    const traceparent = headers['traceparent'];
+    const traceparent = headers.traceparent;
     if (traceparent) {
       const value = Array.isArray(traceparent) ? traceparent[0] : traceparent;
       // Format: version-traceId-spanId-flags (e.g., 00-traceId-spanId-01)
@@ -123,9 +123,11 @@ export class TracingService implements OnModuleInit, OnModuleDestroy {
   /**
    * Extract span ID from headers
    */
-  static extractSpanIdFromHeaders(headers: Record<string, string | string[] | undefined>): string | null {
+  static extractSpanIdFromHeaders(
+    headers: Record<string, string | string[] | undefined>
+  ): string | null {
     // W3C Trace Context format: traceparent header
-    const traceparent = headers['traceparent'];
+    const traceparent = headers.traceparent;
     if (traceparent) {
       const value = Array.isArray(traceparent) ? traceparent[0] : traceparent;
       const parts = value.split('-');
@@ -165,7 +167,7 @@ export class TracingService implements OnModuleInit, OnModuleDestroy {
 
     if (spanId) {
       // W3C Trace Context format: version-traceId-spanId-flags
-      headers['traceparent'] = `00-${traceId}-${spanId}-01`;
+      headers.traceparent = `00-${traceId}-${spanId}-01`;
     }
 
     return headers;

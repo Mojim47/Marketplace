@@ -2,27 +2,25 @@
 // SC³ Service Tests
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { describe, it, expect, beforeEach } from 'vitest';
-import { SC3Service, DEFAULT_SC3_CONFIG } from './sc3.service';
-import { BuildVerifierService } from './build-verifier.service';
-import { DependencyScannerService } from './dependency-scanner.service';
-import { AttestationService } from './attestation.service';
-import { ProvenanceService } from './provenance.service';
-import { ImmutableLogService } from './immutable-log.service';
+import { beforeEach, describe, expect, it } from 'vitest';
 import type {
-  Build,
-  Dependency,
-  ExecutionAttestation,
   Artifact,
-  ImmutableLog,
-  SLSALevel,
+  ArtifactType,
+  AttestationType,
+  Build,
   BuildStatus,
   CVESeverity,
-  AttestationType,
+  Dependency,
+  ExecutionAttestation,
   MemorySafetyStatus,
-  ArtifactType,
-  ProvenanceStatus,
+  SLSALevel,
 } from '../types';
+import { AttestationService } from './attestation.service';
+import { BuildVerifierService } from './build-verifier.service';
+import { DependencyScannerService } from './dependency-scanner.service';
+import { ImmutableLogService } from './immutable-log.service';
+import { ProvenanceService } from './provenance.service';
+import { SC3Service } from './sc3.service';
 
 describe('SC3Service', () => {
   let sc3Service: SC3Service;
@@ -39,13 +37,7 @@ describe('SC3Service', () => {
     provenance = new ProvenanceService();
     immutableLog = new ImmutableLogService();
 
-    sc3Service = new SC3Service(
-      buildVerifier,
-      depScanner,
-      attestation,
-      provenance,
-      immutableLog,
-    );
+    sc3Service = new SC3Service(buildVerifier, depScanner, attestation, provenance, immutableLog);
   });
 
   describe('configuration', () => {
@@ -194,23 +186,25 @@ describe('SC3Service', () => {
       });
 
       expect(result.build_verification.passed).toBe(false);
-      expect(result.failures.some(f => f.code === 'SLSA_LEVEL_INSUFFICIENT')).toBe(true);
+      expect(result.failures.some((f) => f.code === 'SLSA_LEVEL_INSUFFICIENT')).toBe(true);
     });
 
     it('should fail with critical CVE', async () => {
       const dep = createValidDependency();
-      dep.cves = [{
-        id: 'CVE-2024-1234',
-        cvss_score: 9.8,
-        severity: 4 as CVESeverity,
-        description: 'Critical vulnerability',
-        affected_versions: '>=4.0.0',
-        published_at: new Date().toISOString(),
-        modified_at: new Date().toISOString(),
-        cwe_ids: ['CWE-79'],
-        exploit_available: true,
-        patch_available: true,
-      }];
+      dep.cves = [
+        {
+          id: 'CVE-2024-1234',
+          cvss_score: 9.8,
+          severity: 4 as CVESeverity,
+          description: 'Critical vulnerability',
+          affected_versions: '>=4.0.0',
+          published_at: new Date().toISOString(),
+          modified_at: new Date().toISOString(),
+          cwe_ids: ['CWE-79'],
+          exploit_available: true,
+          patch_available: true,
+        },
+      ];
 
       const result = await sc3Service.verify({
         builds: [],
@@ -237,7 +231,7 @@ describe('SC3Service', () => {
       });
 
       expect(result.execution_verification.passed).toBe(false);
-      expect(result.failures.some(f => f.code === 'ATTESTATION_EXPIRED')).toBe(true);
+      expect(result.failures.some((f) => f.code === 'ATTESTATION_EXPIRED')).toBe(true);
     });
   });
 
@@ -286,7 +280,7 @@ describe('SC3Service', () => {
       });
 
       const report = sc3Service.generateReport(result);
-      
+
       expect(report).toContain('SC³ Supply Chain Security Report');
       expect(report).toContain('Build Verification');
       expect(report).toContain('Dependency Verification');

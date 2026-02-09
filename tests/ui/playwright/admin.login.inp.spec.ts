@@ -1,4 +1,4 @@
-﻿import { test, expect } from '@playwright/test';
+﻿import { expect, test } from '@playwright/test';
 
 test.describe('admin login INP', () => {
   test('login INP under 200ms', async ({ page }) => {
@@ -7,8 +7,13 @@ test.describe('admin login INP', () => {
       new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
           const eventEntry = entry as PerformanceEntry & { duration: number; name: string };
-          if (eventEntry.duration > 0 && ['click', 'pointerdown', 'pointerup', 'keydown', 'keyup'].includes(eventEntry.name)) {
-            (window as unknown as { __inpEntries?: number[] }).__inpEntries?.push(eventEntry.duration);
+          if (
+            eventEntry.duration > 0 &&
+            ['click', 'pointerdown', 'pointerup', 'keydown', 'keyup'].includes(eventEntry.name)
+          ) {
+            (window as unknown as { __inpEntries?: number[] }).__inpEntries?.push(
+              eventEntry.duration
+            );
           }
         }
       }).observe({ type: 'event', buffered: true, durationThreshold: 16 });

@@ -4,22 +4,27 @@
 // Fast, typo-tolerant search engine - great for e-commerce
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { MeiliSearch, Index } from 'meilisearch';
+import { type Index, MeiliSearch } from 'meilisearch';
 import type {
-  ISearchProvider,
-  SearchSchema,
-  SearchQuery,
-  SearchResult,
-  SearchHit,
-  FilterCondition,
   AggregationQuery,
   AggregationResult,
-  Suggestion,
+  FilterCondition,
+  ISearchProvider,
   IndexStats,
-  SearchHealthCheck,
   MeilisearchConfig,
+  SearchHealthCheck,
+  SearchHit,
+  SearchQuery,
+  SearchResult,
+  SearchSchema,
+  Suggestion,
 } from '../interfaces/search.interface';
-import { SearchProviderType, FilterOperator, AggregationType, FieldType } from '../interfaces/search.interface';
+import {
+  AggregationType,
+  FieldType,
+  FilterOperator,
+  SearchProviderType,
+} from '../interfaces/search.interface';
 
 /**
  * MeiliSearch adapter
@@ -64,7 +69,11 @@ export class MeilisearchAdapter implements ISearchProvider {
 
     // Configure searchable attributes
     const searchableAttributes = Object.entries(schema.fields)
-      .filter(([, def]) => def.searchable !== false && (def.type === FieldType.TEXT || def.type === FieldType.KEYWORD))
+      .filter(
+        ([, def]) =>
+          def.searchable !== false &&
+          (def.type === FieldType.TEXT || def.type === FieldType.KEYWORD)
+      )
       .map(([name]) => name);
 
     if (searchableAttributes.length > 0) {
@@ -118,18 +127,29 @@ export class MeilisearchAdapter implements ISearchProvider {
       const meiliIndex = this.getIndex(index);
       const settings = await meiliIndex.getSettings();
 
-      const fields: Record<string, { type: FieldType; searchable?: boolean; filterable?: boolean; sortable?: boolean }> = {};
+      const fields: Record<
+        string,
+        { type: FieldType; searchable?: boolean; filterable?: boolean; sortable?: boolean }
+      > = {};
 
       for (const attr of settings.searchableAttributes || []) {
         fields[attr] = { ...fields[attr], type: FieldType.TEXT, searchable: true };
       }
 
       for (const attr of settings.filterableAttributes || []) {
-        fields[attr] = { ...fields[attr], type: fields[attr]?.type || FieldType.KEYWORD, filterable: true };
+        fields[attr] = {
+          ...fields[attr],
+          type: fields[attr]?.type || FieldType.KEYWORD,
+          filterable: true,
+        };
       }
 
       for (const attr of settings.sortableAttributes || []) {
-        fields[attr] = { ...fields[attr], type: fields[attr]?.type || FieldType.KEYWORD, sortable: true };
+        fields[attr] = {
+          ...fields[attr],
+          type: fields[attr]?.type || FieldType.KEYWORD,
+          sortable: true,
+        };
       }
 
       return { fields };
@@ -148,7 +168,11 @@ export class MeilisearchAdapter implements ISearchProvider {
   // Document Operations
   // ═══════════════════════════════════════════════════════════════════════
 
-  async index<T extends Record<string, unknown>>(index: string, id: string, document: T): Promise<void> {
+  async index<T extends Record<string, unknown>>(
+    index: string,
+    id: string,
+    document: T
+  ): Promise<void> {
     const meiliIndex = this.getIndex(index);
     await meiliIndex.addDocuments([{ ...document, id }]);
   }
@@ -192,7 +216,11 @@ export class MeilisearchAdapter implements ISearchProvider {
     }
   }
 
-  async update<T extends Record<string, unknown>>(index: string, id: string, partial: Partial<T>): Promise<void> {
+  async update<T extends Record<string, unknown>>(
+    index: string,
+    id: string,
+    partial: Partial<T>
+  ): Promise<void> {
     const meiliIndex = this.getIndex(index);
     await meiliIndex.updateDocuments([{ ...partial, id }]);
   }
@@ -203,7 +231,7 @@ export class MeilisearchAdapter implements ISearchProvider {
 
     // MeiliSearch doesn't have deleteByQuery, so we search and delete
     const results = await meiliIndex.search('', { filter: filterStr, limit: 10000 });
-    const ids = results.hits.map(h => h.id as string);
+    const ids = results.hits.map((h) => h.id as string);
 
     if (ids.length > 0) {
       const task = await meiliIndex.deleteDocuments(ids);
@@ -233,7 +261,7 @@ export class MeilisearchAdapter implements ISearchProvider {
 
     // Sort
     if (query.sort && query.sort.length > 0) {
-      searchParams.sort = query.sort.map(s => `${s.field}:${s.order}`);
+      searchParams.sort = query.sort.map((s) => `${s.field}:${s.order}`);
     }
 
     // Attributes to retrieve
@@ -260,28 +288,32 @@ export class MeilisearchAdapter implements ISearchProvider {
 
     const response = await meiliIndex.search(query.query || '', searchParams);
 
-    const hits: SearchHit<T>[] = response.hits.map(hit => {
-      const { _formatted, ...doc } = hit as Record<string, unknown> & { _formatted?: Record<string, string> };
+    const hits: SearchHit<T>[] = response.hits.map((hit) => {
+      const { _formatted, ...doc } = hit as Record<string, unknown> & {
+        _formatted?: Record<string, string>;
+      };
       return {
         id: doc.id as string,
         document: doc as T,
-        highlights: _formatted ? Object.fromEntries(
-          Object.entries(_formatted).map(([k, v]) => [k, [v]])
-        ) : undefined,
+        highlights: _formatted
+          ? Object.fromEntries(Object.entries(_formatted).map(([k, v]) => [k, [v]]))
+          : undefined,
       };
     });
 
-    const facets = response.facetDistribution ? Object.fromEntries(
-      Object.entries(response.facetDistribution).map(([field, values]) => [
-        field,
-        {
-          buckets: Object.entries(values).map(([value, count]) => ({
-            value,
-            count: count as number,
-          })),
-        },
-      ])
-    ) : undefined;
+    const facets = response.facetDistribution
+      ? Object.fromEntries(
+          Object.entries(response.facetDistribution).map(([field, values]) => [
+            field,
+            {
+              buckets: Object.entries(values).map(([value, count]) => ({
+                value,
+                count: count as number,
+              })),
+            },
+          ])
+        )
+      : undefined;
 
     return {
       hits,
@@ -297,7 +329,7 @@ export class MeilisearchAdapter implements ISearchProvider {
     });
   }
 
-  async autocomplete(index: string, field: string, prefix: string, limit: number = 10): Promise<string[]> {
+  async autocomplete(index: string, field: string, prefix: string, limit = 10): Promise<string[]> {
     const meiliIndex = this.getIndex(index);
 
     const response = await meiliIndex.search(prefix, {
@@ -317,7 +349,12 @@ export class MeilisearchAdapter implements ISearchProvider {
     return Array.from(suggestions);
   }
 
-  async fuzzySearch<T>(index: string, field: string, term: string, _fuzziness?: number): Promise<SearchResult<T>> {
+  async fuzzySearch<T>(
+    index: string,
+    field: string,
+    term: string,
+    _fuzziness?: number
+  ): Promise<SearchResult<T>> {
     // MeiliSearch has built-in typo tolerance
     return this.search<T>(index, {
       query: term,
@@ -349,7 +386,7 @@ export class MeilisearchAdapter implements ISearchProvider {
   }
 
   private buildFilterString(filters: FilterCondition[]): string {
-    return filters.map(f => this.buildSingleFilter(f)).join(' AND ');
+    return filters.map((f) => this.buildSingleFilter(f)).join(' AND ');
   }
 
   private buildSingleFilter(filter: FilterCondition): string {
@@ -368,20 +405,31 @@ export class MeilisearchAdapter implements ISearchProvider {
         return `${field} < ${value}`;
       case FilterOperator.LESS_THAN_OR_EQUALS:
         return `${field} <= ${value}`;
-      case FilterOperator.IN:
-        const inValues = (value as unknown[]).map(v => typeof v === 'string' ? `"${v}"` : v).join(', ');
+      case FilterOperator.IN: {
+        const inValues = (value as unknown[])
+          .map((v) => (typeof v === 'string' ? `"${v}"` : v))
+          .join(', ');
         return `${field} IN [${inValues}]`;
-      case FilterOperator.NOT_IN:
-        const notInValues = (value as unknown[]).map(v => typeof v === 'string' ? `"${v}"` : v).join(', ');
+      }
+      case FilterOperator.NOT_IN: {
+        const notInValues = (value as unknown[])
+          .map((v) => (typeof v === 'string' ? `"${v}"` : v))
+          .join(', ');
         return `${field} NOT IN [${notInValues}]`;
+      }
       case FilterOperator.EXISTS:
         return value ? `${field} EXISTS` : `${field} IS NULL`;
-      case FilterOperator.RANGE:
+      case FilterOperator.RANGE: {
         const range = value as { from?: number; to?: number };
         const parts: string[] = [];
-        if (range.from !== undefined) parts.push(`${field} >= ${range.from}`);
-        if (range.to !== undefined) parts.push(`${field} <= ${range.to}`);
+        if (range.from !== undefined) {
+          parts.push(`${field} >= ${range.from}`);
+        }
+        if (range.to !== undefined) {
+          parts.push(`${field} <= ${range.to}`);
+        }
         return parts.join(' AND ');
+      }
       default:
         return '';
     }
@@ -397,8 +445,8 @@ export class MeilisearchAdapter implements ISearchProvider {
 
     // MeiliSearch only supports facets for aggregations
     const facetFields = aggregations
-      .filter(a => a.type === AggregationType.TERMS)
-      .map(a => a.field);
+      .filter((a) => a.type === AggregationType.TERMS)
+      .map((a) => a.field);
 
     if (facetFields.length > 0) {
       const response = await meiliIndex.search('', { facets: facetFields, limit: 0 });
@@ -420,21 +468,32 @@ export class MeilisearchAdapter implements ISearchProvider {
 
     // For numeric aggregations, we need to fetch all documents (limited)
     for (const agg of aggregations) {
-      if ([AggregationType.AVG, AggregationType.SUM, AggregationType.MIN, AggregationType.MAX, AggregationType.STATS].includes(agg.type)) {
+      if (
+        [
+          AggregationType.AVG,
+          AggregationType.SUM,
+          AggregationType.MIN,
+          AggregationType.MAX,
+          AggregationType.STATS,
+        ].includes(agg.type)
+      ) {
         const response = await meiliIndex.search('', {
           limit: 10000,
           attributesToRetrieve: [agg.field],
         });
 
         const values = response.hits
-          .map(h => (h as Record<string, unknown>)[agg.field])
+          .map((h) => (h as Record<string, unknown>)[agg.field])
           .filter((v): v is number => typeof v === 'number');
 
         const name = agg.name || agg.field;
 
         switch (agg.type) {
           case AggregationType.AVG:
-            results.push({ name, value: values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0 });
+            results.push({
+              name,
+              value: values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0,
+            });
             break;
           case AggregationType.SUM:
             results.push({ name, value: values.reduce((a, b) => a + b, 0) });
@@ -464,7 +523,7 @@ export class MeilisearchAdapter implements ISearchProvider {
     return results;
   }
 
-  async suggest(index: string, field: string, text: string, limit: number = 5): Promise<Suggestion[]> {
+  async suggest(index: string, field: string, text: string, limit = 5): Promise<Suggestion[]> {
     const meiliIndex = this.getIndex(index);
 
     const response = await meiliIndex.search(text, {
@@ -476,7 +535,7 @@ export class MeilisearchAdapter implements ISearchProvider {
       highlightPostTag: '</em>',
     });
 
-    return response.hits.map(hit => {
+    return response.hits.map((hit) => {
       const formatted = (hit as { _formatted?: Record<string, string> })._formatted;
       return {
         text: (hit as Record<string, unknown>)[field] as string,

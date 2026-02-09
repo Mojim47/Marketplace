@@ -14,8 +14,8 @@
  */
 
 const sharp = require('sharp');
-const fs = require('fs');
-const path = require('path');
+const fs = require('node:fs');
+const path = require('node:path');
 
 // Icon sizes required for PWA
 const ICON_SIZES = [
@@ -39,7 +39,6 @@ const PLACEHOLDER_COLOR = '#4F46E5'; // Indigo-600
 // Create output directory
 if (!fs.existsSync(OUTPUT_DIR)) {
   fs.mkdirSync(OUTPUT_DIR, { recursive: true });
-  console.log('✓ Created output directory:', OUTPUT_DIR);
 }
 
 /**
@@ -127,7 +126,6 @@ async function generateMaskableIcon() {
 
     const buffer = Buffer.from(svg);
     await sharp(buffer).png().toFile(outputPath);
-    console.log(`  ✓ Generated maskable-icon.png`);
   } catch (error) {
     console.error('  ✗ Failed to generate maskable icon:', error.message);
   }
@@ -137,28 +135,22 @@ async function generateMaskableIcon() {
  * Main execution
  */
 async function main() {
-  console.log('🎨 PWA Icon Generator\n');
-
   const logoExists = fs.existsSync(SOURCE_LOGO);
 
   if (logoExists) {
-    console.log('✓ Found source logo:', SOURCE_LOGO);
-    console.log('📸 Generating icons from logo...\n');
   } else {
-    console.log('⚠️  No logo found at:', SOURCE_LOGO);
-    console.log('📝 Generating placeholder icons...\n');
   }
 
   // Check if sharp is installed
   try {
     require.resolve('sharp');
-  } catch (e) {
+  } catch (_e) {
     console.error('❌ Error: "sharp" package not found!');
     console.error('   Install it with: npm install sharp --save-dev\n');
     process.exit(1);
   }
 
-  let successCount = 0;
+  let _successCount = 0;
   let failCount = 0;
 
   // Generate all icons
@@ -173,8 +165,7 @@ async function main() {
     }
 
     if (success) {
-      console.log(`  ✓ Generated ${name}`);
-      successCount++;
+      _successCount++;
     } else {
       failCount++;
     }
@@ -182,34 +173,23 @@ async function main() {
 
   // Generate maskable icon
   await generateMaskableIcon();
-  successCount++;
+  _successCount++;
 
   // Generate favicon
   if (logoExists) {
     try {
       const faviconPath = path.join(ROOT_DIR, 'apps/web/public/favicon.ico');
       await sharp(SOURCE_LOGO).resize(32, 32).toFile(faviconPath);
-      console.log(`  ✓ Generated favicon.ico`);
-      successCount++;
+      _successCount++;
     } catch (error) {
       console.error('  ✗ Failed to generate favicon:', error.message);
     }
   }
-
-  console.log('\n' + '─'.repeat(50));
-  console.log(`✅ Generated ${successCount} icons`);
   if (failCount > 0) {
-    console.log(`❌ Failed: ${failCount} icons`);
   }
 
   if (!logoExists) {
-    console.log('\n💡 To use your own logo:');
-    console.log('   1. Place your logo at: apps/web/public/logo.png');
-    console.log('   2. Recommended size: 1024x1024 or larger');
-    console.log('   3. Run this script again: node scripts/generate-icons.js');
   }
-
-  console.log('\n🎉 PWA icons ready!');
 }
 
 // Run

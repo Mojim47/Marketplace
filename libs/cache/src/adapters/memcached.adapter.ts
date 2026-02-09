@@ -6,13 +6,13 @@
 
 import Memcached from 'memcached';
 import type {
-  ICacheProvider,
-  CacheSetOptions,
   CacheGetOptions,
+  CacheHealthCheck,
   CacheScanOptions,
   CacheScanResult,
+  CacheSetOptions,
   CacheStats,
-  CacheHealthCheck,
+  ICacheProvider,
   MemcachedCacheConfig,
 } from '../interfaces/cache.interface';
 import { CacheProviderType } from '../interfaces/cache.interface';
@@ -59,7 +59,9 @@ export class MemcachedCacheAdapter implements ICacheProvider {
   }
 
   private deserialize<T>(value: string | undefined): T | null {
-    if (value === undefined) return null;
+    if (value === undefined) {
+      return null;
+    }
     try {
       return JSON.parse(value) as T;
     } catch {
@@ -67,11 +69,16 @@ export class MemcachedCacheAdapter implements ICacheProvider {
     }
   }
 
-  private promisify<T>(fn: (callback: (err: Error | undefined, result: T) => void) => void): Promise<T> {
+  private promisify<T>(
+    fn: (callback: (err: Error | undefined, result: T) => void) => void
+  ): Promise<T> {
     return new Promise((resolve, reject) => {
       fn((err, result) => {
-        if (err) reject(err);
-        else resolve(result);
+        if (err) {
+          reject(err);
+        } else {
+          resolve(result);
+        }
       });
     });
   }
@@ -82,9 +89,9 @@ export class MemcachedCacheAdapter implements ICacheProvider {
 
   async get<T = unknown>(key: string, _options?: CacheGetOptions): Promise<T | null> {
     const prefixedKey = this.prefixKey(key);
-    
+
     try {
-      const value = await this.promisify<string | undefined>((cb) => 
+      const value = await this.promisify<string | undefined>((cb) =>
         this.client.get(prefixedKey, cb)
       );
 
@@ -109,18 +116,14 @@ export class MemcachedCacheAdapter implements ICacheProvider {
     try {
       if (options?.nx) {
         // Only set if not exists
-        await this.promisify<boolean>((cb) =>
-          this.client.add(prefixedKey, serialized, ttl, cb)
-        );
+        await this.promisify<boolean>((cb) => this.client.add(prefixedKey, serialized, ttl, cb));
       } else if (options?.xx) {
         // Only set if exists
         await this.promisify<boolean>((cb) =>
           this.client.replace(prefixedKey, serialized, ttl, cb)
         );
       } else {
-        await this.promisify<boolean>((cb) =>
-          this.client.set(prefixedKey, serialized, ttl, cb)
-        );
+        await this.promisify<boolean>((cb) => this.client.set(prefixedKey, serialized, ttl, cb));
       }
 
       this.trackedKeys.add(prefixedKey);
@@ -132,11 +135,9 @@ export class MemcachedCacheAdapter implements ICacheProvider {
 
   async delete(key: string): Promise<boolean> {
     const prefixedKey = this.prefixKey(key);
-    
+
     try {
-      await this.promisify<boolean>((cb) =>
-        this.client.del(prefixedKey, cb)
-      );
+      await this.promisify<boolean>((cb) => this.client.del(prefixedKey, cb));
       this.trackedKeys.delete(prefixedKey);
       return true;
     } catch {
@@ -156,11 +157,9 @@ export class MemcachedCacheAdapter implements ICacheProvider {
 
   async expire(key: string, ttl: number): Promise<boolean> {
     const prefixedKey = this.prefixKey(key);
-    
+
     try {
-      await this.promisify<boolean>((cb) =>
-        this.client.touch(prefixedKey, ttl, cb)
-      );
+      await this.promisify<boolean>((cb) => this.client.touch(prefixedKey, ttl, cb));
       return true;
     } catch {
       return false;
@@ -172,10 +171,12 @@ export class MemcachedCacheAdapter implements ICacheProvider {
   // ═══════════════════════════════════════════════════════════════════════
 
   async mget<T = unknown>(keys: string[]): Promise<Map<string, T | null>> {
-    if (keys.length === 0) return new Map();
+    if (keys.length === 0) {
+      return new Map();
+    }
 
-    const prefixedKeys = keys.map(k => this.prefixKey(k));
-    
+    const prefixedKeys = keys.map((k) => this.prefixKey(k));
+
     try {
       const values = await this.promisify<Record<string, string>>((cb) =>
         this.client.getMulti(prefixedKeys, cb)
@@ -185,7 +186,7 @@ export class MemcachedCacheAdapter implements ICacheProvider {
       for (const key of keys) {
         const prefixedKey = this.prefixKey(key);
         const value = values[prefixedKey];
-        
+
         if (value === undefined) {
           this.misses++;
           result.set(key, null);
@@ -207,18 +208,18 @@ export class MemcachedCacheAdapter implements ICacheProvider {
 
   async mset<T = unknown>(entries: Map<string, T>, options?: CacheSetOptions): Promise<boolean> {
     const promises: Promise<boolean>[] = [];
-    
+
     for (const [key, value] of entries) {
       promises.push(this.set(key, value, options));
     }
 
     const results = await Promise.all(promises);
-    return results.every(r => r);
+    return results.every((r) => r);
   }
 
   async mdelete(keys: string[]): Promise<number> {
     let count = 0;
-    
+
     for (const key of keys) {
       if (await this.delete(key)) {
         count++;
@@ -235,7 +236,7 @@ export class MemcachedCacheAdapter implements ICacheProvider {
   async keys(pattern: string): Promise<string[]> {
     // Memcached doesn't support key listing
     // We use tracked keys as a workaround
-    const regex = new RegExp('^' + pattern.replace(/\*/g, '.*').replace(/\?/g, '.') + '$');
+    const regex = new RegExp(`^${pattern.replace(/\*/g, '.*').replace(/\?/g, '.')}$`);
     const result: string[] = [];
 
     for (const key of this.trackedKeys) {
@@ -251,7 +252,7 @@ export class MemcachedCacheAdapter implements ICacheProvider {
   async scan(options?: CacheScanOptions): Promise<CacheScanResult> {
     const pattern = options?.pattern || '*';
     const count = options?.count || 100;
-    const cursor = parseInt(options?.cursor || '0', 10);
+    const cursor = Number.parseInt(options?.cursor || '0', 10);
 
     const allKeys = await this.keys(pattern);
     const start = cursor;
@@ -277,8 +278,10 @@ export class MemcachedCacheAdapter implements ICacheProvider {
   async invalidateTag(tag: string): Promise<number> {
     const tagKey = this.prefixKey(`__tag__:${tag}`);
     const keysJson = await this.get<string[]>(tagKey);
-    
-    if (!keysJson || keysJson.length === 0) return 0;
+
+    if (!keysJson || keysJson.length === 0) {
+      return 0;
+    }
 
     let count = 0;
     for (const key of keysJson) {
@@ -303,9 +306,9 @@ export class MemcachedCacheAdapter implements ICacheProvider {
   // Atomic Operations
   // ═══════════════════════════════════════════════════════════════════════
 
-  async increment(key: string, delta: number = 1): Promise<number> {
+  async increment(key: string, delta = 1): Promise<number> {
     const prefixedKey = this.prefixKey(key);
-    
+
     try {
       const result = await this.promisify<number | false>((cb) =>
         this.client.incr(prefixedKey, delta, cb)
@@ -324,9 +327,9 @@ export class MemcachedCacheAdapter implements ICacheProvider {
     }
   }
 
-  async decrement(key: string, delta: number = 1): Promise<number> {
+  async decrement(key: string, delta = 1): Promise<number> {
     const prefixedKey = this.prefixKey(key);
-    
+
     try {
       const result = await this.promisify<number | false>((cb) =>
         this.client.decr(prefixedKey, delta, cb)
@@ -362,15 +365,19 @@ export class MemcachedCacheAdapter implements ICacheProvider {
 
   async hget<T = unknown>(key: string, field: string): Promise<T | null> {
     const hash = await this.get<Record<string, T>>(key);
-    if (!hash) return null;
+    if (!hash) {
+      return null;
+    }
     return hash[field] ?? null;
   }
 
   async hset<T = unknown>(key: string, field: string, value: T): Promise<boolean> {
     let hash = await this.get<Record<string, T>>(key);
     const isNew = !hash || !(field in hash);
-    
-    if (!hash) hash = {};
+
+    if (!hash) {
+      hash = {};
+    }
     hash[field] = value;
     await this.set(key, hash);
     return isNew;
@@ -379,28 +386,30 @@ export class MemcachedCacheAdapter implements ICacheProvider {
   async hgetall<T = unknown>(key: string): Promise<Map<string, T>> {
     const hash = await this.get<Record<string, T>>(key);
     const result = new Map<string, T>();
-    
+
     if (hash) {
       for (const [field, value] of Object.entries(hash)) {
         result.set(field, value as T);
       }
     }
-    
+
     return result;
   }
 
   async hdel(key: string, field: string): Promise<boolean> {
     const hash = await this.get<Record<string, unknown>>(key);
-    if (!hash || !(field in hash)) return false;
-    
+    if (!hash || !(field in hash)) {
+      return false;
+    }
+
     delete hash[field];
-    
+
     if (Object.keys(hash).length === 0) {
       await this.delete(key);
     } else {
       await this.set(key, hash);
     }
-    
+
     return true;
   }
 
@@ -415,7 +424,9 @@ export class MemcachedCacheAdapter implements ICacheProvider {
 
   async rpush<T = unknown>(key: string, value: T): Promise<number> {
     let list = await this.get<T[]>(key);
-    if (!list) list = [];
+    if (!list) {
+      list = [];
+    }
     list.push(value);
     await this.set(key, list);
     return list.length;
@@ -423,7 +434,9 @@ export class MemcachedCacheAdapter implements ICacheProvider {
 
   async lpush<T = unknown>(key: string, value: T): Promise<number> {
     let list = await this.get<T[]>(key);
-    if (!list) list = [];
+    if (!list) {
+      list = [];
+    }
     list.unshift(value);
     await this.set(key, list);
     return list.length;
@@ -431,7 +444,9 @@ export class MemcachedCacheAdapter implements ICacheProvider {
 
   async rpop<T = unknown>(key: string): Promise<T | null> {
     const list = await this.get<T[]>(key);
-    if (!list || list.length === 0) return null;
+    if (!list || list.length === 0) {
+      return null;
+    }
     const value = list.pop()!;
     await this.set(key, list);
     return value;
@@ -439,7 +454,9 @@ export class MemcachedCacheAdapter implements ICacheProvider {
 
   async lpop<T = unknown>(key: string): Promise<T | null> {
     const list = await this.get<T[]>(key);
-    if (!list || list.length === 0) return null;
+    if (!list || list.length === 0) {
+      return null;
+    }
     const value = list.shift()!;
     await this.set(key, list);
     return value;
@@ -452,7 +469,9 @@ export class MemcachedCacheAdapter implements ICacheProvider {
 
   async lrange<T = unknown>(key: string, start: number, stop: number): Promise<T[]> {
     const list = await this.get<T[]>(key);
-    if (!list) return [];
+    if (!list) {
+      return [];
+    }
     const end = stop === -1 ? undefined : stop + 1;
     return list.slice(start, end);
   }
@@ -463,42 +482,48 @@ export class MemcachedCacheAdapter implements ICacheProvider {
 
   async sadd<T = unknown>(key: string, member: T): Promise<boolean> {
     let arr = await this.get<T[]>(key);
-    if (!arr) arr = [];
-    
+    if (!arr) {
+      arr = [];
+    }
+
     const serialized = JSON.stringify(member);
-    const exists = arr.some(m => JSON.stringify(m) === serialized);
-    
+    const exists = arr.some((m) => JSON.stringify(m) === serialized);
+
     if (!exists) {
       arr.push(member);
       await this.set(key, arr);
       return true;
     }
-    
+
     return false;
   }
 
   async srem<T = unknown>(key: string, member: T): Promise<boolean> {
     const arr = await this.get<T[]>(key);
-    if (!arr) return false;
-    
+    if (!arr) {
+      return false;
+    }
+
     const serialized = JSON.stringify(member);
-    const index = arr.findIndex(m => JSON.stringify(m) === serialized);
-    
+    const index = arr.findIndex((m) => JSON.stringify(m) === serialized);
+
     if (index !== -1) {
       arr.splice(index, 1);
       await this.set(key, arr);
       return true;
     }
-    
+
     return false;
   }
 
   async sismember<T = unknown>(key: string, member: T): Promise<boolean> {
     const arr = await this.get<T[]>(key);
-    if (!arr) return false;
-    
+    if (!arr) {
+      return false;
+    }
+
     const serialized = JSON.stringify(member);
-    return arr.some(m => JSON.stringify(m) === serialized);
+    return arr.some((m) => JSON.stringify(m) === serialized);
   }
 
   async smembers<T = unknown>(key: string): Promise<T[]> {
@@ -517,9 +542,7 @@ export class MemcachedCacheAdapter implements ICacheProvider {
 
   async clear(): Promise<boolean> {
     try {
-      await this.promisify<boolean>((cb) =>
-        this.client.flush(cb)
-      );
+      await this.promisify<boolean>((cb) => this.client.flush(cb));
       this.trackedKeys.clear();
       this.hits = 0;
       this.misses = 0;
@@ -531,7 +554,7 @@ export class MemcachedCacheAdapter implements ICacheProvider {
 
   async stats(): Promise<CacheStats> {
     const total = this.hits + this.misses;
-    
+
     try {
       const serverStats = await this.promisify<Record<string, Record<string, string>>>((cb) =>
         this.client.stats(cb)
@@ -542,9 +565,9 @@ export class MemcachedCacheAdapter implements ICacheProvider {
       let uptime = 0;
 
       for (const server of Object.values(serverStats)) {
-        keyCount += parseInt(server['curr_items'] || '0', 10);
-        memoryUsage += parseInt(server['bytes'] || '0', 10);
-        uptime = Math.max(uptime, parseInt(server['uptime'] || '0', 10));
+        keyCount += Number.parseInt(server.curr_items || '0', 10);
+        memoryUsage += Number.parseInt(server.bytes || '0', 10);
+        uptime = Math.max(uptime, Number.parseInt(server.uptime || '0', 10));
       }
 
       return {
@@ -572,12 +595,8 @@ export class MemcachedCacheAdapter implements ICacheProvider {
 
     try {
       const testKey = this.prefixKey('__health_check__');
-      await this.promisify<boolean>((cb) =>
-        this.client.set(testKey, 'ok', 1, cb)
-      );
-      const value = await this.promisify<string>((cb) =>
-        this.client.get(testKey, cb)
-      );
+      await this.promisify<boolean>((cb) => this.client.set(testKey, 'ok', 1, cb));
+      const value = await this.promisify<string>((cb) => this.client.get(testKey, cb));
 
       return {
         healthy: value === 'ok',

@@ -1,16 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { Counter, Histogram, Gauge, Registry, collectDefaultMetrics } from 'prom-client';
+import { Counter, Gauge, Histogram, Registry, collectDefaultMetrics } from 'prom-client';
 
 /**
  * Prometheus Metrics Service
- * 
+ *
  * Provides comprehensive metrics collection for:
  * - HTTP request latency (p50, p95, p99 percentiles)
  * - Request counts by method, route, status
  * - Business metrics (orders, payments)
  * - Database query performance
  * - Cache hit/miss rates
- * 
+ *
  * Validates: Requirements 7.1, 7.2
  */
 @Injectable()

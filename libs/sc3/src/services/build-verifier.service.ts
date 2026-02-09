@@ -4,17 +4,17 @@
 // Implements: hash(b) = hash_canonical(b, T) ∧ slsa_level(b) ≥ 3
 // ═══════════════════════════════════════════════════════════════════════════
 
+import * as crypto from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
-import * as crypto from 'crypto';
 import {
-  SC3FailureCategory,
   type Build,
   type BuildEnvironment,
-  type BuildVerificationResult,
-  type SLSALevel,
   type BuildStatus,
+  type BuildVerificationResult,
   type ProvenanceAttestation,
   type SC3Failure,
+  SC3FailureCategory,
+  type SLSALevel,
 } from '../types';
 
 /**
@@ -55,7 +55,7 @@ export class BuildVerifierService {
    */
   async verifyBuilds(
     builds: Build[],
-    options: BuildVerificationOptions,
+    options: BuildVerificationOptions
   ): Promise<{ result: BuildVerificationResult; failures: SC3Failure[] }> {
     const failures: SC3Failure[] = [];
     const failedBuilds: string[] = [];
@@ -64,7 +64,7 @@ export class BuildVerifierService {
 
     for (const build of builds) {
       const buildFailures = await this.verifyBuild(build, options);
-      
+
       if (buildFailures.length === 0) {
         canonicalHashValid++;
         if (build.slsa_level >= options.min_slsa_level) {
@@ -76,9 +76,10 @@ export class BuildVerifierService {
       }
     }
 
-    const passed = failedBuilds.length === 0 && 
-                   canonicalHashValid === builds.length &&
-                   slsaCompliant === builds.length;
+    const passed =
+      failedBuilds.length === 0 &&
+      canonicalHashValid === builds.length &&
+      slsaCompliant === builds.length;
 
     return {
       result: {
@@ -95,10 +96,7 @@ export class BuildVerifierService {
   /**
    * Verify a single build
    */
-  async verifyBuild(
-    build: Build,
-    options: BuildVerificationOptions,
-  ): Promise<SC3Failure[]> {
+  async verifyBuild(build: Build, options: BuildVerificationOptions): Promise<SC3Failure[]> {
     const failures: SC3Failure[] = [];
 
     // 1. Verify canonical hash
@@ -206,7 +204,7 @@ export class BuildVerifierService {
       include_environment: true,
       include_timestamp: false,
       algorithm: 'sha256',
-    },
+    }
   ): string {
     const hasher = crypto.createHash(options.algorithm);
 
@@ -248,7 +246,7 @@ export class BuildVerifierService {
    */
   computeBuildHash(build: Build): string {
     const hasher = crypto.createHash('sha256');
-    
+
     // Hash build outputs deterministically
     const buildData = {
       id: build.id,
@@ -292,8 +290,10 @@ export class BuildVerifierService {
     }
 
     // L3 Requirement 4: Parameterless build (no user-defined parameters)
-    if (build.provenance?.metadata?.parameters && 
-        Object.keys(build.provenance.metadata.parameters).length > 0) {
+    if (
+      build.provenance?.metadata?.parameters &&
+      Object.keys(build.provenance.metadata.parameters).length > 0
+    ) {
       // Parameters are allowed but must be recorded
       this.logger.log('Build has parameters recorded in provenance');
     }
@@ -392,21 +392,22 @@ export class BuildVerifierService {
     }
 
     if (Array.isArray(obj)) {
-      return obj.map(item => 
-        typeof item === 'object' && item !== null 
-          ? this.sortObjectKeys(item as Record<string, unknown>) 
+      return obj.map((item) =>
+        typeof item === 'object' && item !== null
+          ? this.sortObjectKeys(item as Record<string, unknown>)
           : item
       ) as unknown as Record<string, unknown>;
     }
 
     const sorted: Record<string, unknown> = {};
     const keys = Object.keys(obj).sort();
-    
+
     for (const key of keys) {
       const value = obj[key];
-      sorted[key] = typeof value === 'object' && value !== null
-        ? this.sortObjectKeys(value as Record<string, unknown>)
-        : value;
+      sorted[key] =
+        typeof value === 'object' && value !== null
+          ? this.sortObjectKeys(value as Record<string, unknown>)
+          : value;
     }
 
     return sorted;

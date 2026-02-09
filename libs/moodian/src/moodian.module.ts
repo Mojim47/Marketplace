@@ -2,7 +2,7 @@
 // Moodian Module - Iranian Tax Authority Integration Module
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { Module, Global } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
 // Services

@@ -1,12 +1,8 @@
-import { describe, it, expect } from 'vitest';
 import * as fc from 'fast-check';
+import { describe, expect, it } from 'vitest';
 import { __testing } from './env.validation';
 
-const {
-  validateProductionSecrets,
-  checkForWeakSecrets,
-  PRODUCTION_REQUIRED_SECRETS,
-} = __testing;
+const { validateProductionSecrets, checkForWeakSecrets, PRODUCTION_REQUIRED_SECRETS } = __testing;
 
 describe('Environment Validation', () => {
   describe('Property 20: Secrets Validation', () => {
@@ -19,25 +15,22 @@ describe('Environment Validation', () => {
 
       // Should have errors for all required secrets
       expect(errors.length).toBe(PRODUCTION_REQUIRED_SECRETS.length);
-      
+
       for (const secret of PRODUCTION_REQUIRED_SECRETS) {
-        expect(errors.some(e => e.includes(secret))).toBe(true);
+        expect(errors.some((e) => e.includes(secret))).toBe(true);
       }
     });
 
     it('should not require production secrets in development mode', () => {
       fc.assert(
-        fc.property(
-          fc.constantFrom('development', 'staging', 'test'),
-          (nodeEnv) => {
-            const config: Record<string, unknown> = {
-              NODE_ENV: nodeEnv,
-            };
+        fc.property(fc.constantFrom('development', 'staging', 'test'), (nodeEnv) => {
+          const config: Record<string, unknown> = {
+            NODE_ENV: nodeEnv,
+          };
 
-            const errors = validateProductionSecrets(config);
-            expect(errors.length).toBe(0);
-          }
-        ),
+          const errors = validateProductionSecrets(config);
+          expect(errors.length).toBe(0);
+        }),
         { numRuns: 10 }
       );
     });
@@ -81,12 +74,13 @@ describe('Environment Validation', () => {
     it('should not flag strong secrets as weak', () => {
       fc.assert(
         fc.property(
-          fc.string({ minLength: 64, maxLength: 128 })
-            .filter(s => !/^(secret|password|123456|test|dev|changeme|default)/i.test(s)),
+          fc
+            .string({ minLength: 64, maxLength: 128 })
+            .filter((s) => !/^(secret|password|123456|test|dev|changeme|default)/i.test(s)),
           (strongSecret) => {
             const config = { JWT_SECRET: strongSecret };
             const warnings = checkForWeakSecrets(config);
-            
+
             // Strong random secrets should not trigger warnings
             // (unless they happen to match weak patterns by chance)
             return warnings.length === 0 || !warnings[0].includes('JWT_SECRET');
@@ -108,7 +102,7 @@ describe('Environment Validation', () => {
       for (const key of secretKeys) {
         const config = { [key]: 'password' }; // Exact match for weak pattern
         const warnings = checkForWeakSecrets(config);
-        expect(warnings.some(w => w.includes(key))).toBe(true);
+        expect(warnings.some((w) => w.includes(key))).toBe(true);
       }
     });
   });
@@ -128,7 +122,7 @@ describe('Environment Validation', () => {
       // JWT secrets should be at least 64 chars in production
       const shortJwtSecret = 'a'.repeat(63);
       const validJwtSecret = 'a'.repeat(64);
-      
+
       expect(shortJwtSecret.length).toBeLessThan(64);
       expect(validJwtSecret.length).toBeGreaterThanOrEqual(64);
     });
@@ -158,11 +152,11 @@ describe('Environment Validation', () => {
       const prodErrors = validateProductionSecrets(prodConfig);
 
       // Dev should not require RSA keys
-      expect(devErrors.some(e => e.includes('JWT_PRIVATE_KEY'))).toBe(false);
-      
+      expect(devErrors.some((e) => e.includes('JWT_PRIVATE_KEY'))).toBe(false);
+
       // Production should require RSA keys
-      expect(prodErrors.some(e => e.includes('JWT_PRIVATE_KEY'))).toBe(true);
-      expect(prodErrors.some(e => e.includes('JWT_PUBLIC_KEY'))).toBe(true);
+      expect(prodErrors.some((e) => e.includes('JWT_PRIVATE_KEY'))).toBe(true);
+      expect(prodErrors.some((e) => e.includes('JWT_PUBLIC_KEY'))).toBe(true);
     });
   });
 
@@ -196,11 +190,7 @@ describe('Environment Validation', () => {
         'redis://localhost:6379/0',
       ];
 
-      const invalidUrls = [
-        'http://localhost:6379',
-        'postgresql://localhost:5432',
-        'invalid-url',
-      ];
+      const invalidUrls = ['http://localhost:6379', 'postgresql://localhost:5432', 'invalid-url'];
 
       for (const url of validUrls) {
         expect(/^redis(s)?:\/\//.test(url)).toBe(true);
@@ -212,8 +202,10 @@ describe('Environment Validation', () => {
     });
 
     it('should validate RSA key format', () => {
-      const validPrivateKey = '-----BEGIN RSA PRIVATE KEY-----\nMIIE....\n-----END RSA PRIVATE KEY-----';
-      const validPublicKey = '-----BEGIN RSA PUBLIC KEY-----\nMIIB....\n-----END RSA PUBLIC KEY-----';
+      const validPrivateKey =
+        '-----BEGIN RSA PRIVATE KEY-----\nMIIE....\n-----END RSA PRIVATE KEY-----';
+      const validPublicKey =
+        '-----BEGIN RSA PUBLIC KEY-----\nMIIB....\n-----END RSA PUBLIC KEY-----';
       const validPrivateKey2 = '-----BEGIN PRIVATE KEY-----\nMIIE....\n-----END PRIVATE KEY-----';
 
       expect(/^-----BEGIN (RSA )?PRIVATE KEY-----/.test(validPrivateKey)).toBe(true);
@@ -233,7 +225,7 @@ describe('Environment Validation', () => {
       };
 
       const errors = validateProductionSecrets(config);
-      
+
       // Should report all missing secrets, not just the first one
       expect(errors.length).toBe(PRODUCTION_REQUIRED_SECRETS.length);
     });
@@ -244,7 +236,7 @@ describe('Environment Validation', () => {
       };
 
       const errors = validateProductionSecrets(config);
-      
+
       for (const error of errors) {
         expect(error).toContain('Missing required production secret');
         expect(error.length).toBeGreaterThan(30);

@@ -11,24 +11,20 @@
  * Validates: Requirements 1.4, 7.7
  */
 
-import { describe, it, expect } from 'vitest';
 import * as fc from 'fast-check';
-import { z } from 'zod';
+import { describe, expect, it } from 'vitest';
 import {
-  validateNationalId,
-  validateMobileNumber,
-  validateIBAN,
-  validatePostalCode,
-  validateBankCard,
+  emailSchema,
+  mobileSchema,
+  nationalIdSchema,
+  passwordSchema,
+  priceRialSchema,
   toEnglishDigits,
   toPersianDigits,
-  nationalIdSchema,
-  mobileSchema,
-  ibanSchema,
-  postalCodeSchema,
-  passwordSchema,
-  emailSchema,
-  priceRialSchema,
+  validateIBAN,
+  validateMobileNumber,
+  validateNationalId,
+  validatePostalCode,
 } from './persian-validators.js';
 
 // Helper to generate valid national ID with correct checksum

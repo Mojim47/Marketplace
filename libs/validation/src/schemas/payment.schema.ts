@@ -25,7 +25,10 @@ export const ZarinpalPaymentRequestSchema = z.object({
   order_id: z.string().cuid(),
   amount: z.number().positive().max(999999999.99),
   description: z.string().max(255).optional(),
-  mobile: z.string().regex(/^09\d{9}$/).optional(), // Iranian mobile format
+  mobile: z
+    .string()
+    .regex(/^09\d{9}$/)
+    .optional(), // Iranian mobile format
   email: z.string().email().optional(),
 });
 

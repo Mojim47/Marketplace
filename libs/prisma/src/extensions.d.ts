@@ -11,9 +11,9 @@
  * This should be set by your authentication middleware
  */
 export interface TenantContext {
-    organizationId?: string;
-    userId?: string;
-    role?: string;
+  organizationId?: string;
+  userId?: string;
+  role?: string;
 }
 /**
  * Set tenant context for current request
@@ -31,9 +31,19 @@ export declare function getTenantContext(): TenantContext | null;
 /**
  * Prisma Client Extension for Tenant Isolation
  */
-export declare const tenantIsolationExtension: (client: any) => import("@prisma/client").PrismaClientExtends<import("@prisma/client/runtime/library").InternalArgs<{}, {}, {}, {}> & import("@prisma/client/runtime/library").DefaultArgs>;
+export declare const tenantIsolationExtension: (
+  client: any
+) => import('@prisma/client').PrismaClientExtends<
+  import('@prisma/client/runtime/library').InternalArgs<{}, {}, {}, {}> &
+    import('@prisma/client/runtime/library').DefaultArgs
+>;
 /**
  * Logging extension for debugging
  */
-export declare const loggingExtension: (client: any) => import("@prisma/client").PrismaClientExtends<import("@prisma/client/runtime/library").InternalArgs<{}, {}, {}, {}> & import("@prisma/client/runtime/library").DefaultArgs>;
+export declare const loggingExtension: (
+  client: any
+) => import('@prisma/client').PrismaClientExtends<
+  import('@prisma/client/runtime/library').InternalArgs<{}, {}, {}, {}> &
+    import('@prisma/client/runtime/library').DefaultArgs
+>;
 //# sourceMappingURL=extensions.d.ts.map

@@ -5,9 +5,9 @@
  */
 
 import { Module } from '@nestjs/common';
-import { AISearchService } from './ai-search.service';
-import { AISearchController } from './ai-search.controller';
 import { ProductsModule } from '../products/products.module';
+import { AISearchController } from './ai-search.controller';
+import { AISearchService } from './ai-search.service';
 
 @Module({
   imports: [ProductsModule],

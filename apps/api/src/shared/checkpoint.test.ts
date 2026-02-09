@@ -2,16 +2,16 @@
  * ???????????????????????????????????????????????????????????????????????????
  * NextGen Marketplace - Checkpoint Tests
  * ???????????????????????????????????????????????????????????????????????????
- * 
+ *
  * Checkpoint 11: Integration tests for all modules
  * - Payment flow testing
  * - File upload testing
  * - Persian search testing
- * 
+ *
  * Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 6.1, 6.2, 6.3, 6.4, 8.1, 8.2, 8.3
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 /**
  * ???????????????????????????????????????????????????????????????????????????
@@ -37,7 +37,7 @@ describe('Payment Flow - Checkpoint Tests', () => {
       expect(paymentRequest.orderId).toBeDefined();
       expect(paymentRequest.amount).toBeGreaterThan(0);
       expect(paymentRequest.callbackUrl).toMatch(/^https?:\/\//);
-      
+
       // Amount should be in Rials (minimum 1000 Rials = 100 Tomans)
       expect(paymentRequest.amount).toBeGreaterThanOrEqual(1000);
     });
@@ -85,7 +85,7 @@ describe('Payment Flow - Checkpoint Tests', () => {
       };
 
       // All error messages should be in Persian
-      Object.values(errorMessages).forEach(message => {
+      Object.values(errorMessages).forEach((message) => {
         // Check for Persian characters (Unicode range for Persian/Arabic)
         expect(/[\u0600-\u06FF]/.test(message)).toBe(true);
       });
@@ -124,7 +124,7 @@ describe('Payment Flow - Checkpoint Tests', () => {
      */
     it('should enforce minimum payment amount', () => {
       const MIN_AMOUNT_RIALS = 10000; // 1000 Tomans minimum
-      
+
       const validAmount = 50000;
       const invalidAmount = 5000;
 
@@ -311,8 +311,8 @@ describe('Persian Search - Checkpoint Tests', () => {
       // Convert Persian/Arabic numerals to Western
       const toWestern = (text: string) => {
         return text
-          .replace(/[۰-۹]/g, d => String.fromCharCode(d.charCodeAt(0) - 1728))
-          .replace(/[٠-٩]/g, d => String.fromCharCode(d.charCodeAt(0) - 1584));
+          .replace(/[۰-۹]/g, (d) => String.fromCharCode(d.charCodeAt(0) - 1728))
+          .replace(/[٠-٩]/g, (d) => String.fromCharCode(d.charCodeAt(0) - 1584));
       };
 
       expect(toWestern(persianNumbers)).toBe(westernNumbers);
@@ -327,7 +327,7 @@ describe('Persian Search - Checkpoint Tests', () => {
      */
     it('should tokenize Persian text correctly', () => {
       const text = 'لوازم خانگي برقي';
-      const tokens = text.split(/\s+/).filter(t => t.length > 0);
+      const tokens = text.split(/\s+/).filter((t) => t.length > 0);
 
       expect(tokens).toHaveLength(3);
       expect(tokens).toContain('لوازم');
@@ -341,12 +341,12 @@ describe('Persian Search - Checkpoint Tests', () => {
      */
     it('should identify Persian stop words', () => {
       const stopWords = ['و', 'در', 'به', 'از', 'که', 'اين', 'را', 'با', 'براي', 'آن'];
-      
+
       const text = 'اين محصول براي خانه مناسب است';
       const tokens = text.split(/\s+/);
-      
-      const filteredTokens = tokens.filter(t => !stopWords.includes(t));
-      
+
+      const filteredTokens = tokens.filter((t) => !stopWords.includes(t));
+
       expect(filteredTokens).not.toContain('اين');
       expect(filteredTokens).not.toContain('براي');
       expect(filteredTokens).toContain('محصول');
@@ -363,14 +363,14 @@ describe('Persian Search - Checkpoint Tests', () => {
       // Simple Levenshtein distance implementation
       const levenshtein = (a: string, b: string): number => {
         const matrix: number[][] = [];
-        
+
         for (let i = 0; i <= b.length; i++) {
           matrix[i] = [i];
         }
         for (let j = 0; j <= a.length; j++) {
           matrix[0][j] = j;
         }
-        
+
         for (let i = 1; i <= b.length; i++) {
           for (let j = 1; j <= a.length; j++) {
             if (b.charAt(i - 1) === a.charAt(j - 1)) {
@@ -384,7 +384,7 @@ describe('Persian Search - Checkpoint Tests', () => {
             }
           }
         }
-        
+
         return matrix[b.length][a.length];
       };
 
@@ -401,19 +401,21 @@ describe('Persian Search - Checkpoint Tests', () => {
     it('should match similar words within threshold', () => {
       const similarity = (a: string, b: string): number => {
         const maxLen = Math.max(a.length, b.length);
-        if (maxLen === 0) return 1;
-        
+        if (maxLen === 0) {
+          return 1;
+        }
+
         // Simple character overlap similarity
         const aChars = new Set(a.split(''));
         const bChars = new Set(b.split(''));
-        const intersection = [...aChars].filter(c => bChars.has(c)).length;
+        const intersection = [...aChars].filter((c) => bChars.has(c)).length;
         const union = new Set([...aChars, ...bChars]).size;
-        
+
         return intersection / union;
       };
 
       const threshold = 0.6;
-      
+
       // Similar words should pass threshold
       expect(similarity('يخچال', 'يخچال')).toBeGreaterThanOrEqual(threshold);
       expect(similarity('ماشين', 'ماشن')).toBeGreaterThanOrEqual(threshold);
@@ -459,9 +461,9 @@ describe('Persian Search - Checkpoint Tests', () => {
      * Requirements: 8.1
      */
     it('should highlight search terms in results', () => {
-      const highlight = (text: string, terms: string[], tag: string = 'mark'): string => {
+      const highlight = (text: string, terms: string[], tag = 'mark'): string => {
         let result = text;
-        terms.forEach(term => {
+        terms.forEach((term) => {
           const regex = new RegExp(`(${term})`, 'gi');
           result = result.replace(regex, `<${tag}>$1</${tag}>`);
         });
@@ -491,16 +493,14 @@ describe('Persian Search - Checkpoint Tests', () => {
         'ماشين ظرفشويي',
       ];
 
-      const getSuggestions = (prefix: string, items: string[], limit: number = 5): string[] => {
-        return items
-          .filter(item => item.startsWith(prefix))
-          .slice(0, limit);
+      const getSuggestions = (prefix: string, items: string[], limit = 5): string[] => {
+        return items.filter((item) => item.startsWith(prefix)).slice(0, limit);
       };
 
       const suggestions = getSuggestions('يخچال', productNames);
-      
+
       expect(suggestions).toHaveLength(3);
-      expect(suggestions.every(s => s.startsWith('يخچال'))).toBe(true);
+      expect(suggestions.every((s) => s.startsWith('يخچال'))).toBe(true);
     });
   });
 });
@@ -539,4 +539,3 @@ describe('Module Integration Summary', () => {
     expect(modules.search.requirements).toContain('8.1');
   });
 });
-

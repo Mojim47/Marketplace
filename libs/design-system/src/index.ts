@@ -20,7 +20,12 @@ export { cn } from './utils/cn';
 
 // Components - Header
 export { Header } from './components/Header/Header';
-export type { HeaderProps, NavItem, SearchSuggestion, UserMenuItem } from './components/Header/Header';
+export type {
+  HeaderProps,
+  NavItem,
+  SearchSuggestion,
+  UserMenuItem,
+} from './components/Header/Header';
 
 // Components - Sidebar
 export { Sidebar } from './components/Sidebar/Sidebar';
@@ -28,10 +33,18 @@ export type { SidebarProps, SidebarItem } from './components/Sidebar/Sidebar';
 
 // Components - Footer
 export { Footer } from './components/Footer/Footer';
-export type { FooterProps, FooterSection, FooterLink, SocialLink } from './components/Footer/Footer';
+export type {
+  FooterProps,
+  FooterSection,
+  FooterLink,
+  SocialLink,
+} from './components/Footer/Footer';
 
 // Components - Notifications
-export { NotificationProvider, useNotifications } from './components/Notifications/NotificationProvider';
+export {
+  NotificationProvider,
+  useNotifications,
+} from './components/Notifications/NotificationProvider';
 export type {
   NotificationProviderProps,
   NotificationContextValue,

@@ -1,10 +1,5 @@
-// ═══════════════════════════════════════════════════════════════════════════
-// E2E Scenario Engine - Critical Business Flow Validation
-// ═══════════════════════════════════════════════════════════════════════════
-
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { PrismaClient } from '@prisma/client';
 import { Logger } from '@nestjs/common';
+import { PrismaClient } from '@prisma/client';
 
 const logger = new Logger('ScenarioEngine');
 import { hash } from 'bcryptjs';
@@ -103,12 +98,12 @@ class E2EScenarioEngine {
   async cleanupTestEnvironment(): Promise<void> {
     if (this.testTenant) {
       logger.log('🧹 Cleaning up E2E test environment...');
-      
+
       // Delete test tenant and all related data (CASCADE)
       await this.prisma.tenant.delete({
         where: { id: this.testTenant.id },
       });
-      
+
       logger.log('✅ Test environment cleaned up');
     }
   }
@@ -128,8 +123,8 @@ class E2EScenarioEngine {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'X-Tenant-ID': this.testTenant!.id,
-            'X-User-ID': this.testTenant!.sellerUser.id,
+            'X-Tenant-ID': this.testTenant?.id,
+            'X-User-ID': this.testTenant?.sellerUser.id,
             'X-User-Roles': 'SELLER',
           },
           body: JSON.stringify({
@@ -157,11 +152,11 @@ class E2EScenarioEngine {
       // Step 2: Verify product is visible to buyers
       const viewProductStep = await this.executeStep('View Product', async () => {
         const productId = createProductStep.data.data.id;
-        
+
         const response = await fetch(`${this.apiBaseUrl}/products/${productId}`, {
           headers: {
-            'X-Tenant-ID': this.testTenant!.id,
-            'X-User-ID': this.testTenant!.buyerUser.id,
+            'X-Tenant-ID': this.testTenant?.id,
+            'X-User-ID': this.testTenant?.buyerUser.id,
             'X-User-Roles': 'USER',
           },
         });
@@ -177,13 +172,13 @@ class E2EScenarioEngine {
       // Step 3: Update product inventory
       const updateInventoryStep = await this.executeStep('Update Inventory', async () => {
         const productId = createProductStep.data.data.id;
-        
+
         const response = await fetch(`${this.apiBaseUrl}/products/${productId}/inventory`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
-            'X-Tenant-ID': this.testTenant!.id,
-            'X-User-ID': this.testTenant!.sellerUser.id,
+            'X-Tenant-ID': this.testTenant?.id,
+            'X-User-ID': this.testTenant?.sellerUser.id,
             'X-User-Roles': 'SELLER',
           },
           body: JSON.stringify({
@@ -204,8 +199,8 @@ class E2EScenarioEngine {
       const searchProductStep = await this.executeStep('Search Product', async () => {
         const response = await fetch(`${this.apiBaseUrl}/products/search?q=تست`, {
           headers: {
-            'X-Tenant-ID': this.testTenant!.id,
-            'X-User-ID': this.testTenant!.buyerUser.id,
+            'X-Tenant-ID': this.testTenant?.id,
+            'X-User-ID': this.testTenant?.buyerUser.id,
             'X-User-Roles': 'USER',
           },
         });
@@ -219,7 +214,7 @@ class E2EScenarioEngine {
       steps.push(searchProductStep);
 
       const duration = Date.now() - startTime;
-      const success = steps.every(step => step.success);
+      const success = steps.every((step) => step.success);
 
       return {
         scenarioName,
@@ -227,7 +222,6 @@ class E2EScenarioEngine {
         duration,
         steps,
       };
-
     } catch (error) {
       return {
         scenarioName,
@@ -257,8 +251,8 @@ class E2EScenarioEngine {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'X-Tenant-ID': this.testTenant!.id,
-            'X-User-ID': this.testTenant!.buyerUser.id,
+            'X-Tenant-ID': this.testTenant?.id,
+            'X-User-ID': this.testTenant?.buyerUser.id,
             'X-User-Roles': 'USER',
           },
           body: JSON.stringify({
@@ -288,11 +282,11 @@ class E2EScenarioEngine {
       // Step 3: View order
       const viewOrderStep = await this.executeStep('View Order', async () => {
         const orderId = createOrderStep.data.data.id;
-        
+
         const response = await fetch(`${this.apiBaseUrl}/orders/${orderId}`, {
           headers: {
-            'X-Tenant-ID': this.testTenant!.id,
-            'X-User-ID': this.testTenant!.buyerUser.id,
+            'X-Tenant-ID': this.testTenant?.id,
+            'X-User-ID': this.testTenant?.buyerUser.id,
             'X-User-Roles': 'USER',
           },
         });
@@ -308,13 +302,13 @@ class E2EScenarioEngine {
       // Step 4: Update order status (seller)
       const updateOrderStep = await this.executeStep('Update Order Status', async () => {
         const orderId = createOrderStep.data.data.id;
-        
+
         const response = await fetch(`${this.apiBaseUrl}/orders/${orderId}/status`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
-            'X-Tenant-ID': this.testTenant!.id,
-            'X-User-ID': this.testTenant!.sellerUser.id,
+            'X-Tenant-ID': this.testTenant?.id,
+            'X-User-ID': this.testTenant?.sellerUser.id,
             'X-User-Roles': 'SELLER',
           },
           body: JSON.stringify({
@@ -334,14 +328,14 @@ class E2EScenarioEngine {
       // Step 5: Process payment
       const processPaymentStep = await this.executeStep('Process Payment', async () => {
         const orderId = createOrderStep.data.data.id;
-        
+
         // This would integrate with actual payment gateway in production
         const response = await fetch(`${this.apiBaseUrl}/payments`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'X-Tenant-ID': this.testTenant!.id,
-            'X-User-ID': this.testTenant!.buyerUser.id,
+            'X-Tenant-ID': this.testTenant?.id,
+            'X-User-ID': this.testTenant?.buyerUser.id,
             'X-User-Roles': 'USER',
           },
           body: JSON.stringify({
@@ -361,7 +355,7 @@ class E2EScenarioEngine {
       steps.push(processPaymentStep);
 
       const duration = Date.now() - startTime;
-      const success = steps.every(step => step.success);
+      const success = steps.every((step) => step.success);
 
       return {
         scenarioName,
@@ -369,7 +363,6 @@ class E2EScenarioEngine {
         duration,
         steps,
       };
-
     } catch (error) {
       return {
         scenarioName,
@@ -391,29 +384,32 @@ class E2EScenarioEngine {
 
     try {
       // Step 1: Create product in tenant A
-      const createProductTenantAStep = await this.executeStep('Create Product Tenant A', async () => {
-        const response = await fetch(`${this.apiBaseUrl}/products`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Tenant-ID': this.testTenant!.id,
-            'X-User-ID': this.testTenant!.sellerUser.id,
-            'X-User-Roles': 'SELLER',
-          },
-          body: JSON.stringify({
-            sku: `TENANT-A-${Date.now()}`,
-            name: 'محصول تنانت A',
-            price: 100000,
-            stock: 5,
-          }),
-        });
+      const createProductTenantAStep = await this.executeStep(
+        'Create Product Tenant A',
+        async () => {
+          const response = await fetch(`${this.apiBaseUrl}/products`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Tenant-ID': this.testTenant?.id,
+              'X-User-ID': this.testTenant?.sellerUser.id,
+              'X-User-Roles': 'SELLER',
+            },
+            body: JSON.stringify({
+              sku: `TENANT-A-${Date.now()}`,
+              name: 'محصول تنانت A',
+              price: 100000,
+              stock: 5,
+            }),
+          });
 
-        if (!response.ok) {
-          throw new Error(`Product creation failed: ${response.statusText}`);
+          if (!response.ok) {
+            throw new Error(`Product creation failed: ${response.statusText}`);
+          }
+
+          return await response.json();
         }
-
-        return await response.json();
-      });
+      );
       steps.push(createProductTenantAStep);
 
       // Step 2: Create second tenant
@@ -435,7 +431,7 @@ class E2EScenarioEngine {
       // Step 3: Try to access Tenant A's product from Tenant B (should fail)
       const crossTenantAccessStep = await this.executeStep('Cross-Tenant Access Test', async () => {
         const productId = createProductTenantAStep.data.data.id;
-        
+
         const response = await fetch(`${this.apiBaseUrl}/products/${productId}`, {
           headers: {
             'X-Tenant-ID': tenantBId, // Different tenant
@@ -447,16 +443,15 @@ class E2EScenarioEngine {
         // Should return 404 or empty result due to RLS
         if (response.status === 404) {
           return { isolated: true, message: 'Product not accessible from different tenant' };
-        } else if (response.ok) {
+        }
+        if (response.ok) {
           const data = await response.json();
           if (!data.data) {
             return { isolated: true, message: 'RLS working - no data returned' };
-          } else {
-            throw new Error('SECURITY VIOLATION: Cross-tenant data leak detected!');
           }
-        } else {
-          throw new Error(`Unexpected response: ${response.statusText}`);
+          throw new Error('SECURITY VIOLATION: Cross-tenant data leak detected!');
         }
+        throw new Error(`Unexpected response: ${response.statusText}`);
       });
       steps.push(crossTenantAccessStep);
 
@@ -483,7 +478,7 @@ class E2EScenarioEngine {
       await this.prisma.tenant.delete({ where: { id: tenantBId } });
 
       const duration = Date.now() - startTime;
-      const success = steps.every(step => step.success);
+      const success = steps.every((step) => step.success);
 
       return {
         scenarioName,
@@ -491,7 +486,6 @@ class E2EScenarioEngine {
         duration,
         steps,
       };
-
     } catch (error) {
       return {
         scenarioName,
@@ -518,8 +512,8 @@ class E2EScenarioEngine {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'X-Tenant-ID': this.testTenant!.id,
-            'X-User-ID': this.testTenant!.sellerUser.id,
+            'X-Tenant-ID': this.testTenant?.id,
+            'X-User-ID': this.testTenant?.sellerUser.id,
             'X-User-Roles': 'SELLER',
           },
           body: JSON.stringify({
@@ -547,40 +541,40 @@ class E2EScenarioEngine {
       // Step 2: Request AR model streaming
       const streamARModelStep = await this.executeStep('Stream AR Model', async () => {
         const productId = createARProductStep.data.data.id;
-        
+
         // Simulate AR model streaming request
         const response = await fetch(`${this.apiBaseUrl}/ar/models/${productId}/stream`, {
           headers: {
-            'X-Tenant-ID': this.testTenant!.id,
-            'X-User-ID': this.testTenant!.buyerUser.id,
+            'X-Tenant-ID': this.testTenant?.id,
+            'X-User-ID': this.testTenant?.buyerUser.id,
             'X-User-Roles': 'USER',
-            'Accept': 'application/octet-stream',
+            Accept: 'application/octet-stream',
           },
         });
 
         // In a real implementation, this would stream the 3D model
-        if (response.status === 200 || response.status === 206) { // 206 for partial content
-          return { 
-            streaming: true, 
+        if (response.status === 200 || response.status === 206) {
+          // 206 for partial content
+          return {
+            streaming: true,
             contentType: response.headers.get('content-type'),
             contentLength: response.headers.get('content-length'),
           };
-        } else {
-          throw new Error(`AR streaming failed: ${response.statusText}`);
         }
+        throw new Error(`AR streaming failed: ${response.statusText}`);
       });
       steps.push(streamARModelStep);
 
       // Step 3: Cache AR model for faster access
       const cacheARModelStep = await this.executeStep('Cache AR Model', async () => {
         const productId = createARProductStep.data.data.id;
-        
+
         // Simulate AR model caching
         const response = await fetch(`${this.apiBaseUrl}/ar/models/${productId}/cache`, {
           method: 'POST',
           headers: {
-            'X-Tenant-ID': this.testTenant!.id,
-            'X-User-ID': this.testTenant!.buyerUser.id,
+            'X-Tenant-ID': this.testTenant?.id,
+            'X-User-ID': this.testTenant?.buyerUser.id,
             'X-User-Roles': 'USER',
           },
         });
@@ -588,14 +582,13 @@ class E2EScenarioEngine {
         if (response.ok) {
           const data = await response.json();
           return { cached: true, cacheKey: data.cacheKey };
-        } else {
-          throw new Error(`AR caching failed: ${response.statusText}`);
         }
+        throw new Error(`AR caching failed: ${response.statusText}`);
       });
       steps.push(cacheARModelStep);
 
       const duration = Date.now() - startTime;
-      const success = steps.every(step => step.success);
+      const success = steps.every((step) => step.success);
 
       return {
         scenarioName,
@@ -603,7 +596,6 @@ class E2EScenarioEngine {
         duration,
         steps,
       };
-
     } catch (error) {
       return {
         scenarioName,
@@ -633,7 +625,7 @@ class E2EScenarioEngine {
 
       // Generate summary
       const totalScenarios = scenarios.length;
-      const successfulScenarios = scenarios.filter(s => s.success).length;
+      const successfulScenarios = scenarios.filter((s) => s.success).length;
       const totalDuration = scenarios.reduce((sum, s) => sum + s.duration, 0);
 
       logger.log('\n📊 E2E Scenarios Summary:');
@@ -644,29 +636,31 @@ class E2EScenarioEngine {
       logger.log(`   Average Duration: ${(totalDuration / totalScenarios).toFixed(2)}ms`);
 
       // Log failed scenarios
-      const failedScenarios = scenarios.filter(s => !s.success);
+      const failedScenarios = scenarios.filter((s) => !s.success);
       if (failedScenarios.length > 0) {
         logger.log('\n❌ Failed Scenarios:');
-        failedScenarios.forEach(scenario => {
+        failedScenarios.forEach((scenario) => {
           logger.log(`   - ${scenario.scenarioName}: ${scenario.error}`);
         });
       }
 
       return scenarios;
-
     } finally {
       await this.cleanupTestEnvironment();
     }
   }
 
   // Helper methods
-  private async executeStep(stepName: string, stepFunction: () => Promise<any>): Promise<StepResult> {
+  private async executeStep(
+    stepName: string,
+    stepFunction: () => Promise<any>
+  ): Promise<StepResult> {
     const startTime = Date.now();
-    
+
     try {
       const data = await stepFunction();
       const duration = Date.now() - startTime;
-      
+
       return {
         stepName,
         success: true,
@@ -675,7 +669,7 @@ class E2EScenarioEngine {
       };
     } catch (error) {
       const duration = Date.now() - startTime;
-      
+
       return {
         stepName,
         success: false,
@@ -685,7 +679,11 @@ class E2EScenarioEngine {
     }
   }
 
-  private async createTestUser(tenantId: string, userType: string, roles: string[]): Promise<TestUser> {
+  private async createTestUser(
+    tenantId: string,
+    userType: string,
+    roles: string[]
+  ): Promise<TestUser> {
     const userId = `user_${userType}_${Date.now()}`;
     const email = `${userType}@e2e-test.com`;
     const password = 'E2ETest123!@#';
@@ -717,22 +715,22 @@ class E2EScenarioEngine {
   private async createTestProduct(): Promise<any> {
     // Set RLS context
     await this.prisma.$executeRaw`
-      SELECT set_security_context(${this.testTenant!.id}, ${this.testTenant!.sellerUser.id}, ARRAY['SELLER'])
+      SELECT set_security_context(${this.testTenant?.id}, ${this.testTenant?.sellerUser.id}, ARRAY['SELLER'])
     `;
 
     return await this.prisma.product.create({
       data: {
         id: `product_${Date.now()}`,
-        tenant_id: this.testTenant!.id,
+        tenant_id: this.testTenant?.id,
         sku: `TEST-PRODUCT-${Date.now()}`,
         name: 'محصول تست',
         price: 150000,
         stock: 10,
-        created_by: this.testTenant!.sellerUser.id,
-        updated_by: this.testTenant!.sellerUser.id,
+        created_by: this.testTenant?.sellerUser.id,
+        updated_by: this.testTenant?.sellerUser.id,
       },
     });
   }
 }
 
-export { E2EScenarioEngine, ScenarioResult, StepResult };
+export { E2EScenarioEngine, type ScenarioResult, type StepResult };

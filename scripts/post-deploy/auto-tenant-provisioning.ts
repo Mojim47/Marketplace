@@ -46,8 +46,6 @@ class AutoTenantProvisioning {
   }
 
   async provisionTenant(request: TenantProvisioningRequest): Promise<ProvisioningResult> {
-    console.log(`🏢 Provisioning new tenant: ${request.tenantName}`);
-
     try {
       // 1. Validate request
       await this.validateProvisioningRequest(request);
@@ -76,8 +74,6 @@ class AutoTenantProvisioning {
       // 9. Send welcome email
       await this.sendWelcomeEmail(adminUser.email, tenant.name);
 
-      console.log(`✅ Tenant provisioned successfully: ${tenant.id}`);
-
       return {
         success: true,
         tenantId: tenant.id,
@@ -88,10 +84,9 @@ class AutoTenantProvisioning {
           tempPassword: 'Please check your email for login instructions',
         },
       };
-
     } catch (error) {
-      console.error(`❌ Tenant provisioning failed:`, error);
-      
+      console.error('❌ Tenant provisioning failed:', error);
+
       // Cleanup on failure
       await this.cleanupFailedProvisioning(request.tenantSlug);
 
@@ -157,12 +152,13 @@ class AutoTenantProvisioning {
         updated_by: 'system',
       },
     });
-
-    console.log(`✅ Tenant created: ${tenant.id}`);
     return tenant;
   }
 
-  private async createAdminUser(tenantId: string, request: TenantProvisioningRequest): Promise<any> {
+  private async createAdminUser(
+    tenantId: string,
+    request: TenantProvisioningRequest
+  ): Promise<any> {
     const userId = `user_${uuidv4()}`;
     const hashedPassword = await hash(request.adminPassword, 12);
 
@@ -180,14 +176,10 @@ class AutoTenantProvisioning {
         updated_by: 'system',
       },
     });
-
-    console.log(`✅ Admin user created: ${adminUser.id}`);
     return adminUser;
   }
 
   private async setupTenantInfrastructure(tenantId: string, features: any): Promise<void> {
-    console.log(`🏗️ Setting up infrastructure for tenant: ${tenantId}`);
-
     // Create tenant-specific cache namespace
     await this.setupTenantCache(tenantId);
 
@@ -210,15 +202,11 @@ class AutoTenantProvisioning {
     if (features.moodian) {
       await this.setupMoodianIntegration(tenantId);
     }
-
-    console.log(`✅ Infrastructure setup completed for tenant: ${tenantId}`);
   }
 
   private async createDefaultData(tenantId: string, adminUserId: string): Promise<void> {
-    console.log(`📊 Creating default data for tenant: ${tenantId}`);
-
     // Create sample product categories
-    const categories = [
+    const _categories = [
       { name: 'الکترونیک', slug: 'electronics' },
       { name: 'پوشاک', slug: 'clothing' },
       { name: 'خانه و آشپزخانه', slug: 'home-kitchen' },
@@ -255,14 +243,10 @@ class AutoTenantProvisioning {
         },
       });
     }
-
-    console.log(`✅ Default data created for tenant: ${tenantId}`);
   }
 
-  private async setupFeatureFlags(tenantId: string, features: any): Promise<void> {
-    console.log(`🚩 Setting up feature flags for tenant: ${tenantId}`);
-
-    const featureFlags = {
+  private async setupFeatureFlags(_tenantId: string, features: any): Promise<void> {
+    const _featureFlags = {
       ar_enabled: features.ar,
       ai_enabled: features.ai,
       b2b_enabled: features.b2b,
@@ -273,16 +257,9 @@ class AutoTenantProvisioning {
       multi_currency: false,
       advanced_reporting: features.analytics,
     };
-
-    // Store feature flags in cache for fast access
-    // await this.cacheService.set(`${tenantId}:feature_flags`, featureFlags, 86400); // 24 hours
-
-    console.log(`✅ Feature flags configured for tenant: ${tenantId}`);
   }
 
   private async setupTenantMonitoring(tenantId: string): Promise<void> {
-    console.log(`📊 Setting up monitoring for tenant: ${tenantId}`);
-
     // Create initial performance metrics
     const initialMetrics = [
       { metric_name: 'tenant_created', value: 1, tags: { event: 'provisioning' } },
@@ -298,44 +275,33 @@ class AutoTenantProvisioning {
         },
       });
     }
-
-    console.log(`✅ Monitoring setup completed for tenant: ${tenantId}`);
   }
 
-  private async setupTenantCache(tenantId: string): Promise<void> {
-    // Setup tenant-specific cache namespaces
-    console.log(`💾 Setting up cache namespace for tenant: ${tenantId}`);
+  private async setupTenantCache(_tenantId: string): Promise<void> {
     // Implementation would setup Redis namespaces
   }
 
-  private async setupTenantAnalytics(tenantId: string): Promise<void> {
-    console.log(`📈 Setting up analytics for tenant: ${tenantId}`);
+  private async setupTenantAnalytics(_tenantId: string): Promise<void> {
     // Implementation would create ClickHouse tables
   }
 
-  private async setupTenantARStorage(tenantId: string): Promise<void> {
-    console.log(`🥽 Setting up AR storage for tenant: ${tenantId}`);
+  private async setupTenantARStorage(_tenantId: string): Promise<void> {
     // Implementation would setup S3 buckets or MinIO buckets
   }
 
-  private async setupTenantAICache(tenantId: string): Promise<void> {
-    console.log(`🤖 Setting up AI cache for tenant: ${tenantId}`);
+  private async setupTenantAICache(_tenantId: string): Promise<void> {
     // Implementation would setup AI model cache
   }
 
-  private async setupMoodianIntegration(tenantId: string): Promise<void> {
-    console.log(`🏛️ Setting up Moodian integration for tenant: ${tenantId}`);
+  private async setupMoodianIntegration(_tenantId: string): Promise<void> {
     // Implementation would setup Moodian API credentials
   }
 
-  private async sendWelcomeEmail(email: string, tenantName: string): Promise<void> {
-    console.log(`📧 Sending welcome email to: ${email}`);
+  private async sendWelcomeEmail(_email: string, _tenantName: string): Promise<void> {
     // Implementation would send actual email
   }
 
   private async cleanupFailedProvisioning(tenantSlug: string): Promise<void> {
-    console.log(`🧹 Cleaning up failed provisioning for: ${tenantSlug}`);
-    
     try {
       // Remove tenant if created
       await this.prisma.tenant.deleteMany({
@@ -345,7 +311,6 @@ class AutoTenantProvisioning {
       // Remove any created users
       // Remove any created data
       // Cleanup infrastructure
-
     } catch (error) {
       console.error('Cleanup failed:', error);
     }
@@ -371,8 +336,6 @@ class AutoFeatureRollout {
   }
 
   async rolloutFeature(featureName: string, rolloutPercentage: number): Promise<void> {
-    console.log(`🚀 Rolling out feature '${featureName}' to ${rolloutPercentage}% of tenants`);
-
     try {
       // Get all active tenants
       const tenants = await this.prisma.tenant.findMany({
@@ -382,23 +345,19 @@ class AutoFeatureRollout {
 
       // Calculate how many tenants to enable
       const tenantsToEnable = Math.ceil((tenants.length * rolloutPercentage) / 100);
-      
+
       // Randomly select tenants (or use other criteria)
       const selectedTenants = this.selectTenantsForRollout(tenants, tenantsToEnable);
 
       // Enable feature for selected tenants
       for (const tenant of selectedTenants) {
         await this.enableFeatureForTenant(tenant.id, featureName);
-        console.log(`✅ Feature '${featureName}' enabled for tenant: ${tenant.slug}`);
       }
 
       // Record rollout metrics
       await this.recordRolloutMetrics(featureName, rolloutPercentage, selectedTenants.length);
-
-      console.log(`🎉 Feature rollout completed: ${selectedTenants.length}/${tenants.length} tenants`);
-
     } catch (error) {
-      console.error(`❌ Feature rollout failed:`, error);
+      console.error('❌ Feature rollout failed:', error);
       throw error;
     }
   }
@@ -434,14 +393,13 @@ class AutoFeatureRollout {
     }
   }
 
-  private async recordRolloutMetrics(featureName: string, percentage: number, enabledCount: number): Promise<void> {
-    // Record rollout metrics for monitoring
-    console.log(`📊 Recording rollout metrics for feature: ${featureName}`);
-  }
+  private async recordRolloutMetrics(
+    _featureName: string,
+    _percentage: number,
+    _enabledCount: number
+  ): Promise<void> {}
 
   async instantRollback(featureName: string): Promise<void> {
-    console.log(`🔄 Performing instant rollback for feature: ${featureName}`);
-
     try {
       // Disable feature for all tenants
       const tenants = await this.prisma.tenant.findMany({
@@ -451,11 +409,8 @@ class AutoFeatureRollout {
       for (const tenant of tenants) {
         await this.disableFeatureForTenant(tenant.id, featureName);
       }
-
-      console.log(`✅ Feature '${featureName}' rolled back for all tenants`);
-
     } catch (error) {
-      console.error(`❌ Rollback failed:`, error);
+      console.error('❌ Rollback failed:', error);
       throw error;
     }
   }

@@ -2,40 +2,34 @@
  * ???????????????????????????????????????????????????????????????????????????
  * NextGen Marketplace - Shared Localization Module
  * ???????????????????????????????????????????????????????????????????????????
- * 
+ *
  * Central localization module that integrates all Persian/Farsi localization
  * services from libs/localization for the Iranian market.
- * 
+ *
  * Features:
  * - Jalali (Persian) date conversion and formatting
  * - Persian number formatting and conversion
  * - Iranian currency formatting (Rial/Toman)
  * - Persian validators (mobile, national ID, bank card, IBAN, postal code)
  * - Persian translations
- * 
+ *
  * @module @nextgen/api/shared/localization
  * Requirements: 3.1, 3.2, 3.3, 3.4, 3.5
  */
 
-import { Module, Global, DynamicModule } from '@nestjs/common';
+import { type DynamicModule, Global, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
 // Import localization services from libs/localization
 import {
-  JalaliConverter,
-  jalaliConverter,
-  PersianNumberFormatter,
-  persianNumbers,
-  IranianCurrencyFormatter,
-  iranianCurrency,
-  PersianValidators,
-  persianValidators,
-  TranslationManager,
-  translations,
-  t,
   PERSIAN_MONTHS,
   PERSIAN_WEEKDAYS,
   PERSIAN_WEEKDAYS_SHORT,
+  iranianCurrency,
+  jalaliConverter,
+  persianNumbers,
+  persianValidators,
+  translations,
 } from '@nextgen/localization';
 
 // Re-export types for convenience
@@ -43,22 +37,26 @@ export type { JalaliDate, JalaliDateTime, DateFormatOptions } from '@nextgen/loc
 export type { CurrencyUnit, CurrencyFormatOptions } from '@nextgen/localization';
 export type { NumberFormatOptions } from '@nextgen/localization';
 export type { ValidationResult } from '@nextgen/localization';
-export type { TranslationKey, TranslationNamespace, TranslationOptions } from '@nextgen/localization';
+export type {
+  TranslationKey,
+  TranslationNamespace,
+  TranslationOptions,
+} from '@nextgen/localization';
 
 // Re-export constants
 export { PERSIAN_MONTHS, PERSIAN_WEEKDAYS, PERSIAN_WEEKDAYS_SHORT };
 
 // Import pipes
 import {
-  IranianMobilePipe,
-  NationalIdPipe,
   BankCardPipe,
-  IBANPipe,
-  PostalCodePipe,
-  LandlinePipe,
-  PersianTextPipe,
   CompanyRegistrationPipe,
   EconomicCodePipe,
+  IBANPipe,
+  IranianMobilePipe,
+  LandlinePipe,
+  NationalIdPipe,
+  PersianTextPipe,
+  PostalCodePipe,
 } from './pipes';
 
 // Re-export pipes
@@ -121,7 +119,8 @@ export class LocalizationModule {
         {
           provide: LOCALIZATION_TOKENS.IRANIAN_CURRENCY,
           useFactory: (configService: ConfigService) => {
-            const defaultUnit = config?.defaultCurrencyUnit || 
+            const defaultUnit =
+              config?.defaultCurrencyUnit ||
               configService.get<'rial' | 'toman'>('DEFAULT_CURRENCY_UNIT', 'toman');
             iranianCurrency.setDefaultUnit(defaultUnit);
             return iranianCurrency;
@@ -141,8 +140,7 @@ export class LocalizationModule {
         {
           provide: LOCALIZATION_TOKENS.TRANSLATIONS,
           useFactory: (configService: ConfigService) => {
-            const locale = config?.defaultLocale || 
-              configService.get('DEFAULT_LOCALE', 'fa');
+            const locale = config?.defaultLocale || configService.get('DEFAULT_LOCALE', 'fa');
             translations.setLocale(locale);
             return translations;
           },

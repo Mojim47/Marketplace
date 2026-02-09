@@ -1,11 +1,11 @@
-﻿import { Controller, Get, Post, Put, Body, Param, Query, UseGuards, Headers } from '@nestjs/common';
+﻿import { Body, Controller, Get, Headers, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { OrdersService } from './orders.service';
-import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { CreateOrderDto } from './dto';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import type { AuthenticatedUser } from '../common/types/authenticated-user.type';
+import type { CreateOrderDto } from './dto';
+import type { OrdersService } from './orders.service';
 
 @ApiTags('orders')
 @Controller({ path: 'orders', version: '1' })
@@ -43,4 +43,3 @@ export class OrdersController {
     return this.service.updateStatus(id, status);
   }
 }
-

@@ -2,9 +2,7 @@
 // Storage Interfaces - Barrel Export
 // ═══════════════════════════════════════════════════════════════════════════
 
-export {
-  StorageProviderType,
-} from './storage.interface';
+export { StorageProviderType } from './storage.interface';
 
 export type {
   IStorageProvider,

@@ -39,14 +39,5 @@
     "@prisma/client": "^5.7.0",
     "@nextgen/errors": "workspace:*"
   },
-  "keywords": [
-    "auth",
-    "authentication",
-    "jwt",
-    "totp",
-    "2fa",
-    "session",
-    "rate-limiting",
-    "nestjs"
-  ]
+  "keywords": ["auth", "authentication", "jwt", "totp", "2fa", "session", "rate-limiting", "nestjs"]
 }

@@ -1,5 +1,5 @@
-import { jsx as _jsx } from 'react/jsx-runtime';
 import { fireEvent, render } from '@testing-library/react';
+import { jsx as _jsx } from 'react/jsx-runtime';
 import { describe, expect, it, vi } from 'vitest';
 vi.mock('@nextgen/ai/src/core/ai.service', () => ({
   AIService: class {

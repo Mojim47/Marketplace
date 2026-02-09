@@ -18,12 +18,7 @@
 
 import { Injectable } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
-import {
-  ZarinPalGateway,
-  type PaymentInitRequest,
-  type PaymentVerifyResponse,
-  type WageItem,
-} from './gateways/zarinpal.gateway';
+import { type PaymentInitRequest, ZarinPalGateway } from './gateways/zarinpal.gateway';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Types and Interfaces
@@ -322,7 +317,9 @@ export class PaymentService {
       SELECT * FROM payments WHERE id = ${paymentId}::uuid
     `;
 
-    if (results.length === 0) return null;
+    if (results.length === 0) {
+      return null;
+    }
 
     const r = results[0];
     return this.mapPaymentRecord(r);
@@ -497,7 +494,7 @@ export class PaymentService {
 
   private async initiateBankTransfer(
     paymentId: string,
-    dto: CreatePaymentDto
+    _dto: CreatePaymentDto
   ): Promise<PaymentInitResult> {
     // Bank transfer is manual - just mark as pending
     await this.logAudit(paymentId, 'BANK_TRANSFER_INITIATED', {});
@@ -510,7 +507,7 @@ export class PaymentService {
 
   private async initiateCredit(
     paymentId: string,
-    dto: CreatePaymentDto
+    _dto: CreatePaymentDto
   ): Promise<PaymentInitResult> {
     // Credit payment - check organization credit limit
     // This would integrate with the credit management system
@@ -549,7 +546,9 @@ export class PaymentService {
       SELECT * FROM payments WHERE idempotency_key = ${key}
     `;
 
-    if (results.length === 0) return null;
+    if (results.length === 0) {
+      return null;
+    }
     return this.mapPaymentRecord(results[0]);
   }
 
@@ -580,7 +579,9 @@ export class PaymentService {
       SELECT * FROM payments WHERE authority = ${authority}
     `;
 
-    if (results.length === 0) return null;
+    if (results.length === 0) {
+      return null;
+    }
     return this.mapPaymentRecord(results[0]);
   }
 

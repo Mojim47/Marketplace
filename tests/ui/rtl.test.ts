@@ -10,7 +10,7 @@
  * _Requirements: 7.1_
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // RTL Utility Functions
@@ -52,7 +52,9 @@ export function containsPersianChars(text: string): boolean {
  * Determines if content should be RTL based on its text
  */
 export function shouldBeRTL(text: string): boolean {
-  if (!text || text.trim().length === 0) return false;
+  if (!text || text.trim().length === 0) {
+    return false;
+  }
 
   // Count RTL and LTR characters
   const rtlChars = (

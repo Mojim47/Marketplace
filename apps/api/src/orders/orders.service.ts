@@ -1,10 +1,18 @@
-﻿import { Injectable, NotFoundException, BadRequestException, ConflictException, ServiceUnavailableException, Logger, Inject } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
-import { Decimal } from '@prisma/client/runtime/library';
-import { DistributedLockService } from '@nextgen/cache';
-import { MetricsService } from '../monitoring/metrics.service';
-import { createHash } from 'crypto';
+﻿import { createHash } from 'node:crypto';
+import {
+  BadRequestException,
+  ConflictException,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
+import type { DistributedLockService } from '@nextgen/cache';
 import type { Prisma } from '@prisma/client';
+import { Decimal } from '@prisma/client/runtime/library';
+import type { PrismaService } from '../database/prisma.service';
+import type { MetricsService } from '../monitoring/metrics.service';
 
 interface IStateService {
   setState<T>(key: string, value: T, options?: { ttlSeconds?: number }): Promise<boolean>;
@@ -54,11 +62,13 @@ const normalizeOrderPayload = (data: CreateOrderInput) => {
   if (!data || !Array.isArray(data.items)) {
     return data;
   }
-  const normalizedItems = [...data.items].map((item) => ({ ...item })).sort((a, b) => {
-    const keyA = `${a.productId ?? ''}:${a.variantId ?? ''}`;
-    const keyB = `${b.productId ?? ''}:${b.variantId ?? ''}`;
-    return keyA.localeCompare(keyB);
-  });
+  const normalizedItems = [...data.items]
+    .map((item) => ({ ...item }))
+    .sort((a, b) => {
+      const keyA = `${a.productId ?? ''}:${a.variantId ?? ''}`;
+      const keyB = `${b.productId ?? ''}:${b.variantId ?? ''}`;
+      return keyA.localeCompare(keyB);
+    });
   return { ...data, items: normalizedItems };
 };
 
@@ -83,14 +93,16 @@ export class OrdersService {
       throw new BadRequestException('ليست اقلام سفارش نمي‌تواند خالي باشد');
     }
 
-    const normalizedIdempotencyKey = typeof idempotencyKey === 'string' ? idempotencyKey.trim() : undefined;
+    const normalizedIdempotencyKey =
+      typeof idempotencyKey === 'string' ? idempotencyKey.trim() : undefined;
     const idempotencyRecordKey = normalizedIdempotencyKey
       ? `order:idempotency:${userId}:${normalizedIdempotencyKey}`
       : null;
     const requestHash = normalizedIdempotencyKey ? hashOrderRequest(data) : null;
 
     if (idempotencyRecordKey && requestHash) {
-      const existing = await this.stateService.getState<IdempotencyRecord<any>>(idempotencyRecordKey);
+      const existing =
+        await this.stateService.getState<IdempotencyRecord<any>>(idempotencyRecordKey);
       if (existing) {
         const expiresAt = Number(new Date(existing.expiresAt));
         if (!Number.isNaN(expiresAt) && expiresAt > Date.now()) {
@@ -103,14 +115,16 @@ export class OrdersService {
       }
     }
 
-    const lockResources = Array.from(new Set([
-      ...data.items.map((item) => (
-        item.variantId
-          ? `product:${item.productId}:variant:${item.variantId}`
-          : `product:${item.productId}`
-      )),
-      ...(normalizedIdempotencyKey ? [`idempotency:${userId}:${normalizedIdempotencyKey}`] : []),
-    ])).sort();
+    const lockResources = Array.from(
+      new Set([
+        ...data.items.map((item) =>
+          item.variantId
+            ? `product:${item.productId}:variant:${item.variantId}`
+            : `product:${item.productId}`
+        ),
+        ...(normalizedIdempotencyKey ? [`idempotency:${userId}:${normalizedIdempotencyKey}`] : []),
+      ])
+    ).sort();
 
     const lockSettings = {
       retryCount: 3,
@@ -123,117 +137,130 @@ export class OrdersService {
     const slaMs = Number(process.env.ORDER_CREATE_SLA_MS || 2000);
 
     try {
-      return await this.lockService.using(lockResources, 10000, async (signal) => {
-        if (signal.aborted) {
-          throw new ServiceUnavailableException('زيرساخت قفل‌گذاري موقتاً در دسترس نيست. لطفاً دوباره تلاش کنيد.');
-        }
+      return await this.lockService.using(
+        lockResources,
+        10000,
+        async (signal) => {
+          if (signal.aborted) {
+            throw new ServiceUnavailableException(
+              'زيرساخت قفل‌گذاري موقتاً در دسترس نيست. لطفاً دوباره تلاش کنيد.'
+            );
+          }
 
-        return this.prisma.$transaction(async (tx) => {
-          const productIds = Array.from(new Set(data.items.map((item) => item.productId)));
-          const products = await tx.product.findMany({
-            where: { id: { in: productIds } },
-            select: { id: true, name: true, stock: true },
-          });
-          const productMap = new Map(products.map((product) => [product.id, product]));
+          return this.prisma.$transaction(async (tx) => {
+            const productIds = Array.from(new Set(data.items.map((item) => item.productId)));
+            const products = await tx.product.findMany({
+              where: { id: { in: productIds } },
+              select: { id: true, name: true, stock: true },
+            });
+            const productMap = new Map(products.map((product) => [product.id, product]));
 
-          for (const item of data.items) {
-            const product = productMap.get(item.productId);
-            if (!product) {
-              throw new NotFoundException('محصول يافت نشد');
+            for (const item of data.items) {
+              const product = productMap.get(item.productId);
+              if (!product) {
+                throw new NotFoundException('محصول يافت نشد');
+              }
+
+              const updated = await tx.product.updateMany({
+                where: { id: item.productId, stock: { gte: item.quantity } },
+                data: { stock: { decrement: item.quantity } },
+              });
+
+              if (updated.count === 0) {
+                throw new BadRequestException(`موجودي کافي نيست: ${product.name}`);
+              }
             }
 
-            const updated = await tx.product.updateMany({
-              where: { id: item.productId, stock: { gte: item.quantity } },
-              data: { stock: { decrement: item.quantity } },
+            const subtotal = data.items.reduce(
+              (sum: number, item) => sum + item.price * item.quantity,
+              0
+            );
+            const taxAmount = subtotal * 0.09;
+            const totalAmount = subtotal + taxAmount + (data.shippingCost || 0);
+
+            const order = await tx.order.create({
+              data: {
+                userId,
+                vendorId: data.vendorId,
+                orderNumber: `ORD-${Date.now()}`,
+                subtotal: new Decimal(subtotal),
+                taxAmount: new Decimal(taxAmount),
+                shippingCost: new Decimal(data.shippingCost || 0),
+                totalAmount: new Decimal(totalAmount),
+                status: 'PENDING',
+                paymentStatus: 'PENDING',
+                customerEmail: data.customerEmail,
+                customerPhone: data.customerPhone,
+                shippingAddress: data.shippingAddress,
+                items: {
+                  create: data.items.map((item) => ({
+                    productId: item.productId,
+                    variantId: item.variantId,
+                    productName: item.productName,
+                    productSku: item.productSku,
+                    quantity: item.quantity,
+                    price: new Decimal(item.price),
+                    total: new Decimal(item.price * item.quantity),
+                  })),
+                },
+              },
+              select: {
+                id: true,
+                orderNumber: true,
+                status: true,
+                paymentStatus: true,
+                totalAmount: true,
+                createdAt: true,
+                items: {
+                  select: {
+                    id: true,
+                    productId: true,
+                    productName: true,
+                    productSku: true,
+                    quantity: true,
+                    price: true,
+                    total: true,
+                  },
+                },
+              },
             });
 
-            if (updated.count === 0) {
-              throw new BadRequestException(`موجودي کافي نيست: ${product.name}`);
+            this.metrics.ordersTotal.inc({
+              status: order.status,
+              vendor_id: data.vendorId ?? 'unknown',
+            });
+            this.metrics.orderValue.observe(
+              { vendor_id: data.vendorId ?? 'unknown' },
+              Number(totalAmount)
+            );
+
+            if (idempotencyRecordKey && requestHash) {
+              try {
+                const now = new Date();
+                const expiresAt = new Date(now.getTime() + IDEMPOTENCY_TTL_SECONDS * 1000);
+                await this.stateService.setState(
+                  idempotencyRecordKey,
+                  {
+                    requestHash,
+                    response: order,
+                    createdAt: now.toISOString(),
+                    expiresAt: expiresAt.toISOString(),
+                  },
+                  { ttlSeconds: IDEMPOTENCY_TTL_SECONDS }
+                );
+              } catch (err) {
+                this.logger.warn(
+                  'Idempotency cache write failed',
+                  (err as Error)?.message ?? 'unknown'
+                );
+              }
             }
-          }
 
-          const subtotal = data.items.reduce((sum: number, item) => sum + (item.price * item.quantity), 0);
-          const taxAmount = subtotal * 0.09;
-          const totalAmount = subtotal + taxAmount + (data.shippingCost || 0);
-
-          const order = await tx.order.create({
-            data: {
-              userId,
-              vendorId: data.vendorId,
-              orderNumber: `ORD-${Date.now()}`,
-              subtotal: new Decimal(subtotal),
-              taxAmount: new Decimal(taxAmount),
-              shippingCost: new Decimal(data.shippingCost || 0),
-              totalAmount: new Decimal(totalAmount),
-              status: 'PENDING',
-              paymentStatus: 'PENDING',
-              customerEmail: data.customerEmail,
-              customerPhone: data.customerPhone,
-              shippingAddress: data.shippingAddress,
-              items: {
-                create: data.items.map((item) => ({
-                  productId: item.productId,
-                  variantId: item.variantId,
-                  productName: item.productName,
-                  productSku: item.productSku,
-                  quantity: item.quantity,
-                  price: new Decimal(item.price),
-                  total: new Decimal(item.price * item.quantity),
-                })),
-              },
-            },
-            select: {
-              id: true,
-              orderNumber: true,
-              status: true,
-              paymentStatus: true,
-              totalAmount: true,
-              createdAt: true,
-              items: {
-                select: {
-                  id: true,
-                  productId: true,
-                  productName: true,
-                  productSku: true,
-                  quantity: true,
-                  price: true,
-                  total: true,
-                },
-              },
-            },
+            return order;
           });
-
-          this.metrics.ordersTotal.inc({
-            status: order.status,
-            vendor_id: data.vendorId ?? 'unknown',
-          });
-          this.metrics.orderValue.observe(
-            { vendor_id: data.vendorId ?? 'unknown' },
-            Number(totalAmount)
-          );
-
-          if (idempotencyRecordKey && requestHash) {
-            try {
-              const now = new Date();
-              const expiresAt = new Date(now.getTime() + IDEMPOTENCY_TTL_SECONDS * 1000);
-              await this.stateService.setState(
-                idempotencyRecordKey,
-                {
-                  requestHash,
-                  response: order,
-                  createdAt: now.toISOString(),
-                  expiresAt: expiresAt.toISOString(),
-                },
-                { ttlSeconds: IDEMPOTENCY_TTL_SECONDS }
-              );
-            } catch (err) {
-              this.logger.warn('Idempotency cache write failed', (err as Error)?.message ?? 'unknown');
-            }
-          }
-
-          return order;
-        });
-      }, lockSettings);
+        },
+        lockSettings
+      );
     } catch (error) {
       if (this.lockService.isLockConflict(error)) {
         this.metrics.orderLockConflicts.inc({ vendor_id: data.vendorId ?? 'unknown' });
@@ -247,7 +274,9 @@ export class OrdersService {
       if (this.lockService.isLockInfrastructureError(error)) {
         this.metrics.orderLockInfraErrors.inc({ vendor_id: data.vendorId ?? 'unknown' });
         this.logger.error('Order lock infrastructure error', error as Error);
-        throw new ServiceUnavailableException('زيرساخت قفل‌گذاري موقتاً در دسترس نيست. لطفاً دوباره تلاش کنيد.');
+        throw new ServiceUnavailableException(
+          'زيرساخت قفل‌گذاري موقتاً در دسترس نيست. لطفاً دوباره تلاش کنيد.'
+        );
       }
       throw error;
     } finally {
@@ -327,7 +356,9 @@ export class OrdersService {
       },
     });
 
-    if (!order) throw new NotFoundException('سفارش يافت نشد');
+    if (!order) {
+      throw new NotFoundException('سفارش يافت نشد');
+    }
     return order;
   }
 
@@ -338,4 +369,3 @@ export class OrdersService {
     });
   }
 }
-

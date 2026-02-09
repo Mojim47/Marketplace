@@ -1,3 +1,2 @@
-export declare class ObservabilityModule {
-}
+export declare class ObservabilityModule {}
 //# sourceMappingURL=observability.module.d.ts.map

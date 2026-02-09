@@ -6,7 +6,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import type { ConfigService } from '@nestjs/config';
 import * as argon2 from 'argon2';
 import type { AuthConfig } from '../types';
 
@@ -24,13 +24,54 @@ export class PasswordService {
 
   // Common passwords list (top 100 - in production, use a larger list)
   private readonly commonPasswords = new Set([
-    'password', '123456', '12345678', 'qwerty', 'abc123', 'monkey', '1234567',
-    'letmein', 'trustno1', 'dragon', 'baseball', 'iloveyou', 'master', 'sunshine',
-    'ashley', 'bailey', 'passw0rd', 'shadow', '123123', '654321', 'superman',
-    'qazwsx', 'michael', 'football', 'password1', 'password123', 'welcome',
-    'jesus', 'ninja', 'mustang', 'password2', 'amanda', 'summer', 'love',
-    'ashley1', 'nicole', 'chelsea', 'biteme', 'matthew', 'access', 'yankees',
-    'dallas', 'austin', 'thunder', 'taylor', 'matrix', 'william', 'corvette',
+    'password',
+    '123456',
+    '12345678',
+    'qwerty',
+    'abc123',
+    'monkey',
+    '1234567',
+    'letmein',
+    'trustno1',
+    'dragon',
+    'baseball',
+    'iloveyou',
+    'master',
+    'sunshine',
+    'ashley',
+    'bailey',
+    'passw0rd',
+    'shadow',
+    '123123',
+    '654321',
+    'superman',
+    'qazwsx',
+    'michael',
+    'football',
+    'password1',
+    'password123',
+    'welcome',
+    'jesus',
+    'ninja',
+    'mustang',
+    'password2',
+    'amanda',
+    'summer',
+    'love',
+    'ashley1',
+    'nicole',
+    'chelsea',
+    'biteme',
+    'matthew',
+    'access',
+    'yankees',
+    'dallas',
+    'austin',
+    'thunder',
+    'taylor',
+    'matrix',
+    'william',
+    'corvette',
   ]);
 
   constructor(private readonly configService: ConfigService) {
@@ -86,7 +127,10 @@ export class PasswordService {
    * Validate password against security policy
    * Implements NIST SP 800-63B guidelines
    */
-  validate(password: string, userContext?: { email?: string; name?: string }): PasswordValidationResult {
+  validate(
+    password: string,
+    userContext?: { email?: string; name?: string }
+  ): PasswordValidationResult {
     const errors: string[] = [];
     let score = 0;
 
@@ -173,10 +217,15 @@ export class PasswordService {
 
     // Determine strength
     let strength: PasswordValidationResult['strength'];
-    if (score < 25) strength = 'weak';
-    else if (score < 50) strength = 'fair';
-    else if (score < 75) strength = 'strong';
-    else strength = 'very_strong';
+    if (score < 25) {
+      strength = 'weak';
+    } else if (score < 50) {
+      strength = 'fair';
+    } else if (score < 75) {
+      strength = 'strong';
+    } else {
+      strength = 'very_strong';
+    }
 
     return {
       valid: errors.length === 0,
@@ -230,7 +279,7 @@ export class PasswordService {
     const all = uppercase + lowercase + numbers + special;
 
     let password = '';
-    
+
     // Ensure at least one of each required type
     password += uppercase[Math.floor(Math.random() * uppercase.length)];
     password += lowercase[Math.floor(Math.random() * lowercase.length)];
@@ -243,6 +292,9 @@ export class PasswordService {
     }
 
     // Shuffle
-    return password.split('').sort(() => Math.random() - 0.5).join('');
+    return password
+      .split('')
+      .sort(() => Math.random() - 0.5)
+      .join('');
   }
 }

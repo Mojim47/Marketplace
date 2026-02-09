@@ -1,7 +1,7 @@
-﻿import { Injectable, NotFoundException, ConflictException, Logger } from '@nestjs/common';
-import { Exclude, plainToInstance } from 'class-transformer';
+﻿import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import * as argon2 from 'argon2';
-import { PrismaService } from '../database/prisma.service';
+import { Exclude, plainToInstance } from 'class-transformer';
+import type { PrismaService } from '../database/prisma.service';
 
 export class UserEntity {
   id!: string;
@@ -42,7 +42,7 @@ export class UsersService {
 
     // Check if user already exists
     const existingUser = await this.prisma.user.findUnique({
-      where: { email: dto.email }
+      where: { email: dto.email },
     });
 
     if (existingUser) {
@@ -54,7 +54,7 @@ export class UsersService {
       type: argon2.argon2id,
       memoryCost: 65536, // 64 MB
       timeCost: 3,
-      parallelism: 4
+      parallelism: 4,
     });
 
     // Create user
@@ -63,8 +63,8 @@ export class UsersService {
         email: dto.email,
         passwordHash: hashedPassword,
         firstName: dto.name.split(' ')[0],
-        lastName: dto.name.split(' ').slice(1).join(' ') || null
-      }
+        lastName: dto.name.split(' ').slice(1).join(' ') || null,
+      },
     });
 
     this.logger.log(`User created successfully: ${user.id}`);
@@ -90,19 +90,21 @@ export class UsersService {
         passwordHash: true,
         firstName: true,
         lastName: true,
-        role: true
-      }
+        role: true,
+      },
     });
-    
-    if (!user) return null;
-    
+
+    if (!user) {
+      return null;
+    }
+
     return {
       id: user.id,
       email: user.email,
       password: user.passwordHash || '',
       name: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
       tenantId: 'default',
-      roles: [user.role]
+      roles: [user.role],
     };
   }
 
@@ -111,7 +113,7 @@ export class UsersService {
    */
   async findByEmail(email: string): Promise<UserEntity | null> {
     const user = await this.prisma.user.findUnique({
-      where: { email }
+      where: { email },
     });
 
     return user ? this.excludePassword(user) : null;
@@ -122,7 +124,7 @@ export class UsersService {
    */
   async findById(id: string): Promise<UserEntity> {
     const user = await this.prisma.user.findUnique({
-      where: { id }
+      where: { id },
     });
 
     if (!user) {
@@ -150,7 +152,9 @@ export class UsersService {
   async updateRefreshToken(userId: string, refreshToken: string | null): Promise<void> {
     // Store refresh token in session or separate table
     // Prisma User model doesn't have refreshToken field
-    this.logger.log(`Refresh token update requested for user: ${userId}, token: ${refreshToken ? 'PRESENT' : 'NULL'}`);
+    this.logger.log(
+      `Refresh token update requested for user: ${userId}, token: ${refreshToken ? 'PRESENT' : 'NULL'}`
+    );
   }
 
   /**
@@ -159,9 +163,9 @@ export class UsersService {
   private excludePassword(user: unknown): UserEntity {
     const instance = plainToInstance(UserEntity, user, {
       excludeExtraneousValues: false,
-      enableImplicitConversion: true
+      enableImplicitConversion: true,
     });
-    
+
     if (Array.isArray(instance)) {
       const first = instance[0];
       if (!first) {
@@ -169,8 +173,7 @@ export class UsersService {
       }
       return first;
     }
-    
+
     return instance;
   }
 }
-

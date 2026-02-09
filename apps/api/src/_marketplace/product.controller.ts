@@ -1,43 +1,38 @@
-﻿import type { AuthenticatedUser } from '../common/types/authenticated-user.type';
-import {
-  Controller,
-  Get,
-  Post,
-  Put,
-  Delete,
+﻿import {
   Body,
-  Param,
-  Query,
-  UseGuards,
+  Controller,
+  Delete,
+  Get,
   HttpCode,
   HttpStatus,
+  Param,
   ParseUUIDPipe,
+  Post,
+  Put,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
 import {
-  ApiTags,
-  ApiOperation,
   ApiBearerAuth,
-  ApiResponse,
+  ApiOperation,
   ApiParam,
   ApiQuery,
+  ApiResponse,
+  ApiTags,
 } from '@nestjs/swagger';
-import { ProductService, SellerOfferService } from '@nextgen/product';
+import type { ProductService, SellerOfferService } from '@nextgen/product';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { ProductOwnershipGuard } from '../common/guards/product-ownership.guard';
-import { CurrentUser } from '../common/decorators/current-user.decorator';
-import {
-  CreateProductDto,
-  UpdateProductDto,
-  ProductSearchDto,
-  CreateVariantDto,
-} from './dto';
+import type { AuthenticatedUser } from '../common/types/authenticated-user.type';
+import type { CreateProductDto, ProductSearchDto, UpdateProductDto } from './dto';
 
 @ApiTags('marketplace/products')
 @Controller('marketplace/products')
 export class ProductController {
   constructor(
     private readonly productService: ProductService,
-    private readonly sellerOfferService: SellerOfferService,
+    private readonly sellerOfferService: SellerOfferService
   ) {}
 
   @Get()
@@ -60,10 +55,7 @@ export class ProductController {
   @Get('search/persian')
   @ApiOperation({ summary: 'جستجوي فارسي با pg_trgm' })
   @ApiQuery({ name: 'q', description: 'عبارت جستجو' })
-  async searchPersian(
-    @Query('q') query: string,
-    @Query('limit') limit?: number,
-  ) {
+  async searchPersian(@Query('q') query: string, @Query('limit') limit?: number) {
     return this.productService.searchPersian(query, limit);
   }
 
@@ -102,10 +94,7 @@ export class ProductController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'ايجاد محصول جديد' })
   @ApiResponse({ status: 201, description: 'محصول ايجاد شد' })
-  async create(
-    @CurrentUser() user: AuthenticatedUser,
-    @Body() dto: CreateProductDto,
-  ) {
+  async create(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateProductDto) {
     return this.productService.create({
       ...dto,
       vendorId: user.vendorId,
@@ -119,8 +108,8 @@ export class ProductController {
   @ApiParam({ name: 'id', description: 'شناسه محصول' })
   async update(
     @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() user: AuthenticatedUser,
-    @Body() dto: UpdateProductDto,
+    @CurrentUser() _user: AuthenticatedUser,
+    @Body() dto: UpdateProductDto
   ) {
     return this.productService.update(id, dto);
   }
@@ -131,10 +120,7 @@ export class ProductController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'حذف محصول' })
   @ApiParam({ name: 'id', description: 'شناسه محصول' })
-  async delete(
-    @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() user: AuthenticatedUser,
-  ) {
+  async delete(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() _user: AuthenticatedUser) {
     await this.productService.delete(id);
   }
 
@@ -149,7 +135,7 @@ export class ProductController {
   async createOffer(
     @Param('productId', ParseUUIDPipe) productId: string,
     @CurrentUser() user: AuthenticatedUser,
-    @Body() dto: { variantId: string; price: number; quantity: number },
+    @Body() dto: { variantId: string; price: number; quantity: number }
   ) {
     return this.sellerOfferService.createOffer({
       productId,
@@ -166,10 +152,9 @@ export class ProductController {
   @ApiOperation({ summary: 'ويرايش پيشنهاد فروشنده' })
   async updateOffer(
     @Param('offerId', ParseUUIDPipe) offerId: string,
-    @CurrentUser() user: AuthenticatedUser,
-    @Body() dto: { price?: number; quantity?: number; isActive?: boolean },
+    @CurrentUser() _user: AuthenticatedUser,
+    @Body() dto: { price?: number; quantity?: number; isActive?: boolean }
   ) {
     return this.sellerOfferService.updateOffer(offerId, dto);
   }
 }
-

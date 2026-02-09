@@ -40,7 +40,11 @@ export { authConfig } from './config/auth.config';
 export { AuthService } from './services/auth.service';
 export { PasswordService, type PasswordValidationResult } from './services/password.service';
 export { TokenService, type CreateTokenOptions } from './services/token.service';
-export { SessionService, type CreateSessionOptions, type SessionMetadata } from './services/session.service';
+export {
+  SessionService,
+  type CreateSessionOptions,
+  type SessionMetadata,
+} from './services/session.service';
 export { RateLimitService, type RateLimitAction } from './services/rate-limit.service';
 export { LockoutService, type LockoutStatus } from './services/lockout.service';
 export { TotpService } from './services/totp.service';

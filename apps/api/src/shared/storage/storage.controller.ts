@@ -2,60 +2,60 @@
  * ???????????????????????????????????????????????????????????????????????????
  * NextGen Marketplace - Storage Controller
  * ???????????????????????????????????????????????????????????????????????????
- * 
+ *
  * REST API endpoints for file storage operations.
- * 
+ *
  * Features:
  * - File upload with validation
  * - Presigned URL generation
  * - File deletion
  * - File listing
- * 
+ *
  * @module @nextgen/api/shared/storage
  * Requirements: 6.1, 6.2, 6.3, 6.4
  */
 
 import {
-  Controller,
-  Post,
-  Get,
-  Delete,
+  BadRequestException,
   Body,
-  Query,
+  Controller,
+  Delete,
+  FileTypeValidator,
+  Get,
+  Inject,
+  MaxFileSizeValidator,
   Param,
-  UseGuards,
-  UseInterceptors,
+  ParseFilePipe,
+  Post,
+  Query,
   UploadedFile,
   UploadedFiles,
-  Inject,
-  BadRequestException,
-  ParseFilePipe,
-  MaxFileSizeValidator,
-  FileTypeValidator,
+  UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import {
-  ApiTags,
-  ApiOperation,
-  ApiConsumes,
   ApiBearerAuth,
   ApiBody,
+  ApiConsumes,
+  ApiOperation,
   ApiResponse,
+  ApiTags,
 } from '@nestjs/swagger';
 
 import { StorageService, UploadFile } from '@nextgen/storage';
-import { STORAGE_TOKENS } from './tokens';
 import {
-  UploadFileDto,
-  GetSignedUrlDto,
-  GetUploadUrlDto,
   DeleteFileDto,
-  ListFilesDto,
-  UploadResultDto,
-  SignedUrlResultDto,
   FileMetadataDto,
   FileType,
+  GetSignedUrlDto,
+  GetUploadUrlDto,
+  ListFilesDto,
+  SignedUrlResultDto,
+  UploadFileDto,
+  UploadResultDto,
 } from './dto';
+import { STORAGE_TOKENS } from './tokens';
 
 // Maximum file sizes by type (in bytes)
 const MAX_FILE_SIZES: Record<FileType, number> = {
@@ -82,15 +82,15 @@ const ALLOWED_MIME_TYPES: Record<FileType, string[]> = {
 export class StorageController {
   constructor(
     @Inject(STORAGE_TOKENS.STORAGE_SERVICE)
-    private readonly storageService: StorageService,
+    private readonly storageService: StorageService
   ) {}
 
   /**
-   * ÂáæÏ İÇíá
+   * Âï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
    * Requirements: 6.1, 6.3
    */
   @Post('upload')
-  @ApiOperation({ summary: 'ÂáæÏ İÇíá' })
+  @ApiOperation({ summary: 'Âï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -114,14 +114,14 @@ export class StorageController {
       },
     },
   })
-  @ApiResponse({ status: 201, description: 'İÇíá ÈÇ ãæİŞíÊ ÂáæÏ ÔÏ', type: UploadResultDto })
+  @ApiResponse({ status: 201, description: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Âï¿½ï¿½ï¿½ ï¿½ï¿½', type: UploadResultDto })
   @UseInterceptors(FileInterceptor('file'))
   async uploadFile(
     @UploadedFile() file: Express.Multer.File,
-    @Body() dto: UploadFileDto,
+    @Body() dto: UploadFileDto
   ): Promise<UploadResultDto> {
     if (!file) {
-      throw new BadRequestException('İÇíáí ÇäÊÎÇÈ äÔÏå ÇÓÊ');
+      throw new BadRequestException('ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½');
     }
 
     // Validate file type if specified
@@ -131,14 +131,12 @@ export class StorageController {
 
       if (file.size > maxSize) {
         throw new BadRequestException(
-          `ÍÌã İÇíá ÈíÔ ÇÒ ÍÏ ãÌÇÒ ÇÓÊ. ÍÏÇ˜ËÑ ${maxSize / 1024 / 1024}MB`,
+          `ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½. ï¿½ï¿½Ç˜ï¿½ï¿½ ${maxSize / 1024 / 1024}MB`
         );
       }
 
       if (!allowedTypes.includes(file.mimetype)) {
-        throw new BadRequestException(
-          `äæÚ İÇíá ãÌÇÒ äíÓÊ. ÇäæÇÚ ãÌÇÒ: ${allowedTypes.join(', ')}`,
-        );
+        throw new BadRequestException(`ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½. ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: ${allowedTypes.join(', ')}`);
       }
     }
 
@@ -158,11 +156,11 @@ export class StorageController {
   }
 
   /**
-   * ÂáæÏ äÏ İÇíá
+   * Âï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
    * Requirements: 6.1, 6.3
    */
   @Post('upload/multiple')
-  @ApiOperation({ summary: 'ÂáæÏ äÏ İÇíá' })
+  @ApiOperation({ summary: 'Âï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -185,14 +183,14 @@ export class StorageController {
       },
     },
   })
-  @ApiResponse({ status: 201, description: 'İÇíáåÇ ÈÇ ãæİŞíÊ ÂáæÏ ÔÏäÏ', type: [UploadResultDto] })
+  @ApiResponse({ status: 201, description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Âï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½', type: [UploadResultDto] })
   @UseInterceptors(FilesInterceptor('files', 10)) // Max 10 files
   async uploadMultipleFiles(
     @UploadedFiles() files: Express.Multer.File[],
-    @Body() dto: UploadFileDto,
+    @Body() dto: UploadFileDto
   ): Promise<UploadResultDto[]> {
     if (!files || files.length === 0) {
-      throw new BadRequestException('İÇíáí ÇäÊÎÇÈ äÔÏå ÇÓÊ');
+      throw new BadRequestException('ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½');
     }
 
     const results: UploadResultDto[] = [];
@@ -217,12 +215,12 @@ export class StorageController {
   }
 
   /**
-   * ÏÑíÇİÊ URL ÇãÖÇÔÏå ÈÑÇí ÏÇäáæÏ
+   * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ URL ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
    * Requirements: 6.2
    */
   @Post('signed-url')
-  @ApiOperation({ summary: 'ÏÑíÇİÊ URL ÇãÖÇÔÏå ÈÑÇí ÏÇäáæÏ' })
-  @ApiResponse({ status: 200, description: 'URL ÇãÖÇÔÏå', type: SignedUrlResultDto })
+  @ApiOperation({ summary: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ URL ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
+  @ApiResponse({ status: 200, description: 'URL ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½', type: SignedUrlResultDto })
   async getSignedUrl(@Body() dto: GetSignedUrlDto): Promise<SignedUrlResultDto> {
     const expiresIn = dto.expiresIn || 3600;
     const url = await this.storageService.getSignedUrl(dto.key, expiresIn, dto.bucket);
@@ -234,12 +232,12 @@ export class StorageController {
   }
 
   /**
-   * ÏÑíÇİÊ URL ÇãÖÇÔÏå ÈÑÇí ÂáæÏ ãÓÊŞíã
+   * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ URL ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Âï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
    * Requirements: 6.3
    */
   @Post('upload-url')
-  @ApiOperation({ summary: 'ÏÑíÇİÊ URL ÇãÖÇÔÏå ÈÑÇí ÂáæÏ ãÓÊŞíã' })
-  @ApiResponse({ status: 200, description: 'URL ÂáæÏ', type: SignedUrlResultDto })
+  @ApiOperation({ summary: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ URL ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Âï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
+  @ApiResponse({ status: 200, description: 'URL Âï¿½ï¿½ï¿½', type: SignedUrlResultDto })
   async getUploadUrl(@Body() dto: GetUploadUrlDto): Promise<SignedUrlResultDto> {
     const expiresIn = dto.expiresIn || 3600;
     const url = await this.storageService.getUploadUrl(dto.key, expiresIn, dto.bucket);
@@ -251,56 +249,56 @@ export class StorageController {
   }
 
   /**
-   * ÍĞİ İÇíá
+   * ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
    * Requirements: 6.4
    */
   @Delete('file')
-  @ApiOperation({ summary: 'ÍĞİ İÇíá' })
-  @ApiResponse({ status: 200, description: 'İÇíá ÈÇ ãæİŞíÊ ÍĞİ ÔÏ' })
+  @ApiOperation({ summary: 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½' })
+  @ApiResponse({ status: 200, description: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½' })
   async deleteFile(@Body() dto: DeleteFileDto): Promise<{ success: boolean; message: string }> {
     await this.storageService.delete(dto.key, dto.bucket);
     return {
       success: true,
-      message: 'İÇíá ÈÇ ãæİŞíÊ ÍĞİ ÔÏ',
+      message: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½',
     };
   }
 
   /**
-   * ÏÑíÇİÊ ÇØáÇÚÇÊ İÇíá
+   * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
    * Requirements: 6.2
    */
   @Get('metadata/:key')
-  @ApiOperation({ summary: 'ÏÑíÇİÊ ÇØáÇÚÇÊ İÇíá' })
-  @ApiResponse({ status: 200, description: 'ÇØáÇÚÇÊ İÇíá', type: FileMetadataDto })
+  @ApiOperation({ summary: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½' })
+  @ApiResponse({ status: 200, description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½', type: FileMetadataDto })
   async getFileMetadata(
     @Param('key') key: string,
-    @Query('bucket') bucket?: string,
+    @Query('bucket') bucket?: string
   ): Promise<FileMetadataDto> {
     return this.storageService.getMetadata(key, bucket);
   }
 
   /**
-   * ÈÑÑÓí æÌæÏ İÇíá
+   * ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
    * Requirements: 6.2
    */
   @Get('exists/:key')
-  @ApiOperation({ summary: 'ÈÑÑÓí æÌæÏ İÇíá' })
-  @ApiResponse({ status: 200, description: 'æÖÚíÊ æÌæÏ İÇíá' })
+  @ApiOperation({ summary: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½' })
+  @ApiResponse({ status: 200, description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½' })
   async checkFileExists(
     @Param('key') key: string,
-    @Query('bucket') bucket?: string,
+    @Query('bucket') bucket?: string
   ): Promise<{ exists: boolean }> {
     const exists = await this.storageService.exists(key, bucket);
     return { exists };
   }
 
   /**
-   * áíÓÊ İÇíáåÇ
+   * ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
    * Requirements: 6.2
    */
   @Get('list')
-  @ApiOperation({ summary: 'áíÓÊ İÇíáåÇ' })
-  @ApiResponse({ status: 200, description: 'áíÓÊ İÇíáåÇ', type: [String] })
+  @ApiOperation({ summary: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
+  @ApiResponse({ status: 200, description: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½', type: [String] })
   async listFiles(@Query() dto: ListFilesDto): Promise<string[]> {
     return this.storageService.list(dto.prefix, dto.bucket);
   }

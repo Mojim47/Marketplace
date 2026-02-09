@@ -2,24 +2,24 @@
  * ???????????????????????????????????????????????????????????????????????????
  * NextGen Marketplace - Shared Tax Module
  * ???????????????????????????????????????????????????????????????????????????
- * 
+ *
  * Central tax module that integrates with Iranian tax authority (Moodian/SENA)
  * for electronic invoice submission and VAT reporting.
- * 
+ *
  * Features:
  * - Submit invoices to Moodian/SENA
  * - Poll invoice status
  * - Generate VAT reports
  * - Store submission history
- * 
+ *
  * @module @nextgen/api/shared/tax
  * Requirements: 9.1, 9.2, 9.3
  */
 
-import { Module, Global, DynamicModule } from '@nestjs/common';
+import { type DynamicModule, Global, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TaxController } from './tax.controller';
-import { TaxService, TAX_TOKENS, HttpSenaClient, DatabaseSenaRepo } from './tax.service';
+import { DatabaseSenaRepo, HttpSenaClient, TAX_TOKENS, TaxService } from './tax.service';
 
 // Module configuration interface
 export interface TaxModuleConfig {
@@ -71,12 +71,7 @@ export class TaxModule {
           inject: [TAX_TOKENS.SENA_CLIENT],
         },
       ],
-      exports: [
-        TAX_TOKENS.SENA_CLIENT,
-        TAX_TOKENS.SENA_REPO,
-        TaxService,
-        HttpSenaClient,
-      ],
+      exports: [TAX_TOKENS.SENA_CLIENT, TAX_TOKENS.SENA_REPO, TaxService, HttpSenaClient],
     };
   }
 
@@ -129,12 +124,7 @@ export class TaxModule {
           inject: [TAX_TOKENS.SENA_CLIENT],
         },
       ],
-      exports: [
-        TAX_TOKENS.SENA_CLIENT,
-        TAX_TOKENS.SENA_REPO,
-        TaxService,
-        HttpSenaClient,
-      ],
+      exports: [TAX_TOKENS.SENA_CLIENT, TAX_TOKENS.SENA_REPO, TaxService, HttpSenaClient],
     };
   }
 }

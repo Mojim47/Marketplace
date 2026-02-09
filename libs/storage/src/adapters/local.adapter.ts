@@ -4,24 +4,23 @@
 // Development & testing adapter using local file system
 // ═══════════════════════════════════════════════════════════════════════════
 
-import * as fs from 'fs';
-import * as path from 'path';
-import * as crypto from 'crypto';
-import { Readable } from 'stream';
+import * as crypto from 'node:crypto';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import * as mime from 'mime-types';
 import type {
-  IStorageProvider,
-  FileMetadata,
-  UploadOptions,
+  CopyOptions,
   DownloadOptions,
+  FileMetadata,
+  IStorageProvider,
   ListOptions,
   ListResult,
-  SignedUrlOptions,
-  CopyOptions,
-  MultipartUpload,
-  UploadedPart,
-  StorageHealthCheck,
   LocalStorageConfig,
+  MultipartUpload,
+  SignedUrlOptions,
+  StorageHealthCheck,
+  UploadOptions,
+  UploadedPart,
 } from '../interfaces/storage.interface';
 import { StorageProviderType } from '../interfaces/storage.interface';
 
@@ -32,11 +31,14 @@ import { StorageProviderType } from '../interfaces/storage.interface';
 export class LocalStorageAdapter implements IStorageProvider {
   readonly providerType = StorageProviderType.LOCAL;
   readonly bucket: string;
-  
+
   private readonly rootDir: string;
   private readonly baseUrl: string;
   private readonly basePath: string;
-  private readonly multipartUploads: Map<string, { parts: Map<number, Buffer>; key: string; initiated: Date }> = new Map();
+  private readonly multipartUploads: Map<
+    string,
+    { parts: Map<number, Buffer>; key: string; initiated: Date }
+  > = new Map();
 
   constructor(config: LocalStorageConfig) {
     this.bucket = config.bucket;
@@ -60,7 +62,9 @@ export class LocalStorageAdapter implements IStorageProvider {
   }
 
   private getContentType(key: string, override?: string): string {
-    if (override) return override;
+    if (override) {
+      return override;
+    }
     return mime.lookup(key) || 'application/octet-stream';
   }
 
@@ -115,8 +119,8 @@ export class LocalStorageAdapter implements IStorageProvider {
 
   async download(key: string, options?: DownloadOptions): Promise<Buffer> {
     const fullPath = this.getFullPath(key);
-    
-    if (!await this.exists(key)) {
+
+    if (!(await this.exists(key))) {
       throw new Error(`File not found: ${key}`);
     }
 
@@ -133,8 +137,8 @@ export class LocalStorageAdapter implements IStorageProvider {
 
   async getStream(key: string, options?: DownloadOptions): Promise<NodeJS.ReadableStream> {
     const fullPath = this.getFullPath(key);
-    
-    if (!await this.exists(key)) {
+
+    if (!(await this.exists(key))) {
       throw new Error(`File not found: ${key}`);
     }
 
@@ -170,7 +174,7 @@ export class LocalStorageAdapter implements IStorageProvider {
 
   async deleteMany(keys: string[]): Promise<string[]> {
     const failed: string[] = [];
-    
+
     await Promise.all(
       keys.map(async (key) => {
         try {
@@ -196,8 +200,8 @@ export class LocalStorageAdapter implements IStorageProvider {
 
   async getMetadata(key: string): Promise<FileMetadata> {
     const fullPath = this.getFullPath(key);
-    
-    if (!await this.exists(key)) {
+
+    if (!(await this.exists(key))) {
       throw new Error(`File not found: ${key}`);
     }
 
@@ -235,13 +239,15 @@ export class LocalStorageAdapter implements IStorageProvider {
     const files: FileMetadata[] = [];
     const prefixes: Set<string> = new Set();
 
-    const walkDir = async (dir: string, relativePath: string = ''): Promise<void> => {
+    const walkDir = async (dir: string, relativePath = ''): Promise<void> => {
       try {
         const entries = await fs.promises.readdir(dir, { withFileTypes: true });
-        
+
         for (const entry of entries) {
-          if (entry.name.endsWith('.meta.json')) continue;
-          
+          if (entry.name.endsWith('.meta.json')) {
+            continue;
+          }
+
           const entryRelativePath = relativePath ? `${relativePath}/${entry.name}` : entry.name;
           const fullEntryPath = path.join(dir, entry.name);
 
@@ -252,7 +258,9 @@ export class LocalStorageAdapter implements IStorageProvider {
             continue;
           }
 
-          if (startAfter && entryRelativePath <= startAfter) continue;
+          if (startAfter && entryRelativePath <= startAfter) {
+            continue;
+          }
 
           if (entry.isDirectory()) {
             if (delimiter) {
@@ -261,21 +269,19 @@ export class LocalStorageAdapter implements IStorageProvider {
             } else {
               await walkDir(fullEntryPath, entryRelativePath);
             }
-          } else {
-            if (files.length < maxKeys) {
-              const stats = await fs.promises.stat(fullEntryPath);
-              const buffer = await fs.promises.readFile(fullEntryPath);
-              
-              files.push({
-                key: entryRelativePath,
-                size: stats.size,
-                contentType: this.getContentType(entryRelativePath),
-                lastModified: stats.mtime,
-                etag: this.calculateEtag(buffer),
-                provider: this.providerType,
-                bucket: this.bucket,
-              });
-            }
+          } else if (files.length < maxKeys) {
+            const stats = await fs.promises.stat(fullEntryPath);
+            const buffer = await fs.promises.readFile(fullEntryPath);
+
+            files.push({
+              key: entryRelativePath,
+              size: stats.size,
+              contentType: this.getContentType(entryRelativePath),
+              lastModified: stats.mtime,
+              etag: this.calculateEtag(buffer),
+              provider: this.providerType,
+              bucket: this.bucket,
+            });
           }
         }
       } catch (error) {
@@ -297,7 +303,9 @@ export class LocalStorageAdapter implements IStorageProvider {
       files: truncatedFiles,
       prefixes: Array.from(prefixes).sort(),
       isTruncated,
-      nextContinuationToken: isTruncated ? truncatedFiles[truncatedFiles.length - 1]?.key : undefined,
+      nextContinuationToken: isTruncated
+        ? truncatedFiles[truncatedFiles.length - 1]?.key
+        : undefined,
       keyCount: truncatedFiles.length,
     };
   }
@@ -306,7 +314,11 @@ export class LocalStorageAdapter implements IStorageProvider {
   // Advanced Operations
   // ═══════════════════════════════════════════════════════════════════════
 
-  async copy(sourceKey: string, destinationKey: string, options?: CopyOptions): Promise<FileMetadata> {
+  async copy(
+    sourceKey: string,
+    destinationKey: string,
+    options?: CopyOptions
+  ): Promise<FileMetadata> {
     const sourceBucket = options?.sourceBucket || this.bucket;
     const sourceFullPath = path.join(this.rootDir, sourceBucket, this.basePath, sourceKey);
     const destFullPath = this.getFullPath(destinationKey);
@@ -340,7 +352,11 @@ export class LocalStorageAdapter implements IStorageProvider {
     return this.getMetadata(destinationKey);
   }
 
-  async move(sourceKey: string, destinationKey: string, options?: CopyOptions): Promise<FileMetadata> {
+  async move(
+    sourceKey: string,
+    destinationKey: string,
+    options?: CopyOptions
+  ): Promise<FileMetadata> {
     const metadata = await this.copy(sourceKey, destinationKey, options);
     await this.delete(sourceKey);
     return metadata;
@@ -358,7 +374,7 @@ export class LocalStorageAdapter implements IStorageProvider {
     const url = new URL(this.getPublicUrl(key));
     url.searchParams.set('expires', expiration.toString());
     url.searchParams.set('signature', signature);
-    
+
     return url.toString();
   }
 
@@ -373,7 +389,7 @@ export class LocalStorageAdapter implements IStorageProvider {
 
   async initiateMultipartUpload(key: string, _options?: UploadOptions): Promise<MultipartUpload> {
     const uploadId = crypto.randomUUID();
-    
+
     this.multipartUploads.set(uploadId, {
       parts: new Map(),
       key,
@@ -453,11 +469,11 @@ export class LocalStorageAdapter implements IStorageProvider {
 
   async healthCheck(): Promise<StorageHealthCheck> {
     const startTime = Date.now();
-    
+
     try {
       const bucketPath = path.join(this.rootDir, this.bucket);
       await fs.promises.access(bucketPath, fs.constants.R_OK | fs.constants.W_OK);
-      
+
       return {
         healthy: true,
         provider: this.providerType,

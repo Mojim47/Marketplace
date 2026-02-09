@@ -1,11 +1,11 @@
-import { beforeAll, afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { randomUUID } from 'crypto';
+import type { CanActivate, ExecutionContext, INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import type { INestApplication, CanActivate, ExecutionContext } from '@nestjs/common';
-import request from 'supertest';
-import { PostgreSqlContainer } from '@testcontainers/postgresql';
 import { PrismaClient } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
-import { randomUUID } from 'crypto';
+import { PostgreSqlContainer } from '@testcontainers/postgresql';
+import request from 'supertest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@nextgen/waf', () => ({
   WAFService: class WAFService {},
@@ -55,7 +55,7 @@ class TestPrismaService {
          WHERE id = $1 AND user_id = $2
          LIMIT 1`,
         where.id,
-        where.userId,
+        where.userId
       );
 
       const row = rows[0];
@@ -79,7 +79,7 @@ class TestPrismaService {
          WHERE id = $3`,
         data.paymentStatus,
         data.status,
-        where.id,
+        where.id
       );
       return true;
     },
@@ -105,7 +105,7 @@ class TestPrismaService {
         data.email,
         data.callbackUrl,
         data.gateway,
-        data.status,
+        data.status
       );
 
       return {
@@ -130,7 +130,7 @@ class TestPrismaService {
          FROM "${SCHEMA}"."payment_transactions"
          WHERE authority = $1
          LIMIT 1`,
-        where.authority,
+        where.authority
       );
 
       const row = rows[0];
@@ -153,7 +153,7 @@ class TestPrismaService {
       const cardPan = data.cardPan ?? null;
       const cardHash = data.cardHash ?? null;
       const feeType = data.feeType ?? null;
-      const fee = data.fee?.toNumber ? data.fee.toNumber() : data.fee ?? null;
+      const fee = data.fee?.toNumber ? data.fee.toNumber() : (data.fee ?? null);
       const errorMessage = data.errorMessage ?? null;
 
       if (where.authority) {
@@ -168,7 +168,7 @@ class TestPrismaService {
           feeType,
           fee,
           errorMessage,
-          where.authority,
+          where.authority
         );
       } else if (where.id) {
         await this.client.$executeRawUnsafe(
@@ -182,7 +182,7 @@ class TestPrismaService {
           feeType,
           fee,
           errorMessage,
-          where.id,
+          where.id
         );
       }
 
@@ -296,10 +296,12 @@ describe('Payment E2E', () => {
       'ORD-1',
       '09120000000',
       'user@example.com',
-      'DRAFT',
+      'DRAFT'
     );
 
-    const paymentService = app.get((await import('../src/payment/payment.service')).PaymentService) as any;
+    const paymentService = app.get(
+      (await import('../src/payment/payment.service')).PaymentService
+    ) as any;
     paymentService.zarinpalService.requestPayment.mockResolvedValue({
       authority: 'AUTH-1',
       redirectUrl: 'https://zarinpal.com/pay/AUTH-1',
@@ -312,20 +314,18 @@ describe('Payment E2E', () => {
       fee: 1000,
     });
 
-    const requestResponse = await request(app.getHttpServer())
-      .post('/payment/request')
-      .send({
-        orderId,
-        description: 'Å—œ«Œ   ” ',
-        callbackUrl: 'http://localhost:3001/payment/verify',
-      });
+    const requestResponse = await request(app.getHttpServer()).post('/payment/request').send({
+      orderId,
+      description: 'ÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩ ÔøΩÔøΩÔøΩ',
+      callbackUrl: 'http://localhost:3001/payment/verify',
+    });
 
     expect(requestResponse.status).toBe(200);
     expect(requestResponse.body.paymentUrl).toBe('https://zarinpal.com/pay/AUTH-1');
 
     const pendingRows = await prisma.$queryRawUnsafe<Array<{ status: string }>>(
       `SELECT status FROM "${SCHEMA}"."payment_transactions" WHERE authority = $1`,
-      'AUTH-1',
+      'AUTH-1'
     );
     expect(pendingRows[0]?.status).toBe('pending');
 
@@ -336,11 +336,9 @@ describe('Payment E2E', () => {
     expect(verifyResponse.status).toBe(200);
     expect(verifyResponse.body.success).toBe(true);
 
-    const paidRows = await prisma.$queryRawUnsafe<
-      Array<{ status: string; ref_id: string | null }>
-    >(
+    const paidRows = await prisma.$queryRawUnsafe<Array<{ status: string; ref_id: string | null }>>(
       `SELECT status, ref_id FROM "${SCHEMA}"."payment_transactions" WHERE authority = $1`,
-      'AUTH-1',
+      'AUTH-1'
     );
     expect(paidRows[0]?.status).toBe('paid');
     expect(paidRows[0]?.ref_id).toBe('REF-1');

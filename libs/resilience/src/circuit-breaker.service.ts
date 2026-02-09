@@ -1,5 +1,5 @@
-import CircuitBreaker from 'opossum';
 import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
+import CircuitBreaker from 'opossum';
 
 export interface CircuitBreakerOptions {
   timeout?: number;
@@ -15,7 +15,7 @@ export class CircuitBreakerService {
   createBreaker<TArgs extends unknown[], TResult>(
     name: string,
     action: (...args: TArgs) => Promise<TResult>,
-    options: CircuitBreakerOptions,
+    options: CircuitBreakerOptions
   ): CircuitBreaker {
     if (this.breakers.has(name)) {
       return this.breakers.get(name)!;
@@ -38,7 +38,7 @@ export class CircuitBreakerService {
   async fire<TResult>(
     breaker: CircuitBreaker,
     args: unknown[],
-    fallbackMessage: string,
+    fallbackMessage: string
   ): Promise<TResult> {
     try {
       return (await breaker.fire(...args)) as TResult;

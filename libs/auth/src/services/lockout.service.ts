@@ -8,8 +8,8 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { PrismaClient } from '@prisma/client';
+import type { ConfigService } from '@nestjs/config';
+import type { PrismaClient } from '@prisma/client';
 import type { AuthConfig } from '../types';
 
 export interface LockoutStatus {
@@ -27,7 +27,7 @@ export class LockoutService {
 
   constructor(
     private readonly prisma: PrismaClient,
-    private readonly configService: ConfigService,
+    private readonly configService: ConfigService
   ) {
     const lockoutConfig = this.configService.get<AuthConfig['lockout']>('auth.lockout');
     this.maxAttempts = lockoutConfig?.max_failed_attempts || 5;
@@ -58,7 +58,7 @@ export class LockoutService {
     if (newAttempts >= this.maxAttempts) {
       // Progressive lockout: doubles each time
       const lockoutMultiplier = Math.floor(newAttempts / this.maxAttempts);
-      const lockoutMinutes = this.baseLockoutMinutes * Math.pow(2, lockoutMultiplier - 1);
+      const lockoutMinutes = this.baseLockoutMinutes * 2 ** (lockoutMultiplier - 1);
       lockedUntil = new Date(Date.now() + lockoutMinutes * 60 * 1000);
 
       this.logger.warn('Account locked due to failed attempts', {
@@ -159,7 +159,7 @@ export class LockoutService {
    */
   async getLockoutRemaining(userId: string): Promise<number> {
     const status = await this.checkLockout(userId);
-    
+
     if (!status.is_locked || !status.locked_until) {
       return 0;
     }

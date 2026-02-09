@@ -10,7 +10,9 @@ export class IdempotencyService {
   ) {}
   async ensure(key: string, value: string): Promise<boolean> {
     const existing = await this.client.get(key);
-    if (existing) return false;
+    if (existing) {
+      return false;
+    }
     await this.client.set(key, value, { PX: this.ttlMs });
     return true;
   }
@@ -20,7 +22,9 @@ export class InMemoryRedis implements RedisLike {
   private m = new Map<string, { v: string; exp: number }>();
   async get(key: string) {
     const e = this.m.get(key);
-    if (!e) return null;
+    if (!e) {
+      return null;
+    }
     if (e.exp < Date.now()) {
       this.m.delete(key);
       return null;

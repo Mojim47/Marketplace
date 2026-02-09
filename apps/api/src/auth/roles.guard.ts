@@ -1,30 +1,30 @@
 /**
  * Enhanced Role-based Authorization Guard
- * 
+ *
  * Security Features:
  * - Role-based access control (RBAC)
  * - Audit logging for authorization failures
  * - Generic 403 response (doesn't reveal resource existence)
  * - Support for multiple role formats
- * 
+ *
  * Requirements: 3.1, 3.3, 3.5
  */
 
-import { 
-  Injectable, 
-  CanActivate, 
-  ExecutionContext, 
+import {
+  type CanActivate,
+  type ExecutionContext,
   ForbiddenException,
-  SetMetadata,
+  Injectable,
   Logger,
+  SetMetadata,
 } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
+import type { Reflector } from '@nestjs/core';
 
 export const ROLES_KEY = 'roles';
 
 /**
  * Roles decorator - specify required roles for an endpoint
- * 
+ *
  * @example
  * @Roles('ADMIN', 'SUPER_ADMIN')
  * async adminOnlyMethod() {}
@@ -68,18 +68,18 @@ export class RolesGuard implements CanActivate {
     if (!user) {
       this.logAuthorizationFailure(request, 'NO_USER', requiredRoles);
       // Generic message - don't reveal that authentication is the issue
-      throw new ForbiddenException('ÏÓÊÑÓí ÛíÑãÌÇÒ');
+      throw new ForbiddenException('ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½');
     }
 
     const userRole: string = user.role?.toUpperCase() || '';
-    
+
     // Check if user has required role (including hierarchy)
     const hasRole = this.checkRoleWithHierarchy(userRole, requiredRoles);
 
     if (!hasRole) {
       this.logAuthorizationFailure(request, userRole, requiredRoles, user.id);
       // Generic message - don't reveal what roles are required
-      throw new ForbiddenException('ÏÓÊÑÓí ÛíÑãÌÇÒ');
+      throw new ForbiddenException('ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½');
     }
 
     return true;
@@ -90,7 +90,7 @@ export class RolesGuard implements CanActivate {
    */
   private checkRoleWithHierarchy(userRole: string, requiredRoles: string[]): boolean {
     // Normalize roles to uppercase
-    const normalizedRequired = requiredRoles.map(r => r.toUpperCase());
+    const normalizedRequired = requiredRoles.map((r) => r.toUpperCase());
     const normalizedUserRole = userRole.toUpperCase();
 
     // Direct match
@@ -100,7 +100,7 @@ export class RolesGuard implements CanActivate {
 
     // Check hierarchy - does user's role inherit any required role?
     const inheritedRoles = ROLE_HIERARCHY[normalizedUserRole] || [];
-    return normalizedRequired.some(required => inheritedRoles.includes(required));
+    return normalizedRequired.some((required) => inheritedRoles.includes(required));
   }
 
   /**
@@ -110,7 +110,7 @@ export class RolesGuard implements CanActivate {
     request: any,
     userRole: string,
     requiredRoles: string[],
-    userId?: string,
+    userId?: string
   ): void {
     const logData = {
       event: 'AUTHORIZATION_FAILURE',

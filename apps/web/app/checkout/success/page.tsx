@@ -1,10 +1,10 @@
 ﻿'use client';
 
-import { useEffect, useMemo } from 'react';
-import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
-import { emitUiEvent } from '@/lib/ui-telemetry';
 import { useTraceId } from '@/hooks/use-trace-id';
+import { emitUiEvent } from '@/lib/ui-telemetry';
+import Link from 'next/link';
+import { useEffect, useMemo } from 'react';
 
 export default function CheckoutSuccessPage() {
   const traceId = useTraceId();
@@ -23,7 +23,7 @@ export default function CheckoutSuccessPage() {
             subtitle: 'سفارش شما با موفقیت ثبت شد و در حال پردازش است.',
             cta: 'بازگشت به فروشگاه',
           },
-    [locale],
+    [locale]
   );
 
   useEffect(() => {

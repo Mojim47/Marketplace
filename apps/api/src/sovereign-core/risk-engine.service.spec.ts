@@ -7,8 +7,8 @@
  * ===========================================================================
  */
 
-import { RiskEngine } from './risk-engine.service';
 import { Decimal } from '@prisma/client/runtime/library';
+import { RiskEngine } from './risk-engine.service';
 
 type FinancialEventType =
   | 'PAYMENT_LATE'
@@ -132,7 +132,7 @@ const createRiskPrismaMock = () => {
           if (include?.financialEvents) {
             const events = Array.from(financialEvents.values()).filter(
               (event) =>
-                event.riskProfileId === record!.id &&
+                event.riskProfileId === record?.id &&
                 (!include.financialEvents.where ||
                   event.processed === include.financialEvents.where.processed)
             );
@@ -143,7 +143,7 @@ const createRiskPrismaMock = () => {
           if (include?.vouchesReceived) {
             const vouches = Array.from(reputationVouches.values()).filter(
               (vouch) =>
-                vouch.voucheeProfileId === record!.id &&
+                vouch.voucheeProfileId === record?.id &&
                 (!include.vouchesReceived.where ||
                   (vouch.isActive === include.vouchesReceived.where.isActive &&
                     vouch.isDefaulted === include.vouchesReceived.where.isDefaulted))
@@ -220,7 +220,9 @@ const createRiskPrismaMock = () => {
       ),
       findMany: vi.fn(async ({ where }: { where?: Partial<FinancialEvent> }) => {
         return Array.from(financialEvents.values()).filter((event) => {
-          if (!where) return true;
+          if (!where) {
+            return true;
+          }
           return Object.entries(where).every(([key, value]) => (event as any)[key] === value);
         });
       }),
@@ -243,7 +245,9 @@ const createRiskPrismaMock = () => {
         async ({ where }: { where?: { riskProfileId?: string | { in: string[] } } }) => {
           const ids = Array.from(financialEvents.values())
             .filter((event) => {
-              if (!where?.riskProfileId) return true;
+              if (!where?.riskProfileId) {
+                return true;
+              }
               if (typeof where.riskProfileId === 'string') {
                 return event.riskProfileId === where.riskProfileId;
               }
@@ -284,7 +288,9 @@ const createRiskPrismaMock = () => {
       ),
       findMany: vi.fn(async ({ where }: { where?: Partial<ReputationVouch> }) => {
         return Array.from(reputationVouches.values()).filter((vouch) => {
-          if (!where) return true;
+          if (!where) {
+            return true;
+          }
           return Object.entries(where).every(([key, value]) => (vouch as any)[key] === value);
         });
       }),
@@ -294,7 +300,9 @@ const createRiskPrismaMock = () => {
       updateMany: vi.fn(async ({ where, data }: { where: Partial<ReputationVouch>; data: any }) => {
         let count = 0;
         reputationVouches.forEach((vouch, id) => {
-          const match = Object.entries(where).every(([key, value]) => (vouch as any)[key] === value);
+          const match = Object.entries(where).every(
+            ([key, value]) => (vouch as any)[key] === value
+          );
           if (match) {
             reputationVouches.set(id, { ...vouch, ...data });
             count += 1;
@@ -325,7 +333,9 @@ const createRiskPrismaMock = () => {
           if (where?.OR) {
             ids = ids.filter((id) => {
               const vouch = reputationVouches.get(id);
-              if (!vouch) return false;
+              if (!vouch) {
+                return false;
+              }
               return where.OR.some((condition) => {
                 if (condition.voucherId) {
                   return vouch.voucherProfileId === condition.voucherId;
@@ -410,8 +420,7 @@ describe('RiskEngine Service - Risk Management & Lambda Decay Tests', () => {
 
       // Manual calculation: score = 100 + (-20 × e^(-0.1 × 12))
       const lambda = 0.1;
-      const months =
-        (Date.now() - oldEventDate.getTime()) / (1000 * 60 * 60 * 24 * 30);
+      const months = (Date.now() - oldEventDate.getTime()) / (1000 * 60 * 60 * 24 * 30);
       const decayFactor = Math.exp(-lambda * months);
       const expectedImpact = -20 * decayFactor;
       const expectedScore = 100 + expectedImpact;
@@ -873,7 +882,7 @@ describe('RiskEngine Service - Risk Management & Lambda Decay Tests', () => {
         riskSharePercentage: 50,
       });
 
-      const vouchId = vouchResult.vouch!.id;
+      const vouchId = vouchResult.vouch?.id;
 
       // Process default
       await riskEngine.processVoucheeDefault(voucheeOrg.id, 10000);

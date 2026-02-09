@@ -1,31 +1,36 @@
 if (!self.define) {
-  let e,
-    a = {};
+  let e;
+  const a = {};
   const s = (s, i) => (
-    (s = new URL(s + '.js', i).href),
+    (s = new URL(`${s}.js`, i).href),
     a[s] ||
       new Promise((a) => {
         if ('document' in self) {
           const e = document.createElement('script');
           (e.src = s), (e.onload = a), document.head.appendChild(e);
-        } else (e = s), importScripts(s), a();
+        } else {
+          (e = s), importScripts(s), a();
+        }
       }).then(() => {
-        let e = a[s];
-        if (!e) throw new Error(`Module ${s} didn’t register its module`);
+        const e = a[s];
+        if (!e) {
+          throw new Error(`Module ${s} didn’t register its module`);
+        }
         return e;
       })
   );
   self.define = (i, c) => {
     const r = e || ('document' in self ? document.currentScript.src : '') || location.href;
-    if (a[r]) return;
-    let n = {};
-    const p = (e) => s(e, r),
-      t = { module: { uri: r }, exports: n, require: p };
+    if (a[r]) {
+      return;
+    }
+    const n = {};
+    const p = (e) => s(e, r);
+    const t = { module: { uri: r }, exports: n, require: p };
     a[r] = Promise.all(i.map((e) => t[e] || p(e))).then((e) => (c(...e), n));
   };
 }
-define(['./workbox-c05e7c83'], function (e) {
-  'use strict';
+define(['./workbox-c05e7c83'], (e) => {
   importScripts('fallback-eAQdKaE9RGzDw6iUPwPJG.js'),
     self.skipWaiting(),
     e.clientsClaim(),

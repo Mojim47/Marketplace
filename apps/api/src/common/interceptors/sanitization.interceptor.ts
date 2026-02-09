@@ -1,19 +1,19 @@
 /**
  * Sanitization Interceptor
- * 
+ *
  * Automatically sanitizes all string inputs in request bodies
  * to prevent XSS attacks.
- * 
+ *
  * Requirements: 2.2 - XSS sanitization for all user inputs
  */
 
 import {
+  type CallHandler,
+  type ExecutionContext,
   Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
+  type NestInterceptor,
 } from '@nestjs/common';
-import { Observable } from 'rxjs';
+import type { Observable } from 'rxjs';
 
 export interface SanitizeOptions {
   allowBasicFormatting?: boolean;
@@ -86,7 +86,7 @@ export class SanitizationInterceptor implements NestInterceptor {
       if (typeof value === 'string') {
         result[key] = this.sanitizeString(value);
       } else if (Array.isArray(value)) {
-        result[key] = value.map(item => {
+        result[key] = value.map((item) => {
           if (typeof item === 'string') {
             return this.sanitizeString(item);
           }
@@ -110,7 +110,7 @@ export class SanitizationInterceptor implements NestInterceptor {
    */
   private sanitizeString(input: string): string {
     let result = input;
-    
+
     // Basic XSS sanitization - escape HTML entities
     result = result
       .replace(/&/g, '&amp;')
@@ -119,25 +119,25 @@ export class SanitizationInterceptor implements NestInterceptor {
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#x27;')
       .replace(/\//g, '&#x2F;');
-    
+
     // Trim if enabled
     if (this.options.trim) {
       result = result.trim();
     }
-    
+
     // Normalize Persian characters if enabled
     if (this.options.normalizePersian) {
       // Convert Arabic Yeh to Persian Yeh
-      result = result.replace(/í/g, 'í');
+      result = result.replace(/ï¿½/g, 'ï¿½');
       // Convert Arabic Kaf to Persian Kaf
-      result = result.replace(/ß/g, '˜');
+      result = result.replace(/ï¿½/g, 'ï¿½');
     }
-    
+
     // Apply max length if set
     if (this.options.maxLength && this.options.maxLength > 0) {
       result = result.substring(0, this.options.maxLength);
     }
-    
+
     return result;
   }
 }

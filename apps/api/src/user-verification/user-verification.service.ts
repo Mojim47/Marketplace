@@ -7,16 +7,16 @@
  * ???????????????????????????????????????????????????????????????????????????
  */
 
-import { Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
-import { PrismaService } from '../database/prisma.service';
+import type { PrismaService } from '../database/prisma.service';
 import {
-  KYBSubmissionDTO,
-  KYBApprovalDTO,
-  STATE_TRANSITION_RULES,
   CREDIT_LIMIT_BY_STATUS,
+  type KYBApprovalDTO,
+  type KYBSubmissionDTO,
   RISK_SCORE_BY_STATUS,
+  STATE_TRANSITION_RULES,
   VerificationStatus,
 } from './user-verification.types';
 
@@ -158,9 +158,7 @@ export class UserVerificationService {
             const baseCreditLimit = new Decimal(
               CREDIT_LIMIT_BY_STATUS[VerificationStatus.ACTIVE_LIMITED]
             );
-            const baseScore = new Decimal(
-              RISK_SCORE_BY_STATUS[VerificationStatus.ACTIVE_LIMITED]
-            );
+            const baseScore = new Decimal(RISK_SCORE_BY_STATUS[VerificationStatus.ACTIVE_LIMITED]);
 
             riskProfile = await tx.riskProfile.create({
               data: {
@@ -214,7 +212,10 @@ export class UserVerificationService {
    * Manual approval by admin to ACTIVE_FULL
    * Increases credit limit and risk score
    */
-  async manualApproveKYB(data: KYBApprovalDTO, approvedBy: string): Promise<{
+  async manualApproveKYB(
+    data: KYBApprovalDTO,
+    approvedBy: string
+  ): Promise<{
     success: boolean;
     newStatus: VerificationStatus;
     riskProfile: any;
@@ -292,7 +293,8 @@ export class UserVerificationService {
               fromStatus: user.verificationStatus,
               toStatus: VerificationStatus.ACTIVE_FULL,
               approvedBy,
-              creditLimit: data.creditLimitBase || CREDIT_LIMIT_BY_STATUS[VerificationStatus.ACTIVE_FULL],
+              creditLimit:
+                data.creditLimitBase || CREDIT_LIMIT_BY_STATUS[VerificationStatus.ACTIVE_FULL],
               riskScore: data.riskScoreBase || RISK_SCORE_BY_STATUS[VerificationStatus.ACTIVE_FULL],
               notes: data.approverNotes,
             }),
@@ -318,7 +320,10 @@ export class UserVerificationService {
   /**
    * Reject KYB application
    */
-  async rejectKYB(userId: string, reason: string): Promise<{
+  async rejectKYB(
+    userId: string,
+    reason: string
+  ): Promise<{
     success: boolean;
     newStatus: VerificationStatus;
     riskProfile: null;
@@ -375,7 +380,11 @@ export class UserVerificationService {
   /**
    * Suspend user account
    */
-  async suspendUser(userId: string, reason: string, suspendedBy: string): Promise<{
+  async suspendUser(
+    userId: string,
+    reason: string,
+    suspendedBy: string
+  ): Promise<{
     success: boolean;
     newStatus: VerificationStatus;
   }> {
@@ -464,10 +473,9 @@ export class UserVerificationService {
         });
       }
 
-      const canAccessFinancialFeatures = (
+      const canAccessFinancialFeatures =
         user.verificationStatus === VerificationStatus.ACTIVE_LIMITED ||
-        user.verificationStatus === VerificationStatus.ACTIVE_FULL
-      );
+        user.verificationStatus === VerificationStatus.ACTIVE_FULL;
 
       return {
         userId: user.id,
@@ -489,12 +497,12 @@ export class UserVerificationService {
     fromStatus: VerificationStatus,
     toStatus: VerificationStatus
   ): void {
-    const allowedTransitions = (STATE_TRANSITION_RULES as any)[fromStatus] as VerificationStatus[] | undefined;
+    const allowedTransitions = (STATE_TRANSITION_RULES as any)[fromStatus] as
+      | VerificationStatus[]
+      | undefined;
 
     if (!allowedTransitions || !allowedTransitions.includes(toStatus)) {
-      throw new BadRequestException(
-        `Invalid state transition: ${fromStatus} ? ${toStatus}`
-      );
+      throw new BadRequestException(`Invalid state transition: ${fromStatus} ? ${toStatus}`);
     }
   }
 

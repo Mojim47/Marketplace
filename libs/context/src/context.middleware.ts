@@ -2,11 +2,11 @@
 // Context Middleware - Request Context Initialization
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { Injectable, NestMiddleware, Logger } from '@nestjs/common';
-import { Request, Response, NextFunction } from 'express';
-import { ContextService } from './context.service';
-import { Context } from './context.interface';
+import { Injectable, Logger, type NestMiddleware } from '@nestjs/common';
+import type { NextFunction, Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
+import type { Context } from './context.interface';
+import type { ContextService } from './context.service';
 
 interface AuthenticatedUser {
   id: string;
@@ -29,19 +29,20 @@ export class ContextMiddleware implements NestMiddleware {
   use(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
       // Generate or extract request ID
-      const requestId = (req.headers['x-request-id'] as string) || 
-                       (req.headers['x-trace-id'] as string) || 
-                       uuidv4();
+      const requestId =
+        (req.headers['x-request-id'] as string) ||
+        (req.headers['x-trace-id'] as string) ||
+        uuidv4();
 
       // Set request ID in response headers
       res.setHeader('x-request-id', requestId);
 
       // Extract tenant ID from various sources
       const tenantId = this.extractTenantId(req);
-      
+
       // Get client IP address
       const ipAddress = this.getClientIp(req);
-      
+
       // Get user agent
       const userAgent = req.get('User-Agent') || 'unknown';
 
@@ -88,7 +89,7 @@ export class ContextMiddleware implements NestMiddleware {
       next();
     } catch (error) {
       this.logger.error('Failed to create context', error);
-      
+
       // Create minimal context for error scenarios
       const fallbackContext: Context = {
         tenantId: 'default',
@@ -98,7 +99,7 @@ export class ContextMiddleware implements NestMiddleware {
         locale: 'fa-IR',
         timestamp: new Date(),
       };
-      
+
       this.contextService.setContext(fallbackContext);
       next();
     }
@@ -121,7 +122,7 @@ export class ContextMiddleware implements NestMiddleware {
       return headerTenantId;
     }
 
-    const queryTenantId = req.query?.['tenant_id'] as string;
+    const queryTenantId = req.query?.tenant_id as string;
     if (queryTenantId) {
       return queryTenantId;
     }

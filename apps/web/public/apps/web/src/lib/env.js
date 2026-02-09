@@ -8,7 +8,9 @@ function validateUrl(u) {
   }
 }
 export function getEnv() {
-  if (cached) return cached;
+  if (cached) {
+    return cached;
+  }
   const NODE_ENV_RAW = process.env.NODE_ENV || 'development';
   const NODE_ENV = ['development', 'production', 'test'].includes(NODE_ENV_RAW)
     ? NODE_ENV_RAW

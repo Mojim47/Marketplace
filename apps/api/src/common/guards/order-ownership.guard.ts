@@ -12,14 +12,14 @@
  */
 
 import {
-  Injectable,
-  CanActivate,
-  ExecutionContext,
+  type CanActivate,
+  type ExecutionContext,
   ForbiddenException,
-  NotFoundException,
+  Injectable,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
-import { PrismaService } from '../../database/prisma.service';
+import type { PrismaService } from '../../database/prisma.service';
 
 @Injectable()
 export class OrderOwnershipGuard implements CanActivate {
@@ -35,19 +35,19 @@ export class OrderOwnershipGuard implements CanActivate {
     // User not authenticated
     if (!user) {
       this.logUnauthorizedAccess(request, 'NO_USER', undefined, orderId);
-      throw new ForbiddenException('ÏÓÊÑÓí ÛíÑãÌÇÒ');
+      throw new ForbiddenException('ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½');
     }
 
     // User must have id
     if (!user.id) {
       this.logUnauthorizedAccess(request, 'NO_USER_ID', undefined, orderId);
-      throw new ForbiddenException('ÏÓÊÑÓí ÛíÑãÌÇÒ');
+      throw new ForbiddenException('ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½');
     }
 
     // Order ID must be provided
     if (!orderId) {
       this.logUnauthorizedAccess(request, 'NO_ORDER_ID', user.id, undefined);
-      throw new ForbiddenException('ÏÓÊÑÓí ÛíÑãÌÇÒ');
+      throw new ForbiddenException('ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½');
     }
 
     // Fetch order to check ownership
@@ -59,13 +59,13 @@ export class OrderOwnershipGuard implements CanActivate {
     // Order not found
     if (!order) {
       this.logUnauthorizedAccess(request, 'ORDER_NOT_FOUND', user.id, orderId);
-      throw new NotFoundException('ÓÝÇÑÔ íÇÝÊ äÔÏ');
+      throw new NotFoundException('ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½');
     }
 
     // Check ownership: order.userId === user.id
     if (order.userId !== user.id) {
       this.logUnauthorizedAccess(request, 'NOT_OWNER', user.id, orderId);
-      throw new ForbiddenException('ÔãÇ ãÇá˜ Çíä ÓÝÇÑÔ äíÓÊíÏ');
+      throw new ForbiddenException('ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½');
     }
 
     return true;
@@ -78,7 +78,7 @@ export class OrderOwnershipGuard implements CanActivate {
     request: any,
     reason: string,
     userId?: string,
-    orderId?: string,
+    orderId?: string
   ): void {
     const logData = {
       event: 'UNAUTHORIZED_ORDER_ACCESS',

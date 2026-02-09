@@ -1,50 +1,50 @@
-import { 
-  Controller, 
-  Get, 
-  Patch, 
-  Body, 
-  Param, 
-  Logger,
-  UseGuards,
+import {
+  Body,
+  Controller,
+  Get,
   HttpCode,
   HttpStatus,
-  Request
-} from '@nestjs/common'
-import { AdminService } from './admin.service'
-import { JwtAuthGuard } from '../auth/jwt-auth.guard'
-import { RolesGuard } from '../auth/roles.guard'
-import { Roles } from '../common/guards/index'
+  Logger,
+  Param,
+  Patch,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../common/guards/index';
+import type { AdminService } from './admin.service';
 
 // DTOs
 interface PlatformStats {
-  totalUsers: number
-  totalVendors: number
-  totalProducts: number
-  totalRevenue: number
-  activeArSessions: number
-  todaySignups: number
+  totalUsers: number;
+  totalVendors: number;
+  totalProducts: number;
+  totalRevenue: number;
+  activeArSessions: number;
+  todaySignups: number;
 }
 
 interface PlatformSettings {
-  maintenanceMode?: boolean
-  enableAR?: boolean
-  enableAI?: boolean
-  commissionRate?: number
+  maintenanceMode?: boolean;
+  enableAR?: boolean;
+  enableAI?: boolean;
+  commissionRate?: number;
 }
 
 interface BanUserDto {
-  reason: string
+  reason: string;
 }
 
 interface AuthenticatedRequest {
-  user?: { id: string; [key: string]: any }
+  user?: { id: string; [key: string]: any };
 }
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('ADMIN')
 export class AdminController {
-  private readonly logger = new Logger(AdminController.name)
+  private readonly logger = new Logger(AdminController.name);
 
   constructor(private readonly adminService: AdminService) {}
 
@@ -54,8 +54,8 @@ export class AdminController {
    */
   @Get('stats')
   async getPlatformStats(): Promise<PlatformStats> {
-    this.logger.log('Fetching platform statistics')
-    return this.adminService.getPlatformStats()
+    this.logger.log('Fetching platform statistics');
+    return this.adminService.getPlatformStats();
   }
 
   /**
@@ -64,8 +64,8 @@ export class AdminController {
    */
   @Get('settings')
   async getSettings(): Promise<PlatformSettings> {
-    this.logger.log('Fetching platform settings')
-    return this.adminService.getSettings()
+    this.logger.log('Fetching platform settings');
+    return this.adminService.getSettings();
   }
 
   /**
@@ -77,12 +77,12 @@ export class AdminController {
   async updateSettings(
     @Body() settings: PlatformSettings
   ): Promise<{ message: string; settings: PlatformSettings }> {
-    this.logger.log('Updating platform settings', settings)
-    const updated = await this.adminService.updateSettings(settings)
+    this.logger.log('Updating platform settings', settings);
+    const updated = await this.adminService.updateSettings(settings);
     return {
       message: 'Settings updated successfully',
-      settings: updated
-    }
+      settings: updated,
+    };
   }
 
   /**
@@ -96,10 +96,10 @@ export class AdminController {
     @Body() banData: BanUserDto,
     @Request() req: AuthenticatedRequest
   ): Promise<{ message: string }> {
-    this.logger.log(`Banning user ${userId}`, banData)
-    const adminId = req.user?.id || 'system'
-    await this.adminService.banUser(userId, banData.reason, adminId)
-    return { message: 'User banned successfully' }
+    this.logger.log(`Banning user ${userId}`, banData);
+    const adminId = req.user?.id || 'system';
+    await this.adminService.banUser(userId, banData.reason, adminId);
+    return { message: 'User banned successfully' };
   }
 
   /**
@@ -112,10 +112,10 @@ export class AdminController {
     @Param('id') userId: string,
     @Request() req: AuthenticatedRequest
   ): Promise<{ message: string }> {
-    this.logger.log(`Unbanning user ${userId}`)
-    const adminId = req.user?.id || 'system'
-    await this.adminService.unbanUser(userId, adminId)
-    return { message: 'User unbanned successfully' }
+    this.logger.log(`Unbanning user ${userId}`);
+    const adminId = req.user?.id || 'system';
+    await this.adminService.unbanUser(userId, adminId);
+    return { message: 'User unbanned successfully' };
   }
 
   /**
@@ -124,8 +124,8 @@ export class AdminController {
    */
   @Get('users')
   async getAllUsers() {
-    this.logger.log('Fetching all users')
-    return this.adminService.getAllUsers()
+    this.logger.log('Fetching all users');
+    return this.adminService.getAllUsers();
   }
 
   /**
@@ -134,8 +134,8 @@ export class AdminController {
    */
   @Get('vendors/pending')
   async getPendingVendors() {
-    this.logger.log('Fetching pending vendor applications')
-    return this.adminService.getPendingVendors()
+    this.logger.log('Fetching pending vendor applications');
+    return this.adminService.getPendingVendors();
   }
 
   /**
@@ -148,10 +148,10 @@ export class AdminController {
     @Param('id') vendorId: string,
     @Request() req: AuthenticatedRequest
   ): Promise<{ message: string }> {
-    this.logger.log(`Approving vendor ${vendorId}`)
-    const adminId = req.user?.id || 'system'
-    await this.adminService.approveVendor(vendorId, adminId)
-    return { message: 'Vendor approved successfully' }
+    this.logger.log(`Approving vendor ${vendorId}`);
+    const adminId = req.user?.id || 'system';
+    await this.adminService.approveVendor(vendorId, adminId);
+    return { message: 'Vendor approved successfully' };
   }
 
   /**
@@ -165,9 +165,9 @@ export class AdminController {
     @Body() data: { reason: string },
     @Request() req: AuthenticatedRequest
   ): Promise<{ message: string }> {
-    this.logger.log(`Rejecting vendor ${vendorId}`, data)
-    const adminId = req.user?.id || 'system'
-    await this.adminService.rejectVendor(vendorId, data.reason, adminId)
-    return { message: 'Vendor rejected successfully' }
+    this.logger.log(`Rejecting vendor ${vendorId}`, data);
+    const adminId = req.user?.id || 'system';
+    await this.adminService.rejectVendor(vendorId, data.reason, adminId);
+    return { message: 'Vendor rejected successfully' };
   }
 }

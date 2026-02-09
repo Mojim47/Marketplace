@@ -1,23 +1,23 @@
 /**
  * SMS Verification Service for NextGen Marketplace
- * 
+ *
  * Integrates with KavehNegar SMS service for:
  * - Registration verification
  * - Password recovery
  * - Mobile verification
- * 
+ *
  * Features:
  * - OTP generation and validation
  * - Rate limiting for SMS sending
  * - Retry mechanism (up to 3 attempts)
  * - Code expiration (2 minutes)
- * 
+ *
  * Requirements: 5.1, 5.2, 5.3, 5.4
  */
 
-import { Injectable, Logger, BadRequestException, ConflictException } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
-import { randomInt } from 'crypto';
+import { randomInt } from 'node:crypto';
+import { BadRequestException, ConflictException, Injectable, Logger } from '@nestjs/common';
+import type { PrismaService } from '../database/prisma.service';
 
 /**
  * SMS Verification Configuration
@@ -25,16 +25,16 @@ import { randomInt } from 'crypto';
 export const SMS_CONFIG = {
   /** OTP code length */
   CODE_LENGTH: 4,
-  
+
   /** Code expiration time in seconds */
   CODE_EXPIRY_SECONDS: 120, // 2 minutes
-  
+
   /** Minimum time between SMS sends (seconds) */
   RESEND_COOLDOWN_SECONDS: 60, // 1 minute
-  
+
   /** Maximum verification attempts */
   MAX_ATTEMPTS: 3,
-  
+
   /** Maximum SMS sends per mobile per hour */
   MAX_SENDS_PER_HOUR: 5,
 };
@@ -51,28 +51,29 @@ export interface VerificationResult {
 @Injectable()
 export class SMSVerificationService {
   private readonly logger = new Logger(SMSVerificationService.name);
-  
+
   // In-memory store for verification codes (in production, use Redis)
-  private readonly verificationCodes: Map<string, {
-    code: string;
-    expiresAt: Date;
-    attempts: number;
-    purpose: SMSPurpose;
-  }> = new Map();
+  private readonly verificationCodes: Map<
+    string,
+    {
+      code: string;
+      expiresAt: Date;
+      attempts: number;
+      purpose: SMSPurpose;
+    }
+  > = new Map();
 
   // Track SMS sends for rate limiting
   private readonly smsSendHistory: Map<string, Date[]> = new Map();
 
-  constructor(
-    private readonly prisma: PrismaService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   /**
    * Generate a random OTP code
    */
   private generateOTP(): string {
-    const min = Math.pow(10, SMS_CONFIG.CODE_LENGTH - 1);
-    const max = Math.pow(10, SMS_CONFIG.CODE_LENGTH) - 1;
+    const min = 10 ** (SMS_CONFIG.CODE_LENGTH - 1);
+    const max = 10 ** SMS_CONFIG.CODE_LENGTH - 1;
     return randomInt(min, max).toString();
   }
 
@@ -83,9 +84,9 @@ export class SMSVerificationService {
     const history = this.smsSendHistory.get(mobile) || [];
     const now = new Date();
     const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
-    
+
     // Filter to last hour
-    const recentSends = history.filter(date => date > oneHourAgo);
+    const recentSends = history.filter((date) => date > oneHourAgo);
     this.smsSendHistory.set(mobile, recentSends);
 
     // Check hourly limit
@@ -99,7 +100,7 @@ export class SMSVerificationService {
     if (recentSends.length > 0) {
       const lastSend = recentSends[recentSends.length - 1];
       const secondsSinceLastSend = (now.getTime() - lastSend.getTime()) / 1000;
-      
+
       if (secondsSinceLastSend < SMS_CONFIG.RESEND_COOLDOWN_SECONDS) {
         const waitSeconds = Math.ceil(SMS_CONFIG.RESEND_COOLDOWN_SECONDS - secondsSinceLastSend);
         return { allowed: false, waitSeconds };
@@ -124,11 +125,11 @@ export class SMSVerificationService {
    */
   async sendVerificationCode(
     mobile: string,
-    purpose: SMSPurpose = 'verify_mobile',
+    purpose: SMSPurpose = 'verify_mobile'
   ): Promise<VerificationResult> {
     // Validate mobile format
     if (!/^09\d{9}$/.test(mobile)) {
-      throw new BadRequestException('ÔãÇÑå ãæÈÇíá äÇãÚÊÈÑ ÇÓÊ');
+      throw new BadRequestException('ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½');
     }
 
     // Check rate limiting
@@ -136,7 +137,7 @@ export class SMSVerificationService {
     if (!rateCheck.allowed) {
       return {
         success: false,
-        message: `áØİÇğ ${rateCheck.waitSeconds} ËÇäíå ÏíÑ ÊáÇÔ ˜äíÏ`,
+        message: `ï¿½ï¿½ï¿½ï¿½ï¿½ ${rateCheck.waitSeconds} ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½`,
         expiresIn: rateCheck.waitSeconds,
       };
     }
@@ -160,23 +161,23 @@ export class SMSVerificationService {
     // Try to send SMS via KavehNegar
     try {
       await this.sendSMSWithRetry(mobile, code, purpose);
-      
+
       this.logger.log(`Verification code sent to ${mobile} for ${purpose}`);
-      
+
       return {
         success: true,
-        message: '˜Ï ÊÇííÏ ÇÑÓÇá ÔÏ',
+        message: 'ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½',
         expiresIn: SMS_CONFIG.CODE_EXPIRY_SECONDS,
       };
     } catch (error) {
       this.logger.error(`Failed to send SMS to ${mobile}: ${error.message}`);
-      
+
       // Remove the stored code since SMS failed
       this.verificationCodes.delete(key);
-      
+
       return {
         success: false,
-        message: 'ÎØÇ ÏÑ ÇÑÓÇá íÇã˜. áØİÇğ ÏæÈÇÑå ÊáÇÔ ˜äíÏ',
+        message: 'ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½. ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½',
       };
     }
   }
@@ -189,10 +190,10 @@ export class SMSVerificationService {
     mobile: string,
     code: string,
     purpose: SMSPurpose,
-    attempt: number = 1,
+    attempt = 1
   ): Promise<void> {
     const maxRetries = 3;
-    
+
     try {
       // In production, use KavehNegar service
       // For now, log the code (in development) or use injected SMS service
@@ -201,21 +202,17 @@ export class SMSVerificationService {
         const axios = await import('axios');
         const apiKey = process.env.KAVEHNEGAR_API_KEY;
         const sender = process.env.KAVEHNEGAR_SENDER || '10004346';
-        
+
         const message = this.getMessageTemplate(code, purpose);
-        
-        await axios.default.post(
-          `https://api.kavenegar.com/v1/${apiKey}/sms/send.json`,
-          null,
-          {
-            params: {
-              receptor: mobile,
-              message,
-              sender,
-            },
-            timeout: 10000,
-          }
-        );
+
+        await axios.default.post(`https://api.kavenegar.com/v1/${apiKey}/sms/send.json`, null, {
+          params: {
+            receptor: mobile,
+            message,
+            sender,
+          },
+          timeout: 10000,
+        });
       } else {
         // Development mode - log the code
         this.logger.warn(`[DEV MODE] SMS Code for ${mobile}: ${code} (purpose: ${purpose})`);
@@ -224,7 +221,7 @@ export class SMSVerificationService {
       if (attempt < maxRetries) {
         this.logger.warn(`SMS send attempt ${attempt} failed, retrying...`);
         // Exponential backoff: 1s, 2s, 4s
-        await this.delay(1000 * Math.pow(2, attempt - 1));
+        await this.delay(1000 * 2 ** (attempt - 1));
         return this.sendSMSWithRetry(mobile, code, purpose, attempt + 1);
       }
       throw error;
@@ -236,10 +233,10 @@ export class SMSVerificationService {
    */
   private getMessageTemplate(code: string, purpose: SMSPurpose): string {
     const templates: Record<SMSPurpose, string> = {
-      login: `˜Ï æÑæÏ ÔãÇ Èå ä˜ÓÊÌä ãÇÑ˜Ê: ${code}\nÇíä ˜Ï ÊÇ 2 ÏŞíŞå ÇÚÊÈÇÑ ÏÇÑÏ.`,
-      register: `˜Ï ÊÇííÏ ËÈÊäÇã ÏÑ ä˜ÓÊÌä ãÇÑ˜Ê: ${code}\nÇíä ˜Ï ÊÇ 2 ÏŞíŞå ÇÚÊÈÇÑ ÏÇÑÏ.`,
-      forgot_password: `˜Ï ÈÇÒíÇÈí ÑãÒ ÚÈæÑ: ${code}\nÇíä ˜Ï ÊÇ 2 ÏŞíŞå ÇÚÊÈÇÑ ÏÇÑÏ.`,
-      verify_mobile: `˜Ï ÊÇííÏ ãæÈÇíá: ${code}\nÇíä ˜Ï ÊÇ 2 ÏŞíŞå ÇÚÊÈÇÑ ÏÇÑÏ.`,
+      login: `ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½Êï¿½ï¿½ ï¿½ï¿½Ñ˜ï¿½: ${code}\nï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ 2 ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.`,
+      register: `ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Êï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½Êï¿½ï¿½ ï¿½ï¿½Ñ˜ï¿½: ${code}\nï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ 2 ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.`,
+      forgot_password: `ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: ${code}\nï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ 2 ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.`,
+      verify_mobile: `ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½: ${code}\nï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ 2 ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.`,
     };
     return templates[purpose];
   }
@@ -250,7 +247,7 @@ export class SMSVerificationService {
   async verifyCode(
     mobile: string,
     code: string,
-    purpose: SMSPurpose = 'verify_mobile',
+    purpose: SMSPurpose = 'verify_mobile'
   ): Promise<VerificationResult> {
     const key = `${mobile}:${purpose}`;
     const stored = this.verificationCodes.get(key);
@@ -258,7 +255,7 @@ export class SMSVerificationService {
     if (!stored) {
       return {
         success: false,
-        message: '˜Ï ÊÇííÏ íÇİÊ äÔÏ. áØİÇğ ˜Ï ÌÏíÏ ÏÑÎæÇÓÊ ˜äíÏ',
+        message: 'ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½. ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½',
       };
     }
 
@@ -267,7 +264,7 @@ export class SMSVerificationService {
       this.verificationCodes.delete(key);
       return {
         success: false,
-        message: '˜Ï ÊÇííÏ ãäŞÖí ÔÏå ÇÓÊ. áØİÇğ ˜Ï ÌÏíÏ ÏÑÎæÇÓÊ ˜äíÏ',
+        message: 'ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½. ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½',
       };
     }
 
@@ -276,7 +273,7 @@ export class SMSVerificationService {
       this.verificationCodes.delete(key);
       return {
         success: false,
-        message: 'ÊÚÏÇÏ ÊáÇÔåÇ ÈíÔ ÇÒ ÍÏ ãÌÇÒ ÇÓÊ. áØİÇğ ˜Ï ÌÏíÏ ÏÑÎæÇÓÊ ˜äíÏ',
+        message: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ôï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½. ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½',
       };
     }
 
@@ -284,22 +281,22 @@ export class SMSVerificationService {
     if (stored.code !== code) {
       stored.attempts++;
       const remainingAttempts = SMS_CONFIG.MAX_ATTEMPTS - stored.attempts;
-      
+
       return {
         success: false,
-        message: `˜Ï ÊÇííÏ äÇÏÑÓÊ ÇÓÊ. ${remainingAttempts} ÊáÇÔ ÈÇŞíãÇäÏå`,
+        message: `ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½. ${remainingAttempts} ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½`,
         remainingAttempts,
       };
     }
 
     // Success - remove the code
     this.verificationCodes.delete(key);
-    
+
     this.logger.log(`Verification code verified for ${mobile}`);
-    
+
     return {
       success: true,
-      message: '˜Ï ÊÇííÏ ÕÍíÍ ÇÓÊ',
+      message: 'ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½',
     };
   }
 
@@ -314,7 +311,7 @@ export class SMSVerificationService {
     });
 
     if (existingUser) {
-      throw new ConflictException('Çíä ÔãÇÑå ãæÈÇíá ŞÈáÇğ ËÈÊ ÔÏå ÇÓÊ');
+      throw new ConflictException('ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½');
     }
 
     return this.sendVerificationCode(mobile, 'register');
@@ -334,7 +331,7 @@ export class SMSVerificationService {
       // Don't reveal if mobile exists or not for security
       return {
         success: true,
-        message: 'ÇÑ Çíä ÔãÇÑå ÏÑ ÓíÓÊã ËÈÊ ÔÏå ÈÇÔÏ¡ ˜Ï ÈÇÒíÇÈí ÇÑÓÇá ÎæÇåÏ ÔÏ',
+        message: 'Çï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ï¡ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½',
         expiresIn: SMS_CONFIG.CODE_EXPIRY_SECONDS,
       };
     }
@@ -349,14 +346,14 @@ export class SMSVerificationService {
   async sendMobileVerificationCode(userId: string, mobile: string): Promise<VerificationResult> {
     // Check if mobile is already used by another user
     const existingUser = await this.prisma.user.findFirst({
-      where: { 
+      where: {
         mobile,
         NOT: { id: userId },
       },
     });
 
     if (existingUser) {
-      throw new ConflictException('Çíä ÔãÇÑå ãæÈÇíá ÊæÓØ ˜ÇÑÈÑ ÏíÑí ÇÓÊİÇÏå ÔÏå ÇÓÊ');
+      throw new ConflictException('ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½');
     }
 
     return this.sendVerificationCode(mobile, 'verify_mobile');
@@ -365,9 +362,13 @@ export class SMSVerificationService {
   /**
    * Verify and update user mobile
    */
-  async verifyAndUpdateMobile(userId: string, mobile: string, code: string): Promise<VerificationResult> {
+  async verifyAndUpdateMobile(
+    userId: string,
+    mobile: string,
+    code: string
+  ): Promise<VerificationResult> {
     const result = await this.verifyCode(mobile, code, 'verify_mobile');
-    
+
     if (!result.success) {
       return result;
     }
@@ -375,7 +376,7 @@ export class SMSVerificationService {
     // Update user mobile
     await this.prisma.user.update({
       where: { id: userId },
-      data: { 
+      data: {
         mobile,
         mobileVerifiedAt: new Date(),
       },
@@ -383,7 +384,7 @@ export class SMSVerificationService {
 
     return {
       success: true,
-      message: 'ÔãÇÑå ãæÈÇíá ÈÇ ãæİŞíÊ ÊÇííÏ ÔÏ',
+      message: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½',
     };
   }
 
@@ -391,7 +392,7 @@ export class SMSVerificationService {
    * Delay helper
    */
   private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   /**

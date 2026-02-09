@@ -5,17 +5,17 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { Injectable, Logger } from '@nestjs/common';
-import type {
-  ICacheProvider,
-  CacheConfig,
-  MemoryCacheConfig,
-  RedisCacheConfig,
-  MemcachedCacheConfig,
-} from '../interfaces/cache.interface';
-import { CacheProviderType } from '../interfaces/cache.interface';
+import { MemcachedCacheAdapter } from '../adapters/memcached.adapter';
 import { MemoryCacheAdapter } from '../adapters/memory.adapter';
 import { RedisCacheAdapter } from '../adapters/redis.adapter';
-import { MemcachedCacheAdapter } from '../adapters/memcached.adapter';
+import type {
+  CacheConfig,
+  ICacheProvider,
+  MemcachedCacheConfig,
+  MemoryCacheConfig,
+  RedisCacheConfig,
+} from '../interfaces/cache.interface';
+import { CacheProviderType } from '../interfaces/cache.interface';
 
 /**
  * Cache factory for creating provider instances
@@ -43,7 +43,7 @@ export class CacheFactory {
     switch (config.provider) {
       case CacheProviderType.MEMORY:
         provider = new MemoryCacheAdapter(config as MemoryCacheConfig);
-        this.logger.log(`Created MemoryCacheAdapter`);
+        this.logger.log('Created MemoryCacheAdapter');
         break;
 
       case CacheProviderType.REDIS:
@@ -54,7 +54,7 @@ export class CacheFactory {
 
       case CacheProviderType.MEMCACHED:
         provider = new MemcachedCacheAdapter(config as MemcachedCacheConfig);
-        this.logger.log(`Created MemcachedCacheAdapter`);
+        this.logger.log('Created MemcachedCacheAdapter');
         break;
 
       default:
@@ -71,7 +71,7 @@ export class CacheFactory {
    * @param name - Optional name for caching
    * @returns Cache provider instance
    */
-  createFromEnv(prefix: string = 'CACHE', name?: string): ICacheProvider {
+  createFromEnv(prefix = 'CACHE', name?: string): ICacheProvider {
     const provider = process.env[`${prefix}_PROVIDER`] as CacheProviderType;
 
     if (!provider) {
@@ -85,9 +85,9 @@ export class CacheFactory {
         config = {
           provider: CacheProviderType.MEMORY,
           keyPrefix: process.env[`${prefix}_KEY_PREFIX`],
-          defaultTtl: parseInt(process.env[`${prefix}_DEFAULT_TTL`] || '0', 10),
-          maxItems: parseInt(process.env[`${prefix}_MAX_ITEMS`] || '10000', 10),
-          maxMemory: parseInt(process.env[`${prefix}_MAX_MEMORY`] || '104857600', 10),
+          defaultTtl: Number.parseInt(process.env[`${prefix}_DEFAULT_TTL`] || '0', 10),
+          maxItems: Number.parseInt(process.env[`${prefix}_MAX_ITEMS`] || '10000', 10),
+          maxMemory: Number.parseInt(process.env[`${prefix}_MAX_MEMORY`] || '104857600', 10),
         };
         break;
 
@@ -96,13 +96,13 @@ export class CacheFactory {
         config = {
           provider,
           host: process.env[`${prefix}_HOST`] || 'localhost',
-          port: parseInt(process.env[`${prefix}_PORT`] || '6379', 10),
+          port: Number.parseInt(process.env[`${prefix}_PORT`] || '6379', 10),
           password: process.env[`${prefix}_PASSWORD`],
-          db: parseInt(process.env[`${prefix}_DB`] || '0', 10),
+          db: Number.parseInt(process.env[`${prefix}_DB`] || '0', 10),
           keyPrefix: process.env[`${prefix}_KEY_PREFIX`],
-          defaultTtl: parseInt(process.env[`${prefix}_DEFAULT_TTL`] || '0', 10),
+          defaultTtl: Number.parseInt(process.env[`${prefix}_DEFAULT_TTL`] || '0', 10),
           tls: process.env[`${prefix}_TLS`] === 'true',
-          connectTimeout: parseInt(process.env[`${prefix}_CONNECT_TIMEOUT`] || '10000', 10),
+          connectTimeout: Number.parseInt(process.env[`${prefix}_CONNECT_TIMEOUT`] || '10000', 10),
         };
         break;
 
@@ -111,9 +111,9 @@ export class CacheFactory {
           provider: CacheProviderType.MEMCACHED,
           servers: (process.env[`${prefix}_SERVERS`] || 'localhost:11211').split(','),
           keyPrefix: process.env[`${prefix}_KEY_PREFIX`],
-          defaultTtl: parseInt(process.env[`${prefix}_DEFAULT_TTL`] || '0', 10),
-          timeout: parseInt(process.env[`${prefix}_TIMEOUT`] || '5000', 10),
-          retries: parseInt(process.env[`${prefix}_RETRIES`] || '3', 10),
+          defaultTtl: Number.parseInt(process.env[`${prefix}_DEFAULT_TTL`] || '0', 10),
+          timeout: Number.parseInt(process.env[`${prefix}_TIMEOUT`] || '5000', 10),
+          retries: Number.parseInt(process.env[`${prefix}_RETRIES`] || '3', 10),
         };
         break;
 

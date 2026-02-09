@@ -2,13 +2,13 @@
 // SC³ Module - NestJS Module for Supply Chain Security & Compliance
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { Module, DynamicModule, Provider } from '@nestjs/common';
-import { SC3Service, DEFAULT_SC3_CONFIG } from './services/sc3.service';
+import { type DynamicModule, Module, type Provider } from '@nestjs/common';
+import { AttestationService } from './services/attestation.service';
 import { BuildVerifierService } from './services/build-verifier.service';
 import { DependencyScannerService } from './services/dependency-scanner.service';
-import { AttestationService } from './services/attestation.service';
-import { ProvenanceService } from './services/provenance.service';
 import { ImmutableLogService } from './services/immutable-log.service';
+import { ProvenanceService } from './services/provenance.service';
+import { DEFAULT_SC3_CONFIG, SC3Service } from './services/sc3.service';
 import type { SC3Config } from './types';
 
 /**
@@ -70,14 +70,14 @@ export class SC3Module {
             depScanner: DependencyScannerService,
             attestation: AttestationService,
             provenance: ProvenanceService,
-            immutableLog: ImmutableLogService,
+            immutableLog: ImmutableLogService
           ) => {
             const service = new SC3Service(
               buildVerifier,
               depScanner,
               attestation,
               provenance,
-              immutableLog,
+              immutableLog
             );
             service.configure(config);
             return service;
@@ -135,14 +135,14 @@ export class SC3Module {
             depScanner: DependencyScannerService,
             attestation: AttestationService,
             provenance: ProvenanceService,
-            immutableLog: ImmutableLogService,
+            immutableLog: ImmutableLogService
           ) => {
             const service = new SC3Service(
               buildVerifier,
               depScanner,
               attestation,
               provenance,
-              immutableLog,
+              immutableLog
             );
             service.configure(config);
             return service;

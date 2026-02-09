@@ -1,22 +1,14 @@
-/**
- * ValidationPipe Unit Tests
- * Input Validation & Sanitization
- *
- * @module test/unit/validation.pipe.spec
- */
-
-import { BadRequestException } from '@nestjs/common';
+import { plainToInstance } from 'class-transformer';
 import {
   IsEmail,
-  IsString,
-  MinLength,
   IsNumber,
-  Min,
-  Max,
   IsOptional,
+  IsString,
   IsStrongPassword,
+  Max,
+  Min,
+  MinLength,
 } from 'class-validator';
-import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 
 // Test DTOs
@@ -281,7 +273,7 @@ describe('ValidationPipe', () => {
         stock: '100',
       };
 
-      const instance = plainToInstance(ProductDto, data);
+      const _instance = plainToInstance(ProductDto, data);
 
       // class-transformer with enableImplicitConversion would convert these
       expect(typeof data.price).toBe('string');

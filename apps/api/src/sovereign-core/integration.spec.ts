@@ -7,17 +7,17 @@
  * ===========================================================================
  */
 
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import {
-  setupTestEnvironment,
-  teardownTestEnvironment,
-  getTestPrisma,
-  getTestRedis,
-} from './test-setup';
+import { Decimal } from '@prisma/client/runtime/library';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import type { PrismaService } from '../database/prisma.service';
 import { PriceEngine } from './price-engine.service';
 import { RiskEngine } from './risk-engine.service';
-import { PrismaService } from '../database/prisma.service';
-import { Decimal } from '@prisma/client/runtime/library';
+import {
+  getTestPrisma,
+  getTestRedis,
+  setupTestEnvironment,
+  teardownTestEnvironment,
+} from './test-setup';
 
 enum FinancialEventType {
   DEFAULT = 'DEFAULT',
@@ -25,7 +25,7 @@ enum FinancialEventType {
   PAYMENT_FAILURE = 'PAYMENT_FAILURE',
 }
 
-const describeIf = process.env['RUN_INTEGRATION'] === 'true' ? describe : describe.skip;
+const describeIf = process.env.RUN_INTEGRATION === 'true' ? describe : describe.skip;
 
 describeIf('SOVEREIGN CORE - Integration Tests (Testcontainers)', () => {
   let prismaService: PrismaService;
@@ -42,8 +42,6 @@ describeIf('SOVEREIGN CORE - Integration Tests (Testcontainers)', () => {
     // Initialize services with real dependencies (Redis injected)
     priceEngine = new PriceEngine(prismaService, redis);
     riskEngine = new RiskEngine(prismaService);
-
-    console.log('Integration test environment initialized');
   }, 300000); // 300s timeout for container startup
 
   afterAll(async () => {
@@ -93,7 +91,7 @@ describeIf('SOVEREIGN CORE - Integration Tests (Testcontainers)', () => {
         },
       });
 
-      const b2bRelation = await prisma.b2BRelation.create({
+      const _b2bRelation = await prisma.b2BRelation.create({
         data: {
           supplierId: org.id,
           buyerId: org.id,
@@ -110,13 +108,9 @@ describeIf('SOVEREIGN CORE - Integration Tests (Testcontainers)', () => {
       expect(result.finalPrice).toBeInstanceOf(Decimal);
 
       // Expected: 1234567.89 × 1.157 × (1 - 0.15) = 1,214,135.7914205
-      const expected = new Decimal('1234567.89')
-        .mul(new Decimal('1.157'))
-        .mul(new Decimal('0.85'));
+      const expected = new Decimal('1234567.89').mul(new Decimal('1.157')).mul(new Decimal('0.85'));
 
       expect(result.finalPrice.toString()).toBe(expected.toString());
-
-      console.log('Decimal precision validated:', result.finalPrice.toString());
     });
   });
 
@@ -171,8 +165,6 @@ describeIf('SOVEREIGN CORE - Integration Tests (Testcontainers)', () => {
           durationDays: 7,
         })
       ).rejects.toThrow(/minimum margin/i);
-
-      console.log('MarginGuard enforcement validated');
     });
   });
 
@@ -232,8 +224,6 @@ describeIf('SOVEREIGN CORE - Integration Tests (Testcontainers)', () => {
       // New score ≈ 100 - 15 = 85
       expect(result.riskProfile.score.toNumber()).toBeGreaterThan(80);
       expect(result.riskProfile.score.toNumber()).toBeLessThan(90);
-
-      console.log('Lambda decay validated. Score:', result.riskProfile.score.toString());
     });
   });
 
@@ -293,8 +283,6 @@ describeIf('SOVEREIGN CORE - Integration Tests (Testcontainers)', () => {
       const ttl = await redis.ttl(cacheKey);
       expect(ttl).toBeGreaterThan(3500);
       expect(ttl).toBeLessThanOrEqual(3600);
-
-      console.log('Redis cache validated. TTL:', ttl);
     });
   });
 
@@ -369,8 +357,6 @@ describeIf('SOVEREIGN CORE - Integration Tests (Testcontainers)', () => {
 
       expect(locks).toHaveLength(1);
       expect(locks[0]?.id).toBe(lock2.priceLock?.id);
-
-      console.log('Atomic transactions validated');
     });
   });
 });

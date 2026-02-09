@@ -6,14 +6,14 @@
 
 import { z } from 'zod';
 import {
-  nationalIdSchema,
-  mobileSchema,
   emailSchema,
+  mobileSchema,
+  nationalIdSchema,
   passwordSchema,
   persianNameSchema,
   uuidSchema,
 } from '../persian-validators.js';
-import { addressSchema, bankAccountSchema } from './common.schema.js';
+import { addressSchema } from './common.schema.js';
 
 /**
  * User Roles

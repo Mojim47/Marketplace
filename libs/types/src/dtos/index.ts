@@ -92,12 +92,24 @@ export async function getProducts(filters?: {
 }): Promise<ProductDTO[]> {
   try {
     const params = new URLSearchParams();
-    if (filters?.category) params.set('category', filters.category);
-    if (filters?.minPrice) params.set('minPrice', filters.minPrice.toString());
-    if (filters?.maxPrice) params.set('maxPrice', filters.maxPrice.toString());
-    if (filters?.search) params.set('search', filters.search);
-    if (filters?.limit) params.set('limit', filters.limit.toString());
-    if (filters?.offset) params.set('offset', filters.offset.toString());
+    if (filters?.category) {
+      params.set('category', filters.category);
+    }
+    if (filters?.minPrice) {
+      params.set('minPrice', filters.minPrice.toString());
+    }
+    if (filters?.maxPrice) {
+      params.set('maxPrice', filters.maxPrice.toString());
+    }
+    if (filters?.search) {
+      params.set('search', filters.search);
+    }
+    if (filters?.limit) {
+      params.set('limit', filters.limit.toString());
+    }
+    if (filters?.offset) {
+      params.set('offset', filters.offset.toString());
+    }
 
     const url = `${API_BASE_URL}/api/products?${params.toString()}`;
     const response = await fetch(url, {

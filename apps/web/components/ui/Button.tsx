@@ -1,6 +1,6 @@
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
-type ButtonVariant = "primary" | "outline" | "ghost" | "secondary";
+type ButtonVariant = 'primary' | 'outline' | 'ghost' | 'secondary';
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: ButtonVariant;
@@ -9,15 +9,15 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const variantClasses: Record<ButtonVariant, string> = {
-  primary: "btn btn-primary",
-  outline: "btn btn-outline",
-  ghost: "btn btn-ghost",
-  secondary: "btn btn-secondary",
+  primary: 'btn btn-primary',
+  outline: 'btn btn-outline',
+  ghost: 'btn btn-ghost',
+  secondary: 'btn btn-secondary',
 };
 
 export function Button({
-  variant = "primary",
-  className = "",
+  variant = 'primary',
+  className = '',
   loading = false,
   loadingText,
   disabled,
@@ -29,12 +29,12 @@ export function Button({
     <button
       className={classes}
       aria-busy={loading}
-      data-loading={loading ? "true" : "false"}
+      data-loading={loading ? 'true' : 'false'}
       disabled={disabled || loading}
       {...props}
     >
       <span className="btn-content">
-        {loading ? loadingText ?? "در حال پردازش..." : children}
+        {loading ? (loadingText ?? 'در حال پردازش...') : children}
       </span>
       {loading ? <span className="btn-spinner" aria-hidden="true" /> : null}
     </button>

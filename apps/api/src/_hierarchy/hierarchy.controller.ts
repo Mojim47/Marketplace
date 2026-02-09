@@ -2,7 +2,7 @@
  * ???????????????????????????????????????????????????????????????????????????
  * Hierarchy Management Controller - Factory ? Agent ? Executor
  * ???????????????????????????????????????????????????????????????????????????
- * Purpose: ãÏíÑíÊ ÓáÓáåãÑÇÊÈ ˜ÇÑÎÇäå ? äãÇíäÏå ? ãÌÑí
+ * Purpose: ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ? ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ? ï¿½ï¿½ï¿½ï¿½
  * Features:
  * - Factory creates Agents (Wholesalers)
  * - Agent creates Executors
@@ -11,17 +11,17 @@
  */
 
 import {
+  BadRequestException,
+  Body,
   Controller,
   Get,
   Post,
-  Body,
-  UseGuards,
   Request,
-  BadRequestException,
+  UseGuards,
 } from '@nestjs/common';
-import { HierarchyService } from './hierarchy.service';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import type { HierarchyService } from './hierarchy.service';
 
 @ApiTags('Hierarchy')
 @Controller('hierarchy')
@@ -32,7 +32,7 @@ export class HierarchyController {
 
   /**
    * GET /api/hierarchy/agents
-   * áíÓÊ äãÇíäÏÇä ÒíÑãÌãæÚå ˜ÇÑÎÇäå
+   * ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ïï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
    */
   @Get('agents')
   @ApiOperation({ summary: 'Get list of agents for factory' })
@@ -43,7 +43,7 @@ export class HierarchyController {
 
   /**
    * POST /api/hierarchy/agents
-   * ÇíÌÇÏ äãÇíäÏå ÌÏíÏ ÊæÓØ ˜ÇÑÎÇäå
+   * ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
    */
   @Post('agents')
   @ApiOperation({ summary: 'Create new agent for factory' })
@@ -62,9 +62,7 @@ export class HierarchyController {
     const userId = req.user.sub || req.user.id;
 
     if (!body.name || !body.mobile || !body.tierLevel) {
-      throw new BadRequestException(
-        'äÇã¡ ãæÈÇíá æ ÓØÍ ŞíãÊ ÇáÒÇãí ÇÓÊ'
-      );
+      throw new BadRequestException('ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½');
     }
 
     return this.hierarchyService.createAgent(userId, {
@@ -79,7 +77,7 @@ export class HierarchyController {
 
   /**
    * GET /api/hierarchy/executors
-   * áíÓÊ ãÌÑíÇä ÒíÑãÌãæÚå äãÇíäÏå
+   * ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
    */
   @Get('executors')
   @ApiOperation({ summary: 'Get list of executors for agent' })
@@ -90,7 +88,7 @@ export class HierarchyController {
 
   /**
    * POST /api/hierarchy/executors
-   * ÇíÌÇÏ ãÌÑí ÌÏíÏ ÊæÓØ äãÇíäÏå
+   * ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
    */
   @Post('executors')
   @ApiOperation({ summary: 'Create new executor for agent' })
@@ -107,7 +105,7 @@ export class HierarchyController {
     const userId = req.user.sub || req.user.id;
 
     if (!body.name || !body.mobile) {
-      throw new BadRequestException('äÇã æ ãæÈÇíá ÇáÒÇãí ÇÓÊ');
+      throw new BadRequestException('ï¿½ï¿½ï¿½ ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½');
     }
 
     return this.hierarchyService.createExecutor(userId, {

@@ -1,5 +1,5 @@
-import { Controller, Get, Request, Logger, UnauthorizedException } from '@nestjs/common';
-import { UsersService, UserEntity } from './users.service';
+import { Controller, Get, Logger, Request, UnauthorizedException } from '@nestjs/common';
+import type { UserEntity, UsersService } from './users.service';
 
 @Controller('v1/users')
 export class UsersController {

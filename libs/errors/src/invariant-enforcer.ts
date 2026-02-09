@@ -13,14 +13,14 @@
  */
 
 import { Logger } from '@nestjs/common';
-import { AuthenticationError, InternalError, BusinessRuleError, ValidationError } from './errors';
+import { AppError, type ErrorCode } from './app-error';
+import { AuthenticationError, BusinessRuleError, InternalError, ValidationError } from './errors';
 import {
   AUTH_INVARIANTS,
-  PAYMENT_INVARIANTS,
-  ERROR_INVARIANTS,
   ERROR_CODE_STATUS_MAP,
+  ERROR_INVARIANTS,
+  PAYMENT_INVARIANTS,
 } from './invariants';
-import { AppError, ErrorCode } from './app-error';
 
 const logger = new Logger('InvariantEnforcer');
 
@@ -35,7 +35,9 @@ export const AuthInvariantEnforcer = {
    */
   verifyTokenMandatory(ctx: { user?: unknown; isPublic: boolean }): void {
     if (AUTH_INVARIANTS.TOKEN_VERIFICATION_MANDATORY.signal(ctx)) {
-      logger.error('[INV-AUTH-001] Token verification mandatory - no user context on protected route');
+      logger.error(
+        '[INV-AUTH-001] Token verification mandatory - no user context on protected route'
+      );
       throw AuthenticationError.tokenInvalid();
     }
   },
@@ -86,9 +88,11 @@ export const PaymentInvariantEnforcer = {
    */
   verifyDoubleEntryBalance(entries: Array<{ type: 'DEBIT' | 'CREDIT'; amount: number }>): void {
     if (PAYMENT_INVARIANTS.DOUBLE_ENTRY_BALANCE.signal(entries)) {
-      const debits = entries.filter(e => e.type === 'DEBIT').reduce((s, e) => s + e.amount, 0);
-      const credits = entries.filter(e => e.type === 'CREDIT').reduce((s, e) => s + e.amount, 0);
-      logger.error(`[INV-PAY-001] Double-entry balance violation: debits=${debits}, credits=${credits}`);
+      const debits = entries.filter((e) => e.type === 'DEBIT').reduce((s, e) => s + e.amount, 0);
+      const credits = entries.filter((e) => e.type === 'CREDIT').reduce((s, e) => s + e.amount, 0);
+      logger.error(
+        `[INV-PAY-001] Double-entry balance violation: debits=${debits}, credits=${credits}`
+      );
       throw BusinessRuleError.violation(
         'Transaction entries must balance (debits = credits)',
         'مجموع بدهکاری و بستانکاری باید برابر باشد'

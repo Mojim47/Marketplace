@@ -2,10 +2,10 @@
  * ???????????????????????????????????????????????????????????????????????????
  * NextGen Marketplace - Shared Security Module
  * ???????????????????????????????????????????????????????????????????????????
- * 
+ *
  * Central security module that integrates all security services from libs/security.
  * Provides guards, interceptors, and services for API protection.
- * 
+ *
  * Features:
  * - JWT authentication with RS256
  * - Role-based access control (RBAC)
@@ -14,41 +14,35 @@
  * - Brute force protection
  * - Security headers
  * - WAF integration
- * 
+ *
  * @module @nextgen/api/shared/security
  * Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6
  */
 
-import { Module, Global, DynamicModule, Logger } from '@nestjs/common';
+import { type DynamicModule, Global, Logger, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 
 // Import security services from libs/security
 import {
-  JWTManager,
-  InMemoryRateLimiter,
-  RedisRateLimiter,
-  createRateLimiter,
-  RATE_LIMIT_TIERS,
-  CSRFManager,
-  createCSRFManager,
   BruteForceProtection,
-  SecurityHeadersManager,
-  createSecurityHeadersManager,
-  createProductionSecurityHeaders,
+  JWTManager,
+  createCSRFManager,
   createDevelopmentSecurityHeaders,
+  createProductionSecurityHeaders,
+  createRateLimiter,
 } from '@nextgen/security';
 
 // Import WAF service from libs/waf
 import { WAFService } from '@nextgen/waf';
 
+import { BruteForceGuard, BruteForceService } from './guards/brute-force.guard';
+import { CSRFGuard } from './guards/csrf.guard';
+import { JWTAuthGuard } from './guards/jwt-auth.guard';
+import { RateLimitGuard } from './guards/rate-limit.guard';
+import { RBACGuard } from './guards/rbac.guard';
 // Import guards
 import { WAFGuard } from './guards/waf.guard';
-import { JWTAuthGuard } from './guards/jwt-auth.guard';
-import { RBACGuard } from './guards/rbac.guard';
-import { RateLimitGuard } from './guards/rate-limit.guard';
-import { CSRFGuard } from './guards/csrf.guard';
-import { BruteForceGuard, BruteForceService } from './guards/brute-force.guard';
 
 // Import tokens
 import { SECURITY_TOKENS } from './tokens';
@@ -56,10 +50,31 @@ import { SECURITY_TOKENS } from './tokens';
 // Export guards
 export { WAFGuard } from './guards/waf.guard';
 export { JWTAuthGuard, Public, IS_PUBLIC_KEY, AuthenticatedRequest } from './guards/jwt-auth.guard';
-export { RBACGuard, Roles, Permissions, ROLES_KEY, PERMISSIONS_KEY, ROLE_HIERARCHY, ROLE_PERMISSIONS } from './guards/rbac.guard';
-export { RateLimitGuard, RateLimitTier, SkipRateLimit, RATE_LIMIT_TIER_KEY, SKIP_RATE_LIMIT_KEY } from './guards/rate-limit.guard';
+export {
+  RBACGuard,
+  Roles,
+  Permissions,
+  ROLES_KEY,
+  PERMISSIONS_KEY,
+  ROLE_HIERARCHY,
+  ROLE_PERMISSIONS,
+} from './guards/rbac.guard';
+export {
+  RateLimitGuard,
+  RateLimitTier,
+  SkipRateLimit,
+  RATE_LIMIT_TIER_KEY,
+  SKIP_RATE_LIMIT_KEY,
+} from './guards/rate-limit.guard';
 export { CSRFGuard, SkipCSRF, SKIP_CSRF_KEY } from './guards/csrf.guard';
-export { BruteForceGuard, BruteForceService, BruteForceProtected, SkipBruteForce, BRUTE_FORCE_KEY, SKIP_BRUTE_FORCE_KEY } from './guards/brute-force.guard';
+export {
+  BruteForceGuard,
+  BruteForceService,
+  BruteForceProtected,
+  SkipBruteForce,
+  BRUTE_FORCE_KEY,
+  SKIP_BRUTE_FORCE_KEY,
+} from './guards/brute-force.guard';
 
 // Security module configuration interface
 export interface SecurityModuleConfig {
@@ -93,9 +108,11 @@ export class SecurityModule {
           useFactory: async (configService: ConfigService) => {
             const jwtManager = new JWTManager({
               issuer: config?.jwtIssuer || configService.get('JWT_ISSUER', 'nextgen-marketplace'),
-              audience: config?.jwtAudience || configService.get('JWT_AUDIENCE', 'nextgen-marketplace'),
+              audience:
+                config?.jwtAudience || configService.get('JWT_AUDIENCE', 'nextgen-marketplace'),
               tokenTTL: config?.jwtTokenTTL || configService.get('JWT_TOKEN_TTL', 3600),
-              refreshTokenTTL: config?.jwtRefreshTokenTTL || configService.get('JWT_REFRESH_TOKEN_TTL', 604800),
+              refreshTokenTTL:
+                config?.jwtRefreshTokenTTL || configService.get('JWT_REFRESH_TOKEN_TTL', 604800),
               keyRotationIntervalHours: 24,
               oldKeysToKeep: 2,
             });
@@ -112,44 +129,56 @@ export class SecurityModule {
             const logger = new Logger('RateLimiterFactory');
             const redisUrl = configService.get<string>('REDIS_URL');
             const redisHost = configService.get<string>('REDIS_HOST');
-            
+
             // Create Redis client for rate limiting
             let redisClient: Redis | undefined;
-            
+
             if (redisUrl) {
               try {
                 redisClient = new Redis(redisUrl, {
                   maxRetriesPerRequest: 3,
                   retryStrategy: (times) => {
-                    if (times > 3) return null;
+                    if (times > 3) {
+                      return null;
+                    }
                     return Math.min(times * 100, 3000);
                   },
                   lazyConnect: true,
                 });
                 logger.log('Rate limiter using Redis URL for sliding window algorithm');
               } catch (error) {
-                logger.warn('Failed to create Redis client from URL, falling back to in-memory', error);
+                logger.warn(
+                  'Failed to create Redis client from URL, falling back to in-memory',
+                  error
+                );
               }
             } else if (redisHost) {
               try {
                 redisClient = new Redis({
                   host: redisHost,
-                  port: parseInt(configService.get('REDIS_PORT', '6379'), 10),
+                  port: Number.parseInt(configService.get('REDIS_PORT', '6379'), 10),
                   password: configService.get('REDIS_PASSWORD') || undefined,
-                  db: parseInt(configService.get('REDIS_DB', '0'), 10),
+                  db: Number.parseInt(configService.get('REDIS_DB', '0'), 10),
                   maxRetriesPerRequest: 3,
                   retryStrategy: (times) => {
-                    if (times > 3) return null;
+                    if (times > 3) {
+                      return null;
+                    }
                     return Math.min(times * 100, 3000);
                   },
                   lazyConnect: true,
                 });
                 logger.log('Rate limiter using Redis host for sliding window algorithm');
               } catch (error) {
-                logger.warn('Failed to create Redis client from host, falling back to in-memory', error);
+                logger.warn(
+                  'Failed to create Redis client from host, falling back to in-memory',
+                  error
+                );
               }
             } else {
-              logger.warn('No Redis configuration found, using in-memory rate limiter (not recommended for production)');
+              logger.warn(
+                'No Redis configuration found, using in-memory rate limiter (not recommended for production)'
+              );
             }
 
             // Create rate limiter with Redis if available
@@ -158,8 +187,12 @@ export class SecurityModule {
               keyPrefix: 'ratelimit',
               defaultTier: {
                 name: 'default',
-                maxRequests: config?.rateLimitMaxRequests || configService.get('RATE_LIMIT_MAX_REQUESTS', 100),
-                windowSeconds: Math.floor((config?.rateLimitWindowMs || configService.get('RATE_LIMIT_WINDOW_MS', 60000)) / 1000),
+                maxRequests:
+                  config?.rateLimitMaxRequests || configService.get('RATE_LIMIT_MAX_REQUESTS', 100),
+                windowSeconds: Math.floor(
+                  (config?.rateLimitWindowMs || configService.get('RATE_LIMIT_WINDOW_MS', 60000)) /
+                    1000
+                ),
                 burstAllowance: 20,
               },
               enableBruteForceProtection: true,
@@ -177,7 +210,10 @@ export class SecurityModule {
             const secret = config?.csrfSecret || configService.get('CSRF_SECRET');
             if (!secret || secret.length < 32) {
               // Generate a default secret for development (should be set in production)
-              const defaultSecret = configService.get('JWT_SECRET', 'development-csrf-secret-minimum-32-chars');
+              const defaultSecret = configService.get(
+                'JWT_SECRET',
+                'development-csrf-secret-minimum-32-chars'
+              );
               return createCSRFManager({
                 secret: defaultSecret.length >= 32 ? defaultSecret : defaultSecret.padEnd(32, '0'),
                 cookieName: 'XSRF-TOKEN',
@@ -208,9 +244,14 @@ export class SecurityModule {
           provide: SECURITY_TOKENS.BRUTE_FORCE,
           useFactory: (configService: ConfigService) => {
             const protection = new BruteForceProtection({
-              maxAttempts: config?.bruteForceMaxAttempts || configService.get('BRUTE_FORCE_MAX_ATTEMPTS', 5),
-              windowMs: config?.bruteForceWindowMs || configService.get('BRUTE_FORCE_WINDOW_MS', 15 * 60 * 1000),
-              blockDurationMs: config?.bruteForceBlockDurationMs || configService.get('BRUTE_FORCE_BLOCK_DURATION_MS', 15 * 60 * 1000),
+              maxAttempts:
+                config?.bruteForceMaxAttempts || configService.get('BRUTE_FORCE_MAX_ATTEMPTS', 5),
+              windowMs:
+                config?.bruteForceWindowMs ||
+                configService.get('BRUTE_FORCE_WINDOW_MS', 15 * 60 * 1000),
+              blockDurationMs:
+                config?.bruteForceBlockDurationMs ||
+                configService.get('BRUTE_FORCE_BLOCK_DURATION_MS', 15 * 60 * 1000),
               whitelistedIPs: ['127.0.0.1', '::1'],
               onBlock: (ip, attempts) => {
                 console.warn(`[BruteForce] IP blocked: ${ip} after ${attempts} attempts`);
@@ -229,7 +270,8 @@ export class SecurityModule {
         {
           provide: SECURITY_TOKENS.SECURITY_HEADERS,
           useFactory: (configService: ConfigService) => {
-            const isProduction = config?.isProduction ?? configService.get('NODE_ENV') === 'production';
+            const isProduction =
+              config?.isProduction ?? configService.get('NODE_ENV') === 'production';
             return isProduction
               ? createProductionSecurityHeaders()
               : createDevelopmentSecurityHeaders();
@@ -312,44 +354,56 @@ export class SecurityModule {
             const logger = new Logger('RateLimiterFactory');
             const redisUrl = configService.get<string>('REDIS_URL');
             const redisHost = configService.get<string>('REDIS_HOST');
-            
+
             // Create Redis client for rate limiting
             let redisClient: Redis | undefined;
-            
+
             if (redisUrl) {
               try {
                 redisClient = new Redis(redisUrl, {
                   maxRetriesPerRequest: 3,
                   retryStrategy: (times) => {
-                    if (times > 3) return null;
+                    if (times > 3) {
+                      return null;
+                    }
                     return Math.min(times * 100, 3000);
                   },
                   lazyConnect: true,
                 });
                 logger.log('Rate limiter using Redis URL for sliding window algorithm');
               } catch (error) {
-                logger.warn('Failed to create Redis client from URL, falling back to in-memory', error);
+                logger.warn(
+                  'Failed to create Redis client from URL, falling back to in-memory',
+                  error
+                );
               }
             } else if (redisHost) {
               try {
                 redisClient = new Redis({
                   host: redisHost,
-                  port: parseInt(configService.get('REDIS_PORT', '6379'), 10),
+                  port: Number.parseInt(configService.get('REDIS_PORT', '6379'), 10),
                   password: configService.get('REDIS_PASSWORD') || undefined,
-                  db: parseInt(configService.get('REDIS_DB', '0'), 10),
+                  db: Number.parseInt(configService.get('REDIS_DB', '0'), 10),
                   maxRetriesPerRequest: 3,
                   retryStrategy: (times) => {
-                    if (times > 3) return null;
+                    if (times > 3) {
+                      return null;
+                    }
                     return Math.min(times * 100, 3000);
                   },
                   lazyConnect: true,
                 });
                 logger.log('Rate limiter using Redis host for sliding window algorithm');
               } catch (error) {
-                logger.warn('Failed to create Redis client from host, falling back to in-memory', error);
+                logger.warn(
+                  'Failed to create Redis client from host, falling back to in-memory',
+                  error
+                );
               }
             } else {
-              logger.warn('No Redis configuration found, using in-memory rate limiter (not recommended for production)');
+              logger.warn(
+                'No Redis configuration found, using in-memory rate limiter (not recommended for production)'
+              );
             }
 
             return createRateLimiter({
@@ -443,4 +497,3 @@ export class SecurityModule {
     };
   }
 }
-

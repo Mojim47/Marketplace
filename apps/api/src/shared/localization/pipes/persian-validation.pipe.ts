@@ -2,26 +2,21 @@
  * ???????????????????????????????????????????????????????????????????????????
  * NextGen Marketplace - Persian Validation Pipes
  * ???????????????????????????????????????????????????????????????????????????
- * 
+ *
  * NestJS pipes for validating Persian/Iranian data formats.
  * Uses validators from libs/localization for:
  * - Iranian mobile numbers
- * - National ID (˜Ï ãáí)
+ * - National ID (ï¿½ï¿½ ï¿½ï¿½ï¿½)
  * - Bank card numbers
- * - IBAN (ÔÈÇ)
+ * - IBAN (ï¿½ï¿½ï¿½)
  * - Postal codes
- * 
+ *
  * @module @nextgen/api/shared/localization/pipes
  * Requirements: 3.3, 3.4, 3.5
  */
 
-import {
-  PipeTransform,
-  Injectable,
-  ArgumentMetadata,
-  BadRequestException,
-} from '@nestjs/common';
-import { persianValidators, ValidationResult } from '@nextgen/localization';
+import { ArgumentMetadata, BadRequestException, Injectable, PipeTransform } from '@nestjs/common';
+import { ValidationResult, persianValidators } from '@nextgen/localization';
 
 /**
  * Base class for Persian validation pipes
@@ -36,9 +31,9 @@ abstract class BasePersianValidationPipe implements PipeTransform<string, string
     }
 
     const result = this.validate(String(value));
-    
+
     if (!result.valid) {
-      throw new BadRequestException(result.error || `${this.fieldName} äÇãÚÊÈÑ ÇÓÊ`);
+      throw new BadRequestException(result.error || `${this.fieldName} ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½`);
     }
 
     // Return normalized value if available
@@ -48,7 +43,7 @@ abstract class BasePersianValidationPipe implements PipeTransform<string, string
 
 /**
  * Pipe for validating Iranian mobile numbers
- * 
+ *
  * @example
  * ```typescript
  * @Post('register')
@@ -59,7 +54,7 @@ abstract class BasePersianValidationPipe implements PipeTransform<string, string
  */
 @Injectable()
 export class IranianMobilePipe extends BasePersianValidationPipe {
-  protected fieldName = 'ÔãÇÑå ãæÈÇíá';
+  protected fieldName = 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½';
 
   protected validate(value: string): ValidationResult {
     return persianValidators.validateMobile(value);
@@ -67,8 +62,8 @@ export class IranianMobilePipe extends BasePersianValidationPipe {
 }
 
 /**
- * Pipe for validating Iranian National ID (˜Ï ãáí)
- * 
+ * Pipe for validating Iranian National ID (ï¿½ï¿½ ï¿½ï¿½ï¿½)
+ *
  * @example
  * ```typescript
  * @Post('verify')
@@ -79,7 +74,7 @@ export class IranianMobilePipe extends BasePersianValidationPipe {
  */
 @Injectable()
 export class NationalIdPipe extends BasePersianValidationPipe {
-  protected fieldName = '˜Ï ãáí';
+  protected fieldName = 'ï¿½ï¿½ ï¿½ï¿½ï¿½';
 
   protected validate(value: string): ValidationResult {
     return persianValidators.validateNationalId(value);
@@ -88,7 +83,7 @@ export class NationalIdPipe extends BasePersianValidationPipe {
 
 /**
  * Pipe for validating Iranian bank card numbers
- * 
+ *
  * @example
  * ```typescript
  * @Post('payment')
@@ -99,7 +94,7 @@ export class NationalIdPipe extends BasePersianValidationPipe {
  */
 @Injectable()
 export class BankCardPipe extends BasePersianValidationPipe {
-  protected fieldName = 'ÔãÇÑå ˜ÇÑÊ';
+  protected fieldName = 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½';
 
   protected validate(value: string): ValidationResult {
     return persianValidators.validateBankCard(value);
@@ -107,8 +102,8 @@ export class BankCardPipe extends BasePersianValidationPipe {
 }
 
 /**
- * Pipe for validating Iranian IBAN (ÔÈÇ)
- * 
+ * Pipe for validating Iranian IBAN (ï¿½ï¿½ï¿½)
+ *
  * @example
  * ```typescript
  * @Post('transfer')
@@ -119,7 +114,7 @@ export class BankCardPipe extends BasePersianValidationPipe {
  */
 @Injectable()
 export class IBANPipe extends BasePersianValidationPipe {
-  protected fieldName = 'ÔãÇÑå ÔÈÇ';
+  protected fieldName = 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½';
 
   protected validate(value: string): ValidationResult {
     return persianValidators.validateIBAN(value);
@@ -128,7 +123,7 @@ export class IBANPipe extends BasePersianValidationPipe {
 
 /**
  * Pipe for validating Iranian postal codes
- * 
+ *
  * @example
  * ```typescript
  * @Post('address')
@@ -139,7 +134,7 @@ export class IBANPipe extends BasePersianValidationPipe {
  */
 @Injectable()
 export class PostalCodePipe extends BasePersianValidationPipe {
-  protected fieldName = '˜Ï ÓÊí';
+  protected fieldName = 'ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½';
 
   protected validate(value: string): ValidationResult {
     return persianValidators.validatePostalCode(value);
@@ -148,7 +143,7 @@ export class PostalCodePipe extends BasePersianValidationPipe {
 
 /**
  * Pipe for validating Iranian landline phone numbers
- * 
+ *
  * @example
  * ```typescript
  * @Post('contact')
@@ -159,7 +154,7 @@ export class PostalCodePipe extends BasePersianValidationPipe {
  */
 @Injectable()
 export class LandlinePipe extends BasePersianValidationPipe {
-  protected fieldName = 'ÔãÇÑå ÊáÝä ËÇÈÊ';
+  protected fieldName = 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½';
 
   protected validate(value: string): ValidationResult {
     return persianValidators.validateLandline(value);
@@ -168,7 +163,7 @@ export class LandlinePipe extends BasePersianValidationPipe {
 
 /**
  * Pipe for validating Persian text (no English characters)
- * 
+ *
  * @example
  * ```typescript
  * @Post('comment')
@@ -179,7 +174,7 @@ export class LandlinePipe extends BasePersianValidationPipe {
  */
 @Injectable()
 export class PersianTextPipe extends BasePersianValidationPipe {
-  protected fieldName = 'ãÊä ÝÇÑÓí';
+  protected fieldName = 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½';
 
   protected validate(value: string): ValidationResult {
     return persianValidators.validatePersianText(value);
@@ -187,8 +182,8 @@ export class PersianTextPipe extends BasePersianValidationPipe {
 }
 
 /**
- * Pipe for validating company registration numbers (ÔãÇÑå ËÈÊ)
- * 
+ * Pipe for validating company registration numbers (ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½)
+ *
  * @example
  * ```typescript
  * @Post('company')
@@ -199,7 +194,7 @@ export class PersianTextPipe extends BasePersianValidationPipe {
  */
 @Injectable()
 export class CompanyRegistrationPipe extends BasePersianValidationPipe {
-  protected fieldName = 'ÔãÇÑå ËÈÊ';
+  protected fieldName = 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½';
 
   protected validate(value: string): ValidationResult {
     return persianValidators.validateCompanyRegistration(value);
@@ -207,8 +202,8 @@ export class CompanyRegistrationPipe extends BasePersianValidationPipe {
 }
 
 /**
- * Pipe for validating economic codes (˜Ï ÇÞÊÕÇÏí)
- * 
+ * Pipe for validating economic codes (ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½)
+ *
  * @example
  * ```typescript
  * @Post('business')
@@ -219,7 +214,7 @@ export class CompanyRegistrationPipe extends BasePersianValidationPipe {
  */
 @Injectable()
 export class EconomicCodePipe extends BasePersianValidationPipe {
-  protected fieldName = '˜Ï ÇÞÊÕÇÏí';
+  protected fieldName = 'ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½';
 
   protected validate(value: string): ValidationResult {
     return persianValidators.validateEconomicCode(value);

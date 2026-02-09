@@ -2,21 +2,17 @@
  * ???????????????????????????????????????????????????????????????????????????
  * NextGen Marketplace - Payment Audit Service
  * ???????????????????????????????????????????????????????????????????????????
- * 
+ *
  * Audit logging service for payment transactions.
  * Records all financial operations for compliance and security.
- * 
- * Requirements: 7.2 - WHEN ÊÑÇ˜äÔ ãÇáí ÇäÌÇã ãíÔæÏ THEN THE Audit_Logger SHALL ÌÒÆíÇÊ ÊÑÇ˜äÔ ÑÇ ËÈÊ ˜äÏ
+ *
+ * Requirements: 7.2 - WHEN ï¿½ï¿½Ç˜ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ THEN THE Audit_Logger SHALL ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ç˜ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
  */
 
 import { Injectable, Logger } from '@nestjs/common';
+import { AuditEventType, AuditSeverity, AuditService as LibAuditService } from '@nextgen/audit';
 import { PrismaService } from '../database/prisma.service';
 import { PaymentAuditService as IPaymentAuditService } from './payment.service';
-import {
-  AuditService as LibAuditService,
-  AuditEventType,
-  AuditSeverity,
-} from '@nextgen/audit';
 
 /**
  * Payment-specific audit event types
@@ -53,7 +49,7 @@ export interface PaymentAuditEntry {
 
 /**
  * Payment Audit Service
- * 
+ *
  * Implements comprehensive audit logging for all payment operations.
  * Uses chain integrity verification for tamper detection.
  */
@@ -69,14 +65,14 @@ export class PaymentAuditService implements IPaymentAuditService {
 
   /**
    * Log payment initiation event
-   * Requirements: 7.2 - ËÈÊ ÔÑæÚ ÊÑÇ˜äÔ ãÇáí
+   * Requirements: 7.2 - ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ç˜ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
    */
   async logPaymentInitiated(
     userId: string,
     transactionId: string,
     amount: number,
     orderId: string,
-    ipAddress?: string,
+    ipAddress?: string
   ): Promise<void> {
     try {
       // Log to libs/audit service
@@ -91,7 +87,7 @@ export class PaymentAuditService implements IPaymentAuditService {
           gateway: 'zarinpal',
           currency: 'IRR',
           action: 'initiated',
-        },
+        }
       );
 
       // Also log to database for persistence
@@ -107,7 +103,7 @@ export class PaymentAuditService implements IPaymentAuditService {
       });
 
       this.logger.log(
-        `[AUDIT] Payment initiated: User=${userId}, Transaction=${transactionId}, Amount=${amount}`,
+        `[AUDIT] Payment initiated: User=${userId}, Transaction=${transactionId}, Amount=${amount}`
       );
     } catch (error) {
       this.logger.error(`Failed to log payment initiation: ${error.message}`);
@@ -117,14 +113,14 @@ export class PaymentAuditService implements IPaymentAuditService {
 
   /**
    * Log successful payment event
-   * Requirements: 7.2 - ËÈÊ ÊÑÇ˜äÔ ãæİŞ
+   * Requirements: 7.2 - ï¿½ï¿½ï¿½ ï¿½ï¿½Ç˜ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
    */
   async logPaymentSuccess(
     userId: string,
     transactionId: string,
     amount: number,
     refId: string,
-    ipAddress?: string,
+    ipAddress?: string
   ): Promise<void> {
     try {
       // Log to libs/audit service
@@ -139,7 +135,7 @@ export class PaymentAuditService implements IPaymentAuditService {
           gateway: 'zarinpal',
           currency: 'IRR',
           action: 'verified',
-        },
+        }
       );
 
       // Also log to database for persistence
@@ -155,7 +151,7 @@ export class PaymentAuditService implements IPaymentAuditService {
       });
 
       this.logger.log(
-        `[AUDIT] Payment success: User=${userId}, Transaction=${transactionId}, RefID=${refId}`,
+        `[AUDIT] Payment success: User=${userId}, Transaction=${transactionId}, RefID=${refId}`
       );
     } catch (error) {
       this.logger.error(`Failed to log payment success: ${error.message}`);
@@ -164,14 +160,14 @@ export class PaymentAuditService implements IPaymentAuditService {
 
   /**
    * Log failed payment event
-   * Requirements: 7.2 - ËÈÊ ÊÑÇ˜äÔ äÇãæİŞ
+   * Requirements: 7.2 - ï¿½ï¿½ï¿½ ï¿½ï¿½Ç˜ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
    */
   async logPaymentFailure(
     userId: string,
     transactionId: string,
     amount: number,
     reason: string,
-    ipAddress?: string,
+    ipAddress?: string
   ): Promise<void> {
     try {
       // Log to libs/audit service with WARNING severity
@@ -206,7 +202,7 @@ export class PaymentAuditService implements IPaymentAuditService {
       });
 
       this.logger.warn(
-        `[AUDIT] Payment failure: User=${userId}, Transaction=${transactionId}, Reason=${reason}`,
+        `[AUDIT] Payment failure: User=${userId}, Transaction=${transactionId}, Reason=${reason}`
       );
     } catch (error) {
       this.logger.error(`Failed to log payment failure: ${error.message}`);
@@ -215,14 +211,14 @@ export class PaymentAuditService implements IPaymentAuditService {
 
   /**
    * Log refund event
-   * Requirements: 7.2 - ËÈÊ ÇÓÊÑÏÇÏ æÌå
+   * Requirements: 7.2 - ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
    */
   async logPaymentRefund(
     userId: string,
     transactionId: string,
     amount: number,
     refId: string,
-    ipAddress?: string,
+    ipAddress?: string
   ): Promise<void> {
     try {
       // Log to libs/audit service
@@ -237,7 +233,7 @@ export class PaymentAuditService implements IPaymentAuditService {
           gateway: 'zarinpal',
           currency: 'IRR',
           action: 'refunded',
-        },
+        }
       );
 
       // Also log to database for persistence
@@ -253,7 +249,7 @@ export class PaymentAuditService implements IPaymentAuditService {
       });
 
       this.logger.log(
-        `[AUDIT] Payment refund: User=${userId}, Transaction=${transactionId}, Amount=${amount}`,
+        `[AUDIT] Payment refund: User=${userId}, Transaction=${transactionId}, Amount=${amount}`
       );
     } catch (error) {
       this.logger.error(`Failed to log payment refund: ${error.message}`);
@@ -262,13 +258,9 @@ export class PaymentAuditService implements IPaymentAuditService {
 
   /**
    * Log payment callback event
-   * Requirements: 7.2 - ËÈÊ callback ÇÒ ÏÑÇå
+   * Requirements: 7.2 - ï¿½ï¿½ï¿½ callback ï¿½ï¿½ ï¿½Ñï¿½ï¿½
    */
-  async logPaymentCallback(
-    authority: string,
-    status: string,
-    ipAddress?: string,
-  ): Promise<void> {
+  async logPaymentCallback(authority: string, status: string, ipAddress?: string): Promise<void> {
     try {
       // Log to libs/audit service
       await this.libAuditService.log({
@@ -293,9 +285,7 @@ export class PaymentAuditService implements IPaymentAuditService {
         metadata: { action: 'callback_received', callbackStatus: status },
       });
 
-      this.logger.log(
-        `[AUDIT] Payment callback: Authority=${authority}, Status=${status}`,
-      );
+      this.logger.log(`[AUDIT] Payment callback: Authority=${authority}, Status=${status}`);
     } catch (error) {
       this.logger.error(`Failed to log payment callback: ${error.message}`);
     }
@@ -390,7 +380,10 @@ export class PaymentAuditService implements IPaymentAuditService {
   /**
    * Get payment audit statistics
    */
-  async getPaymentAuditStats(startDate: Date, endDate: Date): Promise<{
+  async getPaymentAuditStats(
+    startDate: Date,
+    endDate: Date
+  ): Promise<{
     totalTransactions: number;
     successfulPayments: number;
     failedPayments: number;
@@ -415,7 +408,7 @@ export class PaymentAuditService implements IPaymentAuditService {
 
     for (const log of logs) {
       const changes = log.changes as any;
-      
+
       if (log.action === PaymentAuditEventType.PAYMENT_INITIATED) {
         totalTransactions++;
       } else if (log.action === PaymentAuditEventType.PAYMENT_SUCCESS) {

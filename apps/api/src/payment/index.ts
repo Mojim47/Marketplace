@@ -8,5 +8,8 @@ export { PaymentModule } from './payment.module';
 export { PaymentService, PAYMENT_AUDIT_SERVICE } from './payment.service';
 export type { PaymentAuditService } from './payment.service';
 export { PaymentSecurityService } from './payment-security.service';
-export { PaymentAuditService as PaymentAuditServiceImpl, PaymentAuditEventType } from './payment-audit.service';
+export {
+  PaymentAuditService as PaymentAuditServiceImpl,
+  PaymentAuditEventType,
+} from './payment-audit.service';
 export * from './dto/payment.dto';

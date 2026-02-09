@@ -1,38 +1,33 @@
-﻿import type { AuthenticatedUser } from '../common/types/authenticated-user.type';
-import {
-  Controller,
-  Get,
-  Post,
-  Put,
-  Patch,
+﻿import {
   Body,
-  Param,
-  Query,
-  UseGuards,
+  Controller,
+  DefaultValuePipe,
+  Get,
   HttpCode,
   HttpStatus,
-  ParseUUIDPipe,
+  Param,
   ParseIntPipe,
-  DefaultValuePipe,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
 import {
-  ApiTags,
-  ApiOperation,
   ApiBearerAuth,
-  ApiResponse,
+  ApiOperation,
   ApiParam,
   ApiQuery,
+  ApiResponse,
+  ApiTags,
 } from '@nestjs/swagger';
-import { OrderService, SettlementService } from '@nextgen/order';
-import { ShippingService } from '@nextgen/shipping';
+import type { OrderService, SettlementService } from '@nextgen/order';
+import type { ShippingService } from '@nextgen/shipping';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { OrderOwnershipGuard } from '../common/guards/order-ownership.guard';
-import { CurrentUser } from '../common/decorators/current-user.decorator';
-import {
-  CreateOrderDto,
-  UpdateOrderStatusDto,
-  UpdateSubOrderStatusDto,
-} from './dto';
+import type { AuthenticatedUser } from '../common/types/authenticated-user.type';
+import type { CreateOrderDto, UpdateOrderStatusDto, UpdateSubOrderStatusDto } from './dto';
 
 @ApiTags('marketplace/orders')
 @Controller('marketplace/orders')
@@ -42,19 +37,16 @@ export class OrderController {
   constructor(
     private readonly orderService: OrderService,
     private readonly settlementService: SettlementService,
-    private readonly shippingService: ShippingService,
+    private readonly shippingService: ShippingService
   ) {}
 
   @Post()
   @ApiOperation({ summary: 'ايجاد سفارش جديد (Multi-Seller)' })
   @ApiResponse({ status: 201, description: 'سفارش ايجاد شد' })
-  async create(
-    @CurrentUser() user: AuthenticatedUser,
-    @Body() dto: CreateOrderDto,
-  ) {
+  async create(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateOrderDto) {
     return this.orderService.createOrder({
       userId: user.id,
-      items: dto.items.map(item => ({
+      items: dto.items.map((item) => ({
         ...item,
         productSku: item.productSku ?? '',
       })),
@@ -76,7 +68,7 @@ export class OrderController {
   async findAll(
     @CurrentUser() user: AuthenticatedUser,
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
-    @Query('offset', new DefaultValuePipe(0), ParseIntPipe) offset: number,
+    @Query('offset', new DefaultValuePipe(0), ParseIntPipe) offset: number
   ) {
     return this.orderService.getUserOrders(user.id, limit, offset);
   }
@@ -87,10 +79,7 @@ export class OrderController {
   @ApiParam({ name: 'id', description: 'شناسه سفارش' })
   @ApiResponse({ status: 200, description: 'جزئيات سفارش' })
   @ApiResponse({ status: 404, description: 'سفارش يافت نشد' })
-  async findOne(
-    @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() user: AuthenticatedUser,
-  ) {
+  async findOne(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() _user: AuthenticatedUser) {
     const order = await this.orderService.getOrder(id);
     return order;
   }
@@ -100,7 +89,7 @@ export class OrderController {
   @ApiParam({ name: 'orderNumber', description: 'شماره سفارش' })
   async findByNumber(
     @Param('orderNumber') orderNumber: string,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() _user: AuthenticatedUser
   ) {
     return this.orderService.getOrderByNumber(orderNumber);
   }
@@ -108,10 +97,7 @@ export class OrderController {
   @Patch(':id/status')
   @ApiOperation({ summary: 'تغيير وضعيت سفارش' })
   @ApiParam({ name: 'id', description: 'شناسه سفارش' })
-  async updateStatus(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UpdateOrderStatusDto,
-  ) {
+  async updateStatus(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateOrderStatusDto) {
     return this.orderService.updateOrderStatus(id, {
       status: dto.status as any,
       adminNote: dto.adminNote,
@@ -122,10 +108,7 @@ export class OrderController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'لغو سفارش' })
   @ApiParam({ name: 'id', description: 'شناسه سفارش' })
-  async cancel(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body('reason') reason?: string,
-  ) {
+  async cancel(@Param('id', ParseUUIDPipe) id: string, @Body('reason') reason?: string) {
     return this.orderService.cancelOrder(id, reason);
   }
 
@@ -138,7 +121,7 @@ export class OrderController {
   async getSellerSubOrders(
     @CurrentUser() user: AuthenticatedUser,
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
-    @Query('offset', new DefaultValuePipe(0), ParseIntPipe) offset: number,
+    @Query('offset', new DefaultValuePipe(0), ParseIntPipe) offset: number
   ) {
     return this.orderService.getSellerSubOrders(user.vendorId, limit, offset);
   }
@@ -148,7 +131,7 @@ export class OrderController {
   @ApiParam({ name: 'id', description: 'شناسه زيرسفارش' })
   async updateSubOrderStatus(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UpdateSubOrderStatusDto,
+    @Body() dto: UpdateSubOrderStatusDto
   ) {
     return this.orderService.updateSubOrderStatus(id, {
       status: dto.status as any,
@@ -170,7 +153,7 @@ export class OrderController {
       destinationZone: string;
       items: Array<{ weight: number; length?: number; width?: number; height?: number }>;
       orderValue: number;
-    },
+    }
   ) {
     return this.shippingService.calculateShippingRate({
       sellerId: dto.sellerId,
@@ -191,13 +174,12 @@ export class OrderController {
   async getMySettlement(
     @CurrentUser() user: AuthenticatedUser,
     @Query('startDate') startDate: string,
-    @Query('endDate') endDate: string,
+    @Query('endDate') endDate: string
   ) {
     return this.settlementService.generateSettlementReport(
       user.vendorId,
       new Date(startDate),
-      new Date(endDate),
+      new Date(endDate)
     );
   }
 }
-

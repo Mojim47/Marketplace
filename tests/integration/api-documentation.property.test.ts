@@ -15,12 +15,12 @@
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
-import { describe, it, expect, beforeAll } from 'vitest';
-import * as fc from 'fast-check';
-import * as fs from 'fs';
-import * as path from 'path';
-import * as yaml from 'yaml';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { Logger } from '@nestjs/common';
+import * as fc from 'fast-check';
+import { beforeAll, describe, expect, it } from 'vitest';
+import * as yaml from 'yaml';
 
 const logger = new Logger('APIDocumentationTest');
 
@@ -148,8 +148,12 @@ describe('Property 24: API Documentation Completeness', () => {
 
         // Check that at least one response has content with schema
         const hasResponseSchema = Object.entries(responses).some(([statusCode, response]) => {
-          if (statusCode === '204') return true; // No content responses are valid
-          if (!response.content) return false;
+          if (statusCode === '204') {
+            return true; // No content responses are valid
+          }
+          if (!response.content) {
+            return false;
+          }
 
           return Object.values(response.content).some(
             (mediaType) => mediaType.schema !== undefined
@@ -190,8 +194,8 @@ describe('Property 24: API Documentation Completeness', () => {
         const hasRequestBody = operation.requestBody !== undefined;
         const hasSchema =
           hasRequestBody &&
-          operation.requestBody!.content !== undefined &&
-          Object.values(operation.requestBody!.content).some(
+          operation.requestBody?.content !== undefined &&
+          Object.values(operation.requestBody?.content).some(
             (mediaType) => mediaType.schema !== undefined
           );
 
@@ -222,7 +226,9 @@ describe('Property 24: API Documentation Completeness', () => {
             return true;
           }
           // Also allow if all non-error responses are 204
-          const nonErrorResponses = responseKeys.filter(k => !k.startsWith('4') && !k.startsWith('5'));
+          const nonErrorResponses = responseKeys.filter(
+            (k) => !k.startsWith('4') && !k.startsWith('5')
+          );
           if (nonErrorResponses.length === 1 && nonErrorResponses[0] === '204') {
             return true;
           }
@@ -243,7 +249,9 @@ describe('Property 24: API Documentation Completeness', () => {
             hasResponseExample = Object.values(response.content).some(
               (mediaType) => mediaType.example !== undefined
             );
-            if (hasResponseExample) break;
+            if (hasResponseExample) {
+              break;
+            }
           }
         }
 
@@ -415,7 +423,7 @@ describe('Property 24: Error Codes with Persian Descriptions', () => {
 
     fc.assert(
       fc.property(fc.constantFrom(...requiredCategories), (category) => {
-        const hasCategory = errorCodeKeys.some((code) => code.startsWith(category + '_'));
+        const hasCategory = errorCodeKeys.some((code) => code.startsWith(`${category}_`));
 
         if (!hasCategory) {
           logger.warn(`Missing error codes for category: ${category}`);
@@ -444,8 +452,12 @@ describe('Property 24: Documentation Quality', () => {
     // Collect all $ref references
     const refs: string[] = [];
     const collectRefs = (obj: unknown): void => {
-      if (obj === null || obj === undefined) return;
-      if (typeof obj !== 'object') return;
+      if (obj === null || obj === undefined) {
+        return;
+      }
+      if (typeof obj !== 'object') {
+        return;
+      }
 
       if (Array.isArray(obj)) {
         obj.forEach(collectRefs);

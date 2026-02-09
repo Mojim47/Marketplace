@@ -9,9 +9,12 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const variantClasses: Record<ButtonVariant, string> = {
-  primary: 'inline-flex w-full items-center justify-center rounded-full bg-primary-400 px-6 py-3 text-sm font-semibold text-neutral-900 transition hover:bg-primary-500',
-  ghost: 'inline-flex w-full items-center justify-center rounded-full border border-white/10 bg-white/5 px-6 py-3 text-sm font-semibold text-white transition hover:border-white/20',
-  outline: 'inline-flex w-full items-center justify-center rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white transition',
+  primary:
+    'inline-flex w-full items-center justify-center rounded-full bg-primary-400 px-6 py-3 text-sm font-semibold text-neutral-900 transition hover:bg-primary-500',
+  ghost:
+    'inline-flex w-full items-center justify-center rounded-full border border-white/10 bg-white/5 px-6 py-3 text-sm font-semibold text-white transition hover:border-white/20',
+  outline:
+    'inline-flex w-full items-center justify-center rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white transition',
 };
 
 export function Button({
@@ -33,7 +36,7 @@ export function Button({
       {...props}
     >
       <span className="inline-flex items-center gap-2">
-        {loading ? loadingText ?? 'در حال پردازش...' : children}
+        {loading ? (loadingText ?? 'در حال پردازش...') : children}
       </span>
     </button>
   );

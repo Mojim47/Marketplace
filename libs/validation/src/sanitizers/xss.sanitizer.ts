@@ -96,7 +96,9 @@ export function removeDangerousPatterns(input: string): string {
  * Sanitize a URL to prevent XSS
  */
 export function sanitizeUrl(url: string): string {
-  if (!url) return '';
+  if (!url) {
+    return '';
+  }
 
   const trimmed = url.trim().toLowerCase();
 
@@ -218,14 +220,12 @@ export function sanitizeObject<T extends Record<string, unknown>>(
  * Create a sanitization decorator for class-validator
  */
 export function Sanitize(options: SanitizeOptions = {}) {
-  return function (target: object, propertyKey: string) {
+  return (target: object, propertyKey: string) => {
     let value: string;
 
-    const getter = function () {
-      return value;
-    };
+    const getter = () => value;
 
-    const setter = function (newVal: string) {
+    const setter = (newVal: string) => {
       value = sanitize(newVal, options);
     };
 

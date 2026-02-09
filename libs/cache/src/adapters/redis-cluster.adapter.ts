@@ -4,19 +4,25 @@
 // High-availability Redis Cluster adapter with automatic failover
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { Cluster, ClusterNode, ClusterOptions } from 'ioredis';
+import { Cluster, type ClusterNode, type ClusterOptions } from 'ioredis';
 import type {
-  ICacheProvider,
-  CacheSetOptions,
+  CacheConfigBase,
   CacheGetOptions,
+  CacheHealthCheck,
   CacheScanOptions,
   CacheScanResult,
+  CacheSetOptions,
   CacheStats,
-  CacheHealthCheck,
-  CacheConfigBase,
+  ICacheProvider,
 } from '../interfaces/cache.interface';
 import { CacheProviderType } from '../interfaces/cache.interface';
-import type { IPubSubProvider, PubSubSubscription, PubSubMessageHandler, CacheHealth, CacheHealthMetrics } from '../interfaces/pubsub.interface';
+import type {
+  CacheHealth,
+  CacheHealthMetrics,
+  IPubSubProvider,
+  PubSubMessageHandler,
+  PubSubSubscription,
+} from '../interfaces/pubsub.interface';
 
 /**
  * Redis Cluster configuration
@@ -76,7 +82,7 @@ export class RedisClusterAdapter implements ICacheProvider, IPubSubProvider {
     };
 
     this.cluster = new Cluster(config.nodes, clusterOptions);
-    
+
     // Separate connection for subscriptions
     this.subscriber = new Cluster(config.nodes, {
       ...clusterOptions,
@@ -91,7 +97,7 @@ export class RedisClusterAdapter implements ICacheProvider, IPubSubProvider {
       const handlers = this.handlers.get(channel);
       if (handlers) {
         const parsed = this.deserialize(message);
-        handlers.forEach(handler => handler(parsed, channel));
+        handlers.forEach((handler) => handler(parsed, channel));
       }
     });
 
@@ -99,7 +105,7 @@ export class RedisClusterAdapter implements ICacheProvider, IPubSubProvider {
       const handlers = this.handlers.get(`pattern:${pattern}`);
       if (handlers) {
         const parsed = this.deserialize(message);
-        handlers.forEach(handler => handler(parsed, channel));
+        handlers.forEach((handler) => handler(parsed, channel));
       }
     });
   }
@@ -124,14 +130,15 @@ export class RedisClusterAdapter implements ICacheProvider, IPubSubProvider {
   }
 
   private deserialize<T>(value: string | null): T | null {
-    if (value === null) return null;
+    if (value === null) {
+      return null;
+    }
     try {
       return JSON.parse(value) as T;
     } catch {
       return value as unknown as T;
     }
   }
-
 
   // ═══════════════════════════════════════════════════════════════════════
   // Basic Operations
@@ -164,9 +171,15 @@ export class RedisClusterAdapter implements ICacheProvider, IPubSubProvider {
     const ttl = options?.ttl ?? this.defaultTtl;
 
     const args: string[] = [];
-    if (ttl > 0) args.push('EX', ttl.toString());
-    if (options?.nx) args.push('NX');
-    if (options?.xx) args.push('XX');
+    if (ttl > 0) {
+      args.push('EX', ttl.toString());
+    }
+    if (options?.nx) {
+      args.push('NX');
+    }
+    if (options?.xx) {
+      args.push('XX');
+    }
 
     const result = await this.cluster.set(prefixedKey, serialized, ...args);
 
@@ -203,14 +216,16 @@ export class RedisClusterAdapter implements ICacheProvider, IPubSubProvider {
   // ═══════════════════════════════════════════════════════════════════════
 
   async mget<T = unknown>(keys: string[]): Promise<Map<string, T | null>> {
-    if (keys.length === 0) return new Map();
+    if (keys.length === 0) {
+      return new Map();
+    }
 
     const result = new Map<string, T | null>();
-    
+
     // Cluster mget requires keys on same slot, use pipeline instead
     const pipeline = this.cluster.pipeline();
-    const prefixedKeys = keys.map(k => this.prefixKey(k));
-    
+    const prefixedKeys = keys.map((k) => this.prefixKey(k));
+
     for (const key of prefixedKeys) {
       pipeline.get(key);
     }
@@ -232,7 +247,9 @@ export class RedisClusterAdapter implements ICacheProvider, IPubSubProvider {
   }
 
   async mset<T = unknown>(entries: Map<string, T>, options?: CacheSetOptions): Promise<boolean> {
-    if (entries.size === 0) return true;
+    if (entries.size === 0) {
+      return true;
+    }
 
     const pipeline = this.cluster.pipeline();
     const ttl = options?.ttl ?? this.defaultTtl;
@@ -259,13 +276,15 @@ export class RedisClusterAdapter implements ICacheProvider, IPubSubProvider {
   }
 
   async mdelete(keys: string[]): Promise<number> {
-    if (keys.length === 0) return 0;
-    
+    if (keys.length === 0) {
+      return 0;
+    }
+
     const pipeline = this.cluster.pipeline();
     for (const key of keys) {
       pipeline.del(this.prefixKey(key));
     }
-    
+
     const results = await pipeline.exec();
     return results?.filter(([err, val]) => !err && val === 1).length || 0;
   }
@@ -280,13 +299,13 @@ export class RedisClusterAdapter implements ICacheProvider, IPubSubProvider {
 
     // Scan all master nodes in cluster
     const nodes = this.cluster.nodes('master');
-    
+
     for (const node of nodes) {
       let cursor = '0';
       do {
         const [nextCursor, keys] = await node.scan(cursor, 'MATCH', prefixedPattern, 'COUNT', 100);
         cursor = nextCursor;
-        allKeys.push(...keys.map(k => this.unprefixKey(k)));
+        allKeys.push(...keys.map((k) => this.unprefixKey(k)));
       } while (cursor !== '0');
     }
 
@@ -297,9 +316,9 @@ export class RedisClusterAdapter implements ICacheProvider, IPubSubProvider {
     // For cluster, scan is complex - use keys with limit
     const pattern = options?.pattern || '*';
     const count = options?.count || 100;
-    
+
     const allKeys = await this.keys(pattern);
-    const cursor = parseInt(options?.cursor || '0', 10);
+    const cursor = Number.parseInt(options?.cursor || '0', 10);
     const end = Math.min(cursor + count, allKeys.length);
 
     return {
@@ -311,7 +330,9 @@ export class RedisClusterAdapter implements ICacheProvider, IPubSubProvider {
 
   async deletePattern(pattern: string): Promise<number> {
     const keys = await this.keys(pattern);
-    if (keys.length === 0) return 0;
+    if (keys.length === 0) {
+      return 0;
+    }
     return this.mdelete(keys);
   }
 
@@ -323,7 +344,9 @@ export class RedisClusterAdapter implements ICacheProvider, IPubSubProvider {
     const tagSetKey = this.tagKey(tag);
     const keys = await this.cluster.smembers(tagSetKey);
 
-    if (keys.length === 0) return 0;
+    if (keys.length === 0) {
+      return 0;
+    }
 
     const pipeline = this.cluster.pipeline();
     for (const key of keys) {
@@ -347,15 +370,19 @@ export class RedisClusterAdapter implements ICacheProvider, IPubSubProvider {
   // Atomic Operations
   // ═══════════════════════════════════════════════════════════════════════
 
-  async increment(key: string, delta: number = 1): Promise<number> {
+  async increment(key: string, delta = 1): Promise<number> {
     const prefixedKey = this.prefixKey(key);
-    if (delta === 1) return this.cluster.incr(prefixedKey);
+    if (delta === 1) {
+      return this.cluster.incr(prefixedKey);
+    }
     return this.cluster.incrby(prefixedKey, delta);
   }
 
-  async decrement(key: string, delta: number = 1): Promise<number> {
+  async decrement(key: string, delta = 1): Promise<number> {
     const prefixedKey = this.prefixKey(key);
-    if (delta === 1) return this.cluster.decr(prefixedKey);
+    if (delta === 1) {
+      return this.cluster.decr(prefixedKey);
+    }
     return this.cluster.decrby(prefixedKey, delta);
   }
 
@@ -432,7 +459,7 @@ export class RedisClusterAdapter implements ICacheProvider, IPubSubProvider {
 
   async lrange<T = unknown>(key: string, start: number, stop: number): Promise<T[]> {
     const values = await this.cluster.lrange(this.prefixKey(key), start, stop);
-    return values.map(v => this.deserialize<T>(v)!);
+    return values.map((v) => this.deserialize<T>(v)!);
   }
 
   // ═══════════════════════════════════════════════════════════════════════
@@ -456,7 +483,7 @@ export class RedisClusterAdapter implements ICacheProvider, IPubSubProvider {
 
   async smembers<T = unknown>(key: string): Promise<T[]> {
     const members = await this.cluster.smembers(this.prefixKey(key));
-    return members.map(m => this.deserialize<T>(m)!);
+    return members.map((m) => this.deserialize<T>(m)!);
   }
 
   async scard(key: string): Promise<number> {
@@ -482,7 +509,7 @@ export class RedisClusterAdapter implements ICacheProvider, IPubSubProvider {
       await this.subscriber.subscribe(channel);
     }
 
-    this.handlers.get(channel)!.add(handler as PubSubMessageHandler);
+    this.handlers.get(channel)?.add(handler as PubSubMessageHandler);
 
     const subscription: PubSubSubscription = {
       id,
@@ -516,7 +543,7 @@ export class RedisClusterAdapter implements ICacheProvider, IPubSubProvider {
       await this.subscriber.psubscribe(pattern);
     }
 
-    this.handlers.get(handlerKey)!.add(handler as PubSubMessageHandler);
+    this.handlers.get(handlerKey)?.add(handler as PubSubMessageHandler);
 
     const subscription: PubSubSubscription = {
       id,
@@ -600,13 +627,13 @@ export class RedisClusterAdapter implements ICacheProvider, IPubSubProvider {
         return match?.[1];
       };
 
-      totalHits += parseInt(parseInfo(info, 'keyspace_hits') || '0', 10);
-      totalMisses += parseInt(parseInfo(info, 'keyspace_misses') || '0', 10);
-      totalMemory += parseInt(parseInfo(memory, 'used_memory') || '0', 10);
+      totalHits += Number.parseInt(parseInfo(info, 'keyspace_hits') || '0', 10);
+      totalMisses += Number.parseInt(parseInfo(info, 'keyspace_misses') || '0', 10);
+      totalMemory += Number.parseInt(parseInfo(memory, 'used_memory') || '0', 10);
 
       const dbMatch = keyspace.match(/db\d+:keys=(\d+)/);
       if (dbMatch) {
-        totalKeys += parseInt(dbMatch[1], 10);
+        totalKeys += Number.parseInt(dbMatch[1], 10);
       }
     }
 
@@ -627,8 +654,8 @@ export class RedisClusterAdapter implements ICacheProvider, IPubSubProvider {
 
     try {
       const nodes = this.cluster.nodes('master');
-      const results = await Promise.all(nodes.map(node => node.ping()));
-      const allHealthy = results.every(r => r === 'PONG');
+      const results = await Promise.all(nodes.map((node) => node.ping()));
+      const allHealthy = results.every((r) => r === 'PONG');
 
       return {
         healthy: allHealthy,
@@ -656,7 +683,7 @@ export class RedisClusterAdapter implements ICacheProvider, IPubSubProvider {
     try {
       const nodes = this.cluster.nodes('master');
       const slaveNodes = this.cluster.nodes('slave');
-      
+
       let totalMemory = 0;
       let peakMemory = 0;
       let totalKeys = 0;
@@ -670,7 +697,7 @@ export class RedisClusterAdapter implements ICacheProvider, IPubSubProvider {
 
         const parseInfo = (text: string, key: string): number => {
           const match = text.match(new RegExp(`${key}:([^\\r\\n]+)`));
-          return parseInt(match?.[1] || '0', 10);
+          return Number.parseInt(match?.[1] || '0', 10);
         };
 
         totalMemory += parseInfo(memory, 'used_memory');
@@ -679,14 +706,14 @@ export class RedisClusterAdapter implements ICacheProvider, IPubSubProvider {
 
         const dbMatch = keyspace.match(/db\d+:keys=(\d+),expires=(\d+)/);
         if (dbMatch) {
-          totalKeys += parseInt(dbMatch[1], 10);
-          totalExpires += parseInt(dbMatch[2], 10);
+          totalKeys += Number.parseInt(dbMatch[1], 10);
+          totalExpires += Number.parseInt(dbMatch[2], 10);
         }
       }
 
       const clusterInfo = await this.cluster.cluster('INFO');
-      const slotsOk = (clusterInfo.match(/cluster_slots_ok:(\d+)/)?.[1]) || '0';
-      const slotsFail = (clusterInfo.match(/cluster_slots_fail:(\d+)/)?.[1]) || '0';
+      const slotsOk = clusterInfo.match(/cluster_slots_ok:(\d+)/)?.[1] || '0';
+      const slotsFail = clusterInfo.match(/cluster_slots_fail:(\d+)/)?.[1] || '0';
 
       const metrics: CacheHealthMetrics = {
         connections: {
@@ -701,8 +728,8 @@ export class RedisClusterAdapter implements ICacheProvider, IPubSubProvider {
         cluster: {
           enabled: true,
           nodes: nodes.length + slaveNodes.length,
-          slotsOk: parseInt(slotsOk, 10),
-          slotsFail: parseInt(slotsFail, 10),
+          slotsOk: Number.parseInt(slotsOk, 10),
+          slotsFail: Number.parseInt(slotsFail, 10),
         },
         opsPerSecond,
         keyspace: {

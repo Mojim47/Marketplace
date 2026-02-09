@@ -56,7 +56,14 @@ export interface UploadOptions {
   /** KMS key ID for encryption */
   kmsKeyId?: string;
   /** Storage class (S3-specific) */
-  storageClass?: 'STANDARD' | 'REDUCED_REDUNDANCY' | 'STANDARD_IA' | 'ONEZONE_IA' | 'INTELLIGENT_TIERING' | 'GLACIER' | 'DEEP_ARCHIVE';
+  storageClass?:
+    | 'STANDARD'
+    | 'REDUCED_REDUNDANCY'
+    | 'STANDARD_IA'
+    | 'ONEZONE_IA'
+    | 'INTELLIGENT_TIERING'
+    | 'GLACIER'
+    | 'DEEP_ARCHIVE';
   /** Tags for the file */
   tags?: Record<string, string>;
 }
@@ -193,7 +200,7 @@ export interface StorageHealthCheck {
 export interface IStorageProvider {
   /** Provider type identifier */
   readonly providerType: StorageProviderType;
-  
+
   /** Bucket/container name */
   readonly bucket: string;
 

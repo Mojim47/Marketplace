@@ -1,5 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { getCurrentCorrelationId, getCurrentCorrelationContext } from '../_middleware/correlation-id.middleware';
+import {
+  getCurrentCorrelationContext,
+  getCurrentCorrelationId,
+} from '../_middleware/correlation-id.middleware';
 
 /**
  * Structured log entry format
@@ -23,13 +26,13 @@ export interface StructuredLogEntry {
 
 /**
  * Structured Logging Service
- * 
+ *
  * Provides JSON-formatted logging with automatic correlation ID inclusion:
  * - All logs include correlation ID when available
  * - Structured JSON format for log aggregation
  * - Error logs include full error details
  * - Supports metadata for additional context
- * 
+ *
  * Validates: Requirements 7.5
  */
 @Injectable()
@@ -48,7 +51,7 @@ export class LoggingService {
   ]);
 
   constructor() {
-    this.serviceName = process.env['SERVICE_NAME'] || 'nextgen-api';
+    this.serviceName = process.env.SERVICE_NAME || 'nextgen-api';
   }
 
   /**
@@ -59,10 +62,10 @@ export class LoggingService {
     message: string,
     context?: string,
     metadata?: Record<string, unknown>,
-    error?: Error,
+    error?: Error
   ): StructuredLogEntry {
     const correlationContext = getCurrentCorrelationContext();
-    
+
     const entry: StructuredLogEntry = {
       timestamp: new Date().toISOString(),
       level,
@@ -105,7 +108,7 @@ export class LoggingService {
         return '[REDACTED]';
       }
       if (Array.isArray(value)) {
-        return value.map(item => redact(item));
+        return value.map((item) => redact(item));
       }
       if (value && typeof value === 'object') {
         const obj: Record<string, unknown> = {};
@@ -132,9 +135,8 @@ export class LoggingService {
    */
   log(message: string, context?: string, metadata?: Record<string, unknown>): void {
     const entry = this.createLogEntry('info', message, context, metadata);
-    
-    if (process.env['LOG_FORMAT'] === 'json') {
-      console.log(this.formatAsJson(entry));
+
+    if (process.env.LOG_FORMAT === 'json') {
     } else {
       const prefix = entry.correlationId ? `[${entry.correlationId}] ` : '';
       this.logger.log(`${prefix}${message}`, context);
@@ -144,14 +146,19 @@ export class LoggingService {
   /**
    * Log at ERROR level with error details
    * All errors include correlation ID for debugging
-   * 
+   *
    * Validates: Requirements 7.5
    */
-  error(message: string, error?: Error | string, context?: string, metadata?: Record<string, unknown>): void {
+  error(
+    message: string,
+    error?: Error | string,
+    context?: string,
+    metadata?: Record<string, unknown>
+  ): void {
     const errorObj = typeof error === 'string' ? new Error(error) : error;
     const entry = this.createLogEntry('error', message, context, metadata, errorObj);
-    
-    if (process.env['LOG_FORMAT'] === 'json') {
+
+    if (process.env.LOG_FORMAT === 'json') {
       console.error(this.formatAsJson(entry));
     } else {
       const prefix = entry.correlationId ? `[${entry.correlationId}] ` : '';
@@ -164,8 +171,8 @@ export class LoggingService {
    */
   warn(message: string, context?: string, metadata?: Record<string, unknown>): void {
     const entry = this.createLogEntry('warn', message, context, metadata);
-    
-    if (process.env['LOG_FORMAT'] === 'json') {
+
+    if (process.env.LOG_FORMAT === 'json') {
       console.warn(this.formatAsJson(entry));
     } else {
       const prefix = entry.correlationId ? `[${entry.correlationId}] ` : '';
@@ -178,8 +185,8 @@ export class LoggingService {
    */
   debug(message: string, context?: string, metadata?: Record<string, unknown>): void {
     const entry = this.createLogEntry('debug', message, context, metadata);
-    
-    if (process.env['LOG_FORMAT'] === 'json') {
+
+    if (process.env.LOG_FORMAT === 'json') {
       console.debug(this.formatAsJson(entry));
     } else {
       const prefix = entry.correlationId ? `[${entry.correlationId}] ` : '';
@@ -192,9 +199,8 @@ export class LoggingService {
    */
   verbose(message: string, context?: string, metadata?: Record<string, unknown>): void {
     const entry = this.createLogEntry('verbose', message, context, metadata);
-    
-    if (process.env['LOG_FORMAT'] === 'json') {
-      console.log(this.formatAsJson(entry));
+
+    if (process.env.LOG_FORMAT === 'json') {
     } else {
       const prefix = entry.correlationId ? `[${entry.correlationId}] ` : '';
       this.logger.verbose(`${prefix}${message}`, context);
@@ -204,7 +210,13 @@ export class LoggingService {
   /**
    * Log HTTP request with correlation
    */
-  logRequest(method: string, url: string, statusCode: number, duration: number, metadata?: Record<string, unknown>): void {
+  logRequest(
+    method: string,
+    url: string,
+    statusCode: number,
+    duration: number,
+    metadata?: Record<string, unknown>
+  ): void {
     const entry = this.createLogEntry(
       'info',
       `${method} ${url} ${statusCode} - ${duration}ms`,
@@ -217,11 +229,10 @@ export class LoggingService {
           statusCode,
           duration,
         },
-      },
+      }
     );
-    
-    if (process.env['LOG_FORMAT'] === 'json') {
-      console.log(this.formatAsJson(entry));
+
+    if (process.env.LOG_FORMAT === 'json') {
     } else {
       const prefix = entry.correlationId ? `[${entry.correlationId}] ` : '';
       this.logger.log(`${prefix}${method} ${url} ${statusCode} - ${duration}ms`);
@@ -245,7 +256,7 @@ export class LoggingService {
     message: string,
     context?: string,
     metadata?: Record<string, unknown>,
-    error?: Error,
+    error?: Error
   ): StructuredLogEntry {
     return this.createLogEntry(level, message, context, metadata, error);
   }

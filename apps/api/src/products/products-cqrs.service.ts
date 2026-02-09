@@ -2,7 +2,7 @@
  * Products CQRS Service - CQRS Pattern Implementation
  * Enterprise Scalability Architecture
  * Requirements: 3.1, 3.2, 5.1
- * 
+ *
  * Features:
  * - Write operations go to PostgreSQL (Write_DB)
  * - Read operations go to MeiliSearch (Read_DB)
@@ -10,11 +10,17 @@
  * - Circuit breaker for Read_DB fault tolerance
  */
 
-import { Injectable, NotFoundException, OnModuleInit, Logger } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
+import { Injectable, Logger, NotFoundException, OnModuleInit } from '@nestjs/common';
+import type {
+  DomainEvent,
+  ListOptions,
+  PaginatedResult,
+  SearchQuery,
+  SearchResult,
+} from '@nextgen/cqrs';
 import { MeiliSearch } from 'meilisearch';
 import { v4 as uuidv4 } from 'uuid';
-import type { DomainEvent, SearchQuery, SearchResult, ListOptions, PaginatedResult } from '@nextgen/cqrs';
+import { PrismaService } from '../database/prisma.service';
 
 /** Product entity interface */
 interface Product {
@@ -89,15 +95,15 @@ export class ProductsCqrsService implements OnModuleInit {
     // Initialize MeiliSearch client
     const meiliHost = process.env.MEILISEARCH_HOST;
     const meiliKey = process.env.MEILISEARCH_API_KEY || '';
-    
+
     if (!meiliHost) {
       this.logger.warn('MEILISEARCH_HOST not configured, using PostgreSQL for reads');
       return;
     }
-    
+
     try {
       this.meiliClient = new MeiliSearch({ host: meiliHost, apiKey: meiliKey });
-      
+
       // Configure index settings
       const index = this.meiliClient.index(this.INDEX_NAME);
       await index.updateSettings({
@@ -105,7 +111,7 @@ export class ProductsCqrsService implements OnModuleInit {
         filterableAttributes: ['status', 'categoryId', 'vendorId', 'price'],
         sortableAttributes: ['price', 'createdAt', 'name'],
       });
-      
+
       this.logger.log('MeiliSearch client initialized');
     } catch (error) {
       this.logger.warn('MeiliSearch not available, using PostgreSQL for reads');
@@ -159,7 +165,7 @@ export class ProductsCqrsService implements OnModuleInit {
       // Verify ownership
       const existing = await tx.product.findFirst({ where: { id, vendorId } });
       if (!existing) {
-        throw new NotFoundException('ãÍÕæá íÇÝÊ äÔÏ íÇ ÏÓÊÑÓí äÏÇÑíÏ');
+        throw new NotFoundException('ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½');
       }
 
       // Update in Write_DB
@@ -189,7 +195,7 @@ export class ProductsCqrsService implements OnModuleInit {
       // Verify ownership
       const existing = await tx.product.findFirst({ where: { id, vendorId } });
       if (!existing) {
-        throw new NotFoundException('ãÍÕæá íÇÝÊ äÔÏ íÇ ÏÓÊÑÓí äÏÇÑíÏ');
+        throw new NotFoundException('ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½');
       }
 
       // Delete from Write_DB
@@ -224,7 +230,7 @@ export class ProductsCqrsService implements OnModuleInit {
         }
 
         if (query.sort && query.sort.length > 0) {
-          options.sort = query.sort.map(s => `${s.field}:${s.direction}`);
+          options.sort = query.sort.map((s) => `${s.field}:${s.direction}`);
         }
 
         const response = await index.search(query.query, options);
@@ -271,7 +277,7 @@ export class ProductsCqrsService implements OnModuleInit {
         }
 
         if (options.sort && options.sort.length > 0) {
-          searchOptions.sort = options.sort.map(s => `${s.field}:${s.direction}`);
+          searchOptions.sort = options.sort.map((s) => `${s.field}:${s.direction}`);
         }
 
         const response = await index.search('', searchOptions);
@@ -308,14 +314,14 @@ export class ProductsCqrsService implements OnModuleInit {
         }
 
         const index = this.meiliClient.index(this.INDEX_NAME);
-        return await index.getDocument(id) as Product;
+        return (await index.getDocument(id)) as Product;
       },
       // Fallback: return null (will throw NotFoundException)
       () => null
     );
 
     if (!product) {
-      throw new NotFoundException('ãÍÕæá íÇÝÊ äÔÏ');
+      throw new NotFoundException('ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½');
     }
 
     return product;
@@ -325,7 +331,9 @@ export class ProductsCqrsService implements OnModuleInit {
    * Find all products with filters - Read from MeiliSearch
    * Property 11: Read Operation Routing
    */
-  async findAll(filters?: { status?: string; categoryId?: string; search?: string }): Promise<Product[]> {
+  async findAll(filters?: { status?: string; categoryId?: string; search?: string }): Promise<
+    Product[]
+  > {
     const result = await this.search({
       query: filters?.search || '',
       filters: {
@@ -497,7 +505,7 @@ export class ProductsCqrsService implements OnModuleInit {
       if (value === null || value === undefined) continue;
 
       if (Array.isArray(value)) {
-        const values = value.map(v => typeof v === 'string' ? `"${v}"` : v).join(', ');
+        const values = value.map((v) => (typeof v === 'string' ? `"${v}"` : v)).join(', ');
         conditions.push(`${key} IN [${values}]`);
       } else if (typeof value === 'string') {
         conditions.push(`${key} = "${value}"`);

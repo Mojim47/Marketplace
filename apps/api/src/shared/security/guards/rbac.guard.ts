@@ -2,32 +2,32 @@
  * ???????????????????????????????????????????????????????????????????????????
  * NextGen Marketplace - RBAC Guard
  * ???????????????????????????????????????????????????????????????????????????
- * 
+ *
  * Role-Based Access Control guard that checks user permissions based on
  * their assigned roles. Supports role hierarchy and permission inheritance.
- * 
+ *
  * Features:
  * - Role-based access control
  * - Role hierarchy with inheritance
  * - Permission-based access control
  * - Audit logging for authorization failures
  * - Generic error messages (security best practice)
- * 
+ *
  * @module @nextgen/api/shared/security
  * Requirements: 1.2
  */
 
 import {
-  Injectable,
   CanActivate,
   ExecutionContext,
   ForbiddenException,
-  SetMetadata,
+  Injectable,
   Logger,
+  SetMetadata,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Request } from 'express';
 import { JWTPayload } from '@nextgen/security';
+import { Request } from 'express';
 
 // Metadata keys
 export const ROLES_KEY = 'roles';
@@ -35,7 +35,7 @@ export const PERMISSIONS_KEY = 'permissions';
 
 /**
  * Decorator to specify required roles for an endpoint
- * 
+ *
  * @example
  * @Roles('ADMIN', 'SUPER_ADMIN')
  * @Get('admin/users')
@@ -45,7 +45,7 @@ export const Roles = (...roles: string[]) => SetMetadata(ROLES_KEY, roles);
 
 /**
  * Decorator to specify required permissions for an endpoint
- * 
+ *
  * @example
  * @Permissions('users:read', 'users:write')
  * @Get('users')
@@ -72,33 +72,33 @@ export const ROLE_HIERARCHY: Record<string, string[]> = {
 export const ROLE_PERMISSIONS: Record<string, string[]> = {
   SUPER_ADMIN: ['*'], // All permissions
   ADMIN: [
-    'users:read', 'users:write', 'users:delete',
-    'products:read', 'products:write', 'products:delete',
-    'orders:read', 'orders:write', 'orders:delete',
-    'vendors:read', 'vendors:write', 'vendors:approve',
-    'reports:read', 'settings:read', 'settings:write',
+    'users:read',
+    'users:write',
+    'users:delete',
+    'products:read',
+    'products:write',
+    'products:delete',
+    'orders:read',
+    'orders:write',
+    'orders:delete',
+    'vendors:read',
+    'vendors:write',
+    'vendors:approve',
+    'reports:read',
+    'settings:read',
+    'settings:write',
   ],
   SUPPORT: [
     'users:read',
     'products:read',
-    'orders:read', 'orders:write',
+    'orders:read',
+    'orders:write',
     'vendors:read',
     'reports:read',
   ],
-  SELLER: [
-    'products:read', 'products:write',
-    'orders:read',
-    'reports:read',
-  ],
-  EXECUTOR: [
-    'projects:read', 'projects:write',
-    'bids:read', 'bids:write',
-  ],
-  USER: [
-    'profile:read', 'profile:write',
-    'orders:read',
-    'products:read',
-  ],
+  SELLER: ['products:read', 'products:write', 'orders:read', 'reports:read'],
+  EXECUTOR: ['projects:read', 'projects:write', 'bids:read', 'bids:write'],
+  USER: ['profile:read', 'profile:write', 'orders:read', 'products:read'],
 };
 
 /**
@@ -110,10 +110,10 @@ interface AuthenticatedRequest extends Request {
 
 /**
  * RBAC Guard
- * 
+ *
  * Checks if the authenticated user has the required roles or permissions
  * to access the requested resource.
- * 
+ *
  * @example
  * // Apply to specific controller
  * @UseGuards(JWTAuthGuard, RBACGuard)
@@ -140,8 +140,10 @@ export class RBACGuard implements CanActivate {
     ]);
 
     // No roles or permissions required - allow access
-    if ((!requiredRoles || requiredRoles.length === 0) && 
-        (!requiredPermissions || requiredPermissions.length === 0)) {
+    if (
+      (!requiredRoles || requiredRoles.length === 0) &&
+      (!requiredPermissions || requiredPermissions.length === 0)
+    ) {
       return true;
     }
 
@@ -151,7 +153,7 @@ export class RBACGuard implements CanActivate {
     // User not authenticated
     if (!user) {
       this.logAuthorizationFailure(request, 'NO_USER', requiredRoles, requiredPermissions);
-      throw new ForbiddenException('ÏÓÊÑÓí ÛíÑãÌÇÒ');
+      throw new ForbiddenException('ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½');
     }
 
     const userRole = (user.role || '').toUpperCase();
@@ -160,8 +162,14 @@ export class RBACGuard implements CanActivate {
     if (requiredRoles && requiredRoles.length > 0) {
       const hasRole = this.checkRoleWithHierarchy(userRole, requiredRoles);
       if (!hasRole) {
-        this.logAuthorizationFailure(request, userRole, requiredRoles, requiredPermissions, user.sub);
-        throw new ForbiddenException('ÏÓÊÑÓí ÛíÑãÌÇÒ');
+        this.logAuthorizationFailure(
+          request,
+          userRole,
+          requiredRoles,
+          requiredPermissions,
+          user.sub
+        );
+        throw new ForbiddenException('ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½');
       }
     }
 
@@ -169,8 +177,14 @@ export class RBACGuard implements CanActivate {
     if (requiredPermissions && requiredPermissions.length > 0) {
       const hasPermission = this.checkPermissions(userRole, requiredPermissions);
       if (!hasPermission) {
-        this.logAuthorizationFailure(request, userRole, requiredRoles, requiredPermissions, user.sub);
-        throw new ForbiddenException('ÏÓÊÑÓí ÛíÑãÌÇÒ');
+        this.logAuthorizationFailure(
+          request,
+          userRole,
+          requiredRoles,
+          requiredPermissions,
+          user.sub
+        );
+        throw new ForbiddenException('ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½');
       }
     }
 
@@ -181,7 +195,7 @@ export class RBACGuard implements CanActivate {
    * Check if user role matches required roles, considering hierarchy
    */
   private checkRoleWithHierarchy(userRole: string, requiredRoles: string[]): boolean {
-    const normalizedRequired = requiredRoles.map(r => r.toUpperCase());
+    const normalizedRequired = requiredRoles.map((r) => r.toUpperCase());
     const normalizedUserRole = userRole.toUpperCase();
 
     // Direct match
@@ -191,7 +205,7 @@ export class RBACGuard implements CanActivate {
 
     // Check hierarchy - does user's role inherit any required role?
     const inheritedRoles = ROLE_HIERARCHY[normalizedUserRole] || [];
-    return normalizedRequired.some(required => inheritedRoles.includes(required));
+    return normalizedRequired.some((required) => inheritedRoles.includes(required));
   }
 
   /**
@@ -207,9 +221,10 @@ export class RBACGuard implements CanActivate {
     }
 
     // Check if user has all required permissions
-    return requiredPermissions.every(permission => 
-      rolePermissions.includes(permission) ||
-      rolePermissions.some(p => this.matchPermissionPattern(p, permission))
+    return requiredPermissions.every(
+      (permission) =>
+        rolePermissions.includes(permission) ||
+        rolePermissions.some((p) => this.matchPermissionPattern(p, permission))
     );
   }
 
@@ -221,13 +236,13 @@ export class RBACGuard implements CanActivate {
 
     // Add direct role permissions
     const directPermissions = ROLE_PERMISSIONS[role] || [];
-    directPermissions.forEach(p => permissions.add(p));
+    directPermissions.forEach((p) => permissions.add(p));
 
     // Add inherited role permissions
     const inheritedRoles = ROLE_HIERARCHY[role] || [];
     for (const inheritedRole of inheritedRoles) {
       const inheritedPermissions = ROLE_PERMISSIONS[inheritedRole] || [];
-      inheritedPermissions.forEach(p => permissions.add(p));
+      inheritedPermissions.forEach((p) => permissions.add(p));
     }
 
     return Array.from(permissions);
@@ -239,7 +254,7 @@ export class RBACGuard implements CanActivate {
    */
   private matchPermissionPattern(pattern: string, permission: string): boolean {
     if (pattern === '*') return true;
-    
+
     const patternParts = pattern.split(':');
     const permissionParts = permission.split(':');
 
@@ -247,9 +262,7 @@ export class RBACGuard implements CanActivate {
       return false;
     }
 
-    return patternParts.every((part, index) => 
-      part === '*' || part === permissionParts[index]
-    );
+    return patternParts.every((part, index) => part === '*' || part === permissionParts[index]);
   }
 
   /**
@@ -260,7 +273,7 @@ export class RBACGuard implements CanActivate {
     userRole: string,
     requiredRoles?: string[],
     requiredPermissions?: string[],
-    userId?: string,
+    userId?: string
   ): void {
     const logData = {
       event: 'AUTHORIZATION_FAILURE',

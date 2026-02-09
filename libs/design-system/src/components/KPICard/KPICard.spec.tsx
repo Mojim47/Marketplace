@@ -1,25 +1,29 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { KPICard } from './KPICard';
 
 describe('KPICard Component', () => {
-  let intersectionCallback: IntersectionObserverCallback;
-  
+  let _intersectionCallback: IntersectionObserverCallback;
+
   beforeEach(() => {
     // Mock IntersectionObserver to trigger visibility immediately
     const mockIntersectionObserver = vi.fn((callback: IntersectionObserverCallback) => {
-      intersectionCallback = callback;
+      _intersectionCallback = callback;
       return {
         observe: vi.fn((element: Element) => {
           // Trigger intersection immediately
-          callback([{ isIntersecting: true, target: element } as IntersectionObserverEntry], {} as IntersectionObserver);
+          callback(
+            [{ isIntersecting: true, target: element } as IntersectionObserverEntry],
+            {} as IntersectionObserver
+          );
         }),
         unobserve: vi.fn(),
         disconnect: vi.fn(),
       };
     });
-    window.IntersectionObserver = mockIntersectionObserver as unknown as typeof IntersectionObserver;
-    
+    window.IntersectionObserver =
+      mockIntersectionObserver as unknown as typeof IntersectionObserver;
+
     // Mock requestAnimationFrame to execute immediately
     vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => {
       cb(performance.now() + 2000); // Simulate animation complete
@@ -91,12 +95,12 @@ describe('KPICard Component', () => {
 
   it('should render gradient variant', () => {
     const { container } = render(
-      <KPICard 
-        title="Sales" 
-        value={1000} 
-        variant="gradient" 
-        gradientFrom="from-blue-500" 
-        gradientTo="to-purple-600" 
+      <KPICard
+        title="Sales"
+        value={1000}
+        variant="gradient"
+        gradientFrom="from-blue-500"
+        gradientTo="to-purple-600"
       />
     );
     expect(container.querySelector('.bg-gradient-to-br')).toBeInTheDocument();
@@ -117,17 +121,17 @@ describe('KPICard Component', () => {
   it('should be clickable when onClick provided', () => {
     const onClick = vi.fn();
     const { container } = render(<KPICard title="Sales" value={1000} onClick={onClick} />);
-    
+
     const card = container.firstChild as HTMLElement;
     fireEvent.click(card);
-    
+
     expect(onClick).toHaveBeenCalled();
   });
 
   it('should have cursor-pointer when clickable', () => {
     const onClick = vi.fn();
     const { container } = render(<KPICard title="Sales" value={1000} onClick={onClick} />);
-    
+
     const card = container.firstChild as HTMLElement;
     expect(card).toHaveClass('cursor-pointer');
   });
@@ -141,7 +145,7 @@ describe('KPICard Component', () => {
   it('should have hover effects when clickable', () => {
     const onClick = vi.fn();
     const { container } = render(<KPICard title="Sales" value={1000} onClick={onClick} />);
-    
+
     const card = container.firstChild as HTMLElement;
     expect(card).toHaveClass('hover:shadow-lg');
     expect(card).toHaveClass('hover:-translate-y-1');

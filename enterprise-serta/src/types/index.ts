@@ -82,7 +82,7 @@ export enum SecurityPatternType {
   WEAK_VALIDATION = 'weak_validation',
   MISSING_AUTH = 'missing_auth',
   RATE_LIMIT_BYPASS = 'rate_limit_bypass',
-  TENANT_ISOLATION_BYPASS = 'tenant_isolation_bypass'
+  TENANT_ISOLATION_BYPASS = 'tenant_isolation_bypass',
 }
 
 export enum SecuritySeverity {
@@ -90,7 +90,7 @@ export enum SecuritySeverity {
   HIGH = 'high',
   MEDIUM = 'medium',
   LOW = 'low',
-  INFO = 'info'
+  INFO = 'info',
 }
 
 export interface SecurityRisk {
@@ -126,7 +126,7 @@ export enum EmbeddingType {
   SECURITY_PATTERN = 'security_pattern',
   DEPENDENCY_FLOW = 'dependency_flow',
   THREAT_SHAPE = 'threat_shape',
-  BUSINESS_LOGIC = 'business_logic'
+  BUSINESS_LOGIC = 'business_logic',
 }
 
 export interface EmbeddingMetadata {
@@ -170,7 +170,7 @@ export enum NodeType {
   POLICY = 'policy',
   CONTAINER = 'container',
   ROLE = 'role',
-  TRUST_BOUNDARY = 'trust_boundary'
+  TRUST_BOUNDARY = 'trust_boundary',
 }
 
 export interface NodeMetadata {
@@ -187,7 +187,7 @@ export enum ExposureLevel {
   AUTHENTICATED = 'authenticated',
   PRIVILEGED = 'privileged',
   INTERNAL = 'internal',
-  PRIVATE = 'private'
+  PRIVATE = 'private',
 }
 
 export interface ThreatEdge {
@@ -208,7 +208,7 @@ export enum EdgeType {
   ESCALATES_TO = 'escalates_to',
   EXPOSES_TO = 'exposes_to',
   VALIDATES_WITH = 'validates_with',
-  CACHES_IN = 'caches_in'
+  CACHES_IN = 'caches_in',
 }
 
 export interface EdgeMetadata {
@@ -271,7 +271,7 @@ export enum AgentType {
   API_SURFACE_ANALYZER = 'api_surface_analyzer',
   COMPLIANCE_AGENT = 'compliance_agent',
   FINANCIAL_RISK_AGENT = 'financial_risk_agent',
-  ML_EXPLOIT_GENERATOR = 'ml_exploit_generator'
+  ML_EXPLOIT_GENERATOR = 'ml_exploit_generator',
 }
 
 export enum AgentStatus {
@@ -279,7 +279,7 @@ export enum AgentStatus {
   RUNNING = 'running',
   COMPLETED = 'completed',
   FAILED = 'failed',
-  PAUSED = 'paused'
+  PAUSED = 'paused',
 }
 
 export interface AgentFinding {
@@ -302,7 +302,7 @@ export enum FindingType {
   MISCONFIGURATION = 'misconfiguration',
   PERFORMANCE_ISSUE = 'performance_issue',
   COMPLIANCE_VIOLATION = 'compliance_violation',
-  BUSINESS_LOGIC_FLAW = 'business_logic_flaw'
+  BUSINESS_LOGIC_FLAW = 'business_logic_flaw',
 }
 
 export interface Evidence {
@@ -318,7 +318,7 @@ export enum EvidenceType {
   NETWORK_TRACE = 'network_trace',
   DATABASE_QUERY = 'database_query',
   CONFIG_FILE = 'config_file',
-  API_RESPONSE = 'api_response'
+  API_RESPONSE = 'api_response',
 }
 
 export interface ExploitChain {
@@ -374,7 +374,7 @@ export enum AnalysisStatus {
   RUNNING = 'running',
   COMPLETED = 'completed',
   FAILED = 'failed',
-  CANCELLED = 'cancelled'
+  CANCELLED = 'cancelled',
 }
 
 export interface AnalysisSummary {
@@ -407,7 +407,7 @@ export enum Priority {
   CRITICAL = 'critical',
   HIGH = 'high',
   MEDIUM = 'medium',
-  LOW = 'low'
+  LOW = 'low',
 }
 
 export enum RecommendationCategory {
@@ -416,7 +416,7 @@ export enum RecommendationCategory {
   ARCHITECTURE = 'architecture',
   COMPLIANCE = 'compliance',
   BUSINESS_LOGIC = 'business_logic',
-  INFRASTRUCTURE = 'infrastructure'
+  INFRASTRUCTURE = 'infrastructure',
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -466,5 +466,5 @@ export enum ReportFormat {
   HTML = 'html',
   PDF = 'pdf',
   MARKDOWN = 'markdown',
-  SARIF = 'sarif'
+  SARIF = 'sarif',
 }

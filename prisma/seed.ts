@@ -8,8 +8,6 @@ import { hash } from 'bcryptjs';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Seeding Ultra-Fast 7-Layer Architecture...');
-
   // Create default tenant
   const tenant = await prisma.tenant.upsert({
     where: { slug: 'default' },
@@ -33,8 +31,6 @@ async function main() {
     },
   });
 
-  console.log('✅ Created tenant:', tenant.name);
-
   // Set RLS context for seeding
   await prisma.$executeRaw`
     SELECT set_security_context(
@@ -53,12 +49,12 @@ async function main() {
 
   // Create admin user
   const adminPassword = await hash(adminSeedPassword, 12);
-  const adminUser = await prisma.user.upsert({
-    where: { 
+  const _adminUser = await prisma.user.upsert({
+    where: {
       tenant_id_email: {
         tenant_id: tenant.id,
-        email: 'admin@nextgen.ir'
-      }
+        email: 'admin@nextgen.ir',
+      },
     },
     update: {},
     create: {
@@ -76,16 +72,14 @@ async function main() {
     },
   });
 
-  console.log('✅ Created admin user:', adminUser.email);
-
   // Create seller user
   const sellerPassword = await hash(sellerSeedPassword, 12);
   const sellerUser = await prisma.user.upsert({
-    where: { 
+    where: {
       tenant_id_email: {
         tenant_id: tenant.id,
-        email: 'seller@nextgen.ir'
-      }
+        email: 'seller@nextgen.ir',
+      },
     },
     update: {},
     create: {
@@ -103,16 +97,14 @@ async function main() {
     },
   });
 
-  console.log('✅ Created seller user:', sellerUser.email);
-
   // Create regular user
   const userPassword = await hash(userSeedPassword, 12);
   const regularUser = await prisma.user.upsert({
-    where: { 
+    where: {
       tenant_id_email: {
         tenant_id: tenant.id,
-        email: 'user@nextgen.ir'
-      }
+        email: 'user@nextgen.ir',
+      },
     },
     update: {},
     create: {
@@ -129,8 +121,6 @@ async function main() {
       updated_by: 'system',
     },
   });
-
-  console.log('✅ Created regular user:', regularUser.email);
 
   // Create sample products
   const products = [
@@ -186,12 +176,12 @@ async function main() {
   ];
 
   for (const productData of products) {
-    const product = await prisma.product.upsert({
-      where: { 
+    const _product = await prisma.product.upsert({
+      where: {
         tenant_id_sku: {
           tenant_id: tenant.id,
-          sku: productData.sku
-        }
+          sku: productData.sku,
+        },
       },
       update: {},
       create: {
@@ -201,8 +191,6 @@ async function main() {
         updated_by: sellerUser.id,
       },
     });
-
-    console.log('✅ Created product:', product.name);
   }
 
   // Create sample order
@@ -229,10 +217,8 @@ async function main() {
     },
   });
 
-  console.log('✅ Created order:', order.order_number);
-
   // Create order item
-  const orderItem = await prisma.orderItem.create({
+  const _orderItem = await prisma.orderItem.create({
     data: {
       id: 'order_item_1',
       tenant_id: tenant.id,
@@ -246,10 +232,8 @@ async function main() {
     },
   });
 
-  console.log('✅ Created order item for product:', orderItem.product_id);
-
   // Create sample payment
-  const payment = await prisma.payment.create({
+  const _payment = await prisma.payment.create({
     data: {
       id: 'payment_1',
       tenant_id: tenant.id,
@@ -265,8 +249,6 @@ async function main() {
       updated_by: regularUser.id,
     },
   });
-
-  console.log('✅ Created payment:', payment.id);
 
   // Create sample system events
   const events = [
@@ -303,8 +285,6 @@ async function main() {
     });
   }
 
-  console.log('✅ Created system events');
-
   // Create sample performance metrics
   const metrics = [
     { metric_name: 'api_response_time', value: 45.5, tags: { endpoint: '/api/v3/products' } },
@@ -322,24 +302,6 @@ async function main() {
       },
     });
   }
-
-  console.log('✅ Created performance metrics');
-
-  console.log('🎉 Ultra-Fast 7-Layer Architecture seeding completed!');
-  console.log('');
-  console.log('📊 Summary:');
-  console.log('- Tenant: default');
-  console.log('- Users: 3 (admin, seller, user)');
-  console.log('- Products: 3');
-  console.log('- Orders: 1');
-  console.log('- Payments: 1');
-  console.log('- Events: 3');
-  console.log('- Metrics: 4');
-  console.log('');
-  console.log('🔐 Login Credentials:');
-  console.log('Admin: admin@nextgen.ir / (SEED_ADMIN_PASSWORD)');
-  console.log('Seller: seller@nextgen.ir / (SEED_SELLER_PASSWORD)');
-  console.log('User: user@nextgen.ir / (SEED_USER_PASSWORD)');
 }
 
 main()

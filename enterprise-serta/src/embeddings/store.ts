@@ -3,8 +3,8 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { QdrantClient } from '@qdrant/js-client-rest';
-import { CodeEmbedding, EmbeddingType } from '../types';
 import { v4 as uuidv4 } from 'uuid';
+import { type CodeEmbedding, EmbeddingType } from '../types';
 
 export interface VectorSearchResult {
   id: string;
@@ -24,22 +24,17 @@ export class VectorStore {
   private collectionName: string;
   private readonly dimensions = 4096;
 
-  constructor(
-    url: string = 'http://localhost:6333',
-    collectionName: string = 'enterprise_serta_embeddings'
-  ) {
+  constructor(url = 'http://localhost:6333', collectionName = 'enterprise_serta_embeddings') {
     this.client = new QdrantClient({ url });
     this.collectionName = collectionName;
   }
 
   async initialize(): Promise<void> {
-    console.log('🗄️ Initializing vector store...');
-
     try {
       // Check if collection exists
       const collections = await this.client.getCollections();
       const collectionExists = collections.collections.some(
-        col => col.name === this.collectionName
+        (col) => col.name === this.collectionName
       );
 
       if (!collectionExists) {
@@ -48,7 +43,7 @@ export class VectorStore {
           vectors: {
             size: this.dimensions,
             distance: 'Cosine', // Cosine similarity for semantic similarity
-            on_disk: true // Store vectors on disk for large datasets
+            on_disk: true, // Store vectors on disk for large datasets
           },
           optimizers_config: {
             default_segment_number: 2,
@@ -56,25 +51,21 @@ export class VectorStore {
             memmap_threshold: 50000,
             indexing_threshold: 10000,
             flush_interval_sec: 30,
-            max_optimization_threads: 2
+            max_optimization_threads: 2,
           },
           hnsw_config: {
             m: 16, // Number of bi-directional links for each node
             ef_construct: 200, // Size of the dynamic candidate list
             full_scan_threshold: 10000,
             max_indexing_threads: 2,
-            on_disk: true
-          }
+            on_disk: true,
+          },
         });
-
-        console.log(`✅ Created collection: ${this.collectionName}`);
       } else {
-        console.log(`✅ Collection already exists: ${this.collectionName}`);
       }
 
       // Create indexes for efficient filtering
       await this.createIndexes();
-
     } catch (error) {
       console.error('❌ Error initializing vector store:', error);
       throw error;
@@ -94,35 +85,33 @@ export class VectorStore {
         { field: 'metadata.businessCriticality', type: 'integer' },
         { field: 'metadata.complexity', type: 'integer' },
         { field: 'metadata.trustBoundary', type: 'bool' },
-        { field: 'createdAt', type: 'datetime' }
+        { field: 'createdAt', type: 'datetime' },
       ];
 
       for (const index of indexes) {
         try {
           await this.client.createPayloadIndex(this.collectionName, {
             field_name: index.field,
-            field_schema: index.type as any
+            field_schema: index.type as any,
           });
         } catch (error) {
           // Index might already exist, continue
           console.warn(`⚠️ Index creation warning for ${index.field}:`, error);
         }
       }
-
-      console.log('✅ Created payload indexes');
     } catch (error) {
       console.warn('⚠️ Error creating indexes:', error);
     }
   }
 
   async storeEmbeddings(embeddings: CodeEmbedding[]): Promise<void> {
-    if (embeddings.length === 0) return;
-
-    console.log(`💾 Storing ${embeddings.length} embeddings...`);
+    if (embeddings.length === 0) {
+      return;
+    }
 
     try {
       // Prepare points for batch upsert
-      const points = embeddings.map(embedding => ({
+      const points = embeddings.map((embedding) => ({
         id: uuidv4(),
         vector: embedding.vector,
         payload: {
@@ -130,8 +119,8 @@ export class VectorStore {
           fileId: embedding.fileId,
           type: embedding.type,
           metadata: embedding.metadata,
-          createdAt: embedding.createdAt.toISOString()
-        }
+          createdAt: embedding.createdAt.toISOString(),
+        },
       }));
 
       // Batch upsert with chunking for large datasets
@@ -140,11 +129,9 @@ export class VectorStore {
         const chunk = points.slice(i, i + chunkSize);
         await this.client.upsert(this.collectionName, {
           wait: true,
-          points: chunk
+          points: chunk,
         });
       }
-
-      console.log(`✅ Stored ${embeddings.length} embeddings`);
     } catch (error) {
       console.error('❌ Error storing embeddings:', error);
       throw error;
@@ -156,7 +143,7 @@ export class VectorStore {
       const searchParams: any = {
         limit: query.limit || 10,
         with_payload: true,
-        with_vector: false
+        with_vector: false,
       };
 
       if (query.vector) {
@@ -173,10 +160,10 @@ export class VectorStore {
 
       const results = await this.client.search(this.collectionName, searchParams);
 
-      return results.map(result => ({
+      return results.map((result) => ({
         id: result.id as string,
         score: result.score,
-        embedding: this.payloadToEmbedding(result.payload as any)
+        embedding: this.payloadToEmbedding(result.payload as any),
       }));
     } catch (error) {
       console.error('❌ Error searching embeddings:', error);
@@ -186,86 +173,81 @@ export class VectorStore {
 
   async findSimilarSecurityPatterns(
     embedding: CodeEmbedding,
-    limit: number = 20
+    limit = 20
   ): Promise<VectorSearchResult[]> {
     return this.searchSimilar({
       vector: embedding.vector,
       filter: {
         type: EmbeddingType.SECURITY_PATTERN,
-        'metadata.securityRelevance': { gte: 5 }
+        'metadata.securityRelevance': { gte: 5 },
       },
       limit,
-      threshold: 0.7
+      threshold: 0.7,
     });
   }
 
   async findSimilarBusinessLogic(
     embedding: CodeEmbedding,
-    limit: number = 15
+    limit = 15
   ): Promise<VectorSearchResult[]> {
     return this.searchSimilar({
       vector: embedding.vector,
       filter: {
         type: EmbeddingType.BUSINESS_LOGIC,
-        'metadata.businessCriticality': { gte: 5 }
+        'metadata.businessCriticality': { gte: 5 },
       },
       limit,
-      threshold: 0.6
+      threshold: 0.6,
     });
   }
 
   async findTrustBoundaryViolations(
     embedding: CodeEmbedding,
-    limit: number = 10
+    limit = 10
   ): Promise<VectorSearchResult[]> {
     return this.searchSimilar({
       vector: embedding.vector,
       filter: {
         'metadata.trustBoundary': true,
-        'metadata.securityRelevance': { gte: 7 }
+        'metadata.securityRelevance': { gte: 7 },
       },
       limit,
-      threshold: 0.8
+      threshold: 0.8,
     });
   }
 
-  async findComplexFunctions(
-    minComplexity: number = 8,
-    limit: number = 25
-  ): Promise<VectorSearchResult[]> {
+  async findComplexFunctions(minComplexity = 8, limit = 25): Promise<VectorSearchResult[]> {
     return this.searchSimilar({
       filter: {
         type: EmbeddingType.SEMANTIC_CODE,
         'metadata.complexity': { gte: minComplexity },
-        'metadata.functionName': { exists: true }
+        'metadata.functionName': { exists: true },
       },
-      limit
+      limit,
     });
   }
 
-  async findCriticalDependencies(
-    limit: number = 20
-  ): Promise<VectorSearchResult[]> {
+  async findCriticalDependencies(limit = 20): Promise<VectorSearchResult[]> {
     return this.searchSimilar({
       filter: {
         type: EmbeddingType.DEPENDENCY_FLOW,
-        'metadata.securityRelevance': { gte: 6 }
+        'metadata.securityRelevance': { gte: 6 },
       },
-      limit
+      limit,
     });
   }
 
   async getEmbeddingsByFile(fileId: string): Promise<VectorSearchResult[]> {
     return this.searchSimilar({
       filter: { fileId },
-      limit: 100
+      limit: 100,
     });
   }
 
   async getEmbeddingsByType(type: EmbeddingType): Promise<VectorSearchResult[]> {
     return this.searchSimilar({
       filter: { type },
-      limit: 1000
+      limit: 1000,
     });
   }
 
@@ -276,12 +258,11 @@ export class VectorStore {
           must: [
             {
               key: 'fileId',
-              match: { value: fileId }
-            }
-          ]
-        }
+              match: { value: fileId },
+            },
+          ],
+        },
       });
-      console.log(`🗑️ Deleted embeddings for file: ${fileId}`);
     } catch (error) {
       console.error('❌ Error deleting embeddings:', error);
       throw error;
@@ -300,7 +281,7 @@ export class VectorStore {
         pointsCount: info.points_count || 0,
         indexedVectorsCount: info.indexed_vectors_count || 0,
         memoryUsage: 0, // Qdrant doesn't provide this directly
-        diskUsage: 0    // Qdrant doesn't provide this directly
+        diskUsage: 0, // Qdrant doesn't provide this directly
       };
     } catch (error) {
       console.error('❌ Error getting collection info:', error);
@@ -308,25 +289,27 @@ export class VectorStore {
         pointsCount: 0,
         indexedVectorsCount: 0,
         memoryUsage: 0,
-        diskUsage: 0
+        diskUsage: 0,
       };
     }
   }
 
   async performClusterAnalysis(
     embeddingType: EmbeddingType,
-    numClusters: number = 10
-  ): Promise<Array<{
-    clusterId: number;
-    centroid: number[];
-    members: VectorSearchResult[];
-    riskScore: number;
-  }>> {
+    numClusters = 10
+  ): Promise<
+    Array<{
+      clusterId: number;
+      centroid: number[];
+      members: VectorSearchResult[];
+      riskScore: number;
+    }>
+  > {
     // This is a simplified clustering implementation
     // In production, you'd use more sophisticated clustering algorithms
-    
+
     const embeddings = await this.getEmbeddingsByType(embeddingType);
-    
+
     if (embeddings.length < numClusters) {
       return [];
     }
@@ -346,20 +329,17 @@ export class VectorStore {
         clusterId: i,
         centroid: [...randomEmbedding.embedding.vector],
         members: [],
-        riskScore: 0
+        riskScore: 0,
       });
     }
 
     // Assign embeddings to nearest centroids
     for (const embedding of embeddings) {
       let nearestCluster = 0;
-      let minDistance = Infinity;
+      let minDistance = Number.POSITIVE_INFINITY;
 
       for (let i = 0; i < clusters.length; i++) {
-        const distance = this.cosineSimilarity(
-          embedding.embedding.vector,
-          clusters[i].centroid
-        );
+        const distance = this.cosineSimilarity(embedding.embedding.vector, clusters[i].centroid);
         if (distance < minDistance) {
           minDistance = distance;
           nearestCluster = i;
@@ -372,9 +352,11 @@ export class VectorStore {
     // Calculate risk scores for each cluster
     for (const cluster of clusters) {
       if (cluster.members.length > 0) {
-        cluster.riskScore = cluster.members.reduce((sum, member) => 
-          sum + (member.embedding.metadata.securityRelevance || 0), 0
-        ) / cluster.members.length;
+        cluster.riskScore =
+          cluster.members.reduce(
+            (sum, member) => sum + (member.embedding.metadata.securityRelevance || 0),
+            0
+          ) / cluster.members.length;
       }
     }
 
@@ -390,25 +372,25 @@ export class VectorStore {
         if (value.gte !== undefined) {
           conditions.push({
             key,
-            range: { gte: value.gte }
+            range: { gte: value.gte },
           });
         } else if (value.lte !== undefined) {
           conditions.push({
             key,
-            range: { lte: value.lte }
+            range: { lte: value.lte },
           });
         } else if (value.exists !== undefined) {
           // Handle existence queries
           conditions.push({
             key,
-            match: { any: [null] }
+            match: { any: [null] },
           });
         }
       } else {
         // Handle exact matches
         conditions.push({
           key,
-          match: { value }
+          match: { value },
         });
       }
     }
@@ -423,7 +405,7 @@ export class VectorStore {
       type: payload.type,
       vector: [], // Vector not included in search results by default
       metadata: payload.metadata,
-      createdAt: new Date(payload.createdAt)
+      createdAt: new Date(payload.createdAt),
     };
   }
 
@@ -464,17 +446,13 @@ export class VectorStore {
           memmap_threshold: 50000,
           indexing_threshold: 10000,
           flush_interval_sec: 30,
-          max_optimization_threads: 2
-        }
+          max_optimization_threads: 2,
+        },
       });
-      console.log('✅ Collection optimized');
     } catch (error) {
       console.warn('⚠️ Error optimizing collection:', error);
     }
   }
 
-  async close(): Promise<void> {
-    // Qdrant client doesn't need explicit closing
-    console.log('✅ Vector store connection closed');
-  }
+  async close(): Promise<void> {}
 }

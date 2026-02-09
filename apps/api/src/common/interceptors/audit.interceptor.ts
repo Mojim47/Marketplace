@@ -2,10 +2,10 @@
  * ???????????????????????????????????????????????????????????????????????????
  * NextGen Marketplace - Audit Interceptor
  * ???????????????????????????????????????????????????????????????????????????
- * 
+ *
  * Logs all API requests and responses using EnterpriseAuditLogger from libs/audit.
  * Provides comprehensive audit trail with chain integrity for compliance.
- * 
+ *
  * Features:
  * - Automatic request/response logging
  * - User identification from JWT
@@ -13,35 +13,34 @@
  * - Response timing measurement
  * - Error logging with details
  * - Chain integrity for tamper detection
- * 
+ *
  * @module @nextgen/api/interceptors
  * Requirements: 7.1, 7.2, 7.3, 7.4
  */
 
 import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
+  type CallHandler,
+  type ExecutionContext,
   Inject,
-  Optional,
+  Injectable,
   Logger,
+  type NestInterceptor,
+  Optional,
   SetMetadata,
 } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
-import { Observable, throwError } from 'rxjs';
-import { tap, catchError } from 'rxjs/operators';
-import { Request, Response } from 'express';
+import type { Reflector } from '@nestjs/core';
 import {
-  EnterpriseAuditLogger,
-  AuditLoggerConfig,
+  type AuditActor,
+  type AuditContext,
   AuditEventType,
-  AuditSeverity,
   AuditOutcome,
-  AuditActor,
-  AuditContext,
+  AuditSeverity,
+  EnterpriseAuditLogger,
   InMemoryAuditStorage,
 } from '@nextgen/audit';
+import type { Request, Response } from 'express';
+import { type Observable, throwError } from 'rxjs';
+import { catchError, tap } from 'rxjs/operators';
 
 /**
  * Metadata key for skipping audit logging
@@ -61,8 +60,7 @@ export const AUDIT_EVENT_KEY = 'auditEvent';
 /**
  * Decorator to set custom audit event type for an endpoint
  */
-export const AuditEvent = (eventType: AuditEventType) =>
-  SetMetadata(AUDIT_EVENT_KEY, eventType);
+export const AuditEvent = (eventType: AuditEventType) => SetMetadata(AUDIT_EVENT_KEY, eventType);
 
 /**
  * Provider token for audit logger
@@ -127,10 +125,10 @@ interface AuthenticatedRequest extends Request {
 
 /**
  * Audit Interceptor
- * 
+ *
  * Automatically logs all API requests and responses for audit compliance.
  * Captures user identity, request context, timing, and outcomes.
- * 
+ *
  * @example
  * // Global registration in AppModule
  * providers: [
@@ -139,13 +137,13 @@ interface AuthenticatedRequest extends Request {
  *     useClass: AuditInterceptor,
  *   },
  * ]
- * 
+ *
  * @example
  * // Skip audit for specific endpoint
  * @SkipAudit()
  * @Get('internal')
  * internalEndpoint() {}
- * 
+ *
  * @example
  * // Custom audit event type
  * @AuditEvent(AuditEventType.PAYMENT_INITIATED)
@@ -167,10 +165,10 @@ export class AuditInterceptor implements NestInterceptor {
     @Optional()
     @Inject(AUDIT_LOGGER_TOKEN)
     injectedLogger?: EnterpriseAuditLogger,
-    config?: Partial<AuditInterceptorConfig>,
+    config?: Partial<AuditInterceptorConfig>
   ) {
     this.config = { ...DEFAULT_CONFIG, ...config };
-    
+
     // Use injected logger or create default
     if (injectedLogger) {
       this.auditLogger = injectedLogger;
@@ -190,7 +188,7 @@ export class AuditInterceptor implements NestInterceptor {
     // Create sets for O(1) lookup
     this.excludePathsSet = new Set(this.config.excludePaths);
     this.excludeMethodsSet = new Set(this.config.excludeMethods);
-    this.redactFieldsSet = new Set(this.config.redactFields?.map(f => f.toLowerCase()));
+    this.redactFieldsSet = new Set(this.config.redactFields?.map((f) => f.toLowerCase()));
 
     // Initialize audit logger
     this.initializeLogger();
@@ -200,8 +198,10 @@ export class AuditInterceptor implements NestInterceptor {
    * Initialize the audit logger asynchronously
    */
   private async initializeLogger(): Promise<void> {
-    if (this.isInitialized) return;
-    
+    if (this.isInitialized) {
+      return;
+    }
+
     try {
       await this.auditLogger.initialize();
       this.isInitialized = true;
@@ -227,7 +227,7 @@ export class AuditInterceptor implements NestInterceptor {
     // Get custom event type if specified
     const customEventType = this.reflector.get<AuditEventType>(
       AUDIT_EVENT_KEY,
-      context.getHandler(),
+      context.getHandler()
     );
 
     // Build audit context
@@ -268,7 +268,7 @@ export class AuditInterceptor implements NestInterceptor {
           error: error.message,
         });
         return throwError(() => error);
-      }),
+      })
     );
   }
 
@@ -278,13 +278,19 @@ export class AuditInterceptor implements NestInterceptor {
   private shouldSkipAudit(context: ExecutionContext, request: Request): boolean {
     // Check decorator
     const skipAudit = this.reflector.get<boolean>(SKIP_AUDIT_KEY, context.getHandler());
-    if (skipAudit) return true;
+    if (skipAudit) {
+      return true;
+    }
 
     // Check excluded paths
-    if (this.excludePathsSet.has(request.path)) return true;
+    if (this.excludePathsSet.has(request.path)) {
+      return true;
+    }
 
     // Check excluded methods
-    if (this.excludeMethodsSet.has(request.method)) return true;
+    if (this.excludeMethodsSet.has(request.method)) {
+      return true;
+    }
 
     return false;
   }
@@ -351,11 +357,17 @@ export class AuditInterceptor implements NestInterceptor {
    */
   private getSeverityForError(error: any): AuditSeverity {
     const status = error.status || 500;
-    
-    if (status >= 500) return AuditSeverity.ERROR;
-    if (status === 401 || status === 403) return AuditSeverity.WARNING;
-    if (status === 429) return AuditSeverity.WARNING;
-    
+
+    if (status >= 500) {
+      return AuditSeverity.ERROR;
+    }
+    if (status === 401 || status === 403) {
+      return AuditSeverity.WARNING;
+    }
+    if (status === 429) {
+      return AuditSeverity.WARNING;
+    }
+
     return AuditSeverity.INFO;
   }
 
@@ -389,8 +401,8 @@ export class AuditInterceptor implements NestInterceptor {
           path: params.path,
           method: params.method,
           ...(params.error && { error: params.error }),
-          ...(params.responseData && { 
-            responseSize: JSON.stringify(params.responseData).length 
+          ...(params.responseData && {
+            responseSize: JSON.stringify(params.responseData).length,
           }),
         },
       });
@@ -403,10 +415,12 @@ export class AuditInterceptor implements NestInterceptor {
    * Redact sensitive fields from an object
    */
   private redactSensitiveData(data: any): any {
-    if (!data || typeof data !== 'object') return data;
+    if (!data || typeof data !== 'object') {
+      return data;
+    }
 
     const redacted: Record<string, any> = {};
-    
+
     for (const [key, value] of Object.entries(data)) {
       if (this.redactFieldsSet.has(key.toLowerCase())) {
         redacted[key] = '[REDACTED]';
@@ -441,7 +455,7 @@ export class AuditInterceptor implements NestInterceptor {
 export function createAuditInterceptor(
   reflector: Reflector,
   logger?: EnterpriseAuditLogger,
-  config?: Partial<AuditInterceptorConfig>,
+  config?: Partial<AuditInterceptorConfig>
 ): AuditInterceptor {
   return new AuditInterceptor(reflector, logger, config);
 }

@@ -5,9 +5,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 // Interfaces
-export {
-  StorageProviderType,
-} from './interfaces';
+export { StorageProviderType } from './interfaces';
 
 export type {
   IStorageProvider,

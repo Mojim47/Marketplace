@@ -1,6 +1,6 @@
-import { jsxs as _jsxs, jsx as _jsx } from 'react/jsx-runtime';
 import { readCart } from '@/lib/cart';
 import { generateMetadata } from '@/lib/seo';
+import { jsx as _jsx, jsxs as _jsxs } from 'react/jsx-runtime';
 export const metadata = generateMetadata({ title: 'سبد خرید' });
 export default async function CartPage() {
   const cart = await readCart();

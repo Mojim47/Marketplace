@@ -9,10 +9,10 @@
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
 import * as fc from 'fast-check';
-import { QRCodeService, generateSimpleQRCode, parseSimpleQRCode } from '../qr-code.service';
-import { QRCodeData } from '../interfaces';
+import { beforeEach, describe, expect, it } from 'vitest';
+import type { QRCodeData } from '../interfaces';
+import { QRCodeService } from '../qr-code.service';
 
 describe('QRCodeService Property Tests', () => {
   let service: QRCodeService;
@@ -20,7 +20,7 @@ describe('QRCodeService Property Tests', () => {
   beforeEach(() => {
     // Create service with mock config
     service = new QRCodeService({
-      get: (key: string, defaultValue: string) => defaultValue,
+      get: (_key: string, defaultValue: string) => defaultValue,
     } as any);
   });
 
@@ -45,7 +45,7 @@ describe('QRCodeService Property Tests', () => {
     totalAmount: fc.integer({ min: 1, max: 1000000000000 }),
     issueDate: fc
       .date({ min: new Date('2020-01-01'), max: new Date('2030-12-31') })
-      .filter((d) => !isNaN(d.getTime()))
+      .filter((d) => !Number.isNaN(d.getTime()))
       .map((d) => d.toISOString()),
     sellerTaxId: taxIdArbitrary,
   });
@@ -71,7 +71,7 @@ describe('QRCodeService Property Tests', () => {
 
           // SUID must be preserved
           expect(parsed).not.toBeNull();
-          expect(parsed!.suid).toBe(data.suid);
+          expect(parsed?.suid).toBe(data.suid);
         }),
         { numRuns: 100 }
       );
@@ -85,7 +85,7 @@ describe('QRCodeService Property Tests', () => {
 
           // Invoice number must be preserved
           expect(parsed).not.toBeNull();
-          expect(parsed!.invoiceNumber).toBe(data.invoiceNumber);
+          expect(parsed?.invoiceNumber).toBe(data.invoiceNumber);
         }),
         { numRuns: 100 }
       );
@@ -99,7 +99,7 @@ describe('QRCodeService Property Tests', () => {
 
           // Total amount must be preserved
           expect(parsed).not.toBeNull();
-          expect(parsed!.totalAmount).toBe(data.totalAmount);
+          expect(parsed?.totalAmount).toBe(data.totalAmount);
         }),
         { numRuns: 100 }
       );
@@ -113,7 +113,7 @@ describe('QRCodeService Property Tests', () => {
 
           // Seller tax ID must be preserved
           expect(parsed).not.toBeNull();
-          expect(parsed!.sellerTaxId).toBe(data.sellerTaxId);
+          expect(parsed?.sellerTaxId).toBe(data.sellerTaxId);
         }),
         { numRuns: 100 }
       );

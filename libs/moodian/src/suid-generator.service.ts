@@ -15,7 +15,7 @@
  */
 
 import { Injectable, Logger } from '@nestjs/common';
-import { SUIDComponents, SUIDGenerationResult } from './interfaces';
+import type { SUIDComponents, SUIDGenerationResult } from './interfaces';
 
 @Injectable()
 export class SUIDGeneratorService {
@@ -23,7 +23,7 @@ export class SUIDGeneratorService {
 
   // Counter for daily serial numbers (in production, use Redis or DB)
   private dailySerialCounters: Map<string, number> = new Map();
-  private lastResetDate: string = '';
+  private lastResetDate = '';
 
   /**
    * تولید SUID یکتا برای فاکتور
@@ -180,8 +180,8 @@ export class SUIDGeneratorService {
 
   private buildSUID(components: SUIDComponents): string {
     // Combine date and serial into a single number
-    const dateNum = parseInt(components.issueDate, 10);
-    const serialNum = parseInt(components.dailySerial, 10);
+    const dateNum = Number.parseInt(components.issueDate, 10);
+    const serialNum = Number.parseInt(components.dailySerial, 10);
 
     // Create a combined value: date * 1000000 + serial
     const combined = BigInt(dateNum) * BigInt(1000000) + BigInt(serialNum);
@@ -198,7 +198,7 @@ export class SUIDGeneratorService {
   private decodeEncodedPart(encoded: string): { date: string; serial: string } {
     try {
       // Convert from base36 back to number
-      const combined = BigInt(parseInt(encoded, 36));
+      const combined = BigInt(Number.parseInt(encoded, 36));
 
       // Extract date and serial
       const serialNum = combined % BigInt(1000000);

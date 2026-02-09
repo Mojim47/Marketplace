@@ -13,30 +13,30 @@
  */
 
 import {
-  Module,
+  Body,
   Controller,
   Get,
-  Post,
-  Body,
-  Param,
-  Query,
-  UseGuards,
-  Request,
   Injectable,
+  Module,
+  Param,
+  Post,
+  Query,
+  Request,
+  UseGuards,
   UsePipes,
 } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { z } from 'zod';
-import {
-  SecurityModule,
-  JwtAuthGuard,
-  RolesGuard,
-  Public,
-  Roles,
-  AuditLogService,
-  RBACService,
-} from '@nextgen/security';
 import { AuthorizationError } from '@nextgen/errors';
+import {
+  type AuditLogService,
+  JwtAuthGuard,
+  Public,
+  type RBACService,
+  Roles,
+  RolesGuard,
+  SecurityModule,
+} from '@nextgen/security';
+import { z } from 'zod';
 
 // ============================================================================
 // Zod Input Schemas
@@ -162,7 +162,7 @@ class ZodValidationPipe {
 class ProductsService {
   constructor(
     private readonly auditLogService: AuditLogService,
-    private readonly rbacService: RBACService,
+    private readonly rbacService: RBACService
   ) {}
 
   async getPublicProducts(): Promise<ProductListResponseDto> {
@@ -206,13 +206,13 @@ class ProductsService {
       tenantId: string;
       ipAddress: string;
       userAgent: string;
-    },
+    }
   ): Promise<CreateProductResponseDto> {
     const canCreate = await this.rbacService.hasPermission(
       securityContext.userId,
       'products',
       'create',
-      securityContext.tenantId,
+      securityContext.tenantId
     );
 
     if (!canCreate) {
@@ -256,20 +256,12 @@ class ProductsService {
 class AuditService {
   constructor(private readonly auditLogService: AuditLogService) {}
 
-  async getLogs(
-    tenantId: string,
-    query: AuditLogsQuery,
-  ): Promise<AuditLogsResponseDto> {
+  async getLogs(tenantId: string, query: AuditLogsQuery): Promise<AuditLogsResponseDto> {
     const result = await this.auditLogService.getLogsByTenant(tenantId, {
       limit: query.limit,
       offset: query.offset,
       action: query.action,
-      success:
-        query.success === 'true'
-          ? true
-          : query.success === 'false'
-            ? false
-            : undefined,
+      success: query.success === 'true' ? true : query.success === 'false' ? false : undefined,
     });
 
     return result;
@@ -277,20 +269,14 @@ class AuditService {
 
   async getSecurityEvents(
     tenantId: string,
-    query: SecurityEventsQuery,
+    query: SecurityEventsQuery
   ): Promise<SecurityEventsResponseDto> {
-    const events = await this.auditLogService.getSecurityEvents(
-      tenantId,
-      query.limit,
-    );
+    const events = await this.auditLogService.getSecurityEvents(tenantId, query.limit);
 
     return { events };
   }
 
-  async getStatistics(
-    tenantId: string,
-    query: StatisticsQuery,
-  ): Promise<AuditStatisticsDto> {
+  async getStatistics(tenantId: string, query: StatisticsQuery): Promise<AuditStatisticsDto> {
     return this.auditLogService.getAuditStatistics(tenantId, query.timeRange);
   }
 }
@@ -303,7 +289,7 @@ class AuditService {
 class RBACManagementService {
   constructor(
     private readonly rbacService: RBACService,
-    private readonly auditLogService: AuditLogService,
+    private readonly auditLogService: AuditLogService
   ) {}
 
   async assignRole(
@@ -313,13 +299,9 @@ class RBACManagementService {
       tenantId: string;
       ipAddress: string;
       userAgent: string;
-    },
+    }
   ): Promise<SuccessResponseDto> {
-    await this.rbacService.assignRole(
-      input.userId,
-      input.roleName,
-      securityContext.tenantId,
-    );
+    await this.rbacService.assignRole(input.userId, input.roleName, securityContext.tenantId);
 
     await this.auditLogService.log({
       userId: securityContext.userId,
@@ -342,13 +324,9 @@ class RBACManagementService {
       tenantId: string;
       ipAddress: string;
       userAgent: string;
-    },
+    }
   ): Promise<SuccessResponseDto> {
-    await this.rbacService.revokeRole(
-      input.userId,
-      input.roleName,
-      securityContext.tenantId,
-    );
+    await this.rbacService.revokeRole(input.userId, input.roleName, securityContext.tenantId);
 
     await this.auditLogService.log({
       userId: securityContext.userId,
@@ -364,14 +342,8 @@ class RBACManagementService {
     return { success: true };
   }
 
-  async getUserPermissions(
-    userId: string,
-    tenantId: string,
-  ): Promise<PermissionsResponseDto> {
-    const permissions = await this.rbacService.getUserPermissions(
-      userId,
-      tenantId,
-    );
+  async getUserPermissions(userId: string, tenantId: string): Promise<PermissionsResponseDto> {
+    const permissions = await this.rbacService.getUserPermissions(userId, tenantId);
 
     return { permissions };
   }
@@ -407,7 +379,7 @@ export class ProductsController {
   @UsePipes(new ZodValidationPipe(CreateProductSchema))
   createProduct(
     @Request() req: any,
-    @Body() input: CreateProductInput,
+    @Body() input: CreateProductInput
   ): Promise<CreateProductResponseDto> {
     return this.productsService.createProduct(input, {
       userId: req.securityContext.userId,
@@ -430,10 +402,7 @@ export class AuditController {
 
   @Get('logs')
   @UsePipes(new ZodValidationPipe(AuditLogsQuerySchema))
-  getLogs(
-    @Request() req: any,
-    @Query() query: AuditLogsQuery,
-  ): Promise<AuditLogsResponseDto> {
+  getLogs(@Request() req: any, @Query() query: AuditLogsQuery): Promise<AuditLogsResponseDto> {
     return this.auditService.getLogs(req.securityContext.tenantId, query);
   }
 
@@ -441,20 +410,14 @@ export class AuditController {
   @UsePipes(new ZodValidationPipe(SecurityEventsQuerySchema))
   getSecurityEvents(
     @Request() req: any,
-    @Query() query: SecurityEventsQuery,
+    @Query() query: SecurityEventsQuery
   ): Promise<SecurityEventsResponseDto> {
-    return this.auditService.getSecurityEvents(
-      req.securityContext.tenantId,
-      query,
-    );
+    return this.auditService.getSecurityEvents(req.securityContext.tenantId, query);
   }
 
   @Get('statistics')
   @UsePipes(new ZodValidationPipe(StatisticsQuerySchema))
-  getStatistics(
-    @Request() req: any,
-    @Query() query: StatisticsQuery,
-  ): Promise<AuditStatisticsDto> {
+  getStatistics(@Request() req: any, @Query() query: StatisticsQuery): Promise<AuditStatisticsDto> {
     return this.auditService.getStatistics(req.securityContext.tenantId, query);
   }
 }
@@ -471,10 +434,7 @@ export class RBACController {
 
   @Post('assign-role')
   @UsePipes(new ZodValidationPipe(AssignRoleSchema))
-  assignRole(
-    @Request() req: any,
-    @Body() input: AssignRoleInput,
-  ): Promise<SuccessResponseDto> {
+  assignRole(@Request() req: any, @Body() input: AssignRoleInput): Promise<SuccessResponseDto> {
     return this.rbacManagementService.assignRole(input, {
       userId: req.securityContext.userId,
       tenantId: req.securityContext.tenantId,
@@ -485,10 +445,7 @@ export class RBACController {
 
   @Post('revoke-role')
   @UsePipes(new ZodValidationPipe(RevokeRoleSchema))
-  revokeRole(
-    @Request() req: any,
-    @Body() input: RevokeRoleInput,
-  ): Promise<SuccessResponseDto> {
+  revokeRole(@Request() req: any, @Body() input: RevokeRoleInput): Promise<SuccessResponseDto> {
     return this.rbacManagementService.revokeRole(input, {
       userId: req.securityContext.userId,
       tenantId: req.securityContext.tenantId,
@@ -500,12 +457,9 @@ export class RBACController {
   @Get('user-permissions/:userId')
   getUserPermissions(
     @Request() req: any,
-    @Param('userId') userId: string,
+    @Param('userId') userId: string
   ): Promise<PermissionsResponseDto> {
-    return this.rbacManagementService.getUserPermissions(
-      userId,
-      req.securityContext.tenantId,
-    );
+    return this.rbacManagementService.getUserPermissions(userId, req.securityContext.tenantId);
   }
 }
 
@@ -528,7 +482,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({
-    origin: process.env['CORS_ORIGINS']?.split(',') || ['http://localhost:3000'],
+    origin: process.env.CORS_ORIGINS?.split(',') || ['http://localhost:3000'],
     credentials: true,
   });
 

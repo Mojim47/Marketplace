@@ -4,22 +4,19 @@
 // Implements: ∀a∈Artifacts: provenance_verified(a)
 // ═══════════════════════════════════════════════════════════════════════════
 
+import * as crypto from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
-import * as crypto from 'crypto';
 import {
-  SC3FailureCategory,
   type Artifact,
-  type ArtifactType,
   type ArtifactSignature,
-  type ProvenanceAttestation,
-  type ProvenanceStatus,
+  type ArtifactType,
   type ArtifactVerificationResult,
-  type SC3Failure,
-  type TrustedKey,
-  type BuilderIdentity,
-  type ProvenanceMetadata,
+  type ProvenanceAttestation,
   type ProvenanceMaterial,
-  type ProvenanceSubject,
+  type ProvenanceStatus,
+  type SC3Failure,
+  SC3FailureCategory,
+  type TrustedKey,
 } from '../types';
 
 /**
@@ -48,7 +45,7 @@ export class ProvenanceService {
    */
   async verifyArtifacts(
     artifacts: Artifact[],
-    options: ProvenanceVerificationOptions,
+    options: ProvenanceVerificationOptions
   ): Promise<{ result: ArtifactVerificationResult; failures: SC3Failure[] }> {
     const failures: SC3Failure[] = [];
     const failedArtifacts: string[] = [];
@@ -56,7 +53,7 @@ export class ProvenanceService {
 
     for (const artifact of artifacts) {
       const artifactFailures = await this.verifyArtifact(artifact, options);
-      
+
       if (artifactFailures.length === 0) {
         provenanceValid++;
       } else {
@@ -84,7 +81,7 @@ export class ProvenanceService {
    */
   async verifyArtifact(
     artifact: Artifact,
-    options: ProvenanceVerificationOptions,
+    options: ProvenanceVerificationOptions
   ): Promise<SC3Failure[]> {
     const failures: SC3Failure[] = [];
 
@@ -125,7 +122,7 @@ export class ProvenanceService {
       } else {
         const signatureValid = await this.verifyProvenanceSignature(
           artifact.provenance,
-          options.trusted_keys,
+          options.trusted_keys
         );
         if (!signatureValid) {
           failures.push({
@@ -202,7 +199,7 @@ export class ProvenanceService {
    */
   async verifyProvenanceSignature(
     provenance: ProvenanceAttestation,
-    trustedKeys: TrustedKey[],
+    trustedKeys: TrustedKey[]
   ): Promise<boolean> {
     if (!provenance.signature) {
       return false;
@@ -211,7 +208,7 @@ export class ProvenanceService {
     try {
       // Create canonical provenance data for verification
       const canonicalData = this.canonicalizeProvenance(provenance);
-      
+
       // Try each trusted key
       for (const key of trustedKeys) {
         if (key.expires_at && new Date(key.expires_at) < new Date()) {
@@ -221,7 +218,7 @@ export class ProvenanceService {
         try {
           const verifier = crypto.createVerify('RSA-SHA256');
           verifier.update(canonicalData);
-          
+
           if (verifier.verify(key.public_key, provenance.signature, 'base64')) {
             return true;
           }
@@ -249,9 +246,9 @@ export class ProvenanceService {
       // Check if artifact name matches
       if (subject.name === artifact.name || subject.name === artifact.id) {
         // Check if hash matches
-        const sha256 = subject.digest['sha256'];
-        const sha512 = subject.digest['sha512'];
-        
+        const sha256 = subject.digest.sha256;
+        const sha512 = subject.digest.sha512;
+
         if (sha256 && sha256 === artifact.hash) {
           return true;
         }
@@ -278,9 +275,7 @@ export class ProvenanceService {
       }
 
       // Must have at least one digest algorithm
-      const hasDigest = material.digest['sha256'] || 
-                        material.digest['sha512'] || 
-                        material.digest['sha1'];
+      const hasDigest = material.digest.sha256 || material.digest.sha512 || material.digest.sha1;
       if (!hasDigest) {
         return false;
       }
@@ -295,9 +290,9 @@ export class ProvenanceService {
   async verifyArtifactSignature(
     artifact: Artifact,
     signature: ArtifactSignature,
-    trustedKeys: TrustedKey[],
+    trustedKeys: TrustedKey[]
   ): Promise<boolean> {
-    const trustedKey = trustedKeys.find(k => k.id === signature.key_id);
+    const trustedKey = trustedKeys.find((k) => k.id === signature.key_id);
     if (!trustedKey) {
       return false;
     }
@@ -309,7 +304,7 @@ export class ProvenanceService {
     try {
       const verifier = crypto.createVerify(signature.algorithm);
       verifier.update(artifact.hash);
-      
+
       return verifier.verify(trustedKey.public_key, signature.signature, 'base64');
     } catch {
       return false;
@@ -323,7 +318,7 @@ export class ProvenanceService {
     const canonical = {
       _type: 'https://in-toto.io/Statement/v1',
       predicateType: provenance.build_type,
-      subject: provenance.subject.map(s => ({
+      subject: provenance.subject.map((s) => ({
         name: s.name,
         digest: this.sortObject(s.digest),
       })),
@@ -340,7 +335,7 @@ export class ProvenanceService {
           buildFinishedOn: provenance.metadata.build_finished_on,
           reproducible: provenance.metadata.reproducible,
         },
-        materials: provenance.materials.map(m => ({
+        materials: provenance.materials.map((m) => ({
           uri: m.uri,
           digest: this.sortObject(m.digest),
         })),
@@ -388,11 +383,11 @@ export class ProvenanceService {
         reproducible: params.reproducible,
         parameters: params.parameters,
       },
-      materials: params.materials.map(m => ({
+      materials: params.materials.map((m) => ({
         uri: m.uri,
         digest: { sha256: m.sha256 },
       })),
-      subject: params.subjects.map(s => ({
+      subject: params.subjects.map((s) => ({
         name: s.name,
         digest: {
           sha256: s.sha256,
@@ -436,7 +431,7 @@ export class ProvenanceService {
     privateKey: string,
     keyId: string,
     signer: string,
-    algorithm: string = 'RSA-SHA256',
+    algorithm = 'RSA-SHA256'
   ): ArtifactSignature {
     const sign = crypto.createSign(algorithm);
     sign.update(artifact.hash);

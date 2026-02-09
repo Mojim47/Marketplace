@@ -1,4 +1,4 @@
-import { VerifyStatus, ZarinpalPaymentService } from '../gateways/zarinpal.adapter.js';
+import type { VerifyStatus, ZarinpalPaymentService } from '../gateways/zarinpal.adapter.js';
 
 export interface ReconcileResult {
   authority: string;
@@ -22,7 +22,9 @@ export class PaymentReconciliationService {
     for (const [authority, info] of Array.from(this.pending.entries())) {
       const r = await this.zarinpal.reverify(authority, info.amount);
       results.push({ authority, status: r.status, refId: r.refId });
-      if (r.status !== 'pending') this.pending.delete(authority);
+      if (r.status !== 'pending') {
+        this.pending.delete(authority);
+      }
     }
     return results;
   }

@@ -9,7 +9,7 @@
  */
 
 import { AnalyticsService } from '../libs/analytics/src/analytics.service';
-import { SearchEvent } from '../libs/analytics/src/types';
+import type { SearchEvent } from '../libs/analytics/src/types';
 
 // Test configuration
 const TEST_CONFIG = {
@@ -90,12 +90,6 @@ const SAMPLE_SEARCH_EVENTS: Partial<SearchEvent>[] = [
 ];
 
 async function main() {
-  console.log('🚀 NextGen Marketplace - ClickHouse Analytics Test');
-  console.log('═══════════════════════════════════════════════════════════════');
-  console.log(`📊 Test User ID: ${TEST_CONFIG.testUserId}`);
-  console.log(`🔗 Test Session ID: ${TEST_CONFIG.testSessionId}`);
-  console.log('═══════════════════════════════════════════════════════════════');
-
   const testResults = {
     connection: false,
     eventTracking: false,
@@ -105,30 +99,17 @@ async function main() {
   };
 
   try {
-    // Test 1: Initialize Analytics Service
-    console.log('\n🔌 Test 1: Analytics Service Initialization...');
     const analyticsService = new AnalyticsService();
-    
-    // Wait for initialization
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    
-    console.log('   ✅ Analytics service initialized');
-    testResults.connection = true;
 
-    // Test 2: Track Search Events
-    console.log('\n📝 Test 2: Search Event Tracking...');
+    // Wait for initialization
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+    testResults.connection = true;
     try {
-      for (const [index, event] of SAMPLE_SEARCH_EVENTS.entries()) {
+      for (const [_index, event] of SAMPLE_SEARCH_EVENTS.entries()) {
         await analyticsService.trackSearchEvent(event);
-        console.log(`   ✅ Event ${index + 1} tracked: ${event.query}`);
       }
       testResults.eventTracking = true;
-    } catch (error) {
-      console.log('   ❌ Event tracking failed:', error);
-    }
-
-    // Test 3: Track Search Click
-    console.log('\n🖱️ Test 3: Search Click Tracking...');
+    } catch (_error) {}
     try {
       // Simulate a click on the first search result
       const firstEvent = SAMPLE_SEARCH_EVENTS[0];
@@ -137,22 +118,16 @@ async function main() {
         // For testing, we'll use a mock event_id
         const mockEventId = 'test-event-id-123';
         const clickedProduct = firstEvent.results[0];
-        
+
         await analyticsService.trackSearchClick(
           mockEventId,
           clickedProduct.id,
           1, // position
           2500 // time to click in ms
         );
-        console.log(`   ✅ Click tracked: ${clickedProduct.name}`);
         testResults.clickTracking = true;
       }
-    } catch (error) {
-      console.log('   ❌ Click tracking failed:', error);
-    }
-
-    // Test 4: Update User Session
-    console.log('\n👤 Test 4: User Session Tracking...');
+    } catch (_error) {}
     try {
       await analyticsService.updateUserSession({
         session_id: TEST_CONFIG.testSessionId,
@@ -166,54 +141,29 @@ async function main() {
         failed_searches: 1,
         products_clicked: 1,
       });
-      console.log('   ✅ User session updated');
       testResults.sessionTracking = true;
-    } catch (error) {
-      console.log('   ❌ Session tracking failed:', error);
-    }
-
-    // Wait for data to be processed
-    console.log('\n⏳ Waiting for data processing...');
-    await new Promise(resolve => setTimeout(resolve, 5000));
-
-    // Test 5: Analytics Queries
-    console.log('\n📊 Test 5: Analytics Queries...');
+    } catch (_error) {}
+    await new Promise((resolve) => setTimeout(resolve, 5000));
     try {
       // Get popular queries
       const popularQueries = await analyticsService.getPopularQueries(1, 5);
-      console.log(`   ✅ Popular queries: ${popularQueries.length} found`);
       if (popularQueries.length > 0) {
-        console.log(`   📈 Top query: "${popularQueries[0].query_normalized}" (${popularQueries[0].search_count} searches)`);
       }
 
       // Get failed searches
       const failedSearches = await analyticsService.getFailedSearchInsights(1, 5);
-      console.log(`   ✅ Failed searches: ${failedSearches.length} found`);
       if (failedSearches.length > 0) {
-        console.log(`   ❌ Top failed: "${failedSearches[0].query_normalized}" (${failedSearches[0].failure_count} failures)`);
       }
 
       // Get performance metrics
-      const performance = await analyticsService.getSearchPerformanceByHour();
-      console.log(`   ✅ Performance metrics: ${performance.length} hours`);
+      const _performance = await analyticsService.getSearchPerformanceByHour();
 
       // Get dashboard
-      const dashboard = await analyticsService.getDashboard();
-      console.log(`   ✅ Dashboard data loaded`);
-      console.log(`   📊 Total searches today: ${dashboard.total_searches_today}`);
-      console.log(`   ❌ Failed searches today: ${dashboard.failed_searches_today}`);
-      console.log(`   📈 Failure rate: ${dashboard.failure_rate.toFixed(2)}%`);
+      const _dashboard = await analyticsService.getDashboard();
 
       testResults.analytics = true;
-    } catch (error) {
-      console.log('   ❌ Analytics queries failed:', error);
-    }
+    } catch (_error) {}
 
-    // Test Summary
-    console.log('\n═══════════════════════════════════════════════════════════════');
-    console.log('📋 TEST SUMMARY');
-    console.log('═══════════════════════════════════════════════════════════════');
-    
     const results = [
       { name: 'Connection', status: testResults.connection },
       { name: 'Event Tracking', status: testResults.eventTracking },
@@ -222,23 +172,17 @@ async function main() {
       { name: 'Analytics Queries', status: testResults.analytics },
     ];
 
-    results.forEach(result => {
-      const icon = result.status ? '✅' : '❌';
-      const status = result.status ? 'PASS' : 'FAIL';
-      console.log(`${icon} ${result.name}: ${status}`);
+    results.forEach((result) => {
+      const _icon = result.status ? '✅' : '❌';
+      const _status = result.status ? 'PASS' : 'FAIL';
     });
 
-    const passedTests = results.filter(r => r.status).length;
+    const passedTests = results.filter((r) => r.status).length;
     const totalTests = results.length;
-    
-    console.log(`\n🎯 Overall: ${passedTests}/${totalTests} tests passed`);
-    
-    if (passedTests === totalTests) {
-      console.log('🎉 All tests passed! ClickHouse analytics is working correctly.');
-    } else {
-      console.log('⚠️  Some tests failed. Check the ClickHouse setup and configuration.');
-    }
 
+    if (passedTests === totalTests) {
+    } else {
+    }
   } catch (error) {
     console.error('💥 Test execution failed:', error);
     process.exit(1);

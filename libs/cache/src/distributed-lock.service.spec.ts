@@ -1,4 +1,4 @@
-﻿import { describe, it, expect } from 'vitest';
+﻿import { describe, expect, it } from 'vitest';
 import { DistributedLockService } from './distributed-lock.service';
 
 const createService = () => new DistributedLockService({} as any);

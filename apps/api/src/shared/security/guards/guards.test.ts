@@ -2,7 +2,7 @@
  * ???????????????????????????????????????????????????????????????????????????
  * NextGen Marketplace - Security Guards Tests
  * ???????????????????????????????????????????????????????????????????????????
- * 
+ *
  * Comprehensive tests for all security guards:
  * - WAFGuard
  * - JWTAuthGuard
@@ -10,12 +10,12 @@
  * - RateLimitGuard
  * - CSRFGuard
  * - BruteForceGuard
- * 
+ *
  * Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 10.1, 10.2, 10.3, 10.4
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as fc from 'fast-check';
+import { describe, expect, it, vi } from 'vitest';
 
 // ============================================================================
 // Mock Types and Helpers
@@ -88,9 +88,9 @@ function createMockExecutionContext(request: MockRequest, response?: MockRespons
 describe('WAFGuard', () => {
   describe('SQL Injection Detection', () => {
     const sqlInjectionPatterns = [
-      "1 UNION SELECT * FROM users",
+      '1 UNION SELECT * FROM users',
       "'; DROP TABLE users; --",
-      "1; DROP TABLE products",
+      '1; DROP TABLE products',
     ];
 
     it('should detect SQL injection patterns in request body', () => {
@@ -99,11 +99,11 @@ describe('WAFGuard', () => {
           method: 'POST',
           body: { query: pattern },
         });
-        
+
         // Simulate WAF inspection - using the actual WAF patterns
         const content = JSON.stringify(request.body);
         const sqlPattern = /(\bunion\b.*\bselect\b|;.*\bdrop\b)/i;
-        
+
         expect(sqlPattern.test(content)).toBe(true);
       }
     });
@@ -111,13 +111,16 @@ describe('WAFGuard', () => {
     it('should allow safe queries', () => {
       fc.assert(
         fc.property(
-          fc.string({ minLength: 1, maxLength: 100 }).filter(s => 
-            !s.toLowerCase().includes('union') &&
-            !s.toLowerCase().includes('select') &&
-            !s.toLowerCase().includes('drop') &&
-            !s.includes("'") &&
-            !s.includes(';')
-          ),
+          fc
+            .string({ minLength: 1, maxLength: 100 })
+            .filter(
+              (s) =>
+                !s.toLowerCase().includes('union') &&
+                !s.toLowerCase().includes('select') &&
+                !s.toLowerCase().includes('drop') &&
+                !s.includes("'") &&
+                !s.includes(';')
+            ),
           (safeQuery) => {
             const sqlPattern = /(\bunion\b.*\bselect\b|;.*\bdrop\b)/i;
             expect(sqlPattern.test(safeQuery)).toBe(false);
@@ -183,10 +186,9 @@ describe('WAFGuard', () => {
       });
 
       const forwardedFor = request.headers['x-forwarded-for'];
-      const ip = typeof forwardedFor === 'string' 
-        ? forwardedFor.split(',')[0].trim()
-        : forwardedFor?.[0];
-      
+      const ip =
+        typeof forwardedFor === 'string' ? forwardedFor.split(',')[0].trim() : forwardedFor?.[0];
+
       expect(ip).toBe('203.0.113.195');
     });
 
@@ -228,7 +230,7 @@ describe('JWTAuthGuard', () => {
 
       const authHeader = request.headers.authorization as string;
       const [type, extractedToken] = authHeader.split(' ');
-      
+
       expect(type.toLowerCase()).toBe('bearer');
       expect(extractedToken).toBe(token);
     });
@@ -258,7 +260,7 @@ describe('JWTAuthGuard', () => {
 
       const authHeader = request.headers.authorization as string;
       const [, extractedToken] = authHeader.split(' ');
-      
+
       expect(extractedToken).toBe(headerToken);
     });
 
@@ -270,7 +272,7 @@ describe('JWTAuthGuard', () => {
 
       const authHeader = request.headers.authorization;
       const cookieToken = request.cookies?.access_token;
-      
+
       expect(authHeader).toBeUndefined();
       expect(cookieToken).toBeUndefined();
     });
@@ -294,18 +296,12 @@ describe('JWTAuthGuard', () => {
     });
 
     it('should reject tokens with invalid format', () => {
-      const invalidTokens = [
-        'not-a-jwt',
-        'only.two.parts',
-        '',
-        'single',
-        '.....',
-      ];
+      const invalidTokens = ['not-a-jwt', 'only.two.parts', '', 'single', '.....'];
 
       for (const token of invalidTokens) {
         const parts = token.split('.');
-        const isValid = parts.length === 3 && parts.every(p => p.length > 0);
-        
+        const isValid = parts.length === 3 && parts.every((p) => p.length > 0);
+
         if (token === 'only.two.parts') {
           expect(parts.length).toBe(3);
         } else {
@@ -336,8 +332,8 @@ describe('RBACGuard', () => {
       const allRoles = Object.keys(ROLE_HIERARCHY);
 
       for (const role of allRoles) {
-        const hasAccess = superAdminRoles.includes(role) || 
-          ROLE_HIERARCHY.SUPER_ADMIN.includes(role);
+        const hasAccess =
+          superAdminRoles.includes(role) || ROLE_HIERARCHY.SUPER_ADMIN.includes(role);
         expect(hasAccess).toBe(true);
       }
     });
@@ -368,12 +364,12 @@ describe('RBACGuard', () => {
           (userRole, requiredRole) => {
             const inheritedRoles = ROLE_HIERARCHY[userRole] || [];
             const hasAccess = userRole === requiredRole || inheritedRoles.includes(requiredRole);
-            
+
             // SUPER_ADMIN should have access to everything
             if (userRole === 'SUPER_ADMIN') {
               expect(hasAccess).toBe(true);
             }
-            
+
             // USER should only have access to USER
             if (userRole === 'USER' && requiredRole !== 'USER') {
               expect(hasAccess).toBe(false);
@@ -389,14 +385,16 @@ describe('RBACGuard', () => {
     it('should match exact permissions', () => {
       const userPermissions = ['users:read', 'users:write', 'products:read'];
       const requiredPermission = 'users:read';
-      
+
       expect(userPermissions.includes(requiredPermission)).toBe(true);
     });
 
     it('should match wildcard permissions', () => {
       const matchPermissionPattern = (pattern: string, permission: string): boolean => {
-        if (pattern === '*') return true;
-        
+        if (pattern === '*') {
+          return true;
+        }
+
         const patternParts = pattern.split(':');
         const permissionParts = permission.split(':');
 
@@ -404,9 +402,7 @@ describe('RBACGuard', () => {
           return false;
         }
 
-        return patternParts.every((part, index) => 
-          part === '*' || part === permissionParts[index]
-        );
+        return patternParts.every((part, index) => part === '*' || part === permissionParts[index]);
       };
 
       expect(matchPermissionPattern('*', 'users:read')).toBe(true);
@@ -425,7 +421,7 @@ describe('RateLimitGuard', () => {
   describe('Rate Limit Headers', () => {
     it('should set rate limit headers', () => {
       const response = createMockResponse();
-      
+
       response.setHeader('X-RateLimit-Limit', 100);
       response.setHeader('X-RateLimit-Remaining', 99);
       response.setHeader('X-RateLimit-Reset', 60);
@@ -437,7 +433,7 @@ describe('RateLimitGuard', () => {
 
     it('should set Retry-After header when rate limited', () => {
       const response = createMockResponse();
-      
+
       response.setHeader('Retry-After', 30);
 
       expect(response.headers.get('Retry-After')).toBe('30');
@@ -450,9 +446,7 @@ describe('RateLimitGuard', () => {
         user: { sub: 'user-123' },
       });
 
-      const identifier = request.user?.sub 
-        ? `user:${request.user.sub}`
-        : `ip:${request.ip}`;
+      const identifier = request.user?.sub ? `user:${request.user.sub}` : `ip:${request.ip}`;
 
       expect(identifier).toBe('user:user-123');
     });
@@ -462,9 +456,7 @@ describe('RateLimitGuard', () => {
         ip: '192.168.1.1',
       });
 
-      const identifier = request.user?.sub 
-        ? `user:${request.user.sub}`
-        : `ip:${request.ip}`;
+      const identifier = request.user?.sub ? `user:${request.user.sub}` : `ip:${request.ip}`;
 
       expect(identifier).toBe('ip:192.168.1.1');
     });
@@ -485,9 +477,7 @@ describe('RateLimitGuard', () => {
       expect(RATE_LIMIT_TIERS.AUTHENTICATED.maxRequests).toBeLessThan(
         RATE_LIMIT_TIERS.PREMIUM.maxRequests
       );
-      expect(RATE_LIMIT_TIERS.PREMIUM.maxRequests).toBeLessThan(
-        RATE_LIMIT_TIERS.API.maxRequests
-      );
+      expect(RATE_LIMIT_TIERS.PREMIUM.maxRequests).toBeLessThan(RATE_LIMIT_TIERS.API.maxRequests);
     });
   });
 });
@@ -664,7 +654,7 @@ describe('BruteForceGuard', () => {
       const blockedUntil = blockedAt + blockDurationMs;
 
       // Immediately after blocking
-      let remainingTime = Math.ceil((blockedUntil - Date.now()) / 60000);
+      const remainingTime = Math.ceil((blockedUntil - Date.now()) / 60000);
       expect(remainingTime).toBeGreaterThan(14);
       expect(remainingTime).toBeLessThanOrEqual(15);
     });
@@ -689,14 +679,12 @@ describe('Security Guards Integration', () => {
 
       // WAF should be first (block malicious requests early)
       expect(guardOrder[0]).toBe('WAFGuard');
-      
+
       // Rate limit should be second (prevent DoS)
       expect(guardOrder[1]).toBe('RateLimitGuard');
-      
+
       // JWT should come before RBAC (need user info for role check)
-      expect(guardOrder.indexOf('JWTAuthGuard')).toBeLessThan(
-        guardOrder.indexOf('RBACGuard')
-      );
+      expect(guardOrder.indexOf('JWTAuthGuard')).toBeLessThan(guardOrder.indexOf('RBACGuard'));
     });
   });
 
@@ -713,11 +701,10 @@ describe('Security Guards Integration', () => {
 
       // All messages should be in Persian (contain Persian characters)
       const persianRegex = /[\u0600-\u06FF]/;
-      
+
       for (const message of Object.values(errorMessages)) {
         expect(persianRegex.test(message)).toBe(true);
       }
     });
   });
 });
-

@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { UsePipes } from '@nestjs/common';
-import { ZodSchema } from 'zod';
+import type { ZodSchema } from 'zod';
 import { ZodValidationPipe } from '../pipes/zod-validation.pipe';
 
 export const ValidateBody = (schema: ZodSchema) => UsePipes(new ZodValidationPipe(schema));

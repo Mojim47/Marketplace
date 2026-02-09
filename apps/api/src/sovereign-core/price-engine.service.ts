@@ -4,13 +4,13 @@
  * ???????????????????????????????????????????????????????????????????????????
  * Purpose: Manage dynamic pricing with volatility indexes and price locks
  * Critical: ALL financial fields use Decimal (not Float) to prevent floating-point errors
- * 
- * Formula: Price_Final = (Price_Base × Index_Volatility) × (1 - Discount_Tier)
+ *
+ * Formula: Price_Final = (Price_Base ï¿½ Index_Volatility) ï¿½ (1 - Discount_Tier)
  * Constraint: Price_Final >= Price_MinimumAllowed (MarginGuard)
  * ???????????????????????????????????????????????????????????????????????????
  */
 
-import { Injectable, Logger, BadRequestException, Inject } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
 import { Redis } from 'ioredis';
 import { PrismaService } from '../database/prisma.service';
@@ -41,12 +41,12 @@ export class PriceEngine {
 
   constructor(
     private readonly prisma: PrismaService,
-    @Inject('REDIS_CLIENT') private readonly redis: Redis,
+    @Inject('REDIS_CLIENT') private readonly redis: Redis
   ) {}
 
   /**
    * Calculate final price with volatility and tier discount
-   * Formula: Price_Final = (Price_Base × Index_Volatility) × (1 - Discount_Tier)
+   * Formula: Price_Final = (Price_Base ï¿½ Index_Volatility) ï¿½ (1 - Discount_Tier)
    */
   async getFinalPrice(
     productId: string,
@@ -57,7 +57,7 @@ export class PriceEngine {
       // Check cache first
       const cacheKey = `${this.CACHE_PREFIX}${productId}:${organizationId}:${volatilityIndexId || 'none'}`;
       const cached = await this.redis.get(cacheKey);
-      
+
       if (cached) {
         this.logger.debug(`Cache hit for ${cacheKey}`);
         return JSON.parse(cached, (key, value) => {
@@ -72,8 +72,8 @@ export class PriceEngine {
       // 1. Get product base price
       const product = await this.prisma.product.findUnique({
         where: { id: productId },
-        select: { 
-          id: true, 
+        select: {
+          id: true,
           price: true,
           costPrice: true, // For margin calculation
         },
@@ -88,7 +88,7 @@ export class PriceEngine {
 
       // 2. Get volatility index multiplier
       let indexMultiplier = new Decimal(1.0); // Default: no adjustment
-      
+
       if (volatilityIndexId) {
         const volatilityIndex = await this.prisma.volatilityIndex.findUnique({
           where: { id: volatilityIndexId, isActive: true },
@@ -119,26 +119,26 @@ export class PriceEngine {
       if (b2bRelation) {
         // Tier-based discount mapping
         const tierDiscountMap: Record<string, number> = {
-          GOLD: 25.0,   // 25% discount
+          GOLD: 25.0, // 25% discount
           SILVER: 15.0, // 15% discount
-          BRONZE: 5.0,  // 5% discount
+          BRONZE: 5.0, // 5% discount
         };
 
         const baseTierDiscount = tierDiscountMap[b2bRelation.tierLevel] || 0;
         const additionalDiscount = parseFloat(b2bRelation.discountPercentage.toString());
-        
+
         tierDiscount = new Decimal(baseTierDiscount + additionalDiscount);
       }
 
       // 4. Calculate final price
-      // Formula: Price_Final = (Price_Base × Index_Volatility) × (1 - Discount_Tier / 100)
+      // Formula: Price_Final = (Price_Base ï¿½ Index_Volatility) ï¿½ (1 - Discount_Tier / 100)
       const priceWithIndex = basePrice.mul(indexMultiplier);
       const discountMultiplier = new Decimal(1).minus(tierDiscount.div(100));
       const finalPrice = priceWithIndex.mul(discountMultiplier);
 
       // 5. MarginGuard: Calculate minimum allowed price
       // MAP = costPrice * 1.10 (10% minimum margin)
-      const minimumAllowedPrice = costPrice.mul(new Decimal(1.10));
+      const minimumAllowedPrice = costPrice.mul(new Decimal(1.1));
 
       const isWithinMargin = finalPrice.gte(minimumAllowedPrice);
 
@@ -253,10 +253,7 @@ export class PriceEngine {
   /**
    * Get active price lock for organization
    */
-  async getActivePriceLock(
-    productId: string,
-    organizationId: string
-  ): Promise<any | null> {
+  async getActivePriceLock(productId: string, organizationId: string): Promise<any | null> {
     try {
       const priceLock = await this.prisma.priceLock.findFirst({
         where: {
@@ -311,11 +308,12 @@ export class PriceEngine {
     // Use Promise.all for parallel processing
     const calculations = await Promise.all(
       productIds.map((productId) =>
-        this.getFinalPrice(productId, organizationId, volatilityIndexId)
-          .catch((error: any): null => {
+        this.getFinalPrice(productId, organizationId, volatilityIndexId).catch(
+          (error: any): null => {
             this.logger.error(`Error calculating price for ${productId}: ${error}`);
             return null;
-          })
+          }
+        )
       )
     );
 

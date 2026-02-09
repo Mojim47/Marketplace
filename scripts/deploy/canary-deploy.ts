@@ -2,8 +2,8 @@
 // Canary Deployment - Ultra-Fast 7-Layer Architecture
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { execSync } from 'child_process';
-import { readFileSync, writeFileSync } from 'fs';
+import { execSync } from 'node:child_process';
+import { readFileSync, writeFileSync } from 'node:fs';
 
 interface DeploymentConfig {
   stages: number[];
@@ -45,9 +45,6 @@ class CanaryDeployment {
   }
 
   async deploy(): Promise<void> {
-    console.log(`🚀 Starting Canary Deployment: ${this.deploymentId}`);
-    console.log(`📊 Stages: ${this.config.stages.join('% → ')}%`);
-
     try {
       // Pre-deployment checks
       await this.preDeploymentChecks();
@@ -56,15 +53,12 @@ class CanaryDeployment {
       for (let i = 1; i < this.config.stages.length; i++) {
         const percentage = this.config.stages[i];
         await this.deployStage(percentage);
-        
+
         if (percentage < 100) {
           await this.monitorStage(percentage);
         }
       }
-
-      console.log('✅ Canary deployment completed successfully!');
       await this.postDeploymentTasks();
-
     } catch (error) {
       console.error('❌ Deployment failed:', error);
       await this.rollback();
@@ -73,39 +67,27 @@ class CanaryDeployment {
   }
 
   private async preDeploymentChecks(): Promise<void> {
-    console.log('🔍 Running pre-deployment checks...');
-
     // Check infrastructure health
     const infraHealth = await this.checkInfrastructureHealth();
     if (!infraHealth.healthy) {
       throw new Error(`Infrastructure not healthy: ${infraHealth.issues.join(', ')}`);
     }
-
-    // Run integration tests
-    console.log('🧪 Running integration tests...');
     try {
       execSync('pnpm test:integration', { stdio: 'inherit' });
-    } catch (error) {
+    } catch (_error) {
       throw new Error('Integration tests failed');
     }
-
-    // Check database migrations
-    console.log('📊 Checking database migrations...');
     try {
       execSync('pnpm db:migrate:deploy --dry-run', { stdio: 'inherit' });
-    } catch (error) {
+    } catch (_error) {
       throw new Error('Database migration check failed');
     }
 
     // Validate configuration
     await this.validateConfiguration();
-
-    console.log('✅ Pre-deployment checks passed');
   }
 
   private async deployStage(percentage: number): Promise<void> {
-    console.log(`\n🎯 Deploying stage: ${percentage}%`);
-
     if (percentage === 0) {
       // Infrastructure only - no traffic
       await this.deployInfrastructure();
@@ -120,21 +102,15 @@ class CanaryDeployment {
 
     // Update service mesh configuration
     await this.updateServiceMesh(percentage);
-
-    console.log(`✅ Stage ${percentage}% deployed`);
   }
 
   private async monitorStage(percentage: number): Promise<void> {
-    console.log(`📊 Monitoring stage ${percentage}% for ${this.config.monitoringDuration} minutes...`);
-
     const monitoringStart = Date.now();
-    const monitoringEnd = monitoringStart + (this.config.monitoringDuration * 60 * 1000);
+    const monitoringEnd = monitoringStart + this.config.monitoringDuration * 60 * 1000;
 
     while (Date.now() < monitoringEnd) {
       const metrics = await this.collectMetrics();
       const healthStatus = this.evaluateHealth(metrics);
-
-      console.log(`📈 Metrics: Error Rate: ${metrics.errorRate}%, Latency P95: ${metrics.p95Latency}ms, Memory: ${metrics.memoryUsage}%`);
 
       if (!healthStatus.healthy) {
         console.error(`❌ Health check failed: ${healthStatus.issues.join(', ')}`);
@@ -144,15 +120,13 @@ class CanaryDeployment {
       // Wait 30 seconds before next check
       await this.sleep(30000);
     }
-
-    console.log(`✅ Stage ${percentage}% monitoring completed successfully`);
   }
 
   private async collectMetrics(): Promise<HealthMetrics> {
     try {
       // Collect metrics from monitoring endpoints
       const healthResponse = await fetch(`${this.config.healthCheckUrl}/detailed`);
-      const healthData = await healthResponse.json();
+      const _healthData = await healthResponse.json();
 
       const metricsResponse = await fetch(`${this.config.healthCheckUrl}/metrics`);
       const metricsData = await metricsResponse.json();
@@ -201,8 +175,6 @@ class CanaryDeployment {
   }
 
   private async rollback(): Promise<void> {
-    console.log('🔄 Initiating rollback...');
-
     try {
       // Rollback load balancer to 0% new version
       await this.updateLoadBalancer(0);
@@ -216,13 +188,11 @@ class CanaryDeployment {
       // Verify rollback
       await this.sleep(10000); // Wait 10 seconds
       const health = await this.checkInfrastructureHealth();
-      
+
       if (health.healthy) {
-        console.log('✅ Rollback completed successfully');
       } else {
         console.error('❌ Rollback verification failed');
       }
-
     } catch (error) {
       console.error('❌ Rollback failed:', error);
       throw error;
@@ -230,11 +200,9 @@ class CanaryDeployment {
   }
 
   private async deployInfrastructure(): Promise<void> {
-    console.log('🏗️ Deploying infrastructure...');
-
     // Start new infrastructure containers
-    execSync('docker-compose -f docker-compose.canary.yml up -d postgres keydb clickhouse', { 
-      stdio: 'inherit' 
+    execSync('docker-compose -f docker-compose.canary.yml up -d postgres keydb clickhouse', {
+      stdio: 'inherit',
     });
 
     // Wait for services to be ready
@@ -242,31 +210,23 @@ class CanaryDeployment {
 
     // Run database migrations
     execSync('pnpm db:migrate:deploy', { stdio: 'inherit' });
-
-    console.log('✅ Infrastructure deployed');
   }
 
   private async deployContainers(percentage: number): Promise<void> {
-    console.log(`🐳 Deploying containers for ${percentage}% traffic...`);
-
     // Calculate number of instances needed
     const totalInstances = 4; // Base number of instances
     const newInstances = Math.ceil((totalInstances * percentage) / 100);
 
     // Start new version containers
     execSync(`docker-compose -f docker-compose.canary.yml up -d --scale api=${newInstances}`, {
-      stdio: 'inherit'
+      stdio: 'inherit',
     });
 
     // Wait for containers to be healthy
     await this.waitForContainerHealth(newInstances);
-
-    console.log(`✅ ${newInstances} container instances deployed`);
   }
 
   private async updateLoadBalancer(percentage: number): Promise<void> {
-    console.log(`⚖️ Updating load balancer: ${percentage}% → new version`);
-
     // Update nginx configuration (simplified)
     const nginxConfig = `
 upstream backend {
@@ -284,38 +244,37 @@ server {
 }`;
 
     writeFileSync('/tmp/nginx.conf', nginxConfig);
-    
+
     // Reload nginx (in production would use proper nginx reload)
     try {
       execSync('docker exec nginx nginx -s reload', { stdio: 'inherit' });
-    } catch (error) {
+    } catch (_error) {
       console.warn('Nginx reload failed, continuing...');
     }
   }
 
   private async updateServiceMesh(percentage: number): Promise<void> {
-    console.log(`🕸️ Updating service mesh configuration...`);
-    
     // Update Istio/Envoy configuration for traffic splitting
     // This is a simplified version - in production would use proper service mesh APIs
-    
+
     const virtualServiceConfig = {
       apiVersion: 'networking.istio.io/v1beta1',
       kind: 'VirtualService',
       metadata: { name: 'nextgen-api' },
       spec: {
-        http: [{
-          match: [{ uri: { prefix: '/api/v3/' } }],
-          route: [
-            { destination: { host: 'api-stable' }, weight: 100 - percentage },
-            { destination: { host: 'api-canary' }, weight: percentage },
-          ],
-        }],
+        http: [
+          {
+            match: [{ uri: { prefix: '/api/v3/' } }],
+            route: [
+              { destination: { host: 'api-stable' }, weight: 100 - percentage },
+              { destination: { host: 'api-canary' }, weight: percentage },
+            ],
+          },
+        ],
       },
     };
 
     writeFileSync('/tmp/virtual-service.yaml', JSON.stringify(virtualServiceConfig, null, 2));
-    console.log(`✅ Service mesh updated: ${percentage}% canary traffic`);
   }
 
   private async checkInfrastructureHealth(): Promise<{ healthy: boolean; issues: string[] }> {
@@ -324,12 +283,13 @@ server {
     try {
       // Check PostgreSQL
       const pgHealth = await fetch(`${this.config.healthCheckUrl}/detailed`);
-      if (!pgHealth.ok) issues.push('PostgreSQL unhealthy');
+      if (!pgHealth.ok) {
+        issues.push('PostgreSQL unhealthy');
+      }
 
       // Check KeyDB
       // Check ClickHouse
       // Check application health
-
     } catch (error) {
       issues.push(`Health check failed: ${error}`);
     }
@@ -339,12 +299,7 @@ server {
 
   private async validateConfiguration(): Promise<void> {
     // Validate environment variables
-    const requiredEnvVars = [
-      'DATABASE_URL',
-      'KEYDB_PASSWORD',
-      'CLICKHOUSE_PASSWORD',
-      'JWT_SECRET',
-    ];
+    const requiredEnvVars = ['DATABASE_URL', 'KEYDB_PASSWORD', 'CLICKHOUSE_PASSWORD', 'JWT_SECRET'];
 
     for (const envVar of requiredEnvVars) {
       if (!process.env[envVar]) {
@@ -358,60 +313,54 @@ server {
       if (packageJson.version !== '3.0.0') {
         throw new Error('Invalid package version');
       }
-    } catch (error) {
+    } catch (_error) {
       throw new Error('Invalid package.json');
     }
   }
 
   private async waitForServices(services: string[]): Promise<void> {
-    console.log(`⏳ Waiting for services: ${services.join(', ')}`);
-    
     for (const service of services) {
       let attempts = 0;
       const maxAttempts = 30;
-      
+
       while (attempts < maxAttempts) {
         try {
           const result = execSync(`docker-compose ps ${service}`, { encoding: 'utf8' });
           if (result.includes('Up')) {
-            console.log(`✅ ${service} is ready`);
             break;
           }
-        } catch (error) {
+        } catch (_error) {
           // Service not ready yet
         }
-        
+
         attempts++;
         await this.sleep(2000); // Wait 2 seconds
       }
-      
+
       if (attempts >= maxAttempts) {
         throw new Error(`Service ${service} failed to start`);
       }
     }
   }
 
-  private async waitForContainerHealth(expectedInstances: number): Promise<void> {
-    console.log(`⏳ Waiting for ${expectedInstances} healthy containers...`);
-    
+  private async waitForContainerHealth(_expectedInstances: number): Promise<void> {
     let attempts = 0;
     const maxAttempts = 30;
-    
+
     while (attempts < maxAttempts) {
       try {
         const healthResponse = await fetch(`${this.config.healthCheckUrl}`);
         if (healthResponse.ok) {
-          console.log('✅ Containers are healthy');
           return;
         }
-      } catch (error) {
+      } catch (_error) {
         // Not ready yet
       }
-      
+
       attempts++;
       await this.sleep(2000);
     }
-    
+
     throw new Error('Containers failed to become healthy');
   }
 
@@ -422,27 +371,19 @@ server {
   }
 
   private async postDeploymentTasks(): Promise<void> {
-    console.log('🧹 Running post-deployment tasks...');
-
     // Clean up old containers
     execSync('docker system prune -f', { stdio: 'inherit' });
-
-    // Update monitoring dashboards
-    // Send deployment notification
-    // Update documentation
-
-    console.log('✅ Post-deployment tasks completed');
   }
 
   private sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
 
 // Run deployment if called directly
 if (require.main === module) {
   const deployment = new CanaryDeployment();
-  deployment.deploy().catch(error => {
+  deployment.deploy().catch((error) => {
     console.error('Deployment failed:', error);
     process.exit(1);
   });

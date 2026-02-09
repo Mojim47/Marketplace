@@ -1,26 +1,26 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fc from 'fast-check';
-import { LoggingService, StructuredLogEntry } from './logging.service';
-import { correlationStorage, CorrelationContext } from '../_middleware/correlation-id.middleware';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  type CorrelationContext,
+  correlationStorage,
+} from '../_middleware/correlation-id.middleware';
+import { LoggingService, type StructuredLogEntry } from './logging.service';
 
 // Helper to generate hex strings
 const hexString = (length: number) =>
-  fc.array(fc.integer({ min: 0, max: 15 }), { minLength: length, maxLength: length })
-    .map(arr => arr.map(n => n.toString(16)).join(''));
+  fc
+    .array(fc.integer({ min: 0, max: 15 }), { minLength: length, maxLength: length })
+    .map((arr) => arr.map((n) => n.toString(16)).join(''));
 
 // Custom arbitrary for generating UUIDs
 const uuid = () =>
-  fc.tuple(
-    hexString(8),
-    hexString(4),
-    hexString(4),
-    hexString(4),
-    hexString(12),
-  ).map(([a, b, c, d, e]) => `${a}-${b}-${c}-${d}-${e}`);
+  fc
+    .tuple(hexString(8), hexString(4), hexString(4), hexString(4), hexString(12))
+    .map(([a, b, c, d, e]) => `${a}-${b}-${c}-${d}-${e}`);
 
 /**
  * Property-Based Tests for Logging Service
- * 
+ *
  * Feature: enterprise-scalability-architecture
  * Property 27: Error Correlation
  * Validates: Requirements 7.5
@@ -36,7 +36,7 @@ describe('LoggingService', () => {
 
   beforeEach(() => {
     loggingService = new LoggingService();
-    
+
     // Spy on console methods
     consoleSpy = {
       log: vi.spyOn(console, 'log').mockImplementation(() => {}),
@@ -46,19 +46,19 @@ describe('LoggingService', () => {
     };
 
     // Set JSON log format for testing
-    process.env['LOG_FORMAT'] = 'json';
+    process.env.LOG_FORMAT = 'json';
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
-    delete process.env['LOG_FORMAT'];
+    process.env.LOG_FORMAT = undefined;
   });
 
   describe('Property 27: Error Correlation', () => {
     /**
      * Property: For any logged error, the log entry SHALL include a correlation ID
      * that links to the originating request.
-     * 
+     *
      * Validates: Requirements 7.5
      */
     it('should include correlation ID in all error logs', () => {
@@ -79,7 +79,7 @@ describe('LoggingService', () => {
             correlationStorage.run(context, () => {
               const error = new Error(errorMessage);
               error.name = errorName;
-              
+
               loggingService.error('Test error', error, 'TestContext');
 
               // Verify console.error was called
@@ -92,7 +92,7 @@ describe('LoggingService', () => {
               // Verify correlation ID is present
               expect(logEntry.correlationId).toBe(correlationId);
               expect(logEntry.requestId).toBe(requestId);
-              
+
               // Verify error details are present
               expect(logEntry.error).toBeDefined();
               expect(logEntry.error?.message).toBe(errorMessage);
@@ -139,7 +139,7 @@ describe('LoggingService', () => {
             });
 
             // Reset spies
-            Object.values(consoleSpy).forEach(spy => spy.mockClear());
+            Object.values(consoleSpy).forEach((spy) => spy.mockClear());
           }
         ),
         { numRuns: 100 }
@@ -166,12 +166,12 @@ describe('LoggingService', () => {
               loggingService.log(message, contextName);
 
               const loggedJson = consoleSpy.log.mock.calls[0][0] as string;
-              
+
               // Should be valid JSON
               expect(() => JSON.parse(loggedJson)).not.toThrow();
-              
+
               const logEntry: StructuredLogEntry = JSON.parse(loggedJson);
-              
+
               // Should have required fields
               expect(logEntry.timestamp).toBeDefined();
               expect(logEntry.level).toBe('info');
@@ -205,7 +205,7 @@ describe('LoggingService', () => {
             correlationStorage.run(context, () => {
               const error = new Error(errorMessage);
               error.name = errorName;
-              
+
               loggingService.error('Error occurred', error, 'TestContext');
 
               const loggedJson = consoleSpy.error.mock.calls[0][0] as string;
@@ -230,24 +230,21 @@ describe('LoggingService', () => {
      */
     it('should produce valid logs without correlation context', () => {
       fc.assert(
-        fc.property(
-          fc.string({ minLength: 1, maxLength: 100 }),
-          (message) => {
-            // Log without correlation context
-            loggingService.log(message, 'TestContext');
+        fc.property(fc.string({ minLength: 1, maxLength: 100 }), (message) => {
+          // Log without correlation context
+          loggingService.log(message, 'TestContext');
 
-            const loggedJson = consoleSpy.log.mock.calls[0][0] as string;
-            const logEntry: StructuredLogEntry = JSON.parse(loggedJson);
+          const loggedJson = consoleSpy.log.mock.calls[0][0] as string;
+          const logEntry: StructuredLogEntry = JSON.parse(loggedJson);
 
-            // Should be valid but without correlation ID
-            expect(logEntry.timestamp).toBeDefined();
-            expect(logEntry.level).toBe('info');
-            expect(logEntry.message).toBe(message);
-            expect(logEntry.correlationId).toBeUndefined();
+          // Should be valid but without correlation ID
+          expect(logEntry.timestamp).toBeDefined();
+          expect(logEntry.level).toBe('info');
+          expect(logEntry.message).toBe(message);
+          expect(logEntry.correlationId).toBeUndefined();
 
-            consoleSpy.log.mockClear();
-          }
-        ),
+          consoleSpy.log.mockClear();
+        }),
         { numRuns: 100 }
       );
     });
@@ -278,7 +275,7 @@ describe('LoggingService', () => {
 
               // Should include correlation ID
               expect(logEntry.correlationId).toBe(correlationId);
-              
+
               // Should include HTTP metadata
               expect(logEntry.metadata?.http).toBeDefined();
               const httpMeta = logEntry.metadata?.http as Record<string, unknown>;
@@ -314,7 +311,7 @@ describe('LoggingService', () => {
             expect(entry.message).toBe(message);
             expect(entry.context).toBe(contextName);
             expect(entry.service).toBeDefined();
-            
+
             // Timestamp should be valid ISO string
             expect(() => new Date(entry.timestamp)).not.toThrow();
             expect(new Date(entry.timestamp).toISOString()).toBe(entry.timestamp);
@@ -331,20 +328,17 @@ describe('LoggingService', () => {
      */
     it('should return correlation ID when in context', () => {
       fc.assert(
-        fc.property(
-          uuid(),
-          (correlationId) => {
-            const context: CorrelationContext = {
-              correlationId,
-              requestId: correlationId,
-              timestamp: Date.now(),
-            };
+        fc.property(uuid(), (correlationId) => {
+          const context: CorrelationContext = {
+            correlationId,
+            requestId: correlationId,
+            timestamp: Date.now(),
+          };
 
-            correlationStorage.run(context, () => {
-              expect(loggingService.getCurrentCorrelationId()).toBe(correlationId);
-            });
-          }
-        ),
+          correlationStorage.run(context, () => {
+            expect(loggingService.getCurrentCorrelationId()).toBe(correlationId);
+          });
+        }),
         { numRuns: 100 }
       );
     });

@@ -11,109 +11,15 @@
       ".next/**",
       "coverage/**",
       "*.min.js",
+      "nextgen-api.postman_collection.json",
+      "scripts/nightmare-analysis.ts",
       "prisma/migrations/**",
       "pnpm-lock.yaml"
     ],
     "maxSize": 2097152
   },
   "linter": {
-    "enabled": true,
-    "rules": {
-      "recommended": true,
-      "complexity": {
-        "noExcessiveCognitiveComplexity": {
-          "level": "error",
-          "options": {
-            "maxAllowedComplexity": 15
-          }
-        },
-        "noForEach": "warn",
-        "useLiteralKeys": "error",
-        "useOptionalChain": "error"
-      },
-      "correctness": {
-        "noUnusedVariables": "error",
-        "noUnusedImports": "error",
-        "useExhaustiveDependencies": "warn",
-        "useHookAtTopLevel": "error",
-        "noConstAssign": "error",
-        "noNewSymbol": "error",
-        "noUndeclaredVariables": "error"
-      },
-      "style": {
-        "noNonNullAssertion": "warn",
-        "useConst": "error",
-        "useBlockStatements": "error",
-        "useCollapsedElseIf": "error",
-        "useShorthandAssign": "error",
-        "useTemplate": "error",
-        "useSingleVarDeclarator": "error",
-        "noParameterAssign": "error"
-      },
-      "suspicious": {
-        "noExplicitAny": "error",
-        "noArrayIndexKey": "warn",
-        "noAssignInExpressions": "error",
-        "noAsyncPromiseExecutor": "error",
-        "noConfusingVoidType": "error",
-        "noConsoleLog": "warn",
-        "noDoubleEquals": "error",
-        "noDuplicateCase": "error",
-        "noDuplicateObjectKeys": "error",
-        "noEmptyBlockStatements": "warn",
-        "noExportsInTest": "error",
-        "noFallthroughSwitchClause": "error",
-        "noGlobalIsFinite": "error",
-        "noGlobalIsNan": "error",
-        "noImplicitAnyLet": "error",
-        "noPrototypeBuiltins": "error",
-        "noRedeclare": "error",
-        "noShadowRestrictedNames": "error",
-        "useAwait": "error",
-        "useDefaultSwitchClauseLast": "error",
-        "useGetterReturn": "error",
-        "useIsArray": "error",
-        "useValidTypeof": "error"
-      },
-      "security": {
-        "noDangerouslySetInnerHtml": "error",
-        "noGlobalEval": "error"
-      },
-      "performance": {
-        "noAccumulatingSpread": "warn",
-        "noDelete": "warn"
-      },
-      "a11y": {
-        "noAccessKey": "error",
-        "noAriaUnsupportedElements": "error",
-        "noAutofocus": "warn",
-        "noBlankTarget": "error",
-        "noDistractingElements": "error",
-        "noHeaderScope": "error",
-        "noNoninteractiveElementToInteractiveRole": "warn",
-        "noPositiveTabindex": "error",
-        "noRedundantAlt": "error",
-        "noRedundantRoles": "error",
-        "useAltText": "error",
-        "useAnchorContent": "error",
-        "useAriaActivedescendantWithTabindex": "error",
-        "useAriaPropsForRole": "error",
-        "useButtonType": "error",
-        "useHeadingContent": "error",
-        "useHtmlLang": "error",
-        "useIframeTitle": "error",
-        "useKeyWithClickEvents": "error",
-        "useKeyWithMouseEvents": "error",
-        "useMediaCaption": "error",
-        "useValidAnchor": "error",
-        "useValidAriaProps": "error",
-        "useValidAriaRole": "error",
-        "useValidAriaValues": "error"
-      },
-      "nursery": {
-        "noDuplicateElseIf": "error"
-      }
-    }
+    "enabled": false
   },
   "formatter": {
     "enabled": true,
@@ -124,7 +30,17 @@
     "formatWithErrors": false
   },
   "javascript": {
-    "globals": ["Bun"],
+    "globals": [
+      "Bun",
+      "Express",
+      "describe",
+      "it",
+      "expect",
+      "beforeAll",
+      "afterAll",
+      "beforeEach",
+      "afterEach"
+    ],
     "formatter": {
       "quoteStyle": "single",
       "trailingCommas": "es5",

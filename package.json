@@ -168,15 +168,8 @@
   },
   "pnpm": {
     "peerDependencyRules": {
-      "ignoreMissing": [
-        "@types/react",
-        "react",
-        "react-dom"
-      ]
+      "ignoreMissing": ["@types/react", "react", "react-dom"]
     }
   },
-  "workspaces": [
-    "apps/*",
-    "libs/*"
-  ]
+  "workspaces": ["apps/*", "libs/*"]
 }

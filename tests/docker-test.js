@@ -8,9 +8,9 @@
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
-const { execSync, spawn } = require('child_process');
-const fs = require('fs');
-const path = require('path');
+const { execSync, spawn } = require('node:child_process');
+const fs = require('node:fs');
+const path = require('node:path');
 
 // Test results tracking
 const results = {
@@ -20,7 +20,7 @@ const results = {
 };
 
 // Colors for terminal output
-const colors = {
+const _colors = {
   reset: '\x1b[0m',
   red: '\x1b[31m',
   green: '\x1b[32m',
@@ -29,14 +29,10 @@ const colors = {
   cyan: '\x1b[36m',
 };
 
-function log(message, color = 'reset') {
-  console.log(`${colors[color]}${message}${colors.reset}`);
-}
+function log(_message, _color = 'reset') {}
 
 function header(title) {
-  console.log('\n' + '═'.repeat(70));
   log(`  ${title}`, 'cyan');
-  console.log('═'.repeat(70));
 }
 
 function exec(command, options = {}) {
@@ -82,19 +78,25 @@ function testDockerInstallation() {
 
   runTest('Docker CLI available', () => {
     const version = exec('docker --version', { silent: true });
-    if (version.error) throw new Error('Docker not installed');
+    if (version.error) {
+      throw new Error('Docker not installed');
+    }
     log(`     Version: ${version.trim()}`, 'blue');
   });
 
   runTest('Docker Compose available', () => {
     const version = exec('docker-compose --version', { silent: true });
-    if (version.error) throw new Error('Docker Compose not installed');
+    if (version.error) {
+      throw new Error('Docker Compose not installed');
+    }
     log(`     Version: ${version.trim()}`, 'blue');
   });
 
   runTest('Docker daemon running', () => {
     const info = exec('docker info --format "{{.ServerVersion}}"', { silent: true });
-    if (info.error) throw new Error('Docker daemon not running');
+    if (info.error) {
+      throw new Error('Docker daemon not running');
+    }
     log(`     Server: ${info.trim()}`, 'blue');
   });
 }
@@ -103,11 +105,15 @@ function testDockerfiles() {
   header('Dockerfile Tests');
 
   runTest('Main Dockerfile exists', () => {
-    if (!fs.existsSync('Dockerfile')) throw new Error('Dockerfile not found');
+    if (!fs.existsSync('Dockerfile')) {
+      throw new Error('Dockerfile not found');
+    }
   });
 
   runTest('Worker Dockerfile exists', () => {
-    if (!fs.existsSync('Dockerfile.worker')) throw new Error('Dockerfile.worker not found');
+    if (!fs.existsSync('Dockerfile.worker')) {
+      throw new Error('Dockerfile.worker not found');
+    }
   });
 
   runTest('Dockerfile has multi-stage build', () => {
@@ -144,12 +150,15 @@ function testDockerCompose() {
   header('Docker Compose Tests');
 
   runTest('docker-compose.yml exists', () => {
-    if (!fs.existsSync('docker-compose.yml')) throw new Error('docker-compose.yml not found');
+    if (!fs.existsSync('docker-compose.yml')) {
+      throw new Error('docker-compose.yml not found');
+    }
   });
 
   runTest('docker-compose.prod.yml exists', () => {
-    if (!fs.existsSync('docker-compose.prod.yml'))
+    if (!fs.existsSync('docker-compose.prod.yml')) {
       throw new Error('docker-compose.prod.yml not found');
+    }
   });
 
   runTest('docker-compose.yml validates', () => {
@@ -251,7 +260,9 @@ function testBuildCapability() {
   runTest('Dockerfile syntax valid (dry-run)', () => {
     // This checks if Docker can parse the Dockerfile
     const result = exec('docker build --help', { silent: true });
-    if (result.error) throw new Error('Docker build not available');
+    if (result.error) {
+      throw new Error('Docker build not available');
+    }
     return true;
   });
 
@@ -283,7 +294,9 @@ function testInfrastructureFiles() {
       return 'skip';
     }
     const files = fs.readdirSync(nginxPath);
-    if (files.length === 0) throw new Error('Nginx directory empty');
+    if (files.length === 0) {
+      throw new Error('Nginx directory empty');
+    }
     log(`     Files: ${files.join(', ')}`, 'blue');
   });
 
@@ -336,7 +349,9 @@ function testKubernetesConfigs() {
   runTest('Deployment configs exist', () => {
     const files = fs.readdirSync(k8sPath);
     const deployments = files.filter((f) => f.includes('deployment'));
-    if (deployments.length === 0) throw new Error('No deployment configs');
+    if (deployments.length === 0) {
+      throw new Error('No deployment configs');
+    }
     log(`     Deployments: ${deployments.length}`, 'blue');
   });
 
@@ -357,25 +372,14 @@ function testKubernetesConfigs() {
 // ═══════════════════════════════════════════════════════════════════════════
 
 function printSummary() {
-  console.log('\n' + '═'.repeat(70));
   log('  📊 TEST SUMMARY', 'cyan');
-  console.log('═'.repeat(70));
-
-  console.log(`\n  ${colors.green}✅ Passed: ${results.passed.length}${colors.reset}`);
-  console.log(`  ${colors.red}❌ Failed: ${results.failed.length}${colors.reset}`);
-  console.log(`  ${colors.yellow}⏭️  Skipped: ${results.skipped.length}${colors.reset}`);
 
   if (results.failed.length > 0) {
-    console.log('\n  Failed Tests:');
-    results.failed.forEach(({ name, error }) => {
-      console.log(`  ${colors.red}  • ${name}: ${error}${colors.reset}`);
-    });
+    results.failed.forEach(({ name, error }) => {});
   }
 
   const total = results.passed.length + results.failed.length;
   const percentage = total > 0 ? Math.round((results.passed.length / total) * 100) : 0;
-
-  console.log('\n' + '═'.repeat(70));
   if (percentage >= 80) {
     log(`  🎉 Docker Test Score: ${percentage}% - READY FOR DEPLOYMENT`, 'green');
   } else if (percentage >= 50) {
@@ -383,16 +387,13 @@ function printSummary() {
   } else {
     log(`  ❌ Docker Test Score: ${percentage}% - NOT PRODUCTION READY`, 'red');
   }
-  console.log('═'.repeat(70) + '\n');
 
   return results.failed.length === 0;
 }
 
 async function main() {
-  console.log('\n' + '═'.repeat(70));
   log('  🐳 NextGen Marketplace - Docker Test Suite', 'cyan');
   log('  Validating containerization & deployment readiness', 'blue');
-  console.log('═'.repeat(70));
 
   // Change to project root
   const projectRoot = path.resolve(__dirname, '..');

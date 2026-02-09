@@ -1,12 +1,12 @@
 import {
+  type CallHandler,
+  type ExecutionContext,
   Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-  NestMiddleware,
+  type NestInterceptor,
+  type NestMiddleware,
 } from '@nestjs/common';
-import { Observable } from 'rxjs';
-import { Request, Response, NextFunction } from 'express';
+import type { NextFunction, Request, Response } from 'express';
+import type { Observable } from 'rxjs';
 
 /**
  * Security headers configuration
@@ -76,7 +76,7 @@ export interface PermissionsPolicyDirectives {
   microphone: string[];
   midi: string[];
   'navigation-override': string[];
-  'payment': string[];
+  payment: string[];
   'picture-in-picture': string[];
   'publickey-credentials-get': string[];
   'screen-wake-lock': string[];
@@ -153,10 +153,7 @@ const DEFAULT_CONFIG: SecurityHeadersConfig = {
 /**
  * Build CSP header value from directives
  */
-function buildCSPHeader(
-  directives: CSPDirectives,
-  reportUri?: string,
-): string {
+function buildCSPHeader(directives: CSPDirectives, reportUri?: string): string {
   const parts: string[] = [];
 
   for (const [key, value] of Object.entries(directives)) {
@@ -179,9 +176,7 @@ function buildCSPHeader(
 /**
  * Build Permissions-Policy header value
  */
-function buildPermissionsPolicyHeader(
-  directives: PermissionsPolicyDirectives,
-): string {
+function buildPermissionsPolicyHeader(directives: PermissionsPolicyDirectives): string {
   const parts: string[] = [];
 
   for (const [key, value] of Object.entries(directives)) {
@@ -189,7 +184,7 @@ function buildPermissionsPolicyHeader(
       if (value.length === 0) {
         parts.push(`${key}=()`);
       } else {
-        const formattedValues = value.map(v => v === 'self' ? 'self' : `"${v}"`);
+        const formattedValues = value.map((v) => (v === 'self' ? 'self' : `"${v}"`));
         parts.push(`${key}=(${formattedValues.join(' ')})`);
       }
     }
@@ -202,18 +197,17 @@ function buildPermissionsPolicyHeader(
  * Build HSTS header value
  */
 function buildHSTSHeader(config: SecurityHeadersConfig): string {
-  const maxAge =
-    typeof config.hstsMaxAge === 'number' ? config.hstsMaxAge : 31536000;
+  const maxAge = typeof config.hstsMaxAge === 'number' ? config.hstsMaxAge : 31536000;
   const parts = [`max-age=${maxAge}`];
-  
+
   if (config.hstsIncludeSubDomains) {
     parts.push('includeSubDomains');
   }
-  
+
   if (config.hstsPreload) {
     parts.push('preload');
   }
-  
+
   return parts.join('; ');
 }
 
@@ -222,7 +216,7 @@ function buildHSTSHeader(config: SecurityHeadersConfig): string {
  */
 export function applySecurityHeaders(
   response: Response,
-  config: SecurityHeadersConfig = DEFAULT_CONFIG,
+  config: SecurityHeadersConfig = DEFAULT_CONFIG
 ): void {
   // Remove X-Powered-By header (information disclosure)
   response.removeHeader('X-Powered-By');
@@ -271,10 +265,7 @@ export function applySecurityHeaders(
       ...DEFAULT_PERMISSIONS_POLICY,
       ...config.permissionsPolicy,
     };
-    response.setHeader(
-      'Permissions-Policy',
-      buildPermissionsPolicyHeader(permissionsPolicy),
-    );
+    response.setHeader('Permissions-Policy', buildPermissionsPolicyHeader(permissionsPolicy));
   }
 
   // Cache-Control for sensitive responses
@@ -288,7 +279,7 @@ export function applySecurityHeaders(
 
 /**
  * Security Headers Interceptor for NestJS
- * 
+ *
  * Applies comprehensive security headers to all responses:
  * - Content-Security-Policy (CSP)
  * - Strict-Transport-Security (HSTS)
@@ -311,10 +302,10 @@ export class SecurityHeadersInterceptor implements NestInterceptor {
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const response = context.switchToHttp().getResponse<Response>();
-    
+
     // Apply headers before response is sent
     applySecurityHeaders(response, this.config);
-    
+
     return next.handle();
   }
 }
@@ -331,7 +322,7 @@ export class SecurityHeadersMiddleware implements NestMiddleware {
     this.config = { ...DEFAULT_CONFIG, ...config };
   }
 
-  use(req: Request, res: Response, next: NextFunction): void {
+  use(_req: Request, res: Response, next: NextFunction): void {
     applySecurityHeaders(res, this.config);
     next();
   }
@@ -341,11 +332,11 @@ export class SecurityHeadersMiddleware implements NestMiddleware {
  * Create security headers middleware with custom config
  */
 export function createSecurityHeadersMiddleware(
-  config: Partial<SecurityHeadersConfig> = {},
+  config: Partial<SecurityHeadersConfig> = {}
 ): (req: Request, res: Response, next: NextFunction) => void {
   const mergedConfig = { ...DEFAULT_CONFIG, ...config };
-  
-  return (req: Request, res: Response, next: NextFunction) => {
+
+  return (_req: Request, res: Response, next: NextFunction) => {
     applySecurityHeaders(res, mergedConfig);
     next();
   };

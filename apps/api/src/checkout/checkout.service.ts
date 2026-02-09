@@ -2,7 +2,7 @@
  * Checkout Service - Redis-Backed Stateless Implementation
  * Enterprise Scalability Architecture - Stateless Backend
  * Requirements: 2.1, 2.5
- * 
+ *
  * Features:
  * - Checkout session stored in Redis (stateless API)
  * - Distributed locking for concurrent operations
@@ -10,25 +10,27 @@
  * - Multi-step checkout flow
  */
 
-import { Injectable, BadRequestException, NotFoundException, Inject } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
-import { v4 as uuidv4 } from 'uuid';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
+import { v4 as uuidv4 } from 'uuid';
+import type { CartService } from '../cart/cart.service';
+import type { PrismaService } from '../database/prisma.service';
 import type {
-  CheckoutSession,
-  ShippingAddress,
-  PaymentMethod,
-  CheckoutStep,
   CheckoutConfig,
+  CheckoutSession,
+  PaymentMethod,
+  ShippingAddress,
 } from './checkout.types';
-import { CartService } from '../cart/cart.service';
 
 /** Redis State Service Interface */
 interface IStateService {
   setState<T>(key: string, value: T, options?: { ttlSeconds?: number }): Promise<boolean>;
   getState<T>(key: string): Promise<T | null>;
   deleteState(key: string): Promise<boolean>;
-  acquireLock(key: string, options?: { ttlMs?: number; retryAttempts?: number }): Promise<{ key: string; token: string } | null>;
+  acquireLock(
+    key: string,
+    options?: { ttlMs?: number; retryAttempts?: number }
+  ): Promise<{ key: string; token: string } | null>;
   releaseLock(lock: { key: string; token: string }): Promise<boolean>;
 }
 
@@ -44,7 +46,7 @@ export class CheckoutService {
     private readonly prisma: PrismaService,
     private readonly cartService: CartService,
     @Inject('STATE_SERVICE') private readonly stateService: IStateService,
-    config?: Partial<CheckoutConfig>,
+    config?: Partial<CheckoutConfig>
   ) {
     this.config = { ...DEFAULT_CONFIG, ...config };
   }
@@ -92,7 +94,7 @@ export class CheckoutService {
       id: sessionId,
       userId,
       cartSnapshot: {
-        items: cart.items.map(item => ({
+        items: cart.items.map((item) => ({
           productId: item.productId,
           variantId: item.variantId,
           productName: item.productName,
@@ -114,11 +116,15 @@ export class CheckoutService {
 
     // Save session
     const sessionKey = this.getSessionKey(sessionId);
-    await this.stateService.setState(sessionKey, session, { ttlSeconds: this.config.sessionTtlSeconds });
+    await this.stateService.setState(sessionKey, session, {
+      ttlSeconds: this.config.sessionTtlSeconds,
+    });
 
     // Track user's active checkout
     const userKey = this.getUserCheckoutKey(userId);
-    await this.stateService.setState(userKey, sessionId, { ttlSeconds: this.config.sessionTtlSeconds });
+    await this.stateService.setState(userKey, sessionId, {
+      ttlSeconds: this.config.sessionTtlSeconds,
+    });
 
     return session;
   }
@@ -131,11 +137,11 @@ export class CheckoutService {
     const session = await this.stateService.getState<CheckoutSession>(sessionKey);
 
     if (!session) {
-      throw new NotFoundException('ÌáÓå ÑÏÇÎÊ íÇİÊ äÔÏ íÇ ãäŞÖí ÔÏå ÇÓÊ');
+      throw new NotFoundException('ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½');
     }
 
     if (session.userId !== userId) {
-      throw new BadRequestException('ÏÓÊÑÓí ÛíÑãÌÇÒ');
+      throw new BadRequestException('ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½');
     }
 
     // Restore Date objects
@@ -170,12 +176,16 @@ export class CheckoutService {
   /**
    * Set shipping address
    */
-  async setShippingAddress(sessionId: string, userId: string, address: ShippingAddress): Promise<CheckoutSession> {
+  async setShippingAddress(
+    sessionId: string,
+    userId: string,
+    address: ShippingAddress
+  ): Promise<CheckoutSession> {
     const lockKey = this.getCheckoutLockKey(sessionId);
     const lock = await this.stateService.acquireLock(lockKey, { ttlMs: 5000, retryAttempts: 3 });
 
     if (!lock) {
-      throw new BadRequestException('ÌáÓå ÑÏÇÎÊ ÏÑ ÍÇá ÑÏÇÒÔ ÇÓÊ');
+      throw new BadRequestException('ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½');
     }
 
     try {
@@ -186,7 +196,9 @@ export class CheckoutService {
       session.updatedAt = new Date();
 
       const sessionKey = this.getSessionKey(sessionId);
-      await this.stateService.setState(sessionKey, session, { ttlSeconds: this.config.sessionTtlSeconds });
+      await this.stateService.setState(sessionKey, session, {
+        ttlSeconds: this.config.sessionTtlSeconds,
+      });
 
       return session;
     } finally {
@@ -197,12 +209,16 @@ export class CheckoutService {
   /**
    * Set billing address
    */
-  async setBillingAddress(sessionId: string, userId: string, address: ShippingAddress): Promise<CheckoutSession> {
+  async setBillingAddress(
+    sessionId: string,
+    userId: string,
+    address: ShippingAddress
+  ): Promise<CheckoutSession> {
     const lockKey = this.getCheckoutLockKey(sessionId);
     const lock = await this.stateService.acquireLock(lockKey, { ttlMs: 5000, retryAttempts: 3 });
 
     if (!lock) {
-      throw new BadRequestException('ÌáÓå ÑÏÇÎÊ ÏÑ ÍÇá ÑÏÇÒÔ ÇÓÊ');
+      throw new BadRequestException('ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½');
     }
 
     try {
@@ -212,7 +228,9 @@ export class CheckoutService {
       session.updatedAt = new Date();
 
       const sessionKey = this.getSessionKey(sessionId);
-      await this.stateService.setState(sessionKey, session, { ttlSeconds: this.config.sessionTtlSeconds });
+      await this.stateService.setState(sessionKey, session, {
+        ttlSeconds: this.config.sessionTtlSeconds,
+      });
 
       return session;
     } finally {
@@ -223,19 +241,23 @@ export class CheckoutService {
   /**
    * Set payment method
    */
-  async setPaymentMethod(sessionId: string, userId: string, method: PaymentMethod): Promise<CheckoutSession> {
+  async setPaymentMethod(
+    sessionId: string,
+    userId: string,
+    method: PaymentMethod
+  ): Promise<CheckoutSession> {
     const lockKey = this.getCheckoutLockKey(sessionId);
     const lock = await this.stateService.acquireLock(lockKey, { ttlMs: 5000, retryAttempts: 3 });
 
     if (!lock) {
-      throw new BadRequestException('ÌáÓå ÑÏÇÎÊ ÏÑ ÍÇá ÑÏÇÒÔ ÇÓÊ');
+      throw new BadRequestException('ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½');
     }
 
     try {
       const session = await this.getSession(sessionId, userId);
 
       if (!session.shippingAddress) {
-        throw new BadRequestException('ÇÈÊÏÇ ÂÏÑÓ ÇÑÓÇá ÑÇ æÇÑÏ ˜äíÏ');
+        throw new BadRequestException('ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½');
       }
 
       session.paymentMethod = method;
@@ -243,7 +265,9 @@ export class CheckoutService {
       session.updatedAt = new Date();
 
       const sessionKey = this.getSessionKey(sessionId);
-      await this.stateService.setState(sessionKey, session, { ttlSeconds: this.config.sessionTtlSeconds });
+      await this.stateService.setState(sessionKey, session, {
+        ttlSeconds: this.config.sessionTtlSeconds,
+      });
 
       return session;
     } finally {
@@ -254,12 +278,15 @@ export class CheckoutService {
   /**
    * Complete checkout and create order
    */
-  async completeCheckout(sessionId: string, userId: string): Promise<{ orderId: string; orderNumber: string }> {
+  async completeCheckout(
+    sessionId: string,
+    userId: string
+  ): Promise<{ orderId: string; orderNumber: string }> {
     const lockKey = this.getCheckoutLockKey(sessionId);
     const lock = await this.stateService.acquireLock(lockKey, { ttlMs: 30000, retryAttempts: 3 });
 
     if (!lock) {
-      throw new BadRequestException('ÌáÓå ÑÏÇÎÊ ÏÑ ÍÇá ÑÏÇÒÔ ÇÓÊ');
+      throw new BadRequestException('ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½');
     }
 
     try {
@@ -267,11 +294,11 @@ export class CheckoutService {
 
       // Validate session is ready
       if (!session.shippingAddress) {
-        throw new BadRequestException('ÂÏÑÓ ÇÑÓÇá æÇÑÏ äÔÏå ÇÓÊ');
+        throw new BadRequestException('ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½');
       }
 
       if (!session.paymentMethod) {
-        throw new BadRequestException('ÑæÔ ÑÏÇÎÊ ÇäÊÎÇÈ äÔÏå ÇÓÊ');
+        throw new BadRequestException('ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½');
       }
 
       // Create order in transaction
@@ -284,7 +311,7 @@ export class CheckoutService {
           });
 
           if (!product || product.stock < item.quantity) {
-            throw new BadRequestException(`ãæÌæÏí "${item.productName}" ˜Çİí äíÓÊ`);
+            throw new BadRequestException(`ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ "${item.productName}" ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½`);
           }
         }
 
@@ -301,7 +328,7 @@ export class CheckoutService {
             paymentStatus: 'PENDING',
             shippingAddress: session.shippingAddress as any,
             items: {
-              create: session.cartSnapshot.items.map(item => ({
+              create: session.cartSnapshot.items.map((item) => ({
                 productId: item.productId,
                 variantId: item.variantId,
                 productName: item.productName,
@@ -328,7 +355,7 @@ export class CheckoutService {
 
       // Clear cart and checkout session
       await this.cartService.clearCart(userId);
-      
+
       const sessionKey = this.getSessionKey(sessionId);
       const userKey = this.getUserCheckoutKey(userId);
       await this.stateService.deleteState(sessionKey);
@@ -344,11 +371,11 @@ export class CheckoutService {
    * Cancel checkout session
    */
   async cancelCheckout(sessionId: string, userId: string): Promise<void> {
-    const session = await this.getSession(sessionId, userId);
+    const _session = await this.getSession(sessionId, userId);
 
     const sessionKey = this.getSessionKey(sessionId);
     const userKey = this.getUserCheckoutKey(userId);
-    
+
     await this.stateService.deleteState(sessionKey);
     await this.stateService.deleteState(userKey);
   }

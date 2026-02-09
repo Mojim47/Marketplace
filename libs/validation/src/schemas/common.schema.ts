@@ -6,13 +6,11 @@
 
 import { z } from 'zod';
 import {
-  nationalIdSchema,
-  mobileSchema,
-  ibanSchema,
-  postalCodeSchema,
-  persianNameSchema,
   emailSchema,
-  uuidSchema,
+  ibanSchema,
+  mobileSchema,
+  persianNameSchema,
+  postalCodeSchema,
 } from '../persian-validators.js';
 
 /**

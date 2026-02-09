@@ -2,10 +2,10 @@
  * ???????????????????????????????????????????????????????????????????????????
  * NextGen Marketplace - WAF Guard
  * ???????????????????????????????????????????????????????????????????????????
- * 
+ *
  * Web Application Firewall guard that inspects incoming requests for
  * malicious patterns including SQL Injection, XSS, and Path Traversal.
- * 
+ *
  * Features:
  * - SQL Injection detection
  * - XSS attack detection
@@ -14,35 +14,35 @@
  * - XXE attack detection
  * - IP blocking for repeat offenders
  * - Rate limiting integration
- * 
+ *
  * @module @nextgen/api/shared/security
  * Requirements: 10.1, 10.2, 10.3, 10.4
  */
 
 import {
-  Injectable,
   CanActivate,
   ExecutionContext,
   ForbiddenException,
   Inject,
+  Injectable,
   Logger,
 } from '@nestjs/common';
-import { Request } from 'express';
 import { WAFService } from '@nextgen/waf';
+import { Request } from 'express';
 import { SECURITY_TOKENS } from '../tokens';
 
 /**
  * WAF Guard - Filters malicious requests
- * 
+ *
  * This guard inspects all incoming requests for potential security threats
  * and blocks requests that match known attack patterns.
- * 
+ *
  * @example
  * // Apply globally in AppModule
  * providers: [
  *   { provide: APP_GUARD, useClass: WAFGuard }
  * ]
- * 
+ *
  * @example
  * // Apply to specific controller
  * @UseGuards(WAFGuard)
@@ -55,7 +55,7 @@ export class WAFGuard implements CanActivate {
 
   constructor(
     @Inject(SECURITY_TOKENS.WAF_SERVICE)
-    private readonly wafService: WAFService,
+    private readonly wafService: WAFService
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -93,9 +93,7 @@ export class WAFGuard implements CanActivate {
     const forwardedFor = request.headers['x-forwarded-for'];
     if (forwardedFor) {
       // X-Forwarded-For can contain multiple IPs, take the first one
-      const ips = Array.isArray(forwardedFor) 
-        ? forwardedFor[0] 
-        : forwardedFor.split(',')[0];
+      const ips = Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor.split(',')[0];
       return ips.trim();
     }
 
@@ -148,15 +146,15 @@ export class WAFGuard implements CanActivate {
    */
   private getErrorMessage(reason?: string): string {
     const messages: Record<string, string> = {
-      SQL_INJECTION: 'ÏÑÎæÇÓÊ ÔãÇ Èå Ïáíá ãÍÊæÇí ãÔ˜æ˜ ãÓÏæÏ ÔÏ',
-      XSS: 'ÏÑÎæÇÓÊ ÔãÇ Èå Ïáíá ãÍÊæÇí ãÔ˜æ˜ ãÓÏæÏ ÔÏ',
-      PATH_TRAVERSAL: 'ÏÑÎæÇÓÊ ÔãÇ Èå Ïáíá ãÓíÑ äÇãÚÊÈÑ ãÓÏæÏ ÔÏ',
-      COMMAND_INJECTION: 'ÏÑÎæÇÓÊ ÔãÇ Èå Ïáíá ãÍÊæÇí ãÔ˜æ˜ ãÓÏæÏ ÔÏ',
-      XXE: 'ÏÑÎæÇÓÊ ÔãÇ Èå Ïáíá ãÍÊæÇí ãÔ˜æ˜ ãÓÏæÏ ÔÏ',
-      IP_BLOCKED: 'ÂÏÑÓ IP ÔãÇ ãæŞÊÇğ ãÓÏæÏ ÔÏå ÇÓÊ',
-      RATE_LIMIT_EXCEEDED: 'ÊÚÏÇÏ ÏÑÎæÇÓÊåÇí ÔãÇ ÈíÔ ÇÒ ÍÏ ãÌÇÒ ÇÓÊ',
+      SQL_INJECTION: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ô˜ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½',
+      XSS: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ô˜ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½',
+      PATH_TRAVERSAL: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½',
+      COMMAND_INJECTION: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ô˜ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½',
+      XXE: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ô˜ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½',
+      IP_BLOCKED: 'ï¿½ï¿½ï¿½ï¿½ IP ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½',
+      RATE_LIMIT_EXCEEDED: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Êï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½',
     };
 
-    return messages[reason || ''] || 'ÏÑÎæÇÓÊ ÔãÇ ãÓÏæÏ ÔÏ';
+    return messages[reason || ''] || 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½';
   }
 }

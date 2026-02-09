@@ -9,10 +9,10 @@
  * - Cache invalidation on product updates
  */
 
-import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from "@nestjs/common";
-import { ProductSearchService } from "../products/product-search.service";
-import { OnnxEmbedder } from "@nextgen/ai";
-import path from "node:path";
+import path from 'node:path';
+import { Injectable, Logger, type OnModuleDestroy, type OnModuleInit } from '@nestjs/common';
+import { OnnxEmbedder } from '@nextgen/ai';
+import type { ProductSearchService } from '../products/product-search.service';
 
 /** AI Search Query */
 export interface AISearchQuery {
@@ -27,7 +27,7 @@ export interface AIResponse {
   content: string;
   model: string;
   tokens: number;
-  finishReason: "stop" | "length";
+  finishReason: 'stop' | 'length';
   metadata: Record<string, unknown>;
 }
 
@@ -75,7 +75,7 @@ class SemanticCache {
   constructor(
     private readonly similarityThreshold: number,
     private readonly ttlMs: number,
-    private readonly maxEntries: number,
+    private readonly maxEntries: number
   ) {}
 
   getCachedResponse(tokens: string[]): { response: AIResponse; similarity: number } | null {
@@ -133,7 +133,9 @@ class EmbeddingCache {
 
   get(key: string): Float32Array | null {
     const value = this.map.get(key);
-    if (!value) return null;
+    if (!value) {
+      return null;
+    }
     this.map.delete(key);
     this.map.set(key, value);
     return value;
@@ -146,7 +148,9 @@ class EmbeddingCache {
     this.map.set(key, value);
     if (this.map.size > this.maxEntries) {
       const oldest = this.map.keys().next().value as string | undefined;
-      if (oldest) this.map.delete(oldest);
+      if (oldest) {
+        this.map.delete(oldest);
+      }
     }
   }
 }
@@ -154,7 +158,7 @@ class EmbeddingCache {
 function tokenize(text: string): string[] {
   return text
     .toLowerCase()
-    .replace(/[^\p{L}\p{N}\s]+/gu, " ")
+    .replace(/[^\p{L}\p{N}\s]+/gu, ' ')
     .split(/\s+/)
     .map((token) => token.trim())
     .filter(Boolean);
@@ -163,12 +167,18 @@ function tokenize(text: string): string[] {
 function jaccardSimilarity(a: string[], b: string[]): number {
   const setA = new Set(a);
   const setB = new Set(b);
-  if (setA.size === 0 && setB.size === 0) return 1;
-  if (setA.size === 0 || setB.size === 0) return 0;
+  if (setA.size === 0 && setB.size === 0) {
+    return 1;
+  }
+  if (setA.size === 0 || setB.size === 0) {
+    return 0;
+  }
 
   let intersection = 0;
   for (const token of setA) {
-    if (setB.has(token)) intersection += 1;
+    if (setB.has(token)) {
+      intersection += 1;
+    }
   }
   const union = setA.size + setB.size - intersection;
   return union === 0 ? 0 : intersection / union;
@@ -186,17 +196,17 @@ export class AISearchService implements OnModuleInit, OnModuleDestroy {
   constructor(private readonly productSearchService: ProductSearchService) {}
 
   async onModuleInit() {
-    const embeddingEnabled = process.env.AI_EMBEDDING_ENABLED !== "false";
+    const embeddingEnabled = process.env.AI_EMBEDDING_ENABLED !== 'false';
     if (embeddingEnabled) {
       const modelPath =
         process.env.AI_EMBEDDING_MODEL_PATH ??
-        path.join("public", "models", "ai", "all-MiniLM-L6-v2.onnx");
+        path.join('public', 'models', 'ai', 'all-MiniLM-L6-v2.onnx');
       const tokenizerPath =
         process.env.AI_EMBEDDING_TOKENIZER_PATH ??
-        path.join("public", "models", "ai", "tokenizer.json");
+        path.join('public', 'models', 'ai', 'tokenizer.json');
       const tokenizerConfigPath =
         process.env.AI_EMBEDDING_TOKENIZER_CONFIG_PATH ??
-        path.join("public", "models", "ai", "tokenizer_config.json");
+        path.join('public', 'models', 'ai', 'tokenizer_config.json');
       const maxLength = Number(process.env.AI_EMBEDDING_MAX_LEN ?? 128);
 
       this.embedder = new OnnxEmbedder({
@@ -207,12 +217,12 @@ export class AISearchService implements OnModuleInit, OnModuleDestroy {
         normalize: true,
       });
       await this.embedder.ready();
-      this.logger.log("AI Embedding engine loaded");
+      this.logger.log('AI Embedding engine loaded');
     } else {
-      this.logger.warn("AI embedding disabled via AI_EMBEDDING_ENABLED=false");
+      this.logger.warn('AI embedding disabled via AI_EMBEDDING_ENABLED=false');
     }
     this.isInitialized = true;
-    this.logger.log("AI Search Service initialized");
+    this.logger.log('AI Search Service initialized');
   }
 
   async onModuleDestroy() {
@@ -225,7 +235,7 @@ export class AISearchService implements OnModuleInit, OnModuleDestroy {
   async search(query: AISearchQuery): Promise<AISearchResult> {
     const startTime = Date.now();
     if (!this.isInitialized) {
-      throw new Error("AI Search Service not initialized");
+      throw new Error('AI Search Service not initialized');
     }
 
     const tokens = tokenize(query.query);
@@ -263,7 +273,10 @@ export class AISearchService implements OnModuleInit, OnModuleDestroy {
   /**
    * Start streaming predictions
    */
-  async startPrediction(partialQuery: string, sessionId: string): Promise<StreamingPredictionResult> {
+  async startPrediction(
+    partialQuery: string,
+    sessionId: string
+  ): Promise<StreamingPredictionResult> {
     const predictions = await this.productSearchService.getSuggestions(partialQuery, 5);
     const confidence = Math.min(1, predictions.length / 5);
     const state: PredictionState = {
@@ -330,12 +343,12 @@ export class AISearchService implements OnModuleInit, OnModuleDestroy {
 
   async invalidateProductCache(productId: string): Promise<void> {
     await this.invalidateByTopic(`product:${productId}`);
-    await this.invalidateByTopic("products");
+    await this.invalidateByTopic('products');
   }
 
   async invalidateCategoryCache(categoryId: string): Promise<void> {
     await this.invalidateByTopic(`category:${categoryId}`);
-    await this.invalidateByTopic("categories");
+    await this.invalidateByTopic('categories');
   }
 
   async getCacheStats() {
@@ -352,31 +365,40 @@ export class AISearchService implements OnModuleInit, OnModuleDestroy {
 
   private buildResponse(
     query: string,
-    hits: Array<{ id: string; name: string; price: number; images?: string[]; score?: number; similarity?: number }>,
-    suggestions?: string[],
+    hits: Array<{
+      id: string;
+      name: string;
+      price: number;
+      images?: string[];
+      score?: number;
+      similarity?: number;
+    }>,
+    suggestions?: string[]
   ): AIResponse {
     const lines: string[] = [];
     lines.push(`نتایج مرتبط برای «${query}»`);
 
     if (hits.length === 0) {
-      lines.push("هیچ نتیجه دقیقی پیدا نشد.");
+      lines.push('هیچ نتیجه دقیقی پیدا نشد.');
     } else {
       hits.slice(0, 5).forEach((hit, index) => {
-        const price = Number.isFinite(hit.price) ? `${Math.round(hit.price).toLocaleString("fa-IR")} ریال` : "قیمت نامشخص";
-        const score = hit.similarity ? ` (شباهت: ${(hit.similarity * 100).toFixed(1)}٪)` : "";
+        const price = Number.isFinite(hit.price)
+          ? `${Math.round(hit.price).toLocaleString('fa-IR')} ریال`
+          : 'قیمت نامشخص';
+        const score = hit.similarity ? ` (شباهت: ${(hit.similarity * 100).toFixed(1)}٪)` : '';
         lines.push(`${index + 1}. ${hit.name} — ${price}${score}`);
       });
     }
 
     if (suggestions && suggestions.length > 0) {
-      lines.push("پیشنهاد جستجو: " + suggestions.join("، "));
+      lines.push(`پیشنهاد جستجو: ${suggestions.join('، ')}`);
     }
 
     return {
-      content: lines.join("\n"),
-      model: "semantic-ranking-v1",
+      content: lines.join('\n'),
+      model: 'semantic-ranking-v1',
       tokens: tokenize(query).length * 2 + hits.length * 6,
-      finishReason: "stop",
+      finishReason: 'stop',
       metadata: {
         query,
         hitCount: hits.length,
@@ -394,23 +416,31 @@ export class AISearchService implements OnModuleInit, OnModuleDestroy {
 
   private async rankByEmbedding(
     query: string,
-    hits: Array<{ id: string; name: string; description?: string; price: number; images?: string[] }>,
+    hits: Array<{
+      id: string;
+      name: string;
+      description?: string;
+      price: number;
+      images?: string[];
+    }>
   ) {
-    if (!this.embedder) return hits;
+    if (!this.embedder) {
+      return hits;
+    }
     const queryVector = await this.embedder.embed(query);
 
     const scored = await Promise.all(
       hits.map(async (hit) => {
-        const text = `${hit.name}\n${hit.description ?? ""}`.trim();
+        const text = `${hit.name}\n${hit.description ?? ''}`.trim();
         const cacheKey = `product:${hit.id}`;
         let vector = this.embeddingCache.get(cacheKey);
         if (!vector) {
-          vector = await this.embedder!.embed(text);
+          vector = await this.embedder?.embed(text);
           this.embeddingCache.set(cacheKey, vector);
         }
         const similarity = cosineSimilarity(queryVector, vector);
         return { ...hit, similarity };
-      }),
+      })
     );
 
     return scored.sort((a, b) => (b.similarity ?? 0) - (a.similarity ?? 0));
@@ -427,6 +457,8 @@ function cosineSimilarity(a: Float32Array, b: Float32Array): number {
     normA += a[i] * a[i];
     normB += b[i] * b[i];
   }
-  if (!normA || !normB) return 0;
+  if (!normA || !normB) {
+    return 0;
+  }
   return dot / Math.sqrt(normA * normB);
 }

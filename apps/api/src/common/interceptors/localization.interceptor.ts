@@ -2,34 +2,34 @@
  * ???????????????????????????????????????????????????????????????????????????
  * NextGen Marketplace - Localization Interceptor
  * ???????????????????????????????????????????????????????????????????????????
- * 
+ *
  * Transforms API responses to include Persian/Jalali localized data.
  * Uses JalaliConverter and IranianCurrencyFormatter from libs/localization.
- * 
+ *
  * Features:
  * - Automatic Jalali date conversion for date fields
  * - Persian currency formatting for amount fields
  * - Recursive transformation of nested objects and arrays
  * - Configurable field detection
- * 
+ *
  * @module @nextgen/api/interceptors
  * Requirements: 3.1, 3.2
  */
 
 import {
+  type CallHandler,
+  type ExecutionContext,
   Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
+  type NestInterceptor,
 } from '@nestjs/common';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 import {
-  JalaliConverter,
-  jalaliConverter,
-  IranianCurrencyFormatter,
+  type IranianCurrencyFormatter,
+  type JalaliConverter,
   iranianCurrency,
+  jalaliConverter,
 } from '@nextgen/localization';
+import type { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 /**
  * Configuration options for LocalizationInterceptor
@@ -41,7 +41,7 @@ export interface LocalizationInterceptorConfig {
   currencyFields?: string[];
   /** Whether to use Persian digits in formatted values */
   usePersianDigits?: boolean;
-  /** Whether to show currency unit (ÊæãÇä/ÑíÇá) */
+  /** Whether to show currency unit (ï¿½ï¿½ï¿½ï¿½ï¿½/ï¿½ï¿½ï¿½ï¿½) */
   showCurrencyUnit?: boolean;
   /** Currency unit to use */
   currencyUnit?: 'toman' | 'rial';
@@ -124,21 +124,21 @@ const DEFAULT_CONFIG: LocalizationInterceptorConfig = {
 
 /**
  * Localization Interceptor
- * 
+ *
  * Automatically transforms API responses to include Persian localized data:
  * - Converts date fields to Jalali calendar format
  * - Formats currency fields with Persian number formatting
- * 
+ *
  * @example
  * // Input response:
  * { createdAt: "2024-01-15T10:30:00Z", price: 1500000 }
- * 
+ *
  * // Output response:
  * {
  *   createdAt: "2024-01-15T10:30:00Z",
  *   createdAtJalali: "????/??/??",
  *   price: 1500000,
- *   priceFormatted: "?,???,??? ÊæãÇä"
+ *   priceFormatted: "?,???,??? ï¿½ï¿½ï¿½ï¿½ï¿½"
  * }
  */
 @Injectable()
@@ -153,7 +153,7 @@ export class LocalizationInterceptor implements NestInterceptor {
     this.config = { ...DEFAULT_CONFIG, ...config };
     this.jalaliService = jalaliConverter;
     this.currencyService = iranianCurrency;
-    
+
     // Create sets for O(1) lookup
     this.dateFieldsSet = new Set(this.config.dateFields);
     this.currencyFieldsSet = new Set(this.config.currencyFields);
@@ -162,10 +162,8 @@ export class LocalizationInterceptor implements NestInterceptor {
   /**
    * Intercept HTTP requests and transform responses with localization
    */
-  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-    return next.handle().pipe(
-      map(data => this.transformResponse(data)),
-    );
+  intercept(_context: ExecutionContext, next: CallHandler): Observable<any> {
+    return next.handle().pipe(map((data) => this.transformResponse(data)));
   }
 
   /**
@@ -178,7 +176,7 @@ export class LocalizationInterceptor implements NestInterceptor {
 
     // Handle arrays
     if (Array.isArray(data)) {
-      return data.map(item => this.transformResponse(item));
+      return data.map((item) => this.transformResponse(item));
     }
 
     // Handle objects
@@ -233,17 +231,19 @@ export class LocalizationInterceptor implements NestInterceptor {
    * Check if a value is a valid date
    */
   private isValidDate(value: any): boolean {
-    if (!value) return false;
-    
-    if (value instanceof Date) {
-      return !isNaN(value.getTime());
+    if (!value) {
+      return false;
     }
-    
+
+    if (value instanceof Date) {
+      return !Number.isNaN(value.getTime());
+    }
+
     if (typeof value === 'string') {
       const date = new Date(value);
-      return !isNaN(date.getTime());
+      return !Number.isNaN(date.getTime());
     }
-    
+
     return false;
   }
 
@@ -251,7 +251,7 @@ export class LocalizationInterceptor implements NestInterceptor {
    * Check if a value is a valid number for currency formatting
    */
   private isValidNumber(value: any): boolean {
-    return typeof value === 'number' && !isNaN(value) && isFinite(value);
+    return typeof value === 'number' && !Number.isNaN(value) && Number.isFinite(value);
   }
 
   /**
@@ -287,7 +287,7 @@ export class LocalizationInterceptor implements NestInterceptor {
  * Factory function to create LocalizationInterceptor with custom config
  */
 export function createLocalizationInterceptor(
-  config?: Partial<LocalizationInterceptorConfig>,
+  config?: Partial<LocalizationInterceptorConfig>
 ): LocalizationInterceptor {
   return new LocalizationInterceptor(config);
 }

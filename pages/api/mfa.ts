@@ -1,7 +1,7 @@
+import crypto from 'node:crypto';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { authenticator } from 'otplib';
 import qrcode from 'qrcode';
-import crypto from 'crypto';
 
 // ==================================================================================
 // MFA FAILURE TRACKING - Requirements: 9.4
@@ -97,7 +97,9 @@ function clearMfaFailures(userId: string): void {
  */
 function isMfaLockedOut(userId: string): { isLocked: boolean; remainingLockoutMs: number } {
   const existing = mfaFailureTracker.get(userId);
-  if (!existing) return { isLocked: false, remainingLockoutMs: 0 };
+  if (!existing) {
+    return { isLocked: false, remainingLockoutMs: 0 };
+  }
 
   const now = Date.now();
   const timeSinceLastAttempt = now - existing.lastAttempt;

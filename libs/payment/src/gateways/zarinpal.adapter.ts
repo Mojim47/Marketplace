@@ -1,4 +1,4 @@
-import { PaymentGateway, PaymentInitRequest } from '../types.js';
+import type { PaymentGateway, PaymentInitRequest } from '../types.js';
 
 export type VerifyStatus = 'success' | 'failed' | 'pending';
 
@@ -24,7 +24,9 @@ export class MemoryIdempotency implements IdempotencyStore {
   private m = new Map<string, { v: string; exp: number }>();
   has(key: string): boolean {
     const e = this.m.get(key);
-    if (!e) return false;
+    if (!e) {
+      return false;
+    }
     if (e.exp && Date.now() > e.exp) {
       this.m.delete(key);
       return false;
@@ -52,9 +54,15 @@ export class ZarinpalPaymentService implements PaymentGateway {
   async initialize(
     req: PaymentInitRequest
   ): Promise<{ authority: string; url: string; status: 'initialized' }> {
-    if (!req.idempotencyKey) throw new Error('idempotency-key-required');
-    if (this.initCache.has(req.idempotencyKey)) return this.initCache.get(req.idempotencyKey)!;
-    if (this.idem.has(req.idempotencyKey)) throw new Error('idempotency-replay');
+    if (!req.idempotencyKey) {
+      throw new Error('idempotency-key-required');
+    }
+    if (this.initCache.has(req.idempotencyKey)) {
+      return this.initCache.get(req.idempotencyKey)!;
+    }
+    if (this.idem.has(req.idempotencyKey)) {
+      throw new Error('idempotency-replay');
+    }
     this.idem.set(req.idempotencyKey, req.orderId);
     const base: {
       amount: number;
@@ -62,9 +70,12 @@ export class ZarinpalPaymentService implements PaymentGateway {
       description?: string;
       metadata?: Record<string, any>;
     } = { amount: req.amount, callbackUrl: req.callbackUrl };
-    if (Object.prototype.hasOwnProperty.call(req, 'description'))
+    if (Object.prototype.hasOwnProperty.call(req, 'description')) {
       base.description = req.description as any;
-    if (Object.prototype.hasOwnProperty.call(req, 'metadata')) base.metadata = req.metadata as any;
+    }
+    if (Object.prototype.hasOwnProperty.call(req, 'metadata')) {
+      base.metadata = req.metadata as any;
+    }
     const res = await this.client.requestPayment(base);
     this.authorityToKey.set(res.authority, req.idempotencyKey);
     const out = { authority: res.authority, url: res.url, status: 'initialized' as const };
@@ -74,9 +85,13 @@ export class ZarinpalPaymentService implements PaymentGateway {
 
   async verify(authority: string, amount: number, idempotencyKey: string) {
     const bound = this.authorityToKey.get(authority);
-    if (bound && bound !== idempotencyKey) throw new Error('idempotency-mismatch');
+    if (bound && bound !== idempotencyKey) {
+      throw new Error('idempotency-mismatch');
+    }
     const cacheKey = `${authority}:${amount}`;
-    if (this.verifyCache.has(cacheKey)) return this.verifyCache.get(cacheKey)!;
+    if (this.verifyCache.has(cacheKey)) {
+      return this.verifyCache.get(cacheKey)!;
+    }
     const res = await this.client.verifyPayment({ authority, amount });
     this.verifyCache.set(cacheKey, res);
     return res;

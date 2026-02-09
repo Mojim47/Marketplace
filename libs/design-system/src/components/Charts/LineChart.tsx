@@ -4,7 +4,8 @@
 
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import type React from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '../../utils/cn';
 
 export interface DataPoint {
@@ -29,7 +30,6 @@ export interface LineChartProps {
   rtl?: boolean;
   className?: string;
 }
-
 
 export const LineChart: React.FC<LineChartProps> = ({
   data,
@@ -60,9 +60,19 @@ export const LineChart: React.FC<LineChartProps> = ({
   const innerHeight = chartHeight - padding.top - padding.bottom;
 
   const { minValue, maxValue, xScale, yScale, points, linePath, areaPath } = useMemo(() => {
-    if (data.length === 0) return { minValue: 0, maxValue: 0, xScale: () => 0, yScale: () => 0, points: [], linePath: '', areaPath: '' };
+    if (data.length === 0) {
+      return {
+        minValue: 0,
+        maxValue: 0,
+        xScale: () => 0,
+        yScale: () => 0,
+        points: [],
+        linePath: '',
+        areaPath: '',
+      };
+    }
 
-    const values = data.map(d => d.value);
+    const values = data.map((d) => d.value);
     const min = Math.min(...values);
     const max = Math.max(...values);
     const range = max - min || 1;
@@ -70,14 +80,23 @@ export const LineChart: React.FC<LineChartProps> = ({
     const paddedMax = max + range * 0.1;
 
     const xScaleFn = (index: number) => padding.left + (index / (data.length - 1)) * innerWidth;
-    const yScaleFn = (value: number) => padding.top + innerHeight - ((value - paddedMin) / (paddedMax - paddedMin)) * innerHeight;
+    const yScaleFn = (value: number) =>
+      padding.top + innerHeight - ((value - paddedMin) / (paddedMax - paddedMin)) * innerHeight;
 
     const pts = data.map((d, i) => ({ x: xScaleFn(i), y: yScaleFn(d.value), ...d }));
 
     const line = pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
     const area = `${line} L ${pts[pts.length - 1].x} ${padding.top + innerHeight} L ${pts[0].x} ${padding.top + innerHeight} Z`;
 
-    return { minValue: paddedMin, maxValue: paddedMax, xScale: xScaleFn, yScale: yScaleFn, points: pts, linePath: line, areaPath: area };
+    return {
+      minValue: paddedMin,
+      maxValue: paddedMax,
+      xScale: xScaleFn,
+      yScale: yScaleFn,
+      points: pts,
+      linePath: line,
+      areaPath: area,
+    };
   }, [data, innerWidth, innerHeight, padding]);
 
   // Intersection observer
@@ -218,32 +237,33 @@ export const LineChart: React.FC<LineChartProps> = ({
         />
 
         {/* Dots */}
-        {showDots && points.map((point, i) => (
-          <g key={i}>
-            <circle
-              cx={point.x}
-              cy={point.y}
-              r={hoveredIndex === i ? 8 : 5}
-              fill={lineColor}
-              opacity={animationProgress}
-              className="transition-all duration-200"
-              onMouseEnter={() => setHoveredIndex(i)}
-              onMouseLeave={() => setHoveredIndex(null)}
-              style={{ cursor: 'pointer' }}
-            />
-            <circle
-              cx={point.x}
-              cy={point.y}
-              r={3}
-              fill="white"
-              opacity={animationProgress}
-            />
-          </g>
-        ))}
+        {showDots &&
+          points.map((point, i) => (
+            <g key={i}>
+              <circle
+                cx={point.x}
+                cy={point.y}
+                r={hoveredIndex === i ? 8 : 5}
+                fill={lineColor}
+                opacity={animationProgress}
+                className="transition-all duration-200"
+                onMouseEnter={() => setHoveredIndex(i)}
+                onMouseLeave={() => setHoveredIndex(null)}
+                style={{ cursor: 'pointer' }}
+              />
+              <circle cx={point.x} cy={point.y} r={3} fill="white" opacity={animationProgress} />
+            </g>
+          ))}
 
         {/* Gradient Definition */}
         <defs>
-          <linearGradient id={`areaGradient-${areaColor.replace(/[^a-zA-Z0-9]/g, '')}`} x1="0" y1="0" x2="0" y2="1">
+          <linearGradient
+            id={`areaGradient-${areaColor.replace(/[^a-zA-Z0-9]/g, '')}`}
+            x1="0"
+            y1="0"
+            x2="0"
+            y2="1"
+          >
             <stop offset="0%" stopColor={areaColor} stopOpacity={0.4} />
             <stop offset="100%" stopColor={areaColor} stopOpacity={0} />
           </linearGradient>
@@ -270,7 +290,9 @@ export const LineChart: React.FC<LineChartProps> = ({
             {formatValue(points[hoveredIndex].value)}
           </p>
           <p className="text-[var(--color-text-tertiary)]">
-            {rtl && points[hoveredIndex].labelFa ? points[hoveredIndex].labelFa : points[hoveredIndex].label}
+            {rtl && points[hoveredIndex].labelFa
+              ? points[hoveredIndex].labelFa
+              : points[hoveredIndex].label}
           </p>
         </div>
       )}

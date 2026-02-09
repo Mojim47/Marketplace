@@ -1,8 +1,8 @@
-import { jsx as _jsx, jsxs as _jsxs } from 'react/jsx-runtime';
 import { generateMetadata as buildMetadata } from '@/lib/seo';
 import { ARViewer } from '@nextgen/ar';
 import { getProduct } from '@nextgen/types';
 import dynamic from 'next/dynamic';
+import { jsx as _jsx, jsxs as _jsxs } from 'react/jsx-runtime';
 const CopilotButton = dynamic(() => import('./CopilotButton').then((mod) => mod.CopilotButton), {
   ssr: false,
   loading: () =>

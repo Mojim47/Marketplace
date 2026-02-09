@@ -1,11 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import {
-  lightTheme,
-  darkTheme,
-  highContrastTheme,
-  getTheme,
-  generateCSSVariables,
-} from './index';
+import { describe, expect, it } from 'vitest';
+import { darkTheme, generateCSSVariables, getTheme, highContrastTheme, lightTheme } from './index';
 import type { ThemeMode } from './index';
 
 describe('Theme System', () => {
@@ -93,7 +87,7 @@ describe('Theme System', () => {
 
     it('should handle all theme modes', () => {
       const modes: ThemeMode[] = ['light', 'dark', 'high-contrast'];
-      modes.forEach(mode => {
+      modes.forEach((mode) => {
         expect(getTheme(mode)).toBeDefined();
       });
     });
@@ -102,14 +96,14 @@ describe('Theme System', () => {
   describe('generateCSSVariables', () => {
     it('should generate CSS variables from theme', () => {
       const vars = generateCSSVariables(lightTheme);
-      
+
       expect(vars['--color-background-default']).toBe('#FFFFFF');
       expect(vars['--color-text-primary']).toBe('#212121');
     });
 
     it('should flatten nested objects', () => {
       const vars = generateCSSVariables(lightTheme);
-      
+
       expect(vars['--color-semantic-success']).toBeDefined();
       expect(vars['--color-brand-primary']).toBeDefined();
     });

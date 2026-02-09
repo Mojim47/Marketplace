@@ -1,7 +1,7 @@
-import { Module } from '@nestjs/common';
 import { BulkService } from '@libs/bulk';
-import { BulkController } from './bulk.controller';
+import { Module } from '@nestjs/common';
 import { DatabaseModule } from '../database/database.module';
+import { BulkController } from './bulk.controller';
 
 @Module({
   imports: [DatabaseModule],

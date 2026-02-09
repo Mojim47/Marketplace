@@ -2,9 +2,9 @@
 // Moodian Service - Real Iranian Tax Authority Integration
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import axios, { AxiosInstance } from 'axios';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import type { ConfigService } from '@nestjs/config';
+import axios, { type AxiosInstance } from 'axios';
 
 interface MoodianAuthResponse {
   access_token: string;
@@ -88,7 +88,7 @@ export class MoodianService {
   private readonly baseUrl: string;
   private readonly taxId: string;
   private accessToken: string | null = null;
-  private tokenExpiresAt: number = 0;
+  private tokenExpiresAt = 0;
 
   constructor(private readonly configService: ConfigService) {
     this.clientId = this.configService.get<string>('MOODIAN_CLIENT_ID')!;
@@ -101,7 +101,7 @@ export class MoodianService {
       timeout: 30000,
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
+        Accept: 'application/json',
       },
     });
 
@@ -119,7 +119,7 @@ export class MoodianService {
         this.logger.debug(`Moodian API Request: ${config.method?.toUpperCase()} ${config.url}`, {
           hasAuth: !!config.headers.Authorization,
         });
-        
+
         return config;
       },
       (error) => {
@@ -142,13 +142,13 @@ export class MoodianService {
           data: error.response?.data,
           message: error.message,
         });
-        
+
         // Handle token expiration
         if (error.response?.status === 401) {
           this.accessToken = null;
           this.tokenExpiresAt = 0;
         }
-        
+
         return Promise.reject(error);
       }
     );
@@ -156,7 +156,7 @@ export class MoodianService {
 
   private async ensureValidToken(): Promise<void> {
     const now = Date.now();
-    
+
     // Check if token is still valid (with 5 minute buffer)
     if (this.accessToken && this.tokenExpiresAt > now + 300000) {
       return;
@@ -170,12 +170,11 @@ export class MoodianService {
       });
 
       this.accessToken = response.data.access_token;
-      this.tokenExpiresAt = now + (response.data.expires_in * 1000);
+      this.tokenExpiresAt = now + response.data.expires_in * 1000;
 
       this.logger.log('Moodian access token refreshed', {
         expiresIn: response.data.expires_in,
       });
-
     } catch (error) {
       this.logger.error('Failed to get Moodian access token', error);
       throw new BadRequestException('Failed to authenticate with tax authority');
@@ -195,17 +194,15 @@ export class MoodianService {
           uid: response.data.uid,
           referenceNumber: response.data.referenceNumber,
         };
-      } else {
-        return {
-          success: false,
-          error: response.data.error || 'Invoice submission failed',
-          validationErrors: response.data.validationErrors,
-        };
       }
-
+      return {
+        success: false,
+        error: response.data.error || 'Invoice submission failed',
+        validationErrors: response.data.validationErrors,
+      };
     } catch (error) {
       this.logger.error('Moodian invoice submission error', error);
-      
+
       if (error instanceof BadRequestException) {
         throw error;
       }
@@ -224,7 +221,6 @@ export class MoodianService {
         success: true,
         data: response.data,
       };
-
     } catch (error) {
       this.logger.error('Moodian invoice status inquiry error', error);
       return {
@@ -241,7 +237,6 @@ export class MoodianService {
         success: true,
         data: response.data,
       };
-
     } catch (error) {
       this.logger.error('Moodian invoice cancellation error', error);
       return {
@@ -254,7 +249,7 @@ export class MoodianService {
   // Helper method to create invoice from order data
   createInvoiceFromOrder(orderData: any): MoodianInvoiceRequest {
     const now = Date.now();
-    
+
     return {
       header: {
         taxid: this.taxId,
@@ -299,18 +294,20 @@ export class MoodianService {
         cop: 0, // Commission on purchase
         vop: 0, // Value of purchase
         bsrn: '', // Broker service reference number
-        tsstam: item.total_price + (item.total_price * 0.09), // Total amount including tax
+        tsstam: item.total_price + item.total_price * 0.09, // Total amount including tax
       })),
-      payments: [{
-        iinn: orderData.order_number,
-        acn: '', // Account number
-        trmn: '', // Terminal number
-        trn: '', // Transaction reference number
-        pcn: '', // Payment card number
-        pid: orderData.payment?.gateway_ref || '',
-        pdt: now,
-        pv: orderData.total,
-      }],
+      payments: [
+        {
+          iinn: orderData.order_number,
+          acn: '', // Account number
+          trmn: '', // Terminal number
+          trn: '', // Transaction reference number
+          pcn: '', // Payment card number
+          pid: orderData.payment?.gateway_ref || '',
+          pdt: now,
+          pv: orderData.total,
+        },
+      ],
     };
   }
 
@@ -347,8 +344,8 @@ export class MoodianService {
   // Utility method to check if service is configured
   isConfigured(): boolean {
     return !!(
-      this.clientId && 
-      this.clientSecret && 
+      this.clientId &&
+      this.clientSecret &&
       this.taxId &&
       this.clientId !== 'CHANGE_IN_PRODUCTION' &&
       this.clientSecret !== 'CHANGE_IN_PRODUCTION' &&

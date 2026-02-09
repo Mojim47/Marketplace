@@ -2,7 +2,7 @@
 // Current User Decorator - Extract Current User from Request
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { createParamDecorator, ExecutionContext } from '@nestjs/common';
+import { type ExecutionContext, createParamDecorator } from '@nestjs/common';
 import type { AuthenticatedUser } from '../types';
 
 /**
@@ -23,7 +23,7 @@ export const CurrentUser = createParamDecorator(
     }
 
     return data ? user[data] : user;
-  },
+  }
 );
 
 /**
@@ -33,5 +33,5 @@ export const CurrentTenant = createParamDecorator(
   (_data: unknown, ctx: ExecutionContext): string | null => {
     const request = ctx.switchToHttp().getRequest();
     return request.user?.tenant_id || null;
-  },
+  }
 );

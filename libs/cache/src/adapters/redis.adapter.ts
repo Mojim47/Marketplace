@@ -6,16 +6,16 @@
 
 import Redis, { Cluster } from 'ioredis';
 import type {
-  ICacheProvider,
-  CacheSetOptions,
   CacheGetOptions,
+  CacheHealthCheck,
   CacheScanOptions,
   CacheScanResult,
+  CacheSetOptions,
   CacheStats,
-  CacheHealthCheck,
+  ICacheProvider,
   RedisCacheConfig,
 } from '../interfaces/cache.interface';
-import { CacheProviderType } from '../interfaces/cache.interface';
+import type { CacheProviderType } from '../interfaces/cache.interface';
 
 /**
  * Redis cache adapter
@@ -89,7 +89,9 @@ export class RedisCacheAdapter implements ICacheProvider {
   }
 
   private deserialize<T>(value: string | null): T | null {
-    if (value === null) return null;
+    if (value === null) {
+      return null;
+    }
     try {
       return JSON.parse(value) as T;
     } catch {
@@ -175,9 +177,11 @@ export class RedisCacheAdapter implements ICacheProvider {
   // ═══════════════════════════════════════════════════════════════════════
 
   async mget<T = unknown>(keys: string[]): Promise<Map<string, T | null>> {
-    if (keys.length === 0) return new Map();
+    if (keys.length === 0) {
+      return new Map();
+    }
 
-    const prefixedKeys = keys.map(k => this.prefixKey(k));
+    const prefixedKeys = keys.map((k) => this.prefixKey(k));
     const values = await this.client.mget(...prefixedKeys);
 
     const result = new Map<string, T | null>();
@@ -196,7 +200,9 @@ export class RedisCacheAdapter implements ICacheProvider {
   }
 
   async mset<T = unknown>(entries: Map<string, T>, options?: CacheSetOptions): Promise<boolean> {
-    if (entries.size === 0) return true;
+    if (entries.size === 0) {
+      return true;
+    }
 
     const pipeline = this.client.pipeline();
     const ttl = options?.ttl ?? this.defaultTtl;
@@ -223,8 +229,10 @@ export class RedisCacheAdapter implements ICacheProvider {
   }
 
   async mdelete(keys: string[]): Promise<number> {
-    if (keys.length === 0) return 0;
-    const prefixedKeys = keys.map(k => this.prefixKey(k));
+    if (keys.length === 0) {
+      return 0;
+    }
+    const prefixedKeys = keys.map((k) => this.prefixKey(k));
     return this.client.del(...prefixedKeys);
   }
 
@@ -235,7 +243,7 @@ export class RedisCacheAdapter implements ICacheProvider {
   async keys(pattern: string): Promise<string[]> {
     const prefixedPattern = this.prefixKey(pattern);
     const keys = await this.client.keys(prefixedPattern);
-    return keys.map(k => this.unprefixKey(k));
+    return keys.map((k) => this.unprefixKey(k));
   }
 
   async scan(options?: CacheScanOptions): Promise<CacheScanResult> {
@@ -246,7 +254,7 @@ export class RedisCacheAdapter implements ICacheProvider {
     const [nextCursor, keys] = await this.client.scan(cursor, 'MATCH', pattern, 'COUNT', count);
 
     return {
-      keys: keys.map(k => this.unprefixKey(k)),
+      keys: keys.map((k) => this.unprefixKey(k)),
       cursor: nextCursor,
       hasMore: nextCursor !== '0',
     };
@@ -254,7 +262,9 @@ export class RedisCacheAdapter implements ICacheProvider {
 
   async deletePattern(pattern: string): Promise<number> {
     const keys = await this.keys(pattern);
-    if (keys.length === 0) return 0;
+    if (keys.length === 0) {
+      return 0;
+    }
     return this.mdelete(keys);
   }
 
@@ -266,7 +276,9 @@ export class RedisCacheAdapter implements ICacheProvider {
     const tagSetKey = this.tagKey(tag);
     const keys = await this.client.smembers(tagSetKey);
 
-    if (keys.length === 0) return 0;
+    if (keys.length === 0) {
+      return 0;
+    }
 
     const pipeline = this.client.pipeline();
     for (const key of keys) {
@@ -290,7 +302,7 @@ export class RedisCacheAdapter implements ICacheProvider {
   // Atomic Operations
   // ═══════════════════════════════════════════════════════════════════════
 
-  async increment(key: string, delta: number = 1): Promise<number> {
+  async increment(key: string, delta = 1): Promise<number> {
     const prefixedKey = this.prefixKey(key);
     if (delta === 1) {
       return this.client.incr(prefixedKey);
@@ -298,7 +310,7 @@ export class RedisCacheAdapter implements ICacheProvider {
     return this.client.incrby(prefixedKey, delta);
   }
 
-  async decrement(key: string, delta: number = 1): Promise<number> {
+  async decrement(key: string, delta = 1): Promise<number> {
     const prefixedKey = this.prefixKey(key);
     if (delta === 1) {
       return this.client.decr(prefixedKey);
@@ -379,7 +391,7 @@ export class RedisCacheAdapter implements ICacheProvider {
 
   async lrange<T = unknown>(key: string, start: number, stop: number): Promise<T[]> {
     const values = await this.client.lrange(this.prefixKey(key), start, stop);
-    return values.map(v => this.deserialize<T>(v)!);
+    return values.map((v) => this.deserialize<T>(v)!);
   }
 
   // ═══════════════════════════════════════════════════════════════════════
@@ -403,7 +415,7 @@ export class RedisCacheAdapter implements ICacheProvider {
 
   async smembers<T = unknown>(key: string): Promise<T[]> {
     const members = await this.client.smembers(this.prefixKey(key));
-    return members.map(m => this.deserialize<T>(m)!);
+    return members.map((m) => this.deserialize<T>(m)!);
   }
 
   async scard(key: string): Promise<number> {
@@ -440,16 +452,16 @@ export class RedisCacheAdapter implements ICacheProvider {
       return match?.[1];
     };
 
-    const keyspaceHits = parseInt(parseInfo(info, 'keyspace_hits') || '0', 10);
-    const keyspaceMisses = parseInt(parseInfo(info, 'keyspace_misses') || '0', 10);
-    const usedMemory = parseInt(parseInfo(memory, 'used_memory') || '0', 10);
-    const uptimeSeconds = parseInt(parseInfo(info, 'uptime_in_seconds') || '0', 10);
+    const keyspaceHits = Number.parseInt(parseInfo(info, 'keyspace_hits') || '0', 10);
+    const keyspaceMisses = Number.parseInt(parseInfo(info, 'keyspace_misses') || '0', 10);
+    const usedMemory = Number.parseInt(parseInfo(memory, 'used_memory') || '0', 10);
+    const uptimeSeconds = Number.parseInt(parseInfo(info, 'uptime_in_seconds') || '0', 10);
 
     // Count keys in current db
     let keyCount = 0;
     const dbMatch = keyspace.match(/db\d+:keys=(\d+)/);
     if (dbMatch) {
-      keyCount = parseInt(dbMatch[1], 10);
+      keyCount = Number.parseInt(dbMatch[1], 10);
     }
 
     const total = keyspaceHits + keyspaceMisses;

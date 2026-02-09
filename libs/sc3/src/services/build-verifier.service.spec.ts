@@ -2,9 +2,9 @@
 // Build Verifier Service Tests
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
+import type { Build, BuildStatus, SLSALevel } from '../types';
 import { BuildVerifierService } from './build-verifier.service';
-import type { Build, SLSALevel, BuildStatus, BuildEnvironment } from '../types';
 
 describe('BuildVerifierService', () => {
   let service: BuildVerifierService;
@@ -52,7 +52,7 @@ describe('BuildVerifierService', () => {
       const build = createBuild();
       const hash1 = service.computeCanonicalHash(build, new Date());
       const hash2 = service.computeCanonicalHash(build, new Date());
-      
+
       expect(hash1).toBe(hash2);
       expect(hash1).toHaveLength(64); // SHA-256 hex
     });
@@ -60,10 +60,10 @@ describe('BuildVerifierService', () => {
     it('should produce different hashes for different builds', () => {
       const build1 = createBuild({ commit_sha: 'abc123' });
       const build2 = createBuild({ commit_sha: 'def456' });
-      
+
       const hash1 = service.computeCanonicalHash(build1, new Date());
       const hash2 = service.computeCanonicalHash(build2, new Date());
-      
+
       expect(hash1).not.toBe(hash2);
     });
   });
@@ -71,7 +71,7 @@ describe('BuildVerifierService', () => {
   describe('verifyBuild', () => {
     it('should pass for valid build', async () => {
       const build = createBuild();
-      
+
       const failures = await service.verifyBuild(build, {
         time_bound: new Date(Date.now() + 86400000),
         min_slsa_level: 3 as SLSALevel,
@@ -81,16 +81,15 @@ describe('BuildVerifierService', () => {
       });
 
       // Should have no SLSA or builder failures
-      const criticalFailures = failures.filter(f => 
-        f.code === 'SLSA_LEVEL_INSUFFICIENT' || 
-        f.code === 'UNTRUSTED_BUILDER'
+      const criticalFailures = failures.filter(
+        (f) => f.code === 'SLSA_LEVEL_INSUFFICIENT' || f.code === 'UNTRUSTED_BUILDER'
       );
       expect(criticalFailures).toHaveLength(0);
     });
 
     it('should fail for insufficient SLSA level', async () => {
       const build = createBuild({ slsa_level: 1 as SLSALevel });
-      
+
       const failures = await service.verifyBuild(build, {
         time_bound: new Date(Date.now() + 86400000),
         min_slsa_level: 3 as SLSALevel,
@@ -99,12 +98,12 @@ describe('BuildVerifierService', () => {
         verify_provenance: true,
       });
 
-      expect(failures.some(f => f.code === 'SLSA_LEVEL_INSUFFICIENT')).toBe(true);
+      expect(failures.some((f) => f.code === 'SLSA_LEVEL_INSUFFICIENT')).toBe(true);
     });
 
     it('should fail for untrusted builder', async () => {
       const build = createBuild({ builder_id: 'untrusted-builder' });
-      
+
       const failures = await service.verifyBuild(build, {
         time_bound: new Date(Date.now() + 86400000),
         min_slsa_level: 3 as SLSALevel,
@@ -113,13 +112,13 @@ describe('BuildVerifierService', () => {
         verify_provenance: true,
       });
 
-      expect(failures.some(f => f.code === 'UNTRUSTED_BUILDER')).toBe(true);
+      expect(failures.some((f) => f.code === 'UNTRUSTED_BUILDER')).toBe(true);
     });
 
     it('should fail for non-hermetic build when required', async () => {
       const build = createBuild();
       build.environment.hermetic = false;
-      
+
       const failures = await service.verifyBuild(build, {
         time_bound: new Date(Date.now() + 86400000),
         min_slsa_level: 3 as SLSALevel,
@@ -128,7 +127,7 @@ describe('BuildVerifierService', () => {
         verify_provenance: true,
       });
 
-      expect(failures.some(f => f.code === 'NON_HERMETIC_BUILD')).toBe(true);
+      expect(failures.some((f) => f.code === 'NON_HERMETIC_BUILD')).toBe(true);
     });
   });
 
@@ -138,7 +137,7 @@ describe('BuildVerifierService', () => {
       // Add container_digest for full SLSA L3 compliance
       build.environment.container_digest = 'sha256:abc123';
       const result = service.verifySLSALevel3(build);
-      
+
       expect(result.compliant).toBe(true);
       expect(result.missing).toHaveLength(0);
     });
@@ -146,19 +145,19 @@ describe('BuildVerifierService', () => {
     it('should fail for non-hermetic build', () => {
       const build = createBuild();
       build.environment.hermetic = false;
-      
+
       const result = service.verifySLSALevel3(build);
-      
+
       expect(result.compliant).toBe(false);
       expect(result.missing).toContain('Hermetic build environment required');
     });
 
     it('should fail for missing provenance', () => {
       const build = createBuild();
-      delete (build as any).provenance;
-      
+      (build as any).provenance = undefined;
+
       const result = service.verifySLSALevel3(build);
-      
+
       expect(result.compliant).toBe(false);
       expect(result.missing).toContain('Provenance attestation required');
     });

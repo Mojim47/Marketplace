@@ -1,7 +1,16 @@
-﻿import { Controller, Get, HttpStatus, Res, Injectable, Inject, Optional, Logger } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { PrismaService } from '@nextgen/prisma';
-import Redis from 'ioredis';
+﻿import {
+  Controller,
+  Get,
+  HttpStatus,
+  Inject,
+  Injectable,
+  Logger,
+  Optional,
+  Res,
+} from '@nestjs/common';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import type { PrismaService } from '@nextgen/prisma';
+import type Redis from 'ioredis';
 import * as Minio from 'minio';
 
 interface Response {
@@ -125,11 +134,11 @@ export class DatabaseHealthChecker implements DependencyChecker {
 
   async check(): Promise<DependencyHealth> {
     const startTime = Date.now();
-    
+
     try {
       // Execute actual database query - no simulation
       await this.prisma.$queryRaw`SELECT 1`;
-      
+
       return {
         name: this.name,
         status: HealthStatus.HEALTHY,
@@ -139,22 +148,22 @@ export class DatabaseHealthChecker implements DependencyChecker {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       this.logger.error(`Database health check failed: ${errorMessage}`);
-      
+
       // Extract connection details from DATABASE_URL for error reporting
       const databaseUrl = process.env.DATABASE_URL || '';
       let host = 'unknown';
       let port = 5432;
-      
+
       try {
         const urlMatch = databaseUrl.match(/@([^:]+):(\d+)/);
         if (urlMatch) {
           host = urlMatch[1];
-          port = parseInt(urlMatch[2], 10);
+          port = Number.parseInt(urlMatch[2], 10);
         }
       } catch {
         // Ignore parsing errors
       }
-      
+
       return {
         name: this.name,
         status: HealthStatus.UNHEALTHY,
@@ -171,7 +180,6 @@ export class DatabaseHealthChecker implements DependencyChecker {
   }
 }
 
-
 /**
  * Redis health checker - Uses real Redis ping
  * Validates: Requirements 2.2, 2.4
@@ -185,11 +193,11 @@ export class RedisHealthChecker implements DependencyChecker {
 
   async check(): Promise<DependencyHealth> {
     const startTime = Date.now();
-    
+
     try {
       // Execute actual Redis ping - no simulation
       await this.redis.ping();
-      
+
       return {
         name: this.name,
         status: HealthStatus.HEALTHY,
@@ -199,25 +207,25 @@ export class RedisHealthChecker implements DependencyChecker {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       this.logger.error(`Redis health check failed: ${errorMessage}`);
-      
+
       // Extract connection details from REDIS_URL for error reporting
       const redisUrl = process.env.REDIS_URL || '';
       let host = 'unknown';
       let port = 6379;
-      
+
       try {
         const urlMatch = redisUrl.match(/:\/\/([^:@]+)(?::(\d+))?/);
         if (urlMatch) {
           host = urlMatch[1];
-          port = urlMatch[2] ? parseInt(urlMatch[2], 10) : 6379;
+          port = urlMatch[2] ? Number.parseInt(urlMatch[2], 10) : 6379;
         } else {
           host = process.env.REDIS_HOST || 'unknown';
-          port = parseInt(process.env.REDIS_PORT || '6379', 10);
+          port = Number.parseInt(process.env.REDIS_PORT || '6379', 10);
         }
       } catch {
         // Ignore parsing errors
       }
-      
+
       return {
         name: this.name,
         status: HealthStatus.UNHEALTHY,
@@ -251,9 +259,9 @@ export class StorageHealthChecker implements DependencyChecker {
     const endpoint = process.env.MINIO_ENDPOINT;
     const accessKey = process.env.MINIO_ROOT_USER || process.env.MINIO_ACCESS_KEY;
     const secretKey = process.env.MINIO_ROOT_PASSWORD || process.env.MINIO_SECRET_KEY;
-    
+
     this.host = endpoint || 'unknown';
-    this.port = parseInt(process.env.MINIO_API_PORT || process.env.MINIO_PORT || '9000', 10);
+    this.port = Number.parseInt(process.env.MINIO_API_PORT || process.env.MINIO_PORT || '9000', 10);
     this.bucket = process.env.MINIO_BUCKET_UPLOADS || process.env.MINIO_BUCKET || 'uploads';
 
     if (endpoint && accessKey && secretKey) {
@@ -269,7 +277,7 @@ export class StorageHealthChecker implements DependencyChecker {
 
   async check(): Promise<DependencyHealth> {
     const startTime = Date.now();
-    
+
     if (!this.client) {
       return {
         name: this.name,
@@ -280,15 +288,16 @@ export class StorageHealthChecker implements DependencyChecker {
         details: {
           host: this.host,
           port: this.port,
-          error: 'MinIO client not configured - missing MINIO_ENDPOINT, MINIO_ROOT_USER, or MINIO_ROOT_PASSWORD',
+          error:
+            'MinIO client not configured - missing MINIO_ENDPOINT, MINIO_ROOT_USER, or MINIO_ROOT_PASSWORD',
         },
       };
     }
-    
+
     try {
       // Execute actual MinIO bucket check - no simulation
       const bucketExists = await this.client.bucketExists(this.bucket);
-      
+
       if (!bucketExists) {
         return {
           name: this.name,
@@ -306,23 +315,31 @@ export class StorageHealthChecker implements DependencyChecker {
 
       // Test read/write permissions with a small health check object
       const healthCheckKey = `health-check-${Date.now()}.json`;
-      const healthCheckData = JSON.stringify({ 
+      const healthCheckData = JSON.stringify({
         timestamp: new Date().toISOString(),
-        service: 'health-check' 
+        service: 'health-check',
       });
 
       try {
         // Test write permission
-        await this.client.putObject(this.bucket, healthCheckKey, healthCheckData, healthCheckData.length, {
-          'Content-Type': 'application/json',
-        });
+        await this.client.putObject(
+          this.bucket,
+          healthCheckKey,
+          healthCheckData,
+          healthCheckData.length,
+          {
+            'Content-Type': 'application/json',
+          }
+        );
 
         // Test read permission
         const stream = await this.client.getObject(this.bucket, healthCheckKey);
-        
+
         // Consume the stream to ensure read works
-        let data = '';
-        stream.on('data', (chunk) => { data += chunk; });
+        let _data = '';
+        stream.on('data', (chunk) => {
+          _data += chunk;
+        });
         await new Promise((resolve, reject) => {
           stream.on('end', resolve);
           stream.on('error', reject);
@@ -338,9 +355,10 @@ export class StorageHealthChecker implements DependencyChecker {
           lastChecked: new Date().toISOString(),
         };
       } catch (permissionError) {
-        const permissionMessage = permissionError instanceof Error ? permissionError.message : 'Unknown permission error';
+        const permissionMessage =
+          permissionError instanceof Error ? permissionError.message : 'Unknown permission error';
         this.logger.error(`Storage permission check failed: ${permissionMessage}`);
-        
+
         return {
           name: this.name,
           status: HealthStatus.UNHEALTHY,
@@ -354,11 +372,10 @@ export class StorageHealthChecker implements DependencyChecker {
           },
         };
       }
-      
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       this.logger.error(`Storage health check failed: ${errorMessage}`);
-      
+
       return {
         name: this.name,
         status: HealthStatus.UNHEALTHY,
@@ -375,7 +392,6 @@ export class StorageHealthChecker implements DependencyChecker {
   }
 }
 
-
 /**
  * Get system metrics
  */
@@ -383,7 +399,7 @@ function getSystemMetrics(): SystemMetrics {
   const memoryUsage = process.memoryUsage();
   const heapUsedMB = Math.round(memoryUsage.heapUsed / 1024 / 1024);
   const heapTotalMB = Math.round(memoryUsage.heapTotal / 1024 / 1024);
-  
+
   return {
     memoryUsage: {
       heapUsed: heapUsedMB,
@@ -404,16 +420,16 @@ function getSystemMetrics(): SystemMetrics {
 function determineOverallStatus(
   dependencies: DependencyHealth[],
   metrics: SystemMetrics,
-  config: HealthCheckConfig,
+  config: HealthCheckConfig
 ): HealthStatus {
   // Check for any unhealthy dependencies
-  const hasUnhealthy = dependencies.some(d => d.status === HealthStatus.UNHEALTHY);
+  const hasUnhealthy = dependencies.some((d) => d.status === HealthStatus.UNHEALTHY);
   if (hasUnhealthy) {
     return HealthStatus.UNHEALTHY;
   }
 
   // Check for degraded dependencies
-  const hasDegraded = dependencies.some(d => d.status === HealthStatus.DEGRADED);
+  const hasDegraded = dependencies.some((d) => d.status === HealthStatus.DEGRADED);
   if (hasDegraded) {
     return HealthStatus.DEGRADED;
   }
@@ -431,7 +447,7 @@ function determineOverallStatus(
  */
 async function checkWithTimeout(
   checker: DependencyChecker,
-  timeout: number,
+  timeout: number
 ): Promise<DependencyHealth> {
   const timeoutPromise = new Promise<DependencyHealth>((_, reject) => {
     setTimeout(() => {
@@ -453,7 +469,7 @@ async function checkWithTimeout(
 
 /**
  * Comprehensive Health Check Controller
- * 
+ *
  * Features:
  * - Liveness probe for Kubernetes
  * - Readiness probe with dependency checks
@@ -462,7 +478,7 @@ async function checkWithTimeout(
  * - Memory and CPU monitoring
  * - Degraded status support
  * - Real dependency checks (no simulation)
- * 
+ *
  * Validates: Requirements 2.1, 2.2, 2.3, 2.4, 2.5
  */
 @ApiTags('health')
@@ -475,11 +491,11 @@ export class HealthController {
   constructor(
     @Optional() private readonly databaseChecker?: DatabaseHealthChecker,
     @Optional() private readonly redisChecker?: RedisHealthChecker,
-    @Optional() private readonly storageChecker?: StorageHealthChecker,
+    @Optional() private readonly storageChecker?: StorageHealthChecker
   ) {
     this.config = DEFAULT_CONFIG;
     this.dependencyCheckers = [];
-    
+
     if (this.databaseChecker) {
       this.dependencyCheckers.push(this.databaseChecker);
     }
@@ -503,7 +519,7 @@ export class HealthController {
       alive: true,
       timestamp: new Date().toISOString(),
     };
-    
+
     res.status(HttpStatus.OK).json(response);
   }
 
@@ -517,10 +533,8 @@ export class HealthController {
   @ApiResponse({ status: 503, description: 'Application is not ready' })
   async readiness(@Res() res: Response): Promise<void> {
     const dependencies = await this.checkAllDependencies();
-    
-    const isReady = dependencies.every(
-      d => d.status !== HealthStatus.UNHEALTHY
-    );
+
+    const isReady = dependencies.every((d) => d.status !== HealthStatus.UNHEALTHY);
 
     const response: ReadinessResponse = {
       ready: isReady,
@@ -559,9 +573,8 @@ export class HealthController {
       response.metrics = metrics;
     }
 
-    const httpStatus = overallStatus === HealthStatus.UNHEALTHY
-      ? HttpStatus.SERVICE_UNAVAILABLE
-      : HttpStatus.OK;
+    const httpStatus =
+      overallStatus === HealthStatus.UNHEALTHY ? HttpStatus.SERVICE_UNAVAILABLE : HttpStatus.OK;
 
     res.status(httpStatus).json(response);
   }
@@ -582,8 +595,8 @@ export class HealthController {
     if (this.dependencyCheckers.length === 0) {
       return [];
     }
-    
-    const checks = this.dependencyCheckers.map(checker =>
+
+    const checks = this.dependencyCheckers.map((checker) =>
       checkWithTimeout(checker, this.config.timeout)
     );
 
@@ -603,4 +616,3 @@ export const __testing = {
   RedisHealthChecker,
   StorageHealthChecker,
 };
-

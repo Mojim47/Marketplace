@@ -4,7 +4,8 @@
 
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import type React from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { cn } from '../../utils/cn';
 
 export type KPITrend = 'up' | 'down' | 'neutral';
@@ -84,40 +85,53 @@ export const KPICard: React.FC<KPICardProps> = ({
   const animationRef = useRef<number>();
 
   // Calculate trend if not provided
-  const calculatedTrend = trend ?? (previousValue !== undefined
-    ? value > previousValue ? 'up' : value < previousValue ? 'down' : 'neutral'
-    : 'neutral');
+  const calculatedTrend =
+    trend ??
+    (previousValue !== undefined
+      ? value > previousValue
+        ? 'up'
+        : value < previousValue
+          ? 'down'
+          : 'neutral'
+      : 'neutral');
 
-  const calculatedTrendValue = trendValue ?? (previousValue !== undefined && previousValue !== 0
-    ? Math.abs(((value - previousValue) / previousValue) * 100)
-    : 0);
+  const calculatedTrendValue =
+    trendValue ??
+    (previousValue !== undefined && previousValue !== 0
+      ? Math.abs(((value - previousValue) / previousValue) * 100)
+      : 0);
 
   // Format number
-  const formatNumber = useCallback((num: number): string => {
-    if (formatAsCurrency) {
-      return new Intl.NumberFormat(locale, {
-        style: 'decimal',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-      }).format(num);
-    }
+  const formatNumber = useCallback(
+    (num: number): string => {
+      if (formatAsCurrency) {
+        return new Intl.NumberFormat(locale, {
+          style: 'decimal',
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+        }).format(num);
+      }
 
-    if (num >= 1000000) {
-      return new Intl.NumberFormat(locale, {
-        notation: 'compact',
-        compactDisplay: 'short',
-        maximumFractionDigits: 1,
-      }).format(num);
-    }
+      if (num >= 1000000) {
+        return new Intl.NumberFormat(locale, {
+          notation: 'compact',
+          compactDisplay: 'short',
+          maximumFractionDigits: 1,
+        }).format(num);
+      }
 
-    return new Intl.NumberFormat(locale, {
-      maximumFractionDigits: 2,
-    }).format(num);
-  }, [formatAsCurrency, locale]);
+      return new Intl.NumberFormat(locale, {
+        maximumFractionDigits: 2,
+      }).format(num);
+    },
+    [formatAsCurrency, locale]
+  );
 
   // Animate counter
   useEffect(() => {
-    if (!isVisible || loading) return undefined;
+    if (!isVisible || loading) {
+      return undefined;
+    }
 
     const startTime = performance.now();
     const startValue = 0;
@@ -126,11 +140,11 @@ export const KPICard: React.FC<KPICardProps> = ({
     const animate = (currentTime: number) => {
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / animationDuration, 1);
-      
+
       // Easing function (ease-out-expo)
-      const easeOutExpo = 1 - Math.pow(2, -10 * progress);
+      const easeOutExpo = 1 - 2 ** (-10 * progress);
       const currentValue = startValue + (endValue - startValue) * easeOutExpo;
-      
+
       setDisplayValue(currentValue);
 
       if (progress < 1) {
@@ -222,20 +236,24 @@ export const KPICard: React.FC<KPICardProps> = ({
           {/* Header */}
           <div className="flex items-start justify-between mb-4">
             <div className="flex-1">
-              <p className={cn(
-                'text-sm font-medium',
-                variant === 'gradient' ? 'text-white/80' : 'text-[var(--color-text-secondary)]'
-              )}>
+              <p
+                className={cn(
+                  'text-sm font-medium',
+                  variant === 'gradient' ? 'text-white/80' : 'text-[var(--color-text-secondary)]'
+                )}
+              >
                 {rtl && titleFa ? titleFa : title}
               </p>
             </div>
-            
+
             {icon && (
-              <div className={cn(
-                'flex items-center justify-center rounded-xl',
-                iconSizeClasses[size],
-                variant === 'gradient' ? 'bg-white/20' : iconBg
-              )}>
+              <div
+                className={cn(
+                  'flex items-center justify-center rounded-xl',
+                  iconSizeClasses[size],
+                  variant === 'gradient' ? 'bg-white/20' : iconBg
+                )}
+              >
                 {icon}
               </div>
             )}
@@ -243,33 +261,40 @@ export const KPICard: React.FC<KPICardProps> = ({
 
           {/* Value */}
           <div className="mb-3">
-            <span className={cn(
-              'font-bold tracking-tight',
-              valueSizeClasses[size],
-              variant === 'gradient' ? 'text-white' : 'text-[var(--color-text-primary)]'
-            )}>
-              {prefix}{formatNumber(displayValue)}{suffix}
+            <span
+              className={cn(
+                'font-bold tracking-tight',
+                valueSizeClasses[size],
+                variant === 'gradient' ? 'text-white' : 'text-[var(--color-text-primary)]'
+              )}
+            >
+              {prefix}
+              {formatNumber(displayValue)}
+              {suffix}
             </span>
           </div>
 
           {/* Trend */}
           {(calculatedTrend !== 'neutral' || calculatedTrendValue > 0) && (
             <div className="flex items-center gap-2">
-              <span className={cn(
-                'inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium',
-                variant === 'gradient' ? 'bg-white/20 text-white' : [
-                  trendBgColors[calculatedTrend],
-                  trendColors[calculatedTrend]
-                ]
-              )}>
+              <span
+                className={cn(
+                  'inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium',
+                  variant === 'gradient'
+                    ? 'bg-white/20 text-white'
+                    : [trendBgColors[calculatedTrend], trendColors[calculatedTrend]]
+                )}
+              >
                 {calculatedTrend === 'up' && <TrendUpIcon className="w-3 h-3" />}
                 {calculatedTrend === 'down' && <TrendDownIcon className="w-3 h-3" />}
                 {calculatedTrendValue.toFixed(1)}%
               </span>
-              <span className={cn(
-                'text-xs',
-                variant === 'gradient' ? 'text-white/70' : 'text-[var(--color-text-tertiary)]'
-              )}>
+              <span
+                className={cn(
+                  'text-xs',
+                  variant === 'gradient' ? 'text-white/70' : 'text-[var(--color-text-tertiary)]'
+                )}
+              >
                 {rtl ? 'نسبت به دوره قبل' : 'vs previous period'}
               </span>
             </div>
@@ -305,13 +330,23 @@ const KPICardSkeleton: React.FC<{ size: KPISize }> = ({ size }) => {
 // Icons
 const TrendUpIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+    />
   </svg>
 );
 
 const TrendDownIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"
+    />
   </svg>
 );
 

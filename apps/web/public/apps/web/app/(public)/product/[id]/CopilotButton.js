@@ -1,7 +1,7 @@
 'use client';
-import { jsx as _jsx } from 'react/jsx-runtime';
 import { embedText, loadModel } from '@nextgen/ai';
 import { useEffect, useState } from 'react';
+import { jsx as _jsx } from 'react/jsx-runtime';
 export function CopilotButton() {
   const [ready, setReady] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -9,10 +9,14 @@ export function CopilotButton() {
     let active = true;
     loadModel()
       .then(() => {
-        if (active) setReady(true);
+        if (active) {
+          setReady(true);
+        }
       })
       .catch(() => {
-        if (active) setReady(false);
+        if (active) {
+          setReady(false);
+        }
       });
     return () => {
       active = false;
@@ -20,7 +24,9 @@ export function CopilotButton() {
   }, []);
   const handleClick = async () => {
     const query = window.prompt('چه سوالی دارید؟');
-    if (!query) return;
+    if (!query) {
+      return;
+    }
     setLoading(true);
     try {
       const vector = await embedText(query);

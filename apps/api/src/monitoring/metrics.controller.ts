@@ -1,12 +1,12 @@
 import { Controller, Get, Header } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { MetricsService } from './metrics.service';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import type { MetricsService } from './metrics.service';
 
 /**
  * Metrics Controller
- * 
+ *
  * Exposes /metrics endpoint for Prometheus scraping
- * 
+ *
  * Validates: Requirements 7.1
  */
 @ApiTags('monitoring')

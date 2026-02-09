@@ -173,10 +173,18 @@ export class ZarinPalGateway {
         callback_url: request.callbackUrl ?? this.config.callbackUrl,
       };
 
-      if (request.mobile) payload.mobile = request.mobile;
-      if (request.email) payload.email = request.email;
-      if (request.orderId) payload.order_id = request.orderId;
-      if (request.metadata) payload.metadata = request.metadata;
+      if (request.mobile) {
+        payload.mobile = request.mobile;
+      }
+      if (request.email) {
+        payload.email = request.email;
+      }
+      if (request.orderId) {
+        payload.order_id = request.orderId;
+      }
+      if (request.metadata) {
+        payload.metadata = request.metadata;
+      }
 
       // Add split payments (wages)
       if (request.wages && request.wages.length > 0) {

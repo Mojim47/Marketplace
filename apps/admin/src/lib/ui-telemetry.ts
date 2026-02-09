@@ -1,6 +1,6 @@
 'use client';
 
-import { trackUiEvent, type UiEventName } from '@nextgen/observability';
+import { type UiEventName, trackUiEvent } from '@nextgen/observability';
 
 declare global {
   interface Window {
@@ -8,11 +8,7 @@ declare global {
   }
 }
 
-export function emitUiEvent(
-  name: UiEventName,
-  payload: Record<string, unknown>,
-  traceId?: string,
-) {
+export function emitUiEvent(name: UiEventName, payload: Record<string, unknown>, traceId?: string) {
   const event = trackUiEvent(name, payload, { traceId });
 
   if (typeof window !== 'undefined') {

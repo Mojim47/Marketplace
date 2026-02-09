@@ -2,7 +2,7 @@
   label,
   value,
   meta,
-  className = "",
+  className = '',
 }: {
   label: string;
   value: number;

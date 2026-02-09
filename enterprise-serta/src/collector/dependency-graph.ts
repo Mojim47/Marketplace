@@ -2,10 +2,9 @@
 // Dependency Graph Builder - Maps Code Dependencies and Trust Boundaries
 // ═══════════════════════════════════════════════════════════════════════════
 
+import * as path from 'node:path';
 import * as madge from 'madge';
-import { CodeFile } from '../types';
-import * as path from 'path';
-import * as fs from 'fs/promises';
+import type { CodeFile } from '../types';
 
 export interface DependencyNode {
   id: string;
@@ -39,33 +38,29 @@ export class DependencyGraphBuilder {
       edges: [],
       cycles: [],
       entryPoints: [],
-      criticalPaths: []
+      criticalPaths: [],
     };
   }
 
   async buildGraph(codeFiles: CodeFile[]): Promise<DependencyGraph> {
-    console.log('🔗 Building dependency graph...');
-
     try {
       // Build nodes from code files
       await this.buildNodes(codeFiles);
-      
+
       // Analyze dependencies using madge
       await this.analyzeDependencies();
-      
+
       // Detect cycles
       await this.detectCycles();
-      
+
       // Identify entry points
       this.identifyEntryPoints();
-      
+
       // Find critical paths
       this.findCriticalPaths();
-      
+
       // Analyze trust boundaries
       this.analyzeTrustBoundaries();
-
-      console.log(`✅ Built dependency graph with ${this.graph.nodes.size} nodes and ${this.graph.edges.length} edges`);
       return this.graph;
     } catch (error) {
       console.error('❌ Error building dependency graph:', error);
@@ -85,7 +80,7 @@ export class DependencyGraphBuilder {
         isEntryPoint: this.isEntryPoint(file),
         isCritical: this.isCriticalFile(file),
         trustBoundary: this.isTrustBoundary(file),
-        securityRisk: this.calculateSecurityRisk(file)
+        securityRisk: this.calculateSecurityRisk(file),
       };
 
       this.graph.nodes.set(file.id, node);
@@ -100,7 +95,7 @@ export class DependencyGraphBuilder {
           this.graph.edges.push({
             from: nodeId,
             to: depNode.id,
-            type: 'imports'
+            type: 'imports',
           });
         }
       }
@@ -111,15 +106,8 @@ export class DependencyGraphBuilder {
     try {
       const config = {
         fileExtensions: ['ts', 'js', 'tsx', 'jsx'],
-        excludeRegExp: [
-          /node_modules/,
-          /dist/,
-          /build/,
-          /coverage/,
-          /\.test\./,
-          /\.spec\./
-        ],
-        tsConfig: path.join(this.projectPath, 'tsconfig.json')
+        excludeRegExp: [/node_modules/, /dist/, /build/, /coverage/, /\.test\./, /\.spec\./],
+        tsConfig: path.join(this.projectPath, 'tsconfig.json'),
       };
 
       const res = await madge(this.projectPath, config);
@@ -136,7 +124,6 @@ export class DependencyGraphBuilder {
       // Detect circular dependencies
       const circular = res.circular();
       this.graph.cycles = circular;
-
     } catch (error) {
       console.warn('⚠️ Madge analysis failed, using basic dependency analysis:', error);
     }
@@ -157,7 +144,9 @@ export class DependencyGraphBuilder {
         return;
       }
 
-      if (visited.has(nodeId)) return;
+      if (visited.has(nodeId)) {
+        return;
+      }
 
       visited.add(nodeId);
       recursionStack.add(nodeId);
@@ -197,14 +186,12 @@ export class DependencyGraphBuilder {
       /server\.(ts|js)$/,
       /\.controller\.(ts|js)$/,
       /\.gateway\.(ts|js)$/,
-      /\.resolver\.(ts|js)$/
+      /\.resolver\.(ts|js)$/,
     ];
 
     for (const [nodeId, node] of this.graph.nodes) {
       // Check if it's an entry point by pattern
-      const isEntryByPattern = entryPatterns.some(pattern => 
-        pattern.test(node.path)
-      );
+      const isEntryByPattern = entryPatterns.some((pattern) => pattern.test(node.path));
 
       // Check if it has no dependents (leaf node in reverse)
       const hasNoDependents = node.dependents.length === 0;
@@ -226,8 +213,9 @@ export class DependencyGraphBuilder {
 
     // Find paths from entry points to critical nodes
     for (const entryPointId of this.graph.entryPoints) {
-      const paths = this.findPathsToTarget(entryPointId, (node) => 
-        node.isCritical || node.trustBoundary || node.securityRisk > 7
+      const paths = this.findPathsToTarget(
+        entryPointId,
+        (node) => node.isCritical || node.trustBoundary || node.securityRisk > 7
       );
       criticalPaths.push(...paths);
     }
@@ -249,18 +237,22 @@ export class DependencyGraphBuilder {
   }
 
   private findPathsToTarget(
-    startNodeId: string, 
+    startNodeId: string,
     targetPredicate: (node: DependencyNode) => boolean,
     visited: Set<string> = new Set(),
     currentPath: string[] = []
   ): string[][] {
-    if (visited.has(startNodeId)) return [];
+    if (visited.has(startNodeId)) {
+      return [];
+    }
 
     visited.add(startNodeId);
     currentPath.push(startNodeId);
 
     const node = this.graph.nodes.get(startNodeId);
-    if (!node) return [];
+    if (!node) {
+      return [];
+    }
 
     const paths: string[][] = [];
 
@@ -273,12 +265,9 @@ export class DependencyGraphBuilder {
     for (const dep of node.dependencies) {
       const depNode = this.findNodeByImport(dep);
       if (depNode && !visited.has(depNode.id)) {
-        const subPaths = this.findPathsToTarget(
-          depNode.id, 
-          targetPredicate, 
-          new Set(visited), 
-          [...currentPath]
-        );
+        const subPaths = this.findPathsToTarget(depNode.id, targetPredicate, new Set(visited), [
+          ...currentPath,
+        ]);
         paths.push(...subPaths);
       }
     }
@@ -287,9 +276,9 @@ export class DependencyGraphBuilder {
   }
 
   private analyzeTrustBoundaries(): void {
-    for (const [nodeId, node] of this.graph.nodes) {
+    for (const [_nodeId, node] of this.graph.nodes) {
       // Update trust boundary analysis based on dependencies
-      const hasTrustBoundaryDeps = node.dependencies.some(dep => {
+      const hasTrustBoundaryDeps = node.dependencies.some((dep) => {
         const depNode = this.findNodeByImport(dep);
         return depNode?.trustBoundary || this.isExternalDependency(dep);
       });
@@ -306,11 +295,12 @@ export class DependencyGraphBuilder {
       /main\.(ts|js)$/,
       /index\.(ts|js)$/,
       /app\.(ts|js)$/,
-      /server\.(ts|js)$/
+      /server\.(ts|js)$/,
     ];
 
-    return entryPatterns.some(pattern => pattern.test(file.path)) ||
-           file.path.startsWith('apps/');
+    return (
+      entryPatterns.some((pattern) => pattern.test(file.path)) || file.path.startsWith('apps/')
+    );
   }
 
   private isCriticalFile(file: CodeFile): boolean {
@@ -324,12 +314,13 @@ export class DependencyGraphBuilder {
       /config/i,
       /secret/i,
       /key/i,
-      /token/i
+      /token/i,
     ];
 
-    return criticalPatterns.some(pattern => 
-      pattern.test(file.path) || pattern.test(file.content)
-    ) || file.securityPatterns.length > 0;
+    return (
+      criticalPatterns.some((pattern) => pattern.test(file.path) || pattern.test(file.content)) ||
+      file.securityPatterns.length > 0
+    );
   }
 
   private isTrustBoundary(file: CodeFile): boolean {
@@ -340,15 +331,18 @@ export class DependencyGraphBuilder {
       /auth/i,
       /middleware/i,
       /guard/i,
-      /interceptor/i
+      /interceptor/i,
     ];
 
-    return trustBoundaryPatterns.some(pattern => pattern.test(file.path)) ||
-           file.functions.some(func => 
-             func.name.includes('auth') || 
-             func.name.includes('guard') ||
-             func.name.includes('validate')
-           );
+    return (
+      trustBoundaryPatterns.some((pattern) => pattern.test(file.path)) ||
+      file.functions.some(
+        (func) =>
+          func.name.includes('auth') ||
+          func.name.includes('guard') ||
+          func.name.includes('validate')
+      )
+    );
   }
 
   private calculateSecurityRisk(file: CodeFile): number {
@@ -358,41 +352,51 @@ export class DependencyGraphBuilder {
     risk += file.securityPatterns.length * 2;
 
     // Critical patterns add more risk
-    const criticalPatterns = file.securityPatterns.filter(p => 
-      p.severity === 'critical' || p.severity === 'high'
+    const criticalPatterns = file.securityPatterns.filter(
+      (p) => p.severity === 'critical' || p.severity === 'high'
     );
     risk += criticalPatterns.length * 3;
 
     // File type risk
-    if (file.path.includes('auth') || file.path.includes('security')) risk += 3;
-    if (file.path.includes('payment') || file.path.includes('order')) risk += 2;
-    if (file.path.includes('admin') || file.path.includes('config')) risk += 2;
+    if (file.path.includes('auth') || file.path.includes('security')) {
+      risk += 3;
+    }
+    if (file.path.includes('payment') || file.path.includes('order')) {
+      risk += 2;
+    }
+    if (file.path.includes('admin') || file.path.includes('config')) {
+      risk += 2;
+    }
 
     // Function complexity risk
-    const complexFunctions = file.functions.filter(f => f.complexity > 10);
+    const complexFunctions = file.functions.filter((f) => f.complexity > 10);
     risk += complexFunctions.length;
 
     // External dependencies risk
-    const externalDeps = file.imports.filter(imp => this.isExternalDependency(imp));
+    const externalDeps = file.imports.filter((imp) => this.isExternalDependency(imp));
     risk += externalDeps.length * 0.5;
 
     return Math.min(10, risk); // Cap at 10
   }
 
   private isExternalDependency(importPath: string): boolean {
-    return !importPath.startsWith('.') && 
-           !importPath.startsWith('@nextgen/') && 
-           !importPath.startsWith('@libs/') &&
-           !importPath.startsWith('~/');
+    return (
+      !importPath.startsWith('.') &&
+      !importPath.startsWith('@nextgen/') &&
+      !importPath.startsWith('@libs/') &&
+      !importPath.startsWith('~/')
+    );
   }
 
   private findNodeByImport(importPath: string): DependencyNode | undefined {
     // Try to resolve import to actual file path
-    for (const [nodeId, node] of this.graph.nodes) {
-      if (node.path.includes(importPath) || 
-          node.name === importPath ||
-          node.path.endsWith(importPath + '.ts') ||
-          node.path.endsWith(importPath + '.js')) {
+    for (const [_nodeId, node] of this.graph.nodes) {
+      if (
+        node.path.includes(importPath) ||
+        node.name === importPath ||
+        node.path.endsWith(`${importPath}.ts`) ||
+        node.path.endsWith(`${importPath}.js`)
+      ) {
         return node;
       }
     }
@@ -400,7 +404,7 @@ export class DependencyGraphBuilder {
   }
 
   private findNodeByPath(filePath: string): DependencyNode | undefined {
-    for (const [nodeId, node] of this.graph.nodes) {
+    for (const [_nodeId, node] of this.graph.nodes) {
       if (node.path === filePath || node.path.endsWith(filePath)) {
         return node;
       }
@@ -419,9 +423,14 @@ export class DependencyGraphBuilder {
     averageRisk: number;
     maxDepth: number;
   }> {
-    const criticalNodes = Array.from(this.graph.nodes.values()).filter(n => n.isCritical).length;
-    const trustBoundaries = Array.from(this.graph.nodes.values()).filter(n => n.trustBoundary).length;
-    const totalRisk = Array.from(this.graph.nodes.values()).reduce((sum, n) => sum + n.securityRisk, 0);
+    const criticalNodes = Array.from(this.graph.nodes.values()).filter((n) => n.isCritical).length;
+    const trustBoundaries = Array.from(this.graph.nodes.values()).filter(
+      (n) => n.trustBoundary
+    ).length;
+    const totalRisk = Array.from(this.graph.nodes.values()).reduce(
+      (sum, n) => sum + n.securityRisk,
+      0
+    );
     const averageRisk = totalRisk / this.graph.nodes.size;
 
     return {
@@ -432,7 +441,7 @@ export class DependencyGraphBuilder {
       criticalNodes,
       trustBoundaries,
       averageRisk,
-      maxDepth: this.calculateMaxDepth()
+      maxDepth: this.calculateMaxDepth(),
     };
   }
 
@@ -440,11 +449,15 @@ export class DependencyGraphBuilder {
     let maxDepth = 0;
 
     const calculateDepth = (nodeId: string, visited: Set<string> = new Set()): number => {
-      if (visited.has(nodeId)) return 0;
+      if (visited.has(nodeId)) {
+        return 0;
+      }
       visited.add(nodeId);
 
       const node = this.graph.nodes.get(nodeId);
-      if (!node) return 0;
+      if (!node) {
+        return 0;
+      }
 
       let depth = 0;
       for (const dep of node.dependencies) {
@@ -471,7 +484,7 @@ export class DependencyGraphBuilder {
       edges: this.graph.edges,
       cycles: this.graph.cycles,
       entryPoints: this.graph.entryPoints,
-      criticalPaths: this.graph.criticalPaths
+      criticalPaths: this.graph.criticalPaths,
     };
   }
 }

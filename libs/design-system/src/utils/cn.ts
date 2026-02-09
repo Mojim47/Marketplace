@@ -2,7 +2,7 @@
 // cn Utility - Class Name Merger with Tailwind Support
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { clsx, type ClassValue } from 'clsx';
+import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
 /**

@@ -2,8 +2,8 @@
 // Tracing Service - Distributed Tracing
 // ═══════════════════════════════════════════════════════════════════════════
 
+import { randomUUID } from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
-import { randomUUID } from 'crypto';
 
 export interface TraceSpan {
   traceId: string;
@@ -36,7 +36,7 @@ export class TracingService {
     };
 
     this.activeTraces.set(traceId, span);
-    
+
     this.logger.debug(`Started trace: ${operationName} [${traceId}]`);
     return traceId;
   }
@@ -58,12 +58,16 @@ export class TracingService {
     }
 
     this.logger.debug(`Completed trace: ${span.operationName} [${traceId}] in ${span.duration}ms`);
-    
+
     // In production, this would send to a tracing backend like Jaeger
     this.activeTraces.delete(traceId);
   }
 
-  async addSpanEvent(traceId: string, event: string, metadata?: Record<string, any>): Promise<void> {
+  async addSpanEvent(
+    traceId: string,
+    event: string,
+    metadata?: Record<string, any>
+  ): Promise<void> {
     const span = this.activeTraces.get(traceId);
     if (!span) {
       this.logger.warn(`Trace not found for event: ${traceId}`);

@@ -5,15 +5,15 @@
  */
 
 import {
-  ExceptionFilter,
+  type ArgumentsHost,
   Catch,
-  ArgumentsHost,
+  type ExceptionFilter,
   HttpException,
   HttpStatus,
   Logger,
 } from '@nestjs/common';
-import { Request, Response } from 'express';
-import { AppError, ErrorCode, ErrorResponse } from './app-error';
+import type { Request, Response } from 'express';
+import { AppError, ErrorCode, type ErrorResponse } from './app-error';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
@@ -34,11 +34,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     response.status(errorResponse.statusCode).json(errorResponse);
   }
 
-  private buildErrorResponse(
-    exception: unknown,
-    path: string,
-    requestId?: string
-  ): ErrorResponse {
+  private buildErrorResponse(exception: unknown, path: string, requestId?: string): ErrorResponse {
     // AppError - our custom errors
     if (exception instanceof AppError) {
       return exception.toResponse(path, requestId);
@@ -127,11 +123,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     };
   }
 
-  private logError(
-    exception: unknown,
-    errorResponse: ErrorResponse,
-    request: Request
-  ): void {
+  private logError(exception: unknown, errorResponse: ErrorResponse, request: Request): void {
     const logContext = {
       code: errorResponse.code,
       statusCode: errorResponse.statusCode,

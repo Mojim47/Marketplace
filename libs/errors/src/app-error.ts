@@ -18,7 +18,7 @@
  * - UnavailableError (503): Service temporarily unavailable
  */
 
-import { HttpStatus } from '@nestjs/common';
+import type { HttpStatus } from '@nestjs/common';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Error Codes - Unique identifiers for each error type

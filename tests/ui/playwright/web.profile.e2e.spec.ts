@@ -1,4 +1,4 @@
-﻿import { test, expect } from '@playwright/test';
+﻿import { expect, test } from '@playwright/test';
 
 test.describe('web profile e2e', () => {
   test('updates profile successfully', async ({ page }) => {

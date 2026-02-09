@@ -9,13 +9,13 @@
  * @requirements 2.4
  */
 
-import { test, expect, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 // Admin panel base URL (separate app)
 const ADMIN_BASE_URL = process.env.ADMIN_BASE_URL || 'http://localhost:3002';
 
 // Test credentials
-const ADMIN_CREDENTIALS = {
+const _ADMIN_CREDENTIALS = {
   email: 'admin@nextgen.ir',
   password: 'Admin@2025!Secure',
 };

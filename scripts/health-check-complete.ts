@@ -8,9 +8,9 @@
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
+import { exec } from 'node:child_process';
+import { promisify } from 'node:util';
 import { createClient } from '@clickhouse/client';
-import { exec } from 'child_process';
-import { promisify } from 'util';
 
 const execAsync = promisify(exec);
 
@@ -26,11 +26,6 @@ class HealthChecker {
   private results: HealthCheckResult[] = [];
 
   async runHealthCheck(): Promise<void> {
-    console.log('🏥 NextGen Marketplace - Complete Health Check');
-    console.log('═══════════════════════════════════════════════════════════════');
-    console.log(`🕐 Started at: ${new Date().toISOString()}`);
-    console.log('═══════════════════════════════════════════════════════════════\n');
-
     // Run all health checks
     await this.checkDockerServices();
     await this.checkClickHouse();
@@ -47,25 +42,20 @@ class HealthChecker {
   }
 
   private async checkDockerServices(): Promise<void> {
-    console.log('🐳 Checking Docker Services...');
-
     try {
       // Check if Docker is running
       const { stdout: dockerVersion } = await execAsync('docker --version');
-      console.log(`   📦 Docker Version: ${dockerVersion.trim()}`);
 
       // Check ClickHouse services
-      const services = [
-        'nextgen-clickhouse',
-        'nextgen-tabix',
-        'nextgen-vector',
-      ];
+      const services = ['nextgen-clickhouse', 'nextgen-tabix', 'nextgen-vector'];
 
       for (const service of services) {
         try {
-          const { stdout } = await execAsync(`docker ps --filter "name=${service}" --format "{{.Status}}"`);
+          const { stdout } = await execAsync(
+            `docker ps --filter "name=${service}" --format "{{.Status}}"`
+          );
           const isRunning = stdout.includes('Up');
-          
+
           this.results.push({
             service: `Docker: ${service}`,
             status: isRunning ? 'HEALTHY' : 'UNHEALTHY',
@@ -79,7 +69,6 @@ class HealthChecker {
           });
         }
       }
-
     } catch (error) {
       this.results.push({
         service: 'Docker',
@@ -87,15 +76,11 @@ class HealthChecker {
         message: `❌ Docker not available: ${error.message}`,
       });
     }
-
-    console.log('   ✅ Docker services check completed\n');
   }
 
   private async checkClickHouse(): Promise<void> {
-    console.log('🗄️ Checking ClickHouse...');
-
     const startTime = Date.now();
-    
+
     try {
       const client = createClient({
         host: process.env.CLICKHOUSE_HOST || 'http://localhost:8123',
@@ -120,8 +105,8 @@ class HealthChecker {
           format: 'JSONEachRow',
         });
 
-        const tables = await tablesResult.json() as any[];
-        
+        const tables = (await tablesResult.json()) as any[];
+
         this.results.push({
           service: 'ClickHouse',
           status: 'HEALTHY',
@@ -129,21 +114,25 @@ class HealthChecker {
           message: `✅ ClickHouse healthy (${responseTime}ms)`,
           details: {
             tables: tables.length,
-            tableNames: tables.map(t => t.name),
+            tableNames: tables.map((t) => t.name),
           },
         });
 
         // Check each required table
-        const requiredTables = ['search_events', 'failed_searches', 'product_impressions', 'user_sessions'];
+        const requiredTables = [
+          'search_events',
+          'failed_searches',
+          'product_impressions',
+          'user_sessions',
+        ];
         for (const tableName of requiredTables) {
-          const tableExists = tables.some(t => t.name === tableName);
+          const tableExists = tables.some((t) => t.name === tableName);
           this.results.push({
             service: `ClickHouse Table: ${tableName}`,
             status: tableExists ? 'HEALTHY' : 'UNHEALTHY',
             message: tableExists ? `✅ Table ${tableName} exists` : `❌ Table ${tableName} missing`,
           });
         }
-
       } else {
         this.results.push({
           service: 'ClickHouse',
@@ -154,7 +143,6 @@ class HealthChecker {
       }
 
       await client.close();
-
     } catch (error) {
       const responseTime = Date.now() - startTime;
       this.results.push({
@@ -164,20 +152,16 @@ class HealthChecker {
         message: `❌ ClickHouse connection failed: ${error.message}`,
       });
     }
-
-    console.log('   ✅ ClickHouse check completed\n');
   }
 
   private async checkTypesense(): Promise<void> {
-    console.log('🔍 Checking Typesense...');
-
     const startTime = Date.now();
-    
+
     try {
       const typesenseHost = process.env.TYPESENSE_HOST || 'localhost';
       const typesensePort = process.env.TYPESENSE_PORT || '8108';
       const typesenseApiKey = process.env.TYPESENSE_API_KEY || 'typesense_api_key_2024';
-      
+
       const response = await fetch(`http://${typesenseHost}:${typesensePort}/health`, {
         headers: {
           'X-TYPESENSE-API-KEY': typesenseApiKey,
@@ -188,7 +172,7 @@ class HealthChecker {
 
       if (response.ok) {
         const health = await response.json();
-        
+
         this.results.push({
           service: 'Typesense',
           status: 'HEALTHY',
@@ -199,20 +183,25 @@ class HealthChecker {
 
         // Check collections
         try {
-          const collectionsResponse = await fetch(`http://${typesenseHost}:${typesensePort}/collections`, {
-            headers: {
-              'X-TYPESENSE-API-KEY': typesenseApiKey,
-            },
-          });
+          const collectionsResponse = await fetch(
+            `http://${typesenseHost}:${typesensePort}/collections`,
+            {
+              headers: {
+                'X-TYPESENSE-API-KEY': typesenseApiKey,
+              },
+            }
+          );
 
           if (collectionsResponse.ok) {
             const collections = await collectionsResponse.json();
             const hasProductsCollection = collections.some((c: any) => c.name === 'products');
-            
+
             this.results.push({
               service: 'Typesense Collections',
               status: hasProductsCollection ? 'HEALTHY' : 'DEGRADED',
-              message: hasProductsCollection ? '✅ Products collection exists' : '⚠️ Products collection missing',
+              message: hasProductsCollection
+                ? '✅ Products collection exists'
+                : '⚠️ Products collection missing',
               details: { collections: collections.length },
             });
           }
@@ -223,7 +212,6 @@ class HealthChecker {
             message: `⚠️ Could not check collections: ${error.message}`,
           });
         }
-
       } else {
         this.results.push({
           service: 'Typesense',
@@ -232,7 +220,6 @@ class HealthChecker {
           message: `❌ Typesense unhealthy: ${response.status} ${response.statusText}`,
         });
       }
-
     } catch (error) {
       const responseTime = Date.now() - startTime;
       this.results.push({
@@ -242,15 +229,11 @@ class HealthChecker {
         message: `❌ Typesense connection failed: ${error.message}`,
       });
     }
-
-    console.log('   ✅ Typesense check completed\n');
   }
 
   private async checkRedis(): Promise<void> {
-    console.log('🔴 Checking Redis/DragonflyDB...');
-
     const startTime = Date.now();
-    
+
     try {
       const redisHost = process.env.REDIS_HOST || 'localhost';
       const redisPort = process.env.REDIS_PORT || '6379';
@@ -258,9 +241,11 @@ class HealthChecker {
 
       // Simple Redis ping using redis-cli if available
       try {
-        const { stdout } = await execAsync(`redis-cli -h ${redisHost} -p ${redisPort} -a ${redisPassword} ping`);
+        const { stdout } = await execAsync(
+          `redis-cli -h ${redisHost} -p ${redisPort} -a ${redisPassword} ping`
+        );
         const responseTime = Date.now() - startTime;
-        
+
         if (stdout.trim() === 'PONG') {
           this.results.push({
             service: 'Redis/DragonflyDB',
@@ -284,7 +269,6 @@ class HealthChecker {
           message: `⚠️ Could not check Redis (redis-cli not available): ${error.message}`,
         });
       }
-
     } catch (error) {
       const responseTime = Date.now() - startTime;
       this.results.push({
@@ -294,24 +278,23 @@ class HealthChecker {
         message: `❌ Redis check failed: ${error.message}`,
       });
     }
-
-    console.log('   ✅ Redis check completed\n');
   }
 
   private async checkPostgreSQL(): Promise<void> {
-    console.log('🐘 Checking PostgreSQL...');
-
     try {
       // Check if PostgreSQL is accessible via Docker
-      const { stdout } = await execAsync('docker ps --filter "name=nextgen-postgres" --format "{{.Status}}"');
+      const { stdout } = await execAsync(
+        'docker ps --filter "name=nextgen-postgres" --format "{{.Status}}"'
+      );
       const isRunning = stdout.includes('Up');
-      
+
       this.results.push({
         service: 'PostgreSQL',
         status: isRunning ? 'HEALTHY' : 'UNHEALTHY',
-        message: isRunning ? '✅ PostgreSQL container running' : '❌ PostgreSQL container not running',
+        message: isRunning
+          ? '✅ PostgreSQL container running'
+          : '❌ PostgreSQL container not running',
       });
-
     } catch (error) {
       this.results.push({
         service: 'PostgreSQL',
@@ -319,25 +302,21 @@ class HealthChecker {
         message: `⚠️ Could not check PostgreSQL: ${error.message}`,
       });
     }
-
-    console.log('   ✅ PostgreSQL check completed\n');
   }
 
   private async checkVectorProcessor(): Promise<void> {
-    console.log('📊 Checking Vector Log Processor...');
-
     const startTime = Date.now();
-    
+
     try {
       const vectorHost = process.env.VECTOR_HOST || 'localhost';
       const vectorPort = process.env.VECTOR_API_PORT || '8686';
-      
+
       const response = await fetch(`http://${vectorHost}:${vectorPort}/health`);
       const responseTime = Date.now() - startTime;
 
       if (response.ok) {
         const health = await response.json();
-        
+
         this.results.push({
           service: 'Vector Processor',
           status: 'HEALTHY',
@@ -353,7 +332,6 @@ class HealthChecker {
           message: `❌ Vector unhealthy: ${response.status}`,
         });
       }
-
     } catch (error) {
       const responseTime = Date.now() - startTime;
       this.results.push({
@@ -363,40 +341,41 @@ class HealthChecker {
         message: `❌ Vector connection failed: ${error.message}`,
       });
     }
-
-    console.log('   ✅ Vector processor check completed\n');
   }
 
   private async checkNetworkConnectivity(): Promise<void> {
-    console.log('🌐 Checking Network Connectivity...');
-
     const endpoints = [
-      { name: 'ClickHouse HTTP', url: `http://localhost:${process.env.CLICKHOUSE_HTTP_PORT || '8123'}/ping` },
+      {
+        name: 'ClickHouse HTTP',
+        url: `http://localhost:${process.env.CLICKHOUSE_HTTP_PORT || '8123'}/ping`,
+      },
       { name: 'Tabix UI', url: `http://localhost:${process.env.TABIX_PORT || '8124'}` },
       { name: 'Typesense', url: `http://localhost:${process.env.TYPESENSE_PORT || '8108'}/health` },
-      { name: 'Vector API', url: `http://localhost:${process.env.VECTOR_API_PORT || '8686'}/health` },
+      {
+        name: 'Vector API',
+        url: `http://localhost:${process.env.VECTOR_API_PORT || '8686'}/health`,
+      },
     ];
 
     for (const endpoint of endpoints) {
       const startTime = Date.now();
-      
+
       try {
-        const response = await fetch(endpoint.url, { 
+        const response = await fetch(endpoint.url, {
           method: 'GET',
           signal: AbortSignal.timeout(5000), // 5 second timeout
         });
-        
+
         const responseTime = Date.now() - startTime;
-        
+
         this.results.push({
           service: `Network: ${endpoint.name}`,
           status: response.ok ? 'HEALTHY' : 'DEGRADED',
           responseTime,
-          message: response.ok 
+          message: response.ok
             ? `✅ ${endpoint.name} accessible (${responseTime}ms)`
             : `⚠️ ${endpoint.name} returned ${response.status}`,
         });
-
       } catch (error) {
         const responseTime = Date.now() - startTime;
         this.results.push({
@@ -407,23 +386,19 @@ class HealthChecker {
         });
       }
     }
-
-    console.log('   ✅ Network connectivity check completed\n');
   }
 
   private async checkDiskSpace(): Promise<void> {
-    console.log('💾 Checking Disk Space...');
-
     try {
       const { stdout } = await execAsync('df -h .');
       const lines = stdout.split('\n');
       const dataLine = lines[1]; // Second line contains the data
       const parts = dataLine.split(/\s+/);
-      const usedPercentage = parseInt(parts[4].replace('%', ''));
-      
+      const usedPercentage = Number.parseInt(parts[4].replace('%', ''));
+
       let status: 'HEALTHY' | 'DEGRADED' | 'UNHEALTHY' = 'HEALTHY';
       let message = `✅ Disk usage: ${parts[4]} (${parts[2]} used of ${parts[1]})`;
-      
+
       if (usedPercentage > 90) {
         status = 'UNHEALTHY';
         message = `❌ Critical disk usage: ${parts[4]}`;
@@ -431,7 +406,7 @@ class HealthChecker {
         status = 'DEGRADED';
         message = `⚠️ High disk usage: ${parts[4]}`;
       }
-      
+
       this.results.push({
         service: 'Disk Space',
         status,
@@ -443,7 +418,6 @@ class HealthChecker {
           percentage: parts[4],
         },
       });
-
     } catch (error) {
       this.results.push({
         service: 'Disk Space',
@@ -451,31 +425,27 @@ class HealthChecker {
         message: `⚠️ Could not check disk space: ${error.message}`,
       });
     }
-
-    console.log('   ✅ Disk space check completed\n');
   }
 
   private async checkMemoryUsage(): Promise<void> {
-    console.log('🧠 Checking Memory Usage...');
-
     try {
       const { stdout } = await execAsync('free -h');
       const lines = stdout.split('\n');
       const memLine = lines[1]; // Memory line
       const parts = memLine.split(/\s+/);
-      
+
       const total = parts[1];
       const used = parts[2];
       const available = parts[6] || parts[3]; // Available or free
-      
+
       // Calculate usage percentage (rough estimate)
-      const usedNum = parseFloat(used.replace(/[^\d.]/g, ''));
-      const totalNum = parseFloat(total.replace(/[^\d.]/g, ''));
+      const usedNum = Number.parseFloat(used.replace(/[^\d.]/g, ''));
+      const totalNum = Number.parseFloat(total.replace(/[^\d.]/g, ''));
       const usedPercentage = Math.round((usedNum / totalNum) * 100);
-      
+
       let status: 'HEALTHY' | 'DEGRADED' | 'UNHEALTHY' = 'HEALTHY';
       let message = `✅ Memory usage: ${usedPercentage}% (${used} used of ${total})`;
-      
+
       if (usedPercentage > 90) {
         status = 'UNHEALTHY';
         message = `❌ Critical memory usage: ${usedPercentage}%`;
@@ -483,7 +453,7 @@ class HealthChecker {
         status = 'DEGRADED';
         message = `⚠️ High memory usage: ${usedPercentage}%`;
       }
-      
+
       this.results.push({
         service: 'Memory Usage',
         status,
@@ -495,7 +465,6 @@ class HealthChecker {
           percentage: `${usedPercentage}%`,
         },
       });
-
     } catch (error) {
       this.results.push({
         service: 'Memory Usage',
@@ -503,84 +472,44 @@ class HealthChecker {
         message: `⚠️ Could not check memory usage: ${error.message}`,
       });
     }
-
-    console.log('   ✅ Memory usage check completed\n');
   }
 
   private generateHealthReport(): void {
-    console.log('📊 HEALTH CHECK REPORT');
-    console.log('═══════════════════════════════════════════════════════════════');
-
     // Group results by status
-    const healthy = this.results.filter(r => r.status === 'HEALTHY');
-    const degraded = this.results.filter(r => r.status === 'DEGRADED');
-    const unhealthy = this.results.filter(r => r.status === 'UNHEALTHY');
+    const healthy = this.results.filter((r) => r.status === 'HEALTHY');
+    const degraded = this.results.filter((r) => r.status === 'DEGRADED');
+    const unhealthy = this.results.filter((r) => r.status === 'UNHEALTHY');
 
     // Display results
     if (healthy.length > 0) {
-      console.log('\n✅ HEALTHY SERVICES:');
-      healthy.forEach(result => {
-        const responseTime = result.responseTime ? ` (${result.responseTime}ms)` : '';
-        console.log(`   ${result.message}${responseTime}`);
+      healthy.forEach((result) => {
+        const _responseTime = result.responseTime ? ` (${result.responseTime}ms)` : '';
       });
     }
 
     if (degraded.length > 0) {
-      console.log('\n⚠️  DEGRADED SERVICES:');
-      degraded.forEach(result => {
-        const responseTime = result.responseTime ? ` (${result.responseTime}ms)` : '';
-        console.log(`   ${result.message}${responseTime}`);
+      degraded.forEach((result) => {
+        const _responseTime = result.responseTime ? ` (${result.responseTime}ms)` : '';
       });
     }
 
     if (unhealthy.length > 0) {
-      console.log('\n❌ UNHEALTHY SERVICES:');
-      unhealthy.forEach(result => {
-        const responseTime = result.responseTime ? ` (${result.responseTime}ms)` : '';
-        console.log(`   ${result.message}${responseTime}`);
+      unhealthy.forEach((result) => {
+        const _responseTime = result.responseTime ? ` (${result.responseTime}ms)` : '';
       });
     }
 
-    // Summary
-    console.log('\n═══════════════════════════════════════════════════════════════');
-    console.log('📈 SUMMARY:');
-    console.log(`   ✅ HEALTHY: ${healthy.length}`);
-    console.log(`   ⚠️  DEGRADED: ${degraded.length}`);
-    console.log(`   ❌ UNHEALTHY: ${unhealthy.length}`);
-
     const totalServices = this.results.length;
-    const healthyPercentage = ((healthy.length / totalServices) * 100).toFixed(1);
-    
-    console.log(`\n🎯 Overall Health: ${healthyPercentage}%`);
+    const _healthyPercentage = ((healthy.length / totalServices) * 100).toFixed(1);
 
     // Overall status
     if (unhealthy.length === 0 && degraded.length === 0) {
-      console.log('\n🎉 ALL SYSTEMS HEALTHY! ✅');
-      console.log('   Your NextGen Marketplace analytics system is fully operational.');
     } else if (unhealthy.length === 0) {
-      console.log('\n✅ SYSTEMS MOSTLY HEALTHY');
-      console.log('   Some services are degraded but core functionality is available.');
-      console.log('   Consider addressing degraded services for optimal performance.');
     } else {
-      console.log('\n⚠️  SOME SYSTEMS UNHEALTHY');
-      console.log(`   ${unhealthy.length} service(s) are unhealthy and need immediate attention.`);
-      console.log('   Analytics functionality may be impacted.');
     }
-
-    // Recommendations
-    console.log('\n📋 RECOMMENDATIONS:');
     if (unhealthy.length === 0 && degraded.length === 0) {
-      console.log('   🚀 System is ready for production use');
-      console.log('   📊 Analytics data collection is fully operational');
-      console.log('   🔍 Search functionality with analytics tracking is available');
     } else {
-      console.log('   🔧 Address unhealthy services before production deployment');
-      console.log('   📊 Monitor degraded services for potential issues');
-      console.log('   🔄 Run health check again after fixing issues');
     }
-
-    console.log('\n═══════════════════════════════════════════════════════════════');
-    console.log(`🕐 Completed at: ${new Date().toISOString()}`);
   }
 }
 

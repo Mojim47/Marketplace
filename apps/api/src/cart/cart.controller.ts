@@ -5,19 +5,19 @@
  */
 
 import {
+  Body,
   Controller,
+  Delete,
   Get,
+  Param,
   Post,
   Put,
-  Delete,
-  Body,
-  Param,
-  UseGuards,
   Request,
+  UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { CartService } from './cart.service';
-import type { AddToCartDto, UpdateCartItemDto, ApplyDiscountDto } from './cart.types';
+import type { CartService } from './cart.service';
+import type { AddToCartDto, ApplyDiscountDto, UpdateCartItemDto } from './cart.types';
 
 @Controller('cart')
 @UseGuards(JwtAuthGuard)
@@ -45,10 +45,7 @@ export class CartController {
   }
 
   @Delete('items/:productId')
-  async removeFromCart(
-    @Request() req: any,
-    @Param('productId') productId: string,
-  ) {
+  async removeFromCart(@Request() req: any, @Param('productId') productId: string) {
     return this.cartService.removeFromCart(req.user.id, productId);
   }
 

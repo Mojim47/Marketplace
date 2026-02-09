@@ -1,12 +1,12 @@
 ﻿// @vitest-environment node
 
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { GenericContainer } from 'testcontainers';
 import { execSync } from 'node:child_process';
-import Redis from 'ioredis';
-import { PrismaClient } from '@prisma/client';
 import { DistributedLockService } from '@nextgen/cache';
+import { PrismaClient } from '@prisma/client';
+import Redis from 'ioredis';
 import { ExecutionError } from 'redlock';
+import { GenericContainer } from 'testcontainers';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 let redisContainer: GenericContainer | null = null;
 let postgresContainer: GenericContainer | null = null;
@@ -33,9 +33,7 @@ const describeIfRuntime = hasContainerRuntime() ? describe : describe.skip;
 
 describeIfRuntime('Orders Lock Integration (Redis/Prisma)', () => {
   beforeAll(async () => {
-    redisContainer = await new GenericContainer('redis:7-alpine')
-      .withExposedPorts(6379)
-      .start();
+    redisContainer = await new GenericContainer('redis:7-alpine').withExposedPorts(6379).start();
 
     postgresContainer = await new GenericContainer('postgres:16-alpine')
       .withEnvironment({
@@ -74,7 +72,10 @@ describeIfRuntime('Orders Lock Integration (Redis/Prisma)', () => {
   }, 120000);
 
   it('connects to Prisma/Postgres and runs a health query', async () => {
-    const result = await prisma!.$queryRaw<{ ok: number }[]>`SELECT 1 as ok`;
+    if (!prisma) {
+      throw new Error('Prisma client not initialized');
+    }
+    const result = await prisma.$queryRaw<{ ok: number }[]>`SELECT 1 as ok`;
     expect(result[0].ok).toBe(1);
   });
 
@@ -82,9 +83,9 @@ describeIfRuntime('Orders Lock Integration (Redis/Prisma)', () => {
     const lockService = new DistributedLockService(redis as any);
     const lock = await lockService.acquire(['product:integration:1'], 5000);
 
-    await expect(
-      lockService.acquire(['product:integration:1'], 5000)
-    ).rejects.toBeInstanceOf(ExecutionError);
+    await expect(lockService.acquire(['product:integration:1'], 5000)).rejects.toBeInstanceOf(
+      ExecutionError
+    );
 
     await lockService.release(lock);
   });

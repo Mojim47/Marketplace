@@ -3,7 +3,6 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { PrismaClient } from '@prisma/client';
-import { createHash } from 'crypto';
 
 interface SecurityAuditResult {
   timestamp: Date;
@@ -51,35 +50,35 @@ class SecurityAuditManager {
   }
 
   async startContinuousAudit(): Promise<void> {
-    console.log('🔒 Starting continuous security audit...');
-
     // Run initial audit
     await this.runFullSecurityAudit();
 
     // Schedule weekly audits
-    this.auditInterval = setInterval(async () => {
-      try {
-        await this.runFullSecurityAudit();
-      } catch (error) {
-        console.error('❌ Scheduled audit failed:', error);
-      }
-    }, 7 * 24 * 60 * 60 * 1000); // Weekly
+    this.auditInterval = setInterval(
+      async () => {
+        try {
+          await this.runFullSecurityAudit();
+        } catch (error) {
+          console.error('❌ Scheduled audit failed:', error);
+        }
+      },
+      7 * 24 * 60 * 60 * 1000
+    ); // Weekly
 
     // Schedule behavioral analysis (more frequent)
-    setInterval(async () => {
-      try {
-        await this.analyzeBehavioralPatterns();
-      } catch (error) {
-        console.error('❌ Behavioral analysis failed:', error);
-      }
-    }, 60 * 60 * 1000); // Hourly
-
-    console.log('✅ Continuous security audit started');
+    setInterval(
+      async () => {
+        try {
+          await this.analyzeBehavioralPatterns();
+        } catch (error) {
+          console.error('❌ Behavioral analysis failed:', error);
+        }
+      },
+      60 * 60 * 1000
+    ); // Hourly
   }
 
   async runFullSecurityAudit(): Promise<SecurityAuditResult[]> {
-    console.log('🔍 Running full security audit...');
-
     const results: SecurityAuditResult[] = [];
 
     // Get all active tenants
@@ -98,14 +97,10 @@ class SecurityAuditManager {
 
     // Generate summary report
     await this.generateAuditSummary(results);
-
-    console.log(`✅ Security audit completed for ${results.length} tenants`);
     return results;
   }
 
   private async auditTenant(tenantId: string): Promise<SecurityAuditResult> {
-    console.log(`🔍 Auditing tenant: ${tenantId}`);
-
     const findings: SecurityFinding[] = [];
 
     // 1. Check for suspicious user behavior
@@ -169,14 +164,14 @@ class SecurityAuditManager {
         if (!userEvents.has(event.user_id)) {
           userEvents.set(event.user_id, []);
         }
-        userEvents.get(event.user_id)!.push(event);
+        userEvents.get(event.user_id)?.push(event);
       }
     }
 
     // Analyze each user's behavior
     for (const [userId, events] of userEvents) {
       const pattern = this.analyzeBehaviorPattern(userId, tenantId, events);
-      
+
       if (pattern.suspiciousScore > 70) {
         findings.push({
           type: 'suspicious_behavior',
@@ -257,11 +252,12 @@ class SecurityAuditManager {
       const dataSize = event.data?.size || 0;
       const recordCount = event.data?.recordCount || 0;
 
-      if (dataSize > 100 * 1024 * 1024 || recordCount > 10000) { // 100MB or 10k records
+      if (dataSize > 100 * 1024 * 1024 || recordCount > 10000) {
+        // 100MB or 10k records
         findings.push({
           type: 'data_anomaly',
           severity: 'medium',
-          description: `Unusual bulk data operation detected`,
+          description: 'Unusual bulk data operation detected',
           evidence: {
             eventType: event.event_type,
             dataSize,
@@ -293,18 +289,19 @@ class SecurityAuditManager {
 
     // Analyze response times
     const responseTimes = performanceMetrics
-      .filter(m => m.metric_name === 'api_response_time')
-      .map(m => m.value);
+      .filter((m) => m.metric_name === 'api_response_time')
+      .map((m) => m.value);
 
     if (responseTimes.length > 0) {
       const avgResponseTime = responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length;
       const maxResponseTime = Math.max(...responseTimes);
 
-      if (avgResponseTime > 1000 || maxResponseTime > 5000) { // 1s avg or 5s max
+      if (avgResponseTime > 1000 || maxResponseTime > 5000) {
+        // 1s avg or 5s max
         findings.push({
           type: 'performance_anomaly',
           severity: 'medium',
-          description: `Unusual performance degradation detected`,
+          description: 'Unusual performance degradation detected',
           evidence: {
             avgResponseTime,
             maxResponseTime,
@@ -349,50 +346,56 @@ class SecurityAuditManager {
       await this.prisma.$executeRaw`
         SELECT set_security_context(${tenantId}, 'audit_user', ARRAY['ADMIN'])
       `;
-
-    } catch (error) {
-      // RLS working correctly if we get an error
-      console.log('✅ RLS policies are working correctly');
-    }
+    } catch (_error) {}
 
     return findings;
   }
 
   private analyzeBehaviorPattern(userId: string, tenantId: string, events: any[]): BehaviorPattern {
     const requestCount = events.length;
-    const errorCount = events.filter(e => e.event_type.includes('error') || e.event_type.includes('failed')).length;
-    
-    const ipAddresses = [...new Set(events.map(e => e.data?.ipAddress).filter(Boolean))];
+    const errorCount = events.filter(
+      (e) => e.event_type.includes('error') || e.event_type.includes('failed')
+    ).length;
+
+    const ipAddresses = [...new Set(events.map((e) => e.data?.ipAddress).filter(Boolean))];
     const uniqueIPs = ipAddresses.length;
 
     // Analyze time patterns
     const timeOfDay = new Array(24).fill(0);
-    events.forEach(e => {
+    events.forEach((e) => {
       const hour = new Date(e.occurred_at).getHours();
       timeOfDay[hour]++;
     });
 
     // Analyze request types
     const requestTypes: Record<string, number> = {};
-    events.forEach(e => {
+    events.forEach((e) => {
       requestTypes[e.event_type] = (requestTypes[e.event_type] || 0) + 1;
     });
 
     // Calculate suspicious score
     let suspiciousScore = 0;
-    
+
     // High error rate
-    if (errorCount / requestCount > 0.1) suspiciousScore += 30;
-    
+    if (errorCount / requestCount > 0.1) {
+      suspiciousScore += 30;
+    }
+
     // Multiple IPs
-    if (uniqueIPs > 5) suspiciousScore += 20;
-    
+    if (uniqueIPs > 5) {
+      suspiciousScore += 20;
+    }
+
     // Unusual time patterns (activity at night)
     const nightActivity = timeOfDay.slice(0, 6).reduce((a, b) => a + b, 0);
-    if (nightActivity / requestCount > 0.3) suspiciousScore += 25;
-    
+    if (nightActivity / requestCount > 0.3) {
+      suspiciousScore += 25;
+    }
+
     // High request volume
-    if (requestCount > 1000) suspiciousScore += 15;
+    if (requestCount > 1000) {
+      suspiciousScore += 15;
+    }
 
     return {
       userId,
@@ -401,7 +404,7 @@ class SecurityAuditManager {
       errorCount,
       uniqueIPs,
       suspiciousScore,
-      lastActivity: new Date(Math.max(...events.map(e => new Date(e.occurred_at).getTime()))),
+      lastActivity: new Date(Math.max(...events.map((e) => new Date(e.occurred_at).getTime()))),
       patterns: {
         timeOfDay,
         requestTypes,
@@ -413,13 +416,21 @@ class SecurityAuditManager {
 
   private calculateRiskScore(findings: SecurityFinding[]): number {
     let score = 0;
-    
+
     for (const finding of findings) {
       switch (finding.severity) {
-        case 'critical': score += 25; break;
-        case 'high': score += 15; break;
-        case 'medium': score += 8; break;
-        case 'low': score += 3; break;
+        case 'critical':
+          score += 25;
+          break;
+        case 'high':
+          score += 15;
+          break;
+        case 'medium':
+          score += 8;
+          break;
+        case 'low':
+          score += 3;
+          break;
       }
     }
 
@@ -429,9 +440,9 @@ class SecurityAuditManager {
   private generateRecommendations(findings: SecurityFinding[]): string[] {
     const recommendations: string[] = [];
 
-    const criticalFindings = findings.filter(f => f.severity === 'critical');
-    const suspiciousBehavior = findings.filter(f => f.type === 'suspicious_behavior');
-    const accessViolations = findings.filter(f => f.type === 'access_violation');
+    const criticalFindings = findings.filter((f) => f.severity === 'critical');
+    const suspiciousBehavior = findings.filter((f) => f.type === 'suspicious_behavior');
+    const accessViolations = findings.filter((f) => f.type === 'access_violation');
 
     if (criticalFindings.length > 0) {
       recommendations.push('فوری: بررسی و رفع مسائل امنیتی بحرانی');
@@ -452,28 +463,29 @@ class SecurityAuditManager {
     return recommendations;
   }
 
-  private determineSecurityStatus(riskScore: number, findings: SecurityFinding[]): 'clean' | 'warning' | 'critical' {
-    const criticalFindings = findings.filter(f => f.severity === 'critical');
-    
+  private determineSecurityStatus(
+    riskScore: number,
+    findings: SecurityFinding[]
+  ): 'clean' | 'warning' | 'critical' {
+    const criticalFindings = findings.filter((f) => f.severity === 'critical');
+
     if (criticalFindings.length > 0 || riskScore > 70) {
       return 'critical';
-    } else if (riskScore > 30) {
-      return 'warning';
-    } else {
-      return 'clean';
     }
+    if (riskScore > 30) {
+      return 'warning';
+    }
+    return 'clean';
   }
 
   private async handleAuditFindings(auditResult: SecurityAuditResult): Promise<void> {
     if (auditResult.status === 'critical') {
-      console.log(`🚨 CRITICAL security issues found for tenant: ${auditResult.tenantId}`);
-      
       // Send immediate alerts
       await this.sendSecurityAlert(auditResult);
-      
+
       // Auto-block suspicious IPs
       await this.autoBlockSuspiciousIPs(auditResult);
-      
+
       // Temporarily restrict high-risk users
       await this.restrictHighRiskUsers(auditResult);
     }
@@ -482,29 +494,29 @@ class SecurityAuditManager {
     await this.logSecurityFindings(auditResult);
   }
 
-  private async sendSecurityAlert(auditResult: SecurityAuditResult): Promise<void> {
-    console.log(`📧 Sending security alert for tenant: ${auditResult.tenantId}`);
+  private async sendSecurityAlert(_auditResult: SecurityAuditResult): Promise<void> {
     // Implementation would send actual alerts via email, Slack, etc.
   }
 
   private async autoBlockSuspiciousIPs(auditResult: SecurityAuditResult): Promise<void> {
-    const ipViolations = auditResult.findings.filter(f => f.type === 'access_violation' && f.ipAddress);
-    
+    const ipViolations = auditResult.findings.filter(
+      (f) => f.type === 'access_violation' && f.ipAddress
+    );
+
     for (const violation of ipViolations) {
       if (violation.ipAddress) {
-        console.log(`🚫 Auto-blocking suspicious IP: ${violation.ipAddress}`);
         // Implementation would add IP to firewall block list
       }
     }
   }
 
   private async restrictHighRiskUsers(auditResult: SecurityAuditResult): Promise<void> {
-    const userViolations = auditResult.findings.filter(f => f.userId && f.severity === 'critical');
-    
+    const userViolations = auditResult.findings.filter(
+      (f) => f.userId && f.severity === 'critical'
+    );
+
     for (const violation of userViolations) {
       if (violation.userId) {
-        console.log(`⚠️ Restricting high-risk user: ${violation.userId}`);
-        
         // Temporarily disable user account
         await this.prisma.user.update({
           where: { id: violation.userId },
@@ -527,32 +539,24 @@ class SecurityAuditManager {
           riskScore: auditResult.riskScore,
           status: auditResult.status,
           findingsCount: auditResult.findings.length,
-          criticalFindings: auditResult.findings.filter(f => f.severity === 'critical').length,
+          criticalFindings: auditResult.findings.filter((f) => f.severity === 'critical').length,
         },
       },
     });
   }
 
   private async generateAuditSummary(results: SecurityAuditResult[]): Promise<void> {
-    const summary = {
+    const _summary = {
       totalTenants: results.length,
-      cleanTenants: results.filter(r => r.status === 'clean').length,
-      warningTenants: results.filter(r => r.status === 'warning').length,
-      criticalTenants: results.filter(r => r.status === 'critical').length,
+      cleanTenants: results.filter((r) => r.status === 'clean').length,
+      warningTenants: results.filter((r) => r.status === 'warning').length,
+      criticalTenants: results.filter((r) => r.status === 'critical').length,
       avgRiskScore: results.reduce((sum, r) => sum + r.riskScore, 0) / results.length,
       totalFindings: results.reduce((sum, r) => sum + r.findings.length, 0),
     };
-
-    console.log('📊 Security Audit Summary:');
-    console.log(`   Total Tenants: ${summary.totalTenants}`);
-    console.log(`   Clean: ${summary.cleanTenants}, Warning: ${summary.warningTenants}, Critical: ${summary.criticalTenants}`);
-    console.log(`   Average Risk Score: ${summary.avgRiskScore.toFixed(2)}`);
-    console.log(`   Total Findings: ${summary.totalFindings}`);
   }
 
   private async analyzeBehavioralPatterns(): Promise<void> {
-    console.log('🧠 Analyzing behavioral patterns...');
-    
     // This would run more frequently to detect real-time suspicious behavior
     // Implementation would analyze recent events and update user risk scores
   }
@@ -562,8 +566,7 @@ class SecurityAuditManager {
       clearInterval(this.auditInterval);
       this.auditInterval = null;
     }
-    console.log('🔒 Security audit stopped');
   }
 }
 
-export { SecurityAuditManager, SecurityAuditResult, SecurityFinding };
+export { SecurityAuditManager, type SecurityAuditResult, type SecurityFinding };

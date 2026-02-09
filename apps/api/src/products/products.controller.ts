@@ -1,14 +1,37 @@
-﻿import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards, UseInterceptors, UploadedFile, UploadedFiles, Inject, BadRequestException } from '@nestjs/common';
+﻿import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Inject,
+  Param,
+  Post,
+  Put,
+  Query,
+  UploadedFile,
+  UploadedFiles,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes, ApiBody, ApiResponse, ApiQuery } from '@nestjs/swagger';
-import { ProductsService } from './products.service';
-import { ProductSearchService, ProductSearchOptions } from './product-search.service';
-import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import type { StorageService, UploadFile } from '@nextgen/storage';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { CreateProductDto, UpdateProductDto, SearchProductsDto } from './dto';
-import { StorageService, UploadFile } from '@nextgen/storage';
-import { STORAGE_TOKENS } from '../shared/storage/tokens';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import type { AuthenticatedUser } from '../common/types/authenticated-user.type';
+import { STORAGE_TOKENS } from '../shared/storage/tokens';
+import type { CreateProductDto, SearchProductsDto, UpdateProductDto } from './dto';
+import type { ProductSearchOptions, ProductSearchService } from './product-search.service';
+import type { ProductsService } from './products.service';
 
 @ApiTags('products')
 @Controller({ path: 'products', version: '1' })
@@ -17,7 +40,7 @@ export class ProductsController {
     private readonly service: ProductsService,
     private readonly searchService: ProductSearchService,
     @Inject(STORAGE_TOKENS.STORAGE_SERVICE)
-    private readonly storageService: StorageService,
+    private readonly storageService: StorageService
   ) {}
 
   @Get()
@@ -67,10 +90,7 @@ export class ProductsController {
   @ApiQuery({ name: 'prefix', required: true, description: 'پيشوند جستجو' })
   @ApiQuery({ name: 'limit', required: false, description: 'تعداد پيشنهادات' })
   @ApiResponse({ status: 200, description: 'پيشنهادات جستجو' })
-  async getSearchSuggestions(
-    @Query('prefix') prefix: string,
-    @Query('limit') limit?: number,
-  ) {
+  async getSearchSuggestions(@Query('prefix') prefix: string, @Query('limit') limit?: number) {
     const suggestions = await this.searchService.getSuggestions(prefix, limit || 10);
     return { suggestions, prefix };
   }
@@ -88,13 +108,9 @@ export class ProductsController {
   async fuzzySearch(
     @Query('query') query: string,
     @Query('threshold') threshold?: number,
-    @Query('limit') limit?: number,
+    @Query('limit') limit?: number
   ) {
-    const results = await this.searchService.fuzzySearch(
-      query,
-      threshold || 0.6,
-      limit || 10,
-    );
+    const results = await this.searchService.fuzzySearch(query, threshold || 0.6, limit || 10);
     return { results, query, threshold: threshold || 0.6 };
   }
 
@@ -134,7 +150,11 @@ export class ProductsController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'ويرايش محصول' })
-  update(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser, @Body() data: UpdateProductDto) {
+  update(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() data: UpdateProductDto
+  ) {
     return this.service.update(id, user.vendorId, data as unknown as Record<string, unknown>);
   }
 
@@ -171,7 +191,7 @@ export class ProductsController {
   async uploadProductImage(
     @Param('id') id: string,
     @CurrentUser() user: AuthenticatedUser,
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFile() file: Express.Multer.File
   ) {
     if (!file) {
       throw new BadRequestException('تصويري انتخاب نشده است');
@@ -180,7 +200,9 @@ export class ProductsController {
     // Validate file type
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     if (!allowedTypes.includes(file.mimetype)) {
-      throw new BadRequestException('نوع فايل مجاز نيست. فقط تصاوير JPEG، PNG، GIF و WebP مجاز هستند');
+      throw new BadRequestException(
+        'نوع فايل مجاز نيست. فقط تصاوير JPEG، PNG، GIF و WebP مجاز هستند'
+      );
     }
 
     // Validate file size (max 10MB)
@@ -252,7 +274,7 @@ export class ProductsController {
   async uploadMultipleProductImages(
     @Param('id') id: string,
     @CurrentUser() user: AuthenticatedUser,
-    @UploadedFiles() files: Express.Multer.File[],
+    @UploadedFiles() files: Express.Multer.File[]
   ) {
     if (!files || files.length === 0) {
       throw new BadRequestException('تصويري انتخاب نشده است');
@@ -300,7 +322,7 @@ export class ProductsController {
 
     // Update product with new images
     const currentImages = (product as any).images || [];
-    const newImageUrls = uploadedImages.map(img => img.url);
+    const newImageUrls = uploadedImages.map((img) => img.url);
     await this.service.update(id, user.vendorId, {
       images: [...currentImages, ...newImageUrls],
     });
@@ -324,7 +346,7 @@ export class ProductsController {
   async deleteProductImage(
     @Param('id') id: string,
     @CurrentUser() user: AuthenticatedUser,
-    @Body() body: { imageUrl: string },
+    @Body() body: { imageUrl: string }
   ) {
     if (!body.imageUrl) {
       throw new BadRequestException('آدرس تصوير الزامي است');
@@ -342,7 +364,7 @@ export class ProductsController {
 
     try {
       await this.storageService.delete(key);
-    } catch (error) {
+    } catch (_error) {
       // Continue even if file doesn't exist in storage
       console.warn(`Failed to delete file from storage: ${key}`);
     }
@@ -360,4 +382,3 @@ export class ProductsController {
     };
   }
 }
-

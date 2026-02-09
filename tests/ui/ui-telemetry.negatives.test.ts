@@ -1,5 +1,9 @@
 ﻿import { describe, expect, it } from 'vitest';
-import { validateUiEventName, validateUiEventPayload, redactUiPayload } from '../../libs/observability/src/ui';
+import {
+  redactUiPayload,
+  validateUiEventName,
+  validateUiEventPayload,
+} from '../../libs/observability/src/ui';
 
 describe('ui telemetry negative cases', () => {
   it('rejects unknown event names', () => {

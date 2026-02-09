@@ -5,8 +5,8 @@
  * Run: npx tsx prisma/validate-seed.ts
  */
 
+import crypto from 'node:crypto';
 import { PrismaClient } from '@prisma/client';
-import crypto from 'crypto';
 
 const prisma = new PrismaClient({
   log: ['error'],
@@ -42,7 +42,6 @@ async function validateModel(modelName: string, createFn: () => Promise<any>): P
       status: 'success',
       createdId: created.id || created.uid || 'N/A',
     });
-    console.log(`✅ ${modelName}: Success`);
   } catch (error: any) {
     results.push({
       model: modelName,
@@ -54,8 +53,6 @@ async function validateModel(modelName: string, createFn: () => Promise<any>): P
 }
 
 async function runValidation() {
-  console.log('🔍 Starting Prisma Schema Validation...\n');
-
   const testData = generateTestData();
 
   // 1. User & Auth
@@ -66,7 +63,7 @@ async function runValidation() {
         firstName: testData.name,
         phone: testData.phone,
         mobile: testData.phone,
-        passwordHash: 'hashed_password_' + testData.slug,
+        passwordHash: `hashed_password_${testData.slug}`,
         role: 'USER',
         isTwoFactorEnabled: false,
         emailVerified: new Date(),
@@ -76,7 +73,9 @@ async function runValidation() {
   });
 
   const testUser = await prisma.user.findFirst({ where: { email: testData.email } });
-  if (!testUser) throw new Error('Test user not found');
+  if (!testUser) {
+    throw new Error('Test user not found');
+  }
 
   await validateModel('Session', async () => {
     return prisma.session.create({
@@ -341,43 +340,14 @@ async function runValidation() {
     });
   }
 
-  // 7. Admin & Security (skip if models don't match schema)
-  console.log('⏭️  Skipping Admin, Role, AuditLog, ApiKey (models may differ from actual schema)');
-
-  // 8. Payment & Misc (skip if models don't match schema)
-  console.log(
-    '⏭️  Skipping PaymentTransaction, FeatureFlag, SupportTicket (models may differ from actual schema)'
-  );
-
-  // Generate Report
-  console.log('\n' + '='.repeat(60));
-  console.log('📊 VALIDATION REPORT');
-  console.log('='.repeat(60));
-
   const successCount = results.filter((r) => r.status === 'success').length;
   const errorCount = results.filter((r) => r.status === 'error').length;
   const totalCount = results.length;
 
-  console.log(`\n✅ Success: ${successCount}/${totalCount}`);
-  console.log(`❌ Errors: ${errorCount}/${totalCount}`);
-  console.log(`📈 Success Rate: ${((successCount / totalCount) * 100).toFixed(1)}%\n`);
-
   if (errorCount > 0) {
-    console.log('Error Details:');
-    console.log('-'.repeat(60));
-    results
-      .filter((r) => r.status === 'error')
-      .forEach((r) => {
-        console.log(`❌ ${r.model}: ${r.error}`);
-      });
+    results.filter((r) => r.status === 'error').forEach((_r) => {});
   }
-
-  console.log('\n' + '='.repeat(60));
-
-  // Cleanup
-  console.log('\n🧹 Cleaning up test data...');
   await prisma.user.deleteMany({ where: { email: { contains: 'test-' } } });
-  console.log('✅ Cleanup complete\n');
 
   return {
     total: totalCount,
@@ -391,8 +361,6 @@ async function runValidation() {
 // Run validation
 runValidation()
   .then((report) => {
-    console.log('Schema validation completed!');
-
     if (report.errors > 0) {
       process.exit(1);
     } else {

@@ -8,9 +8,9 @@
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { createClient } from '@clickhouse/client';
-import * as fs from 'fs';
-import * as path from 'path';
 
 interface SafetyCheck {
   category: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
@@ -36,12 +36,6 @@ class ProductionSafetyAuditor {
   }
 
   async runAudit(): Promise<void> {
-    console.log('🚨 PRODUCTION SAFETY AUDIT - NextGen Marketplace');
-    console.log('═══════════════════════════════════════════════════════════════');
-    console.log('⚠️  WARNING: This audit identifies CRITICAL production risks');
-    console.log('🎯 Purpose: Ensure system is safe for production deployment');
-    console.log('═══════════════════════════════════════════════════════════════\n');
-
     // Run all safety checks
     await this.checkClickHouseTTLPolicies();
     await this.checkDataValidation();
@@ -75,8 +69,8 @@ class ProductionSafetyAuditor {
         format: 'JSONEachRow',
       });
 
-      const tables = await result.json() as { table: string; ttl_expression: string }[];
-      const tablesWithoutTTL = tables.filter(t => !t.ttl_expression || t.ttl_expression === '');
+      const tables = (await result.json()) as { table: string; ttl_expression: string }[];
+      const tablesWithoutTTL = tables.filter((t) => !t.ttl_expression || t.ttl_expression === '');
 
       if (tablesWithoutTTL.length > 0) {
         this.checks.push({
@@ -84,7 +78,7 @@ class ProductionSafetyAuditor {
           name: 'ClickHouse TTL Policies',
           description: 'TTL policies prevent data from growing forever',
           status: 'FAIL',
-          details: `Tables without TTL: ${tablesWithoutTTL.map(t => t.table).join(', ')}`,
+          details: `Tables without TTL: ${tablesWithoutTTL.map((t) => t.table).join(', ')}`,
           impact: 'Data will grow forever, causing disk space exhaustion and system failure',
           fix: 'Add TTL policies to all analytics tables: ALTER TABLE <table> MODIFY TTL date + INTERVAL X YEAR',
         });
@@ -116,8 +110,11 @@ class ProductionSafetyAuditor {
    * 🛡️ CRITICAL: Check data validation implementation
    */
   private async checkDataValidation(): Promise<void> {
-    const analyticsServicePath = path.join(process.cwd(), 'libs/analytics/src/analytics.service.ts');
-    
+    const analyticsServicePath = path.join(
+      process.cwd(),
+      'libs/analytics/src/analytics.service.ts'
+    );
+
     if (!fs.existsSync(analyticsServicePath)) {
       this.checks.push({
         category: 'CRITICAL',
@@ -132,10 +129,11 @@ class ProductionSafetyAuditor {
     }
 
     const serviceContent = fs.readFileSync(analyticsServicePath, 'utf8');
-    
-    const hasValidation = serviceContent.includes('validateSearchEvent') &&
-                         serviceContent.includes('isDuplicateEvent') &&
-                         serviceContent.includes('anonymizeUserData');
+
+    const hasValidation =
+      serviceContent.includes('validateSearchEvent') &&
+      serviceContent.includes('isDuplicateEvent') &&
+      serviceContent.includes('anonymizeUserData');
 
     if (hasValidation) {
       this.checks.push({
@@ -143,7 +141,8 @@ class ProductionSafetyAuditor {
         name: 'Data Validation',
         description: 'Validate incoming data to prevent corruption',
         status: 'PASS',
-        details: 'Data validation methods found: validateSearchEvent, isDuplicateEvent, anonymizeUserData',
+        details:
+          'Data validation methods found: validateSearchEvent, isDuplicateEvent, anonymizeUserData',
         impact: 'Data integrity is protected, preventing corrupt analytics',
         fix: 'No action needed',
       });
@@ -164,8 +163,11 @@ class ProductionSafetyAuditor {
    * 🧠 CRITICAL: Check memory monitoring implementation
    */
   private async checkMemoryMonitoring(): Promise<void> {
-    const analyticsServicePath = path.join(process.cwd(), 'libs/analytics/src/analytics.service.ts');
-    
+    const analyticsServicePath = path.join(
+      process.cwd(),
+      'libs/analytics/src/analytics.service.ts'
+    );
+
     if (!fs.existsSync(analyticsServicePath)) {
       this.checks.push({
         category: 'CRITICAL',
@@ -180,10 +182,11 @@ class ProductionSafetyAuditor {
     }
 
     const serviceContent = fs.readFileSync(analyticsServicePath, 'utf8');
-    
-    const hasMemoryMonitoring = serviceContent.includes('checkMemoryUsage') &&
-                               serviceContent.includes('memoryUsage') &&
-                               serviceContent.includes('process.memoryUsage');
+
+    const hasMemoryMonitoring =
+      serviceContent.includes('checkMemoryUsage') &&
+      serviceContent.includes('memoryUsage') &&
+      serviceContent.includes('process.memoryUsage');
 
     if (hasMemoryMonitoring) {
       this.checks.push({
@@ -212,8 +215,11 @@ class ProductionSafetyAuditor {
    * 💰 CRITICAL: Check cost monitoring implementation
    */
   private async checkCostMonitoring(): Promise<void> {
-    const analyticsServicePath = path.join(process.cwd(), 'libs/analytics/src/analytics.service.ts');
-    
+    const analyticsServicePath = path.join(
+      process.cwd(),
+      'libs/analytics/src/analytics.service.ts'
+    );
+
     if (!fs.existsSync(analyticsServicePath)) {
       this.checks.push({
         category: 'CRITICAL',
@@ -228,10 +234,11 @@ class ProductionSafetyAuditor {
     }
 
     const serviceContent = fs.readFileSync(analyticsServicePath, 'utf8');
-    
-    const hasCostMonitoring = serviceContent.includes('checkCostLimits') &&
-                             serviceContent.includes('dailyEventCount') &&
-                             serviceContent.includes('ANALYTICS_DAILY_EVENT_LIMIT');
+
+    const hasCostMonitoring =
+      serviceContent.includes('checkCostLimits') &&
+      serviceContent.includes('dailyEventCount') &&
+      serviceContent.includes('ANALYTICS_DAILY_EVENT_LIMIT');
 
     if (hasCostMonitoring) {
       this.checks.push({
@@ -260,8 +267,11 @@ class ProductionSafetyAuditor {
    * 🔒 HIGH: Check security and GDPR compliance
    */
   private async checkSecurityCompliance(): Promise<void> {
-    const analyticsServicePath = path.join(process.cwd(), 'libs/analytics/src/analytics.service.ts');
-    
+    const analyticsServicePath = path.join(
+      process.cwd(),
+      'libs/analytics/src/analytics.service.ts'
+    );
+
     if (!fs.existsSync(analyticsServicePath)) {
       this.checks.push({
         category: 'HIGH',
@@ -276,10 +286,11 @@ class ProductionSafetyAuditor {
     }
 
     const serviceContent = fs.readFileSync(analyticsServicePath, 'utf8');
-    
-    const hasDataAnonymization = serviceContent.includes('anonymizeUserData') &&
-                                serviceContent.includes('hashUserId') &&
-                                serviceContent.includes('anonymizeIP');
+
+    const hasDataAnonymization =
+      serviceContent.includes('anonymizeUserData') &&
+      serviceContent.includes('hashUserId') &&
+      serviceContent.includes('anonymizeIP');
 
     const hasUserHashSalt = process.env.USER_HASH_SALT && process.env.USER_HASH_SALT.length > 10;
 
@@ -310,8 +321,11 @@ class ProductionSafetyAuditor {
    * ⚡ HIGH: Check performance monitoring
    */
   private async checkPerformanceMonitoring(): Promise<void> {
-    const migrationServicePath = path.join(process.cwd(), 'libs/search/src/search-migration.service.ts');
-    
+    const migrationServicePath = path.join(
+      process.cwd(),
+      'libs/search/src/search-migration.service.ts'
+    );
+
     if (!fs.existsSync(migrationServicePath)) {
       this.checks.push({
         category: 'HIGH',
@@ -326,13 +340,14 @@ class ProductionSafetyAuditor {
     }
 
     const serviceContent = fs.readFileSync(migrationServicePath, 'utf8');
-    
-    const hasCircuitBreaker = serviceContent.includes('CircuitBreakerState') &&
-                             serviceContent.includes('executeWithCircuitBreaker') &&
-                             serviceContent.includes('recordFailure');
 
-    const hasHealthCheck = serviceContent.includes('healthCheck') &&
-                          serviceContent.includes('migration');
+    const hasCircuitBreaker =
+      serviceContent.includes('CircuitBreakerState') &&
+      serviceContent.includes('executeWithCircuitBreaker') &&
+      serviceContent.includes('recordFailure');
+
+    const hasHealthCheck =
+      serviceContent.includes('healthCheck') && serviceContent.includes('migration');
 
     if (hasCircuitBreaker && hasHealthCheck) {
       this.checks.push({
@@ -361,8 +376,11 @@ class ProductionSafetyAuditor {
    * 🔄 HIGH: Check rollback capability
    */
   private async checkRollbackCapability(): Promise<void> {
-    const migrationServicePath = path.join(process.cwd(), 'libs/search/src/search-migration.service.ts');
-    
+    const migrationServicePath = path.join(
+      process.cwd(),
+      'libs/search/src/search-migration.service.ts'
+    );
+
     if (!fs.existsSync(migrationServicePath)) {
       this.checks.push({
         category: 'HIGH',
@@ -377,13 +395,15 @@ class ProductionSafetyAuditor {
     }
 
     const serviceContent = fs.readFileSync(migrationServicePath, 'utf8');
-    
-    const hasRollback = serviceContent.includes('executeOldService') &&
-                       serviceContent.includes('SEARCH_MIGRATION_PERCENTAGE') &&
-                       serviceContent.includes('fallback');
 
-    const hasConfigUpdate = serviceContent.includes('updateMigrationConfig') &&
-                           serviceContent.includes('resetCircuitBreaker');
+    const hasRollback =
+      serviceContent.includes('executeOldService') &&
+      serviceContent.includes('SEARCH_MIGRATION_PERCENTAGE') &&
+      serviceContent.includes('fallback');
+
+    const hasConfigUpdate =
+      serviceContent.includes('updateMigrationConfig') &&
+      serviceContent.includes('resetCircuitBreaker');
 
     if (hasRollback && hasConfigUpdate) {
       this.checks.push({
@@ -422,8 +442,8 @@ class ProductionSafetyAuditor {
       'USER_HASH_SALT',
     ];
 
-    const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
-    
+    const missingVars = requiredEnvVars.filter((varName) => !process.env[varName]);
+
     if (missingVars.length === 0) {
       this.checks.push({
         category: 'MEDIUM',
@@ -459,8 +479,8 @@ class ProductionSafetyAuditor {
       'docs/SEARCH_MIGRATION_GUIDE.md',
     ];
 
-    const existingDocs = requiredDocs.filter(doc => fs.existsSync(path.join(process.cwd(), doc)));
-    
+    const existingDocs = requiredDocs.filter((doc) => fs.existsSync(path.join(process.cwd(), doc)));
+
     if (existingDocs.length >= 4) {
       this.checks.push({
         category: 'MEDIUM',
@@ -472,7 +492,9 @@ class ProductionSafetyAuditor {
         fix: 'No action needed',
       });
     } else {
-      const missingDocs = requiredDocs.filter(doc => !fs.existsSync(path.join(process.cwd(), doc)));
+      const missingDocs = requiredDocs.filter(
+        (doc) => !fs.existsSync(path.join(process.cwd(), doc))
+      );
       this.checks.push({
         category: 'MEDIUM',
         name: 'Documentation',
@@ -495,8 +517,8 @@ class ProductionSafetyAuditor {
       'scripts/production-safety-audit.ts',
     ];
 
-    const existingTests = testFiles.filter(test => fs.existsSync(path.join(process.cwd(), test)));
-    
+    const existingTests = testFiles.filter((test) => fs.existsSync(path.join(process.cwd(), test)));
+
     if (existingTests.length >= 2) {
       this.checks.push({
         category: 'LOW',
@@ -524,14 +546,11 @@ class ProductionSafetyAuditor {
    * Generate comprehensive audit report
    */
   private generateReport(): void {
-    console.log('\n📊 PRODUCTION SAFETY AUDIT REPORT');
-    console.log('═══════════════════════════════════════════════════════════════');
-
     // Group checks by category
-    const critical = this.checks.filter(c => c.category === 'CRITICAL');
-    const high = this.checks.filter(c => c.category === 'HIGH');
-    const medium = this.checks.filter(c => c.category === 'MEDIUM');
-    const low = this.checks.filter(c => c.category === 'LOW');
+    const critical = this.checks.filter((c) => c.category === 'CRITICAL');
+    const high = this.checks.filter((c) => c.category === 'HIGH');
+    const medium = this.checks.filter((c) => c.category === 'MEDIUM');
+    const low = this.checks.filter((c) => c.category === 'LOW');
 
     this.displayChecks('🔥 CRITICAL CHECKS (MUST PASS)', critical);
     this.displayChecks('⚠️  HIGH PRIORITY CHECKS', high);
@@ -539,83 +558,34 @@ class ProductionSafetyAuditor {
     this.displayChecks('📝 LOW PRIORITY CHECKS', low);
 
     // Calculate overall score
-    const totalChecks = this.checks.length;
-    const passedChecks = this.checks.filter(c => c.status === 'PASS').length;
-    const failedChecks = this.checks.filter(c => c.status === 'FAIL').length;
-    const warningChecks = this.checks.filter(c => c.status === 'WARNING').length;
+    const _totalChecks = this.checks.length;
+    const _passedChecks = this.checks.filter((c) => c.status === 'PASS').length;
+    const failedChecks = this.checks.filter((c) => c.status === 'FAIL').length;
+    const _warningChecks = this.checks.filter((c) => c.status === 'WARNING').length;
 
-    const criticalFailed = critical.filter(c => c.status === 'FAIL').length;
-    const highFailed = high.filter(c => c.status === 'FAIL').length;
-
-    console.log('\n📈 OVERALL ASSESSMENT');
-    console.log('═══════════════════════════════════════════════════════════════');
-    console.log(`📊 Total Checks: ${totalChecks}`);
-    console.log(`✅ Passed: ${passedChecks}`);
-    console.log(`❌ Failed: ${failedChecks}`);
-    console.log(`⚠️  Warnings: ${warningChecks}`);
-    console.log(`🔥 Critical Failures: ${criticalFailed}`);
-    console.log(`⚠️  High Priority Failures: ${highFailed}`);
+    const criticalFailed = critical.filter((c) => c.status === 'FAIL').length;
+    const highFailed = high.filter((c) => c.status === 'FAIL').length;
 
     // Production readiness assessment
     if (criticalFailed > 0) {
-      console.log('\n🚨 PRODUCTION READINESS: NOT READY');
-      console.log('   CRITICAL issues must be fixed before deployment');
-      console.log('   Risk Level: EXTREMELY HIGH');
-      console.log('   Recommendation: DO NOT DEPLOY');
     } else if (highFailed > 2) {
-      console.log('\n⚠️  PRODUCTION READINESS: HIGH RISK');
-      console.log('   Multiple HIGH priority issues present');
-      console.log('   Risk Level: HIGH');
-      console.log('   Recommendation: Fix high priority issues before deployment');
     } else if (highFailed > 0 || failedChecks > 3) {
-      console.log('\n📊 PRODUCTION READINESS: MODERATE RISK');
-      console.log('   Some issues present but manageable');
-      console.log('   Risk Level: MODERATE');
-      console.log('   Recommendation: Address issues and monitor closely');
     } else {
-      console.log('\n✅ PRODUCTION READINESS: READY');
-      console.log('   System passes all critical checks');
-      console.log('   Risk Level: LOW');
-      console.log('   Recommendation: Safe to deploy with monitoring');
     }
 
-    // Next steps
-    console.log('\n🎯 NEXT STEPS');
-    console.log('═══════════════════════════════════════════════════════════════');
-    
     if (criticalFailed > 0) {
-      console.log('1. Fix all CRITICAL issues immediately');
-      console.log('2. Re-run this audit to verify fixes');
-      console.log('3. Do not proceed to deployment until all critical issues are resolved');
     } else {
-      console.log('1. Address any remaining HIGH priority issues');
-      console.log('2. Set up monitoring and alerting');
-      console.log('3. Prepare deployment with gradual rollout');
-      console.log('4. Monitor system closely during initial deployment');
     }
-
-    console.log('\n🔍 To fix issues, refer to CRITICAL_PRODUCTION_FIXES.md');
-    console.log('📋 For deployment steps, refer to FINAL_CHECKLIST.md');
   }
 
-  private displayChecks(title: string, checks: SafetyCheck[]): void {
-    console.log(`\n${title}`);
-    console.log('─'.repeat(70));
-
-    checks.forEach((check, index) => {
-      const statusIcon = {
-        'PASS': '✅',
-        'FAIL': '❌',
-        'WARNING': '⚠️',
-        'SKIP': '⏭️',
+  private displayChecks(_title: string, checks: SafetyCheck[]): void {
+    checks.forEach((check, _index) => {
+      const _statusIcon = {
+        PASS: '✅',
+        FAIL: '❌',
+        WARNING: '⚠️',
+        SKIP: '⏭️',
       }[check.status];
-
-      console.log(`\n${index + 1}. ${statusIcon} ${check.name}`);
-      console.log(`   📝 ${check.description}`);
-      console.log(`   📊 Status: ${check.status}`);
-      console.log(`   📋 Details: ${check.details}`);
-      console.log(`   💥 Impact: ${check.impact}`);
-      console.log(`   🔧 Fix: ${check.fix}`);
     });
   }
 }

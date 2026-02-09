@@ -1,5 +1,5 @@
-import http from 'k6/http';
 import { check, sleep } from 'k6';
+import http from 'k6/http';
 import { Rate } from 'k6/metrics';
 
 const errorRate = new Rate('errors');
@@ -40,9 +40,6 @@ export default function () {
     // Check for bypass (should get 429 after 5 requests)
     if (shouldBeRateLimited && !isRateLimited) {
       bypassRate.add(1);
-      console.log(
-        `BYPASS DETECTED: Request ${i + 1} should be rate limited but got ${response.status}`
-      );
     } else {
       bypassRate.add(0);
     }
@@ -55,7 +52,6 @@ export default function () {
     errorRate.add(response.status >= 400 && response.status !== 429);
 
     if (response.status === 429) {
-      console.log(`Rate limited at request ${i + 1}: ${response.body}`);
       break;
     }
 
@@ -90,7 +86,6 @@ export default function () {
     }
 
     if (response.status === 429) {
-      console.log(`User rate limited at request ${i + 1}`);
       break;
     }
 

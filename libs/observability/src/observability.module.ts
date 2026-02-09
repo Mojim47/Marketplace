@@ -2,7 +2,7 @@
 // Observability Module - Monitoring and Tracing Module
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { Module, Global } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { ObservabilityService } from './observability.service';
 
 @Global()

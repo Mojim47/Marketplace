@@ -198,15 +198,11 @@ async function checkConnectionHealth() {
 
 // Graceful shutdown
 async function gracefulShutdown() {
-  console.log('Shutting down database connections...');
-
   await Promise.all(
     [primaryClient.$disconnect(), readReplica1?.$disconnect(), readReplica2?.$disconnect()].filter(
       Boolean
     )
   );
-
-  console.log('Database connections closed');
 }
 
 // Health check interval (every 30 seconds)

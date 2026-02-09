@@ -1,28 +1,28 @@
 ﻿import type { AuthenticatedUser } from '../types/authenticated-user.type';
 /**
  * Resource Ownership Guard
- * 
+ *
  * Verifies that the authenticated user owns the resource they're trying to access.
- * 
+ *
  * Security Features:
  * - Generic ownership verification
  * - Configurable resource type and ID parameter
  * - Audit logging for unauthorized access attempts
  * - Generic 403 response (doesn't reveal resource existence)
- * 
+ *
  * Requirements: 3.2, 3.4
  */
 
 import {
-  Injectable,
-  CanActivate,
-  ExecutionContext,
+  type CanActivate,
+  type ExecutionContext,
   ForbiddenException,
-  SetMetadata,
+  Injectable,
   Logger,
+  SetMetadata,
 } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
-import { PrismaService } from '../../database/prisma.service';
+import type { Reflector } from '@nestjs/core';
+import type { PrismaService } from '../../database/prisma.service';
 
 /**
  * Metadata key for resource owner configuration
@@ -47,7 +47,7 @@ export interface ResourceOwnerConfig {
 
 /**
  * Decorator to specify resource ownership requirements
- * 
+ *
  * @example
  * @ResourceOwner({ resourceType: 'order', idParam: 'orderId' })
  * async getOrder(@Param('orderId') orderId: string) {}
@@ -61,14 +61,14 @@ export class ResourceOwnerGuard implements CanActivate {
 
   constructor(
     private readonly reflector: Reflector,
-    private readonly prisma: PrismaService,
+    private readonly prisma: PrismaService
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const config = this.reflector.getAllAndOverride<ResourceOwnerConfig>(
-      RESOURCE_OWNER_KEY,
-      [context.getHandler(), context.getClass()],
-    );
+    const config = this.reflector.getAllAndOverride<ResourceOwnerConfig>(RESOURCE_OWNER_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
 
     // No ownership check configured
     if (!config) {
@@ -103,7 +103,7 @@ export class ResourceOwnerGuard implements CanActivate {
       config.resourceType,
       resourceId,
       user.id,
-      config.ownerField || 'userId',
+      config.ownerField || 'userId'
     );
 
     if (!isOwner) {
@@ -122,12 +122,12 @@ export class ResourceOwnerGuard implements CanActivate {
     resourceType: string,
     resourceId: string,
     userId: string,
-    ownerField: string,
+    ownerField: string
   ): Promise<boolean> {
     try {
       // Dynamic Prisma model access
       const model = (this.prisma as any)[resourceType];
-      
+
       if (!model) {
         this.logger.error(`Unknown resource type: ${resourceType}`);
         return false;
@@ -167,7 +167,7 @@ export class ResourceOwnerGuard implements CanActivate {
     config: ResourceOwnerConfig,
     reason: string,
     userId?: string,
-    resourceId?: string,
+    resourceId?: string
   ): void {
     const logData = {
       event: 'UNAUTHORIZED_RESOURCE_ACCESS',
@@ -196,7 +196,7 @@ export class RoleOrOwnerGuard implements CanActivate {
 
   constructor(
     private readonly reflector: Reflector,
-    private readonly prisma: PrismaService,
+    private readonly prisma: PrismaService
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -214,10 +214,10 @@ export class RoleOrOwnerGuard implements CanActivate {
     }
 
     // Check ownership
-    const config = this.reflector.getAllAndOverride<ResourceOwnerConfig>(
-      RESOURCE_OWNER_KEY,
-      [context.getHandler(), context.getClass()],
-    );
+    const config = this.reflector.getAllAndOverride<ResourceOwnerConfig>(RESOURCE_OWNER_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
 
     if (!config) {
       return true;
@@ -233,7 +233,7 @@ export class RoleOrOwnerGuard implements CanActivate {
     try {
       const model = (this.prisma as any)[config.resourceType];
       const ownerField = config.ownerField || 'userId';
-      
+
       const resource = await model.findUnique({
         where: { id: resourceId },
         select: { [ownerField]: true },
@@ -253,5 +253,3 @@ export class RoleOrOwnerGuard implements CanActivate {
     }
   }
 }
-
-

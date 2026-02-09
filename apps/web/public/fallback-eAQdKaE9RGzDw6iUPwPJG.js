@@ -1,5 +1,4 @@
 (() => {
-  'use strict';
   self.fallback = async (e) => {
     switch (e.destination) {
       case 'document':

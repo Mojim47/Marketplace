@@ -2,8 +2,8 @@
 // Context Service - Request Context Management
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { Injectable, Scope, Logger } from '@nestjs/common';
-import { Context, TenantContext, UserContext } from './context.interface';
+import { Injectable, Logger, Scope } from '@nestjs/common';
+import type { Context, TenantContext, UserContext } from './context.interface';
 
 @Injectable({ scope: Scope.REQUEST })
 export class ContextService {
@@ -54,7 +54,7 @@ export class ContextService {
 
   hasAnyRole(roles: string[]): boolean {
     const context = this.getContext();
-    return roles.some(role => context.roles.includes(role));
+    return roles.some((role) => context.roles.includes(role));
   }
 
   setTenantContext(tenant: TenantContext): void {

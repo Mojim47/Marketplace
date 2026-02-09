@@ -1,6 +1,6 @@
 'use client';
-import { jsx as _jsx, Fragment as _Fragment, jsxs as _jsxs } from 'react/jsx-runtime';
 import { useEffect, useState } from 'react';
+import { Fragment as _Fragment, jsx as _jsx, jsxs as _jsxs } from 'react/jsx-runtime';
 import { OfflineClient } from '../(fa)/offline-client';
 import { Footer } from '../../../../../libs/ui/src/components/layout/Footer';
 import { Header } from '../../../../../libs/ui/src/components/layout/Header';
@@ -8,7 +8,9 @@ export function SiteShell({ children, direction, skipLabel, mainTestId }) {
   const [mode, setMode] = useState('light');
   useEffect(() => {
     const saved = typeof window !== 'undefined' ? window.localStorage.getItem('royal-mode') : null;
-    if (saved) setMode(saved);
+    if (saved) {
+      setMode(saved);
+    }
   }, []);
   const handleMode = (nextMode) => {
     setMode(nextMode);

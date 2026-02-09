@@ -2,18 +2,13 @@
 // JWT Authentication Guard - NestJS Guard for JWT Token Validation
 // ═══════════════════════════════════════════════════════════════════════════
 
-import {
-  Injectable,
-  ExecutionContext,
-  UnauthorizedException,
-  Logger,
-} from '@nestjs/common';
+import { type ExecutionContext, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import type { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
-import { Reflector } from '@nestjs/core';
-import { Observable } from 'rxjs';
+import type { Observable } from 'rxjs';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { REQUIRED_SCOPES_KEY } from '../decorators/scopes.decorator';
-import type { TokenScope, AuthenticatedUser } from '../types';
+import type { AuthenticatedUser, TokenScope } from '../types';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
@@ -24,7 +19,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
   }
 
   override canActivate(
-    context: ExecutionContext,
+    context: ExecutionContext
   ): boolean | Promise<boolean> | Observable<boolean> {
     // Check if route is marked as public
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
@@ -43,7 +38,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     err: Error | null,
     user: TUser | false,
     info: Error | null,
-    context: ExecutionContext,
+    context: ExecutionContext
   ): TUser {
     const request = context.switchToHttp().getRequest();
 
@@ -60,15 +55,15 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     }
 
     // Check required scopes
-    const requiredScopes = this.reflector.getAllAndOverride<TokenScope[]>(
-      REQUIRED_SCOPES_KEY,
-      [context.getHandler(), context.getClass()],
-    );
+    const requiredScopes = this.reflector.getAllAndOverride<TokenScope[]>(REQUIRED_SCOPES_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
 
     if (requiredScopes && requiredScopes.length > 0) {
       const authenticatedUser = user as unknown as AuthenticatedUser;
       const userScopes = authenticatedUser.scopes || [];
-      const hasAllScopes = requiredScopes.every(scope => userScopes.includes(scope));
+      const hasAllScopes = requiredScopes.every((scope) => userScopes.includes(scope));
 
       if (!hasAllScopes) {
         this.logger.warn('Insufficient scopes', {

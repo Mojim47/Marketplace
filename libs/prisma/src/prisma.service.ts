@@ -1,6 +1,6 @@
-import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { Injectable, Logger, type OnModuleDestroy, type OnModuleInit } from '@nestjs/common';
 import { InternalError } from '@nextgen/errors';
+import { PrismaClient } from '@prisma/client';
 
 /**
  * PrismaService - Database Connection with Connection Pooling
@@ -25,8 +25,8 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
   constructor() {
     // Parse connection pool settings from environment
-    const poolSize = parseInt(process.env['DATABASE_POOL_SIZE'] || '10', 10);
-    const poolTimeout = parseInt(process.env['DATABASE_TIMEOUT_MS'] || '5000', 10);
+    const poolSize = Number.parseInt(process.env.DATABASE_POOL_SIZE || '10', 10);
+    const poolTimeout = Number.parseInt(process.env.DATABASE_TIMEOUT_MS || '5000', 10);
 
     super({
       log: [
@@ -47,7 +47,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     this.logger.log('Connecting to database...');
 
     // Log connection pool configuration
-    const dbUrl = process.env['DATABASE_URL'] || '';
+    const dbUrl = process.env.DATABASE_URL || '';
     const urlParams = new URL(dbUrl.replace('postgresql://', 'http://')).searchParams;
     const connectionLimit = urlParams.get('connection_limit') || '10';
     const poolTimeout = urlParams.get('pool_timeout') || '10';
@@ -57,9 +57,9 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     );
 
     try {
-      await this['$connect']();
+      await this.$connect();
       this.logger.log('✅ Database connected successfully');
-      this.connectionPoolMetrics.totalConnections = parseInt(connectionLimit, 10);
+      this.connectionPoolMetrics.totalConnections = Number.parseInt(connectionLimit, 10);
     } catch (error) {
       this.logger.error('❌ Database connection failed', error);
       throw error;
@@ -68,7 +68,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
   async onModuleDestroy() {
     this.logger.log('Disconnecting from database...');
-    await this['$disconnect']();
+    await this.$disconnect();
   }
 
   /**
@@ -86,7 +86,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
    * Execute query with pool exhaustion handling
    * Requirements: 10.3
    */
-  async executeWithPoolQueue<T>(operation: () => Promise<T>, timeoutMs: number = 5000): Promise<T> {
+  async executeWithPoolQueue<T>(operation: () => Promise<T>, timeoutMs = 5000): Promise<T> {
     const startTime = Date.now();
     this.connectionPoolMetrics.waitingRequests++;
 
@@ -111,7 +111,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   }
 
   async cleanDatabase() {
-    if (process.env['NODE_ENV'] === 'production') {
+    if (process.env.NODE_ENV === 'production') {
       throw InternalError.configuration('Cannot clean database in production environment');
     }
 

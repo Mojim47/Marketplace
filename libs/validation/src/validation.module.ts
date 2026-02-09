@@ -2,7 +2,7 @@
 // Validation Module - Unified Validation with Security
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { Module, Global } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 
 // Services
 import { ValidationService } from './validation.service';
