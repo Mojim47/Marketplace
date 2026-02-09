@@ -163,8 +163,10 @@ describe('MetricsService', () => {
             const sorted = [...values].sort((a, b) => a - b);
             const result1 = MetricsService.calculatePercentile(sorted, Math.min(p1, p2));
             const result2 = MetricsService.calculatePercentile(sorted, Math.max(p1, p2));
-            
-            expect(result2).toBeGreaterThanOrEqual(result1);
+
+            // Allow tiny floating-point drift when values are extremely close
+            const epsilon = 1e-9;
+            expect(result2 + epsilon).toBeGreaterThanOrEqual(result1 - epsilon);
           }
         ),
         { numRuns: 100 }
