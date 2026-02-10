@@ -42,6 +42,7 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
+    "composite": true,
     "baseUrl": ".",
     "paths": {
       "@nextgen/context": ["libs/context/src/index.ts"],
@@ -81,7 +82,11 @@
       "@nextgen/ai": ["libs/ai/src/index.ts"],
       "@nextgen/ai/*": ["libs/ai/src/*"],
       "@nextgen/ar": ["libs/ar/src/index.ts"],
-      "@nextgen/ar/*": ["libs/ar/src/*"]
+      "@nextgen/ar/*": ["libs/ar/src/*"],
+      "@nextgen/waf": ["libs/waf/src/index.ts"],
+      "@nextgen/waf/*": ["libs/waf/src/*"],
+      "@nextgen/tax": ["libs/tax/src/index.ts"],
+      "@nextgen/tax/*": ["libs/tax/src/*"]
     }
   },
   "exclude": [

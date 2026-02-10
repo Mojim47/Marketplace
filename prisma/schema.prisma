@@ -8,7 +8,7 @@
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["fullTextSearch", "fullTextIndex", "postgresqlExtensions", "views"]
-  binaryTargets   = ["native", "linux-musl-openssl-3.0.x"]
+  binaryTargets   = ["native", "debian-openssl-1.1.x", "linux-musl-openssl-3.0.x"]
   output          = "../node_modules/.prisma/client"
 }
 
@@ -191,6 +191,7 @@ model Tenant {
   orders     Order[]
   invoices   Invoice[]
   order_idempotencies OrderIdempotency[]
+  spatial_assets      SpatialAsset[]
 
   @@index([status])
   @@map("tenants")
@@ -528,6 +529,7 @@ model Product {
   inventory_logs InventoryLog[]
   warranties     Warranty[]
   tier_prices    ProductTierPrice[]
+  spatial_assets SpatialAsset[]
 
   @@unique([tenant_id, sku])
   @@unique([tenant_id, slug])
@@ -1449,6 +1451,25 @@ model Media {
   @@index([tenant_id])
   @@index([tenant_id, mime_type])
   @@map("media")
+}
+
+model SpatialAsset {
+  id         String   @id @default(cuid())
+  tenant_id  String
+  product_id String?
+  title      String   @db.VarChar(255)
+  asset_url  String   @db.VarChar(500)
+  format     String?  @db.VarChar(32)
+  metadata   Json     @default("{}")
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  product Product? @relation(fields: [product_id], references: [id])
+  tenant  Tenant   @relation(fields: [tenant_id], references: [id])
+
+  @@index([tenant_id])
+  @@index([product_id])
+  @@map("spatial_assets")
 }
 
 model Page {

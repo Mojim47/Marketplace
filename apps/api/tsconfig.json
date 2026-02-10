@@ -2,7 +2,8 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "declaration": false,
+    "rootDir": "../../",
+    "declaration": true,
     "declarationMap": false,
     "removeComments": true,
     "emitDecoratorMetadata": true,
@@ -20,7 +21,7 @@
     "noImplicitOverride": false,
     "isolatedModules": false
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "../../libs/**/src/**/*"],
   "exclude": [
     "node_modules",
     "dist",
