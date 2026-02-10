@@ -8,6 +8,7 @@
 export { StorageProviderType } from './interfaces';
 
 export type {
+  UploadFile,
   IStorageProvider,
   FileMetadata,
   UploadOptions,

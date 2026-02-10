@@ -16,7 +16,7 @@
  * @module @nextgen/payment
  */
 
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { type PaymentInitRequest, ZarinPalGateway } from './gateways/zarinpal.gateway';
 
@@ -123,7 +123,7 @@ export class PaymentService {
   private prisma: PrismaClient;
   private zarinpal?: ZarinPalGateway;
 
-  constructor(prisma: PrismaClient, config: PaymentConfig) {
+  constructor(prisma: PrismaClient, @Inject('PAYMENT_CONFIG') config: PaymentConfig) {
     this.prisma = prisma;
     this.config = config;
 

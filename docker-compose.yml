@@ -126,6 +126,7 @@ services:
       - "${API_PORT:-3001}:3001"
     environment:
       NODE_ENV: ${NODE_ENV:-production}
+      NODE_OPTIONS: ${NODE_OPTIONS:---max-old-space-size=512}
       PORT: 3001
       API_PREFIX: ${API_PREFIX:-/api}
       DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL in your environment}
@@ -156,6 +157,13 @@ services:
       interval: 15s
       timeout: 5s
       retries: 5
+    cap_drop: ["ALL"]
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/log
     logging: *default-logging
     networks:
       - nextgen-network

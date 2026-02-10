@@ -22,3 +22,6 @@ export type {
   MinioStorageConfig,
   StorageConfig,
 } from './storage.interface';
+
+export interface UploadFile { buffer: Buffer; filename?: string; originalName?: string; mimeType?: string; mimetype?: string; size?: number; [key: string]: any; }
+

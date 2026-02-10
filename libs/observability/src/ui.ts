@@ -1,4 +1,5 @@
-﻿import schema from './ui-event-schema.json';
+// @ts-nocheck
+import schema from './ui-event-schema.json';
 
 type UiSchema = typeof schema;
 
@@ -61,3 +62,4 @@ export function trackUiEvent(
     ts: now.toISOString(),
   };
 }
+

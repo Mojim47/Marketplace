@@ -8,6 +8,8 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule } from '@nestjs/throttler';
 import type Redis from 'ioredis';
 
+import { AppController } from './app.controller';
+
 import { AdminModule } from './admin/admin.module';
 import { AuditModule } from './audit/audit.module';
 // Modules
@@ -23,6 +25,7 @@ import { SearchModule } from './search/search.module';
 import { TenantModule } from './tenant/tenant.module';
 import { UsersModule } from './users/users.module';
 import { VendorModule } from './vendor/vendor.module';
+import { PaymentModule } from './payment/payment.module';
 
 import { RedisThrottlerStorage } from './common/guards/redis-throttler.storage';
 import { UserRateLimitGuard } from './common/guards/user-rate-limit.guard';
@@ -122,6 +125,7 @@ import { ObservabilityModule } from './_observability/observability.module';
     VendorModule,
     ProductsModule,
     OrdersModule,
+    PaymentModule,
     HealthModule,
     FeatureFlagModule,
     AuditModule,
@@ -129,6 +133,7 @@ import { ObservabilityModule } from './_observability/observability.module';
     SearchModule,
     ObservabilityModule,
   ],
+  controllers: [AppController],
   providers: [
     // ???????????????????????????????????????????????????????????????????????
     // Global Guards (executed in order)

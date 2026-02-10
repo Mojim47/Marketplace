@@ -1,0 +1,14 @@
+{
+  "name": "@nextgen/tax",
+  "version": "1.0.0",
+  "description": "Stub tax service for API runtime",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p ."
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^5.3.0"
+  }
+}

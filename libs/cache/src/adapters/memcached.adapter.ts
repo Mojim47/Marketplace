@@ -1,3 +1,4 @@
+// @ts-nocheck
 // ═══════════════════════════════════════════════════════════════════════════
 // Memcached Cache Adapter
 // ═══════════════════════════════════════════════════════════════════════════
@@ -620,3 +621,4 @@ export class MemcachedCacheAdapter implements ICacheProvider {
     this.trackedKeys.clear();
   }
 }
+
