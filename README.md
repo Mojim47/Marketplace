@@ -51,6 +51,6 @@ pnpm test:unit
 
 ### ⚠️ Follow-up required (orders lock integration)
 - `orders-lock.integration.test.ts` نیاز به Redis و Postgres واقعی دارد.
-- موقتاً برای آزادسازی پوش می‌توان با `SKIP_ORDER_LOCK=1 git push` (هوک خودش این تست را exclude می‌کند و coverage را خاموش می‌کند) یا دستی `pnpm test:unit -- --exclude=\"**/orders-lock.integration.test.ts\"` اجرا کرد.
+- موقتاً برای آزادسازی پوش می‌توان با `SKIP_ORDER_LOCK=1 git push` (هوک این تست را exclude و coverage را خاموش می‌کند) یا دستی `pnpm test:unit --exclude=\"**/orders-lock.integration.test.ts\"` اجرا کرد.
 - Deadline رفع: 24 ساعت آینده – پس از بالا آوردن Docker (redis/postgres) پرچم را حذف کنید و تست را کامل اجرا کنید:  
   `docker-compose up -d redis postgres` سپس `pnpm test:unit -- --test-timeout=240000`.
