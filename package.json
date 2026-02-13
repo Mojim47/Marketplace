@@ -76,10 +76,12 @@
     "prepare": "husky",
     "ui:events": "ts-node scripts/ui/validate-ui-events.ts",
     "ui:lighthouse": "lhci autorun --config lighthouserc.cjs",
-    "ui:governance": "node scripts/ui/run-ui-governance.mjs"
+    "ui:governance": "node scripts/ui/run-ui-governance.mjs",
+    "build:api": "tsc -p tsconfig.prod.json --skipLibCheck",
+    "build:api:docker": "tsc -p tsconfig.prod.json --skipLibCheck",
+    "prisma:generate:prod": "prisma generate --no-engine"
   },
   "dependencies": {
-    "@huggingface/tokenizers": "^0.1.1",
     "@nestjs/bullmq": "^10.0.0",
     "@nestjs/cache-manager": "^2.0.0",
     "@nestjs/common": "^10.0.0",
@@ -103,12 +105,9 @@
     "class-validator": "^0.14.3",
     "compression": "^1.7.4",
     "cookie-parser": "^1.4.6",
-    "dompurify": "^3.0.0",
     "dotenv": "^16.4.5",
     "helmet": "^7.2.0",
     "ioredis": "^5.3.0",
-    "jsdom": "^23.0.0",
-    "onnxruntime-node": "^1.20.1",
     "opossum": "^8.1.4",
     "otplib": "^12.0.1",
     "passport": "^0.7.0",
@@ -124,6 +123,10 @@
     "zod": "^3.22.0"
   },
   "devDependencies": {
+    "@huggingface/tokenizers": "^0.1.1",
+    "dompurify": "^3.0.0",
+    "jsdom": "^23.0.0",
+    "onnxruntime-node": "^1.20.1",
     "@axe-core/playwright": "^4.10.1",
     "@biomejs/biome": "^1.5.0",
     "@faker-js/faker": "^10.1.0",
@@ -175,7 +178,15 @@
         "react",
         "react-dom"
       ]
-    }
+    },
+    "onlyBuiltDependencies": [
+      "@prisma/client"
+    ],
+    "ignoredBuiltDependencies": [
+      "onnxruntime-node",
+      "puppeteer",
+      "playwright"
+    ]
   },
   "workspaces": [
     "apps/*",

@@ -1,9 +1,12 @@
 import 'reflect-metadata';
 import * as http from 'http';
+import { CacheModule } from '@nestjs/cache-manager';
+import { APP_GUARD } from '@nestjs/core';
 import { Controller, Get, Logger, Module } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { PaymentService } from '../../../libs/payment/src/payment.service';
-import { AppModule } from './app/app.module';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { PrismaService } from '../../../libs/prisma/src/prisma.service';
+import { AppController, NeonThrottlerGuard } from './app.controller';
 
 @Controller()
 class StubController {
@@ -12,6 +15,29 @@ class StubController {
     return { status: 'LAZARUS_STUB', mode: 'SURVIVAL' };
   }
 }
+
+@Module({
+  imports: [
+    CacheModule.register(),
+    ThrottlerModule.forRoot([
+      {
+        name: 'default',
+        limit: 10,
+        ttl: 60,
+      },
+    ]),
+  ],
+  controllers: [AppController],
+  providers: [
+    PrismaService,
+    NeonThrottlerGuard,
+    {
+      provide: APP_GUARD,
+      useExisting: NeonThrottlerGuard,
+    },
+  ],
+})
+class NeonModule {}
 
 @Module({ controllers: [StubController] })
 class StubModule {}
@@ -25,32 +51,10 @@ async function bootstrap() {
   try {
     logger.log('🚀 INITIATING REAL CORE...');
 
-    const app = await NestFactory.create(AppModule, {
+    const app = await NestFactory.create(NeonModule, {
       abortOnError: false,
       logger: ['error', 'warn', 'log'],
     });
-
-    // ⚔️ OPERATION PULSE: SELF-TEST SEQUENCE ⚔️
-    const pulseLogger = new Logger('PulseCheck');
-    pulseLogger.log('💓 INITIATING INTERNAL SELF-TEST...');
-    try {
-      const paymentService =
-        (app as any).get?.(PaymentService) ?? (app as any).get?.('PaymentService');
-      if (paymentService) {
-        pulseLogger.log('✅ PaymentService resolved. Firing test shot...');
-        const result = await paymentService.createPayment({
-          orderId: 'SELFTEST-ORDER',
-          amount: 1000,
-          method: 'ZARINPAL',
-          description: 'Internal pulse check',
-        });
-        pulseLogger.log(`🎯 TEST SHOT RESULT: ${JSON.stringify(result)}`);
-      } else {
-        pulseLogger.error('❌ PaymentService could NOT be resolved from AppModule context.');
-      }
-    } catch (probeError: any) {
-      pulseLogger.warn(`⚠️ SELF-TEST PARTIAL FAIL: ${probeError?.message ?? probeError}`);
-    }
 
     await app.listen(3000);
     logger.log('✅ SYSTEM ONLINE: REAL CORE ACTIVE');

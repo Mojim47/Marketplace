@@ -16,6 +16,12 @@ declare module '@nextgen/storage' {
   export { UploadFile, StorageService } from '@nextgen/storage';
 }
 
+declare module '../../../libs/payment/src/payment.service' {
+  export class PaymentService {
+    createPayment(input: any): Promise<any>;
+  }
+}
+
 declare namespace Express {
   namespace Multer {
     interface File {

@@ -1,23 +1,41 @@
-# Ignore everything by default
-**
+# Dependencies
+node_modules/
+**/node_modules/
+.pnpm-store/
 
-# Allow build context essentials
-!Dockerfile
-!package.json
-!pnpm-lock.yaml
-!apps/api/package.json
-!libs/prisma/package.json
+# Logs & temp
+*.log
+logs/
+tmp/
+temp/
 
-# Allow prebuilt artifacts
-!apps/api/dist/**
-!dist/libs/**
-
-# Keep docker files out
-docker-compose*.yml
-.git
+# VCS / Secrets
+.git/
 .gitignore
-node_modules
-# allow dist/libs but ignore other dist artifacts
-dist/*
-!dist/libs/**
-!.gitkeep
+.env
+.env.*
+*.pem
+*.key
+
+# IDE / OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Test artifacts
+coverage/
+cypress/videos/
+test-results/
+
+# Prisma local
+prisma/dev.db
+prisma/dev.db-journal
+
+# Documentation (not needed in prod)
+README.md
+docs/
+
+# Config files (dev only)
+.eslintrc*
+jest.config.*

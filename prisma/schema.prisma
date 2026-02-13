@@ -1,1650 +1,229 @@
-// ═══════════════════════════════════════════════════════════════════════════
-// NextGen Marketplace - Enterprise Schema v3.1
-// ═══════════════════════════════════════════════════════════════════════════
-// Iranian E-Commerce Platform with B2B, Moodian, Multi-Vendor Support
-// PostgreSQL 16 + RLS + Full-Text Search (Persian)
-// ═══════════════════════════════════════════════════════════════════════════
+// This is your Prisma schema file for NextGen Marketplace
 
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["fullTextSearch", "fullTextIndex", "postgresqlExtensions", "views"]
-  binaryTargets   = ["native", "debian-openssl-1.1.x", "linux-musl-openssl-3.0.x"]
-  output          = "../node_modules/.prisma/client"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-  provider   = "postgresql"
-  url        = env("DATABASE_URL")
-  extensions = [pgcrypto, uuid_ossp(map: "uuid-ossp"), pg_trgm]
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// ENUMS - Business Domain Types
-// ═══════════════════════════════════════════════════════════════════════════
-
-enum TenantStatus {
-  ACTIVE
-  SUSPENDED
-  ARCHIVED
-}
-
-enum UserRole {
-  CUSTOMER // B2C End User
-  DEALER // B2B Dealer (Gold/Silver/Bronze)
-  VENDOR // Seller/Supplier
-  EXECUTOR // Contractor/Installer
-  ADMIN // Platform Admin
-  SUPER_ADMIN // System Admin
-}
-
-enum DealerTier {
-  BRONZE
-  SILVER
-  GOLD
-  PLATINUM
-}
-
-enum ProductStatus {
-  DRAFT
-  PENDING_REVIEW
-  ACTIVE
-  INACTIVE
-  OUT_OF_STOCK
-  DISCONTINUED
-}
-
-enum OrderStatus {
-  DRAFT
-  PENDING_PAYMENT
-  PAID
-  CONFIRMED
-  PROCESSING
-  SHIPPED
-  DELIVERED
-  COMPLETED
-  CANCELLED
-  REFUNDED
-}
-
-enum PaymentStatus {
-  PENDING
-  PROCESSING
-  COMPLETED
-  FAILED
-  REFUNDED
-  PARTIALLY_REFUNDED
-}
-
-enum PaymentGateway {
-  ZARINPAL
-  MELLAT
-  SAMAN
-  WALLET
-  CREDIT
-  CHEQUE
-}
-
-enum InvoiceStatus {
-  DRAFT
-  ISSUED
-  SENT_TO_MOODIAN
-  MOODIAN_CONFIRMED
-  MOODIAN_REJECTED
-  CANCELLED
-}
-
-enum ExecutorStatus {
-  PENDING_VERIFICATION
-  VERIFIED
-  SUSPENDED
-  BLACKLISTED
-}
-
-enum ProjectStatus {
-  OPEN_FOR_BIDDING
-  ASSIGNED
-  IN_PROGRESS
-  COMPLETED
-  CANCELLED
-  DISPUTED
-}
-
-enum ChequeStatus {
-  PENDING
-  DEPOSITED
-  CLEARED
-  BOUNCED
-  CANCELLED
-  RETURNED
-}
-
-enum WarrantyStatus {
-  ACTIVE
-  EXPIRED
-  VOIDED
-  CLAIMED
-}
-
-enum ProformaStatus {
-  DRAFT
-  SENT
-  APPROVED
-  REJECTED
-  CONVERTED
-  EXPIRED
-}
-
-enum InventoryLogType {
-  IN
-  OUT
-  ADJUSTMENT
-  RESERVED
-  RELEASED
-  DAMAGED
-  RETURNED
-}
-
-enum DiscountType {
-  PERCENTAGE
-  FIXED_AMOUNT
-  FREE_SHIPPING
-  BUY_X_GET_Y
-}
-
-enum BidStatus {
-  PENDING
-  ACCEPTED
-  REJECTED
-  WITHDRAWN
-  EXPIRED
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// LAYER 1: TENANT & CONTEXT ISOLATION
-// ═══════════════════════════════════════════════════════════════════════════
-
-model Tenant {
-  id      String       @id @default(cuid())
-  slug    String       @unique @db.VarChar(63)
-  name    String       @db.VarChar(255)
-  name_fa String?      @db.VarChar(255) // Persian name
-  status  TenantStatus @default(ACTIVE)
-
-  // Business Info
-  tax_id        String? @db.VarChar(20) // شناسه مالیاتی
-  economic_code String? @db.VarChar(20) // کد اقتصادی
-
-  // Settings
-  settings Json @default("{}")
-  features Json @default("{}") // Feature flags
-
-  // Audit
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-  created_by String?
-
-  // Relations
-  users      User[]
-  vendors    Vendor[]
-  products   Product[]
-  categories Category[]
-  orders     Order[]
-  invoices   Invoice[]
-  order_idempotencies OrderIdempotency[]
-  spatial_assets      SpatialAsset[]
-
-  @@index([status])
-  @@map("tenants")
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// LAYER 2: USER & AUTHENTICATION
-// ═══════════════════════════════════════════════════════════════════════════
+// ============================================
+// 1. USER MANAGEMENT
+// ============================================
 
 model User {
-  id        String @id @default(cuid())
-  tenant_id String
-
-  // Identity
-  email       String  @db.VarChar(255)
-  phone       String? @db.VarChar(20)
-  national_id String? @db.VarChar(10) // کد ملی
-
-  // Auth
-  password_hash String
-  totp_secret   String? // 2FA
-  totp_enabled  Boolean @default(false)
-
-  // Profile
-  first_name    String? @db.VarChar(100)
-  last_name     String? @db.VarChar(100)
-  first_name_fa String? @db.VarChar(100) // Persian
-  last_name_fa  String? @db.VarChar(100)
-  avatar_url    String?
-
-  // Status
-  is_active   Boolean   @default(true)
-  is_verified Boolean   @default(false)
-  verified_at DateTime?
-
-  // Security
-  last_login_at   DateTime?
-  last_login_ip   String?   @db.VarChar(45)
-  failed_attempts Int       @default(0)
-  locked_until    DateTime?
-
-  // Audit
+  id        String   @id @default(cuid())
+  email     String   @unique @db.VarChar(255)
+  password  String   @db.VarChar(255)
+  first_name String? @db.VarChar(100)
+  last_name  String? @db.VarChar(100)
+  phone     String?  @db.VarChar(20)
+  is_active Boolean  @default(true)
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
   // Relations
-  tenant           Tenant               @relation(fields: [tenant_id], references: [id])
-  roles            UserRoleAssignment[]
-  dealer_profile   DealerProfile?
-  executor_profile ExecutorProfile?
-  orders           Order[]
-  addresses        Address[]
-  sessions         Session[]
-  order_idempotencies OrderIdempotency[]
+  orders    Order[]
+  cart      Cart?
+  reviews   Review[]
+  addresses Address[]
+  wishlist  Wishlist[]
 
-  @@unique([tenant_id, email])
-  @@unique([tenant_id, phone])
-  @@index([tenant_id, is_active])
   @@index([email])
   @@index([phone])
-  @@index([national_id])
   @@map("users")
 }
 
-model Session {
-  id          String   @id @default(cuid())
-  user_id     String
-  token_hash  String   @unique
-  device_info String?
-  ip_address  String?  @db.VarChar(45)
-  expires_at  DateTime
-  created_at  DateTime @default(now())
-
-  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
-  @@index([user_id])
-  @@index([expires_at])
-  @@map("sessions")
-}
-
-model UserRoleAssignment {
-  id          String    @id @default(cuid())
-  user_id     String
-  tenant_id   String
-  role        UserRole
-  is_active   Boolean   @default(true)
-  assigned_by String?
-  assigned_at DateTime  @default(now())
-  expires_at  DateTime?
-
-  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
-  @@unique([user_id, tenant_id, role])
-  @@index([tenant_id, role])
-  @@index([tenant_id, is_active])
-  @@map("user_role_assignments")
-}
-
 model Address {
-  id        String @id @default(cuid())
+  id        String   @id @default(cuid())
   user_id   String
-  tenant_id String
-
-  label       String? @db.VarChar(50) // خانه، محل کار
-  province    String  @db.VarChar(50)
-  city        String  @db.VarChar(50)
-  district    String? @db.VarChar(100)
-  street      String  @db.VarChar(255)
-  postal_code String  @db.VarChar(10)
-  unit        String? @db.VarChar(20)
-
-  latitude  Decimal? @db.Decimal(10, 8)
-  longitude Decimal? @db.Decimal(11, 8)
-
-  is_default Boolean  @default(false)
+  province  String   @db.VarChar(50)
+  city      String   @db.VarChar(50)
+  street    String   @db.VarChar(255)
+  postal_code String @db.VarChar(10)
+  is_default Boolean @default(false)
   created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
 
-  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@index([user_id])
-  @@index([tenant_id])
   @@map("addresses")
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// LAYER 3: B2B - DEALER SYSTEM
-// ═══════════════════════════════════════════════════════════════════════════
-
-model DealerProfile {
-  id        String @id @default(cuid())
-  user_id   String @unique
-  tenant_id String
-
-  // Business Info
-  company_name    String  @db.VarChar(255)
-  company_name_fa String? @db.VarChar(255)
-  tax_id          String? @db.VarChar(20)
-  economic_code   String? @db.VarChar(20)
-
-  // Tier & Credit
-  tier         DealerTier @default(BRONZE)
-  credit_limit Decimal    @default(0) @db.Decimal(15, 2)
-  credit_used  Decimal    @default(0) @db.Decimal(15, 2)
-
-  // Discount Rates (percentage)
-  base_discount Decimal @default(0) @db.Decimal(5, 2)
-
-  // Verification
-  is_verified Boolean   @default(false)
-  verified_at DateTime?
-  verified_by String?
-
-  // Documents
-  documents Json @default("[]")
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  user              User              @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  cheques           Cheque[]
-  proforma_invoices ProformaInvoice[]
-
-  @@index([tenant_id, tier])
-  @@index([tenant_id, is_verified])
-  @@map("dealer_profiles")
-}
-
-model Cheque {
-  id        String @id @default(cuid())
-  dealer_id String
-  tenant_id String
-
-  bank_name      String   @db.VarChar(100)
-  branch_code    String?  @db.VarChar(20)
-  account_number String   @db.VarChar(30)
-  cheque_number  String   @db.VarChar(20)
-  amount         Decimal  @db.Decimal(15, 2)
-  due_date       DateTime @db.Date
-
-  status     ChequeStatus @default(PENDING)
-  cleared_at DateTime?
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  dealer DealerProfile @relation(fields: [dealer_id], references: [id])
-
-  @@index([tenant_id, status])
-  @@index([tenant_id, due_date])
-  @@index([dealer_id])
-  @@map("cheques")
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// LAYER 4: VENDOR & PRODUCT CATALOG
-// ═══════════════════════════════════════════════════════════════════════════
-
-model Vendor {
-  id        String @id @default(cuid())
-  tenant_id String
-
-  // Identity
-  name    String  @db.VarChar(255)
-  name_fa String? @db.VarChar(255)
-  slug    String  @db.VarChar(100)
-
-  // Business Info
-  tax_id        String? @db.VarChar(20)
-  economic_code String? @db.VarChar(20)
-
-  // Contact
-  email String? @db.VarChar(255)
-  phone String? @db.VarChar(20)
-
-  // Status
-  is_active   Boolean   @default(true)
-  is_verified Boolean   @default(false)
-  verified_at DateTime?
-
-  // Commission
-  commission_rate Decimal @default(10) @db.Decimal(5, 2)
-
-  // Settings
-  settings Json @default("{}")
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  tenant   Tenant    @relation(fields: [tenant_id], references: [id])
-  products Product[]
-
-  @@unique([tenant_id, slug])
-  @@index([tenant_id, is_active])
-  @@map("vendors")
-}
+// ============================================
+// 2. CATALOG
+// ============================================
 
 model Category {
-  id        String  @id @default(cuid())
-  tenant_id String
-  parent_id String?
-
-  name        String  @db.VarChar(100)
-  name_fa     String? @db.VarChar(100)
-  slug        String  @db.VarChar(100)
+  id        String   @id @default(cuid())
+  name      String   @db.VarChar(100)
+  slug      String   @unique @db.VarChar(100)
   description String?
-
-  // Hierarchy
-  level Int    @default(0)
-  path  String @default("/") // Materialized path: /1/2/3/
-
-  // Display
-  image_url  String?
-  icon       String?
-  sort_order Int     @default(0)
-
-  is_active Boolean @default(true)
-
+  parent_id String?
   created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
 
-  tenant   Tenant     @relation(fields: [tenant_id], references: [id])
-  parent   Category?  @relation("CategoryHierarchy", fields: [parent_id], references: [id])
-  children Category[] @relation("CategoryHierarchy")
-  products Product[]
+  parent    Category?  @relation("CategoryHierarchy", fields: [parent_id], references: [id])
+  children  Category[] @relation("CategoryHierarchy")
+  products  Product[]
 
-  @@unique([tenant_id, slug])
-  @@index([tenant_id, parent_id])
-  @@index([tenant_id, is_active])
-  @@index([path])
   @@map("categories")
 }
 
+model Vendor {
+  id        String   @id @default(cuid())
+  name      String   @db.VarChar(255)
+  email     String?  @db.VarChar(255)
+  phone     String?  @db.VarChar(20)
+  commission_rate Decimal @default(10) @db.Decimal(5, 2)
+  is_active Boolean  @default(true)
+  created_at DateTime @default(now())
+
+  products  Product[]
+
+  @@map("vendors")
+}
+
 model Product {
-  id          String  @id @default(cuid())
-  tenant_id   String
-  vendor_id   String
-  category_id String?
-
-  // Identity
-  sku     String  @db.VarChar(50)
-  barcode String? @db.VarChar(50)
-
-  // Content
-  name           String  @db.VarChar(255)
-  name_fa        String? @db.VarChar(255)
-  slug           String  @db.VarChar(255)
-  description    String?
-  description_fa String?
-
-  // Pricing
-  price         Decimal  @db.Decimal(15, 2)
-  compare_price Decimal? @db.Decimal(15, 2)
-  cost_price    Decimal? @db.Decimal(15, 2)
-
-  // Tax (Moodian)
-  tax_rate      Decimal @default(9) @db.Decimal(5, 2)
-  is_tax_exempt Boolean @default(false)
-
-  // Inventory
-  stock               Int @default(0)
-  reserved_stock      Int @default(0)
-  low_stock_threshold Int @default(5)
-
-  // Status
-  status ProductStatus @default(DRAFT)
-
-  // Media
-  images       Json    @default("[]")
-  model_3d_url String? // AR/3D .glb/.usdz
-
-  // SEO & Search
-  meta_title       String? @db.VarChar(70)
-  meta_description String? @db.VarChar(160)
-  search_vector    String? // Full-text search tokens
-
-  // Attributes
-  attributes     Json @default("{}")
-  specifications Json @default("[]")
-
-  // Warranty
-  warranty_months Int?
-
-  // Display
-  sort_order  Int     @default(0)
-  is_featured Boolean @default(false)
-
+  id        String   @id @default(cuid())
+  category_id String
+  vendor_id String
+  sku       String   @unique @db.VarChar(50)
+  name      String   @db.VarChar(255)
+  description String?
+  price     Decimal  @db.Decimal(10, 2)
+  stock     Int      @default(0)
+  status    String   @default("DRAFT") // DRAFT, ACTIVE, OUT_OF_STOCK
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  tenant         Tenant             @relation(fields: [tenant_id], references: [id])
-  vendor         Vendor             @relation(fields: [vendor_id], references: [id])
-  category       Category?          @relation(fields: [category_id], references: [id])
-  order_items    OrderItem[]
-  inventory_logs InventoryLog[]
-  warranties     Warranty[]
-  tier_prices    ProductTierPrice[]
-  spatial_assets SpatialAsset[]
+  category   Category   @relation(fields: [category_id], references: [id])
+  vendor     Vendor     @relation(fields: [vendor_id], references: [id])
+  reviews    Review[]
+  order_items OrderItem[]
+  cart_items CartItem[]
+  wishlists  Wishlist[]
 
-  @@unique([tenant_id, sku])
-  @@unique([tenant_id, slug])
-  @@index([tenant_id, vendor_id])
-  @@index([tenant_id, category_id])
-  @@index([tenant_id, status])
-  @@index([tenant_id, category_id, price])
-  @@index([tenant_id, status, created_at])
+  @@index([category_id])
+  @@index([vendor_id])
+  @@index([status])
   @@map("products")
 }
 
-model ProductTierPrice {
-  id         String     @id @default(cuid())
-  product_id String
-  tenant_id  String
-  tier       DealerTier
-  price      Decimal    @db.Decimal(15, 2)
-  min_qty    Int        @default(1)
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  product Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
-
-  @@unique([product_id, tier, min_qty])
-  @@index([tenant_id, tier])
-  @@map("product_tier_prices")
-}
-
-model InventoryLog {
-  id         String @id @default(cuid())
-  product_id String
-  tenant_id  String
-
-  type      InventoryLogType
-  quantity  Int
-  reference String? // Order ID, etc.
-  notes     String?
-
-  created_at DateTime @default(now())
-  created_by String?
-
-  product Product @relation(fields: [product_id], references: [id])
-
-  @@index([tenant_id, product_id])
-  @@index([tenant_id, created_at])
-  @@map("inventory_logs")
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// LAYER 5: ORDER & PAYMENT
-// ═══════════════════════════════════════════════════════════════════════════
-
-model Order {
-  id        String @id @default(cuid())
-  tenant_id String
-  user_id   String
-
-  // Identity
-  order_number String @db.VarChar(20)
-
-  // Status
-  status OrderStatus @default(DRAFT)
-
-  // Pricing (Rials)
-  subtotal        Decimal @db.Decimal(15, 2)
-  discount_amount Decimal @default(0) @db.Decimal(15, 2)
-  tax_amount      Decimal @default(0) @db.Decimal(15, 2)
-  shipping_amount Decimal @default(0) @db.Decimal(15, 2)
-  total           Decimal @db.Decimal(15, 2)
-
-  // Shipping
-  shipping_address Json?
-  shipping_method  String?
-  tracking_number  String?
-
-  // Notes
-  customer_note String?
-  admin_note    String?
-
-  // Metadata
-  metadata Json @default("{}")
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  tenant   Tenant      @relation(fields: [tenant_id], references: [id])
-  user     User        @relation(fields: [user_id], references: [id])
-  items    OrderItem[]
-  payments Payment[]
-  invoices Invoice[]
-  order_idempotencies OrderIdempotency[]
-
-  @@unique([tenant_id, order_number])
-  @@index([tenant_id, user_id])
-  @@index([tenant_id, status])
-  @@index([tenant_id, created_at])
-  @@index([tenant_id, status, created_at])
-  @@map("orders")
-}
-
-model OrderItem {
-  id         String @id @default(cuid())
-  order_id   String
-  product_id String
-  tenant_id  String
-
-  // Snapshot at purchase time
-  product_name String @db.VarChar(255)
-  product_sku  String @db.VarChar(50)
-
-  quantity   Int
-  unit_price Decimal @db.Decimal(15, 2) // Price at purchase
-  discount   Decimal @default(0) @db.Decimal(15, 2)
-  tax_amount Decimal @default(0) @db.Decimal(15, 2)
-  total      Decimal @db.Decimal(15, 2)
-
-  created_at DateTime @default(now())
-
-  order   Order   @relation(fields: [order_id], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [product_id], references: [id])
-
-  @@index([tenant_id, order_id])
-  @@index([tenant_id, product_id])
-  @@map("order_items")
-}
-
-model OrderIdempotency {
-  id          String   @id @default(cuid())
-  tenantId    String   @map("tenant_id")
-  userId      String   @map("user_id")
-  orderId     String?  @map("order_id")
-  key         String   @map("idempotency_key") @db.VarChar(128)
-  requestHash String   @map("request_hash") @db.VarChar(64)
-  response    Json?
-  status      String   @default("IN_PROGRESS") @db.VarChar(32)
-  createdAt   DateTime @default(now()) @map("created_at")
-  expiresAt   DateTime @map("expires_at")
-
-  tenant Tenant @relation(fields: [tenantId], references: [id])
-  user   User   @relation(fields: [userId], references: [id])
-  order  Order? @relation(fields: [orderId], references: [id])
-
-  @@unique([tenantId, userId, key])
-  @@index([orderId])
-  @@index([expiresAt])
-  @@index([tenantId, expiresAt])
-  @@map("order_idempotencies")
-}
-
-model Payment {
-  id        String @id @default(cuid())
-  order_id  String
-  tenant_id String
-
-  // Amount
-  amount Decimal @db.Decimal(15, 2)
-
-  // Gateway
-  gateway       PaymentGateway
-  gateway_ref   String?        @db.VarChar(100) // Authority/RefID
-  gateway_track String?        @db.VarChar(100) // Tracking code
-
-  // Status
-  status PaymentStatus @default(PENDING)
-
-  // Verification
-  verified_at DateTime?
-  card_pan    String?   @db.VarChar(20) // Masked card number
-
-  // Metadata
-  metadata      Json    @default("{}")
-  error_message String?
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  order Order @relation(fields: [order_id], references: [id])
-
-  @@index([order_id])
-  @@index([tenant_id, status])
-  @@index([tenant_id, gateway])
-  @@index([tenant_id, created_at])
-  @@index([gateway_ref])
-  @@map("payments")
-}
-
-model ProformaInvoice {
-  id        String @id @default(cuid())
-  dealer_id String
-  tenant_id String
-
-  invoice_number String @db.VarChar(20)
-
-  // Amounts
-  subtotal Decimal @db.Decimal(15, 2)
-  discount Decimal @default(0) @db.Decimal(15, 2)
-  tax      Decimal @default(0) @db.Decimal(15, 2)
-  total    Decimal @db.Decimal(15, 2)
-
-  // Items
-  items Json @default("[]")
-
-  // Status
-  status ProformaStatus @default(DRAFT)
-
-  // Validity
-  valid_until DateTime
-
-  // Notes
-  notes String?
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  dealer DealerProfile @relation(fields: [dealer_id], references: [id])
-
-  @@unique([tenant_id, invoice_number])
-  @@index([tenant_id, dealer_id])
-  @@index([tenant_id, status])
-  @@map("proforma_invoices")
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// LAYER 6: MOODIAN - TAX AUTHORITY INTEGRATION
-// ═══════════════════════════════════════════════════════════════════════════
-
-model Invoice {
-  id        String @id @default(cuid())
-  order_id  String
-  tenant_id String
-
-  // Invoice Identity
-  invoice_number String  @db.VarChar(20)
-  serial_number  String? @db.VarChar(20)
-
-  // Moodian
-  suid             String? @unique @db.VarChar(30) // Unique Invoice ID from Moodian
-  tax_id           String? @db.VarChar(30) // شماره منحصر به فرد مالیاتی
-  reference_number String? @db.VarChar(30)
-
-  // Status
-  status InvoiceStatus @default(DRAFT)
-
-  // Amounts
-  subtotal   Decimal @db.Decimal(15, 2)
-  discount   Decimal @default(0) @db.Decimal(15, 2)
-  tax_amount Decimal @db.Decimal(15, 2)
-  total      Decimal @db.Decimal(15, 2)
-
-  // Buyer Info (snapshot)
-  buyer_info Json @default("{}")
-
-  // Items (snapshot)
-  items Json @default("[]")
-
-  // Moodian Response
-  moodian_response     Json?
-  moodian_sent_at      DateTime?
-  moodian_confirmed_at DateTime?
-
-  // QR Code
-  qr_code String?
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  order  Order  @relation(fields: [order_id], references: [id])
-  tenant Tenant @relation(fields: [tenant_id], references: [id])
-
-  @@unique([tenant_id, invoice_number])
-  @@index([tenant_id, status])
-  @@index([tenant_id, created_at])
-  @@index([suid])
-  @@map("invoices")
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// LAYER 7: EXECUTOR ECOSYSTEM
-// ═══════════════════════════════════════════════════════════════════════════
-
-model ExecutorProfile {
-  id        String @id @default(cuid())
-  user_id   String @unique
-  tenant_id String
-
-  // Professional Info
-  specialties      String[] // plumber, electrician, etc.
-  experience_years Int      @default(0)
-
-  // Verification
-  status      ExecutorStatus @default(PENDING_VERIFICATION)
-  verified_at DateTime?
-
-  // Rating
-  rating             Decimal @default(0) @db.Decimal(3, 2)
-  total_reviews      Int     @default(0)
-  completed_projects Int     @default(0)
-
-  // Portfolio
-  portfolio    Json @default("[]")
-  certificates Json @default("[]")
-
-  // Commission
-  commission_rate Decimal @default(15) @db.Decimal(5, 2)
-
-  // Service Area
-  service_areas Json @default("[]") // Cities/Districts
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  user     User         @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  projects Project[]
-  bids     ProjectBid[]
-
-  @@index([tenant_id, status])
-  @@index([tenant_id, rating])
-  @@map("executor_profiles")
-}
-
-model Project {
-  id          String  @id @default(cuid())
-  tenant_id   String
-  customer_id String
-  executor_id String?
-
-  // Details
-  title       String @db.VarChar(255)
-  description String
-  category    String @db.VarChar(100)
-
-  // Location
-  address Json
-
-  // Budget
-  budget_min  Decimal? @db.Decimal(15, 2)
-  budget_max  Decimal? @db.Decimal(15, 2)
-  final_price Decimal? @db.Decimal(15, 2)
-
-  // Status
-  status ProjectStatus @default(OPEN_FOR_BIDDING)
-
-  // Timeline
-  deadline     DateTime?
-  started_at   DateTime?
-  completed_at DateTime?
-
-  // Media
-  images Json @default("[]")
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  executor ExecutorProfile? @relation(fields: [executor_id], references: [id])
-  bids     ProjectBid[]
-
-  @@index([tenant_id, status])
-  @@index([tenant_id, category])
-  @@index([tenant_id, created_at])
-  @@map("projects")
-}
-
-model ProjectBid {
-  id          String @id @default(cuid())
-  project_id  String
-  executor_id String
-  tenant_id   String
-
-  // Bid Details
-  amount         Decimal @db.Decimal(15, 2)
-  description    String?
-  estimated_days Int?
-
-  // Status
-  status BidStatus @default(PENDING)
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  project  Project         @relation(fields: [project_id], references: [id], onDelete: Cascade)
-  executor ExecutorProfile @relation(fields: [executor_id], references: [id])
-
-  @@unique([project_id, executor_id])
-  @@index([tenant_id, status])
-  @@map("project_bids")
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// LAYER 8: WARRANTY & AFTER-SALES
-// ═══════════════════════════════════════════════════════════════════════════
-
-model Warranty {
-  id         String @id @default(cuid())
-  product_id String
-  tenant_id  String
-
-  // Registration
-  serial_number String   @db.VarChar(50)
-  purchase_date DateTime @db.Date
-
-  // Customer
-  customer_name  String  @db.VarChar(100)
-  customer_phone String  @db.VarChar(20)
-  customer_email String? @db.VarChar(255)
-
-  // Warranty Period
-  start_date DateTime @db.Date
-  end_date   DateTime @db.Date
-
-  // Status
-  status WarrantyStatus @default(ACTIVE)
-
-  // Claims
-  claims Json @default("[]")
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  product Product @relation(fields: [product_id], references: [id])
-
-  @@unique([tenant_id, serial_number])
-  @@index([tenant_id, status])
-  @@index([tenant_id, end_date])
-  @@index([customer_phone])
-  @@map("warranties")
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// LAYER 9: DISCOUNT & PROMOTION
-// ═══════════════════════════════════════════════════════════════════════════
-
-model Discount {
-  id        String @id @default(cuid())
-  tenant_id String
-
-  // Identity
-  code String @db.VarChar(50)
-  name String @db.VarChar(100)
-
-  // Type
-  type  DiscountType
-  value Decimal      @db.Decimal(15, 2)
-
-  // Conditions
-  min_order_amount Decimal? @db.Decimal(15, 2)
-  max_discount     Decimal? @db.Decimal(15, 2)
-
-  // Limits
-  usage_limit    Int?
-  usage_count    Int  @default(0)
-  per_user_limit Int?
-
-  // Validity
-  starts_at DateTime
-  ends_at   DateTime
-
-  // Targeting
-  applies_to String   @default("ALL") // ALL, CATEGORIES, PRODUCTS, USERS
-  target_ids String[] @default([])
-
-  // Status
-  is_active Boolean @default(true)
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  usages DiscountUsage[]
-
-  @@unique([tenant_id, code])
-  @@index([tenant_id, is_active])
-  @@index([tenant_id, starts_at, ends_at])
-  @@map("discounts")
-}
-
-model DiscountUsage {
-  id          String @id @default(cuid())
-  discount_id String
-  user_id     String
-  order_id    String
-  tenant_id   String
-
-  amount Decimal @db.Decimal(15, 2)
-
-  created_at DateTime @default(now())
-
-  discount Discount @relation(fields: [discount_id], references: [id])
-
-  @@index([tenant_id, discount_id])
-  @@index([tenant_id, user_id])
-  @@map("discount_usages")
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// LAYER 10: SECURITY & RBAC
-// ═══════════════════════════════════════════════════════════════════════════
-
-model Permission {
-  id String @id @default(cuid())
-
-  name        String  @unique @db.VarChar(100)
-  resource    String  @db.VarChar(50)
-  action      String  @db.VarChar(50)
-  description String?
-
-  conditions Json @default("{}")
-
-  created_at DateTime @default(now())
-
-  roles RolePermission[]
-
-  @@index([resource, action])
-  @@map("permissions")
-}
-
-model RolePermission {
-  id            String   @id @default(cuid())
-  tenant_id     String
-  role          UserRole
-  permission_id String
-
-  is_active Boolean @default(true)
-
-  created_at DateTime @default(now())
-
-  permission Permission @relation(fields: [permission_id], references: [id], onDelete: Cascade)
-
-  @@unique([tenant_id, role, permission_id])
-  @@index([tenant_id, role])
-  @@map("role_permissions")
-}
-
-model AuditLog {
-  id        String  @id @default(cuid())
-  tenant_id String?
-  user_id   String?
-
-  action      String  @db.VarChar(50)
-  resource    String  @db.VarChar(50)
-  resource_id String?
-
-  success    Boolean
-  ip_address String? @db.VarChar(45)
-  user_agent String?
-
-  old_values Json?
-  new_values Json?
-  metadata   Json  @default("{}")
-
-  created_at DateTime @default(now())
-
-  @@index([tenant_id, action])
-  @@index([tenant_id, resource])
-  @@index([tenant_id, user_id])
-  @@index([tenant_id, created_at])
-  @@map("audit_logs")
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// LAYER 11: MONITORING & ANALYTICS
-// ═══════════════════════════════════════════════════════════════════════════
-
-model SystemEvent {
-  id        String @id @default(cuid())
-  tenant_id String
-
-  event_type  String  @db.VarChar(50)
-  entity_type String  @db.VarChar(50)
-  entity_id   String?
-  user_id     String?
-
-  data Json @default("{}")
-
-  occurred_at DateTime @default(now())
-
-  @@index([tenant_id, event_type])
-  @@index([tenant_id, entity_type, entity_id])
-  @@index([tenant_id, occurred_at])
-  @@map("system_events")
-}
-
-model PerformanceMetric {
-  id        String @id @default(cuid())
-  tenant_id String
-
-  metric_name String @db.VarChar(100)
-  value       Float
-  tags        Json   @default("{}")
-
-  recorded_at DateTime @default(now())
-
-  @@index([tenant_id, metric_name])
-  @@index([tenant_id, recorded_at])
-  @@map("performance_metrics")
-}
-
-model Notification {
-  id        String @id @default(cuid())
-  tenant_id String
-  user_id   String
-
-  type  String  @db.VarChar(50)
-  title String  @db.VarChar(255)
-  body  String?
-
-  data Json @default("{}")
-
-  is_read Boolean   @default(false)
-  read_at DateTime?
-
-  created_at DateTime @default(now())
-
-  @@index([tenant_id, user_id, is_read])
-  @@index([tenant_id, user_id, created_at])
-  @@map("notifications")
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// LAYER 12: CART & WISHLIST
-// ═══════════════════════════════════════════════════════════════════════════
+// ============================================
+// 3. SHOPPING CART & WISHLIST
+// ============================================
 
 model Cart {
-  id         String  @id @default(cuid())
-  user_id    String? // null for guest carts
-  session_id String? // for guest carts
-  tenant_id  String
+  id        String   @id @default(cuid())
+  user_id   String   @unique
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
-  // Metadata
-  metadata Json @default("{}")
+  user      User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  items     CartItem[]
 
-  created_at DateTime  @default(now())
-  updated_at DateTime  @updatedAt
-  expires_at DateTime? // for guest carts
-
-  items CartItem[]
-
-  @@unique([tenant_id, user_id])
-  @@index([tenant_id, session_id])
-  @@index([expires_at])
   @@map("carts")
 }
 
 model CartItem {
-  id         String @id @default(cuid())
-  cart_id    String
+  id        String   @id @default(cuid())
+  cart_id   String
   product_id String
-  tenant_id  String
-
-  quantity Int @default(1)
-
-  // Selected variant/options
-  options Json @default("{}")
-
+  quantity  Int      @default(1)
   created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
 
-  cart Cart @relation(fields: [cart_id], references: [id], onDelete: Cascade)
+  cart      Cart     @relation(fields: [cart_id], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [product_id], references: [id])
 
   @@unique([cart_id, product_id])
-  @@index([tenant_id])
   @@map("cart_items")
 }
 
 model Wishlist {
-  id        String @id @default(cuid())
+  id        String   @id @default(cuid())
   user_id   String
-  tenant_id String
-
+  product_id String
   created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
 
-  items WishlistItem[]
+  user      User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [product_id], references: [id])
 
-  @@unique([tenant_id, user_id])
+  @@unique([user_id, product_id])
   @@map("wishlists")
 }
 
-model WishlistItem {
-  id          String @id @default(cuid())
-  wishlist_id String
-  product_id  String
-  tenant_id   String
+// ============================================
+// 4. ORDERS & PAYMENTS
+// ============================================
 
+model Order {
+  id        String   @id @default(cuid())
+  user_id   String
+  order_number String @unique @db.VarChar(20)
+  status    String   @default("PENDING") // PENDING, PAID, PROCESSING, SHIPPED, DELIVERED, COMPLETED
+  total_amount Decimal @db.Decimal(10, 2)
   created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
-  wishlist Wishlist @relation(fields: [wishlist_id], references: [id], onDelete: Cascade)
+  user      User        @relation(fields: [user_id], references: [id])
+  items     OrderItem[]
+  payment   Payment?
 
-  @@unique([wishlist_id, product_id])
-  @@index([tenant_id])
-  @@map("wishlist_items")
+  @@index([user_id])
+  @@index([status])
+  @@index([created_at])
+  @@map("orders")
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// LAYER 13: REVIEWS & RATINGS
-// ═══════════════════════════════════════════════════════════════════════════
+model OrderItem {
+  id        String   @id @default(cuid())
+  order_id  String
+  product_id String
+  quantity  Int
+  unit_price Decimal  @db.Decimal(10, 2)
+  total_price Decimal @db.Decimal(10, 2)
+  created_at DateTime @default(now())
+
+  order     Order    @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [product_id], references: [id])
+
+  @@index([order_id])
+  @@map("order_items")
+}
+
+model Payment {
+  id        String   @id @default(cuid())
+  order_id  String   @unique
+  amount    Decimal  @db.Decimal(10, 2)
+  status    String   @default("PENDING") // PENDING, COMPLETED, FAILED
+  gateway   String   @db.VarChar(50) // ZARINPAL, MELLAT, SAMAN
+  transaction_id String? @db.VarChar(100)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  order     Order    @relation(fields: [order_id], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
+
+// ============================================
+// 5. REVIEWS & RATINGS
+// ============================================
 
 model Review {
-  id         String  @id @default(cuid())
+  id        String   @id @default(cuid())
   product_id String
-  user_id    String
-  order_id   String? // Verified purchase
-  tenant_id  String
-
-  // Rating
-  rating Int // 1-5
-
-  // Content
-  title String? @db.VarChar(100)
-  body  String?
-
-  // Pros/Cons
-  pros String[] @default([])
-  cons String[] @default([])
-
-  // Media
-  images Json @default("[]")
-
-  // Moderation
-  is_approved Boolean   @default(false)
-  is_featured Boolean   @default(false)
-  approved_at DateTime?
-  approved_by String?
-
-  // Helpfulness
-  helpful_count Int @default(0)
-
+  user_id   String
+  rating    Int      // 1-5
+  comment   String?
   created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+
+  product   Product  @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@unique([product_id, user_id])
-  @@index([tenant_id, product_id])
-  @@index([tenant_id, is_approved])
-  @@index([tenant_id, rating])
-  @@map("reviews")
-}
-
-model ReviewHelpful {
-  id        String @id @default(cuid())
-  review_id String
-  user_id   String
-  tenant_id String
-
-  is_helpful Boolean
-
-  created_at DateTime @default(now())
-
-  @@unique([review_id, user_id])
-  @@map("review_helpfuls")
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// LAYER 14: BRAND & SHIPPING
-// ═══════════════════════════════════════════════════════════════════════════
-
-model Brand {
-  id        String @id @default(cuid())
-  tenant_id String
-
-  name    String  @db.VarChar(100)
-  name_fa String? @db.VarChar(100)
-  slug    String  @db.VarChar(100)
-
-  logo_url    String?
-  description String?
-
-  is_active   Boolean @default(true)
-  is_featured Boolean @default(false)
-
-  // SEO
-  meta_title       String? @db.VarChar(70)
-  meta_description String? @db.VarChar(160)
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  @@unique([tenant_id, slug])
-  @@index([tenant_id, is_active])
-  @@map("brands")
-}
-
-model ShippingMethod {
-  id        String @id @default(cuid())
-  tenant_id String
-
-  name    String  @db.VarChar(100)
-  name_fa String? @db.VarChar(100)
-  code    String  @db.VarChar(50)
-
-  // Pricing
-  base_cost   Decimal  @db.Decimal(15, 2)
-  cost_per_kg Decimal  @default(0) @db.Decimal(15, 2)
-  free_above  Decimal? @db.Decimal(15, 2) // Free shipping threshold
-
-  // Delivery Time
-  min_days Int @default(1)
-  max_days Int @default(3)
-
-  // Restrictions
-  max_weight      Decimal? @db.Decimal(10, 2) // kg
-  available_areas Json     @default("[]") // Province/City codes
-
-  is_active  Boolean @default(true)
-  sort_order Int     @default(0)
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  @@unique([tenant_id, code])
-  @@index([tenant_id, is_active])
-  @@map("shipping_methods")
-}
-
-model ShippingZone {
-  id        String @id @default(cuid())
-  tenant_id String
-
-  name      String   @db.VarChar(100)
-  provinces String[] @default([])
-  cities    String[] @default([])
-
-  // Rate adjustments
-  rate_multiplier Decimal @default(1) @db.Decimal(5, 2)
-  extra_days      Int     @default(0)
-
-  is_active Boolean @default(true)
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  @@index([tenant_id, is_active])
-  @@map("shipping_zones")
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// LAYER 15: PRODUCT VARIANTS & ATTRIBUTES
-// ═══════════════════════════════════════════════════════════════════════════
-
-model AttributeGroup {
-  id        String @id @default(cuid())
-  tenant_id String
-
-  name    String  @db.VarChar(100)
-  name_fa String? @db.VarChar(100)
-
-  sort_order Int @default(0)
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  attributes Attribute[]
-
-  @@unique([tenant_id, name])
-  @@map("attribute_groups")
-}
-
-model Attribute {
-  id        String @id @default(cuid())
-  group_id  String
-  tenant_id String
-
-  name    String  @db.VarChar(100)
-  name_fa String? @db.VarChar(100)
-  code    String  @db.VarChar(50)
-
-  // Type: TEXT, NUMBER, SELECT, MULTI_SELECT, COLOR, SIZE
-  type String @db.VarChar(20)
-
-  // For SELECT types
-  options Json @default("[]")
-
-  is_filterable Boolean @default(false)
-  is_required   Boolean @default(false)
-
-  sort_order Int @default(0)
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  group AttributeGroup @relation(fields: [group_id], references: [id])
-
-  @@unique([tenant_id, code])
-  @@index([tenant_id, is_filterable])
-  @@map("attributes")
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// LAYER 16: CONTENT & MEDIA
-// ═══════════════════════════════════════════════════════════════════════════
-
-model Media {
-  id        String @id @default(cuid())
-  tenant_id String
-
-  // File Info
-  filename      String @db.VarChar(255)
-  original_name String @db.VarChar(255)
-  mime_type     String @db.VarChar(100)
-  size          Int // bytes
-
-  // Storage
-  storage String @default("local") // local, s3, cloudflare
-  path    String
-  url     String
-
-  // Metadata
-  alt_text String? @db.VarChar(255)
-  title    String? @db.VarChar(255)
-
-  // Dimensions (for images)
-  width  Int?
-  height Int?
-
-  // Variants (thumbnails, etc.)
-  variants Json @default("{}")
-
-  created_at DateTime @default(now())
-  created_by String?
-
-  @@index([tenant_id])
-  @@index([tenant_id, mime_type])
-  @@map("media")
-}
-
-model SpatialAsset {
-  id         String   @id @default(cuid())
-  tenant_id  String
-  product_id String?
-  title      String   @db.VarChar(255)
-  asset_url  String   @db.VarChar(500)
-  format     String?  @db.VarChar(32)
-  metadata   Json     @default("{}")
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  product Product? @relation(fields: [product_id], references: [id])
-  tenant  Tenant   @relation(fields: [tenant_id], references: [id])
-
-  @@index([tenant_id])
   @@index([product_id])
-  @@map("spatial_assets")
-}
-
-model Page {
-  id        String @id @default(cuid())
-  tenant_id String
-
-  title    String  @db.VarChar(255)
-  title_fa String? @db.VarChar(255)
-  slug     String  @db.VarChar(255)
-
-  content    String?
-  content_fa String?
-
-  // SEO
-  meta_title       String? @db.VarChar(70)
-  meta_description String? @db.VarChar(160)
-
-  is_published Boolean   @default(false)
-  published_at DateTime?
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  @@unique([tenant_id, slug])
-  @@index([tenant_id, is_published])
-  @@map("pages")
-}
-
-model Banner {
-  id        String @id @default(cuid())
-  tenant_id String
-
-  title     String  @db.VarChar(255)
-  image_url String
-  link_url  String?
-
-  position String @db.VarChar(50) // homepage_hero, sidebar, etc.
-
-  starts_at DateTime?
-  ends_at   DateTime?
-
-  is_active  Boolean @default(true)
-  sort_order Int     @default(0)
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  @@index([tenant_id, position, is_active])
-  @@map("banners")
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// LAYER 17: SETTINGS & CONFIGURATION
-// ═══════════════════════════════════════════════════════════════════════════
-
-model Setting {
-  id        String  @id @default(cuid())
-  tenant_id String? // null for global settings
-
-  key   String @db.VarChar(100)
-  value Json
-
-  // Grouping
-  group String @default("general") @db.VarChar(50)
-
-  // Type hint for UI
-  type String @default("string") @db.VarChar(20)
-
-  is_public Boolean @default(false) // Exposed to frontend
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  @@unique([tenant_id, key])
-  @@index([tenant_id, group])
-  @@map("settings")
-}
-
-model EmailTemplate {
-  id        String @id @default(cuid())
-  tenant_id String
-
-  code String @db.VarChar(50) // order_confirmation, password_reset, etc.
-  name String @db.VarChar(100)
-
-  subject    String  @db.VarChar(255)
-  subject_fa String? @db.VarChar(255)
-
-  body_html String
-  body_text String?
-
-  // Variables available in template
-  variables Json @default("[]")
-
-  is_active Boolean @default(true)
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  @@unique([tenant_id, code])
-  @@map("email_templates")
-}
-
-model SmsTemplate {
-  id        String @id @default(cuid())
-  tenant_id String
-
-  code String @db.VarChar(50)
-  name String @db.VarChar(100)
-
-  body    String  @db.VarChar(500)
-  body_fa String? @db.VarChar(500)
-
-  // Pattern ID for SMS providers
-  pattern_id String? @db.VarChar(50)
-
-  variables Json @default("[]")
-
-  is_active Boolean @default(true)
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  @@unique([tenant_id, code])
-  @@map("sms_templates")
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// LAYER 18: QUEUE & JOBS
-// ═══════════════════════════════════════════════════════════════════════════
-
-model QueueJob {
-  id        String  @id @default(cuid())
-  tenant_id String?
-
-  queue String @db.VarChar(50)
-  name  String @db.VarChar(100)
-
-  payload Json
-
-  // Status
-  status       String @default("pending") // pending, processing, completed, failed
-  attempts     Int    @default(0)
-  max_attempts Int    @default(3)
-
-  // Timing
-  scheduled_at DateTime  @default(now())
-  started_at   DateTime?
-  completed_at DateTime?
-
-  // Error handling
-  error String?
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  @@index([queue, status])
-  @@index([scheduled_at])
-  @@map("queue_jobs")
-}
-
-model FailedJob {
-  id        String  @id @default(cuid())
-  tenant_id String?
-
-  queue String @db.VarChar(50)
-  name  String @db.VarChar(100)
-
-  payload     Json
-  error       String
-  stack_trace String?
-
-  failed_at DateTime @default(now())
-
-  @@index([queue])
-  @@index([failed_at])
-  @@map("failed_jobs")
+  @@map("reviews")
 }

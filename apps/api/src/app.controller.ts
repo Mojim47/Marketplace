@@ -15,15 +15,14 @@ import { Bulletproof } from '../../../libs/common/src/decorators/bulletproof';
 import { PrismaService } from '../../../libs/prisma/src/prisma.service';
 import { HeroAssetSchema, type HeroAsset } from '../../../libs/common/src/contracts/hero.contract';
 import type { Request } from 'express';
-import pino from 'pino';
 
 const TARGET_ASSET_ID = 'cmlfxxjxz0006foldf4gefkav';
 const HERO_CACHE_KEY = 'hero-asset-cache';
 const HERO_CACHE_TTL_MS = 60_000;
 const HERO_CACHE_MAX_TTL_SECONDS = 300;
 
-class NeonThrottlerGuard extends ThrottlerGuard {
-  protected throwThrottlingException(_context: any): void {
+export class NeonThrottlerGuard extends ThrottlerGuard {
+  protected override async throwThrottlingException(_context: any): Promise<void> {
     throw new HttpException(
       {
         status: 'THROTTLED',
@@ -38,7 +37,6 @@ class NeonThrottlerGuard extends ThrottlerGuard {
 @Controller()
 export class AppController {
   private readonly logger = new Logger('AppController');
-  private readonly structured = pino({ level: process.env.LOG_LEVEL ?? 'info' });
 
   constructor(
     private readonly prisma: PrismaService,
@@ -47,7 +45,6 @@ export class AppController {
 
   @Get('/v1/marketplace/hero')
   @UseGuards(NeonThrottlerGuard)
-  @Throttle(10, 60)
   @Bulletproof({
     id: 'stub-hero',
     name: 'Lazarus Stub Asset',
@@ -92,7 +89,7 @@ export class AppController {
         spatialData: asset.metadata ?? {},
       });
 
-      await this.cache.set(HERO_CACHE_KEY, { data: parsed, fetchedAt: now }, { ttl: HERO_CACHE_MAX_TTL_SECONDS });
+      await this.cache.set(HERO_CACHE_KEY, { data: parsed, fetchedAt: now }, HERO_CACHE_MAX_TTL_SECONDS);
 
       return parsed;
     } catch (error: any) {
@@ -108,7 +105,7 @@ export class AppController {
     }
   }
 
-  private enforceOrigin(req: Request) {
+  private enforceOrigin(req: any) {
     const allowed =
       process.env.FRONTEND_ORIGIN ||
       process.env.NEXT_PUBLIC_APP_ORIGIN ||
@@ -152,7 +149,7 @@ export class AppController {
       await this.prisma.$queryRaw`SELECT 1`;
       db = true;
     } catch (e: any) {
-      this.structured.warn({ msg: 'health db check failed', err: this.sanitize(e?.message) });
+      this.logger.warn(`health db check failed: ${this.sanitize(e?.message)}`);
     }
     const latency = Date.now() - start;
     const mem = process.memoryUsage();

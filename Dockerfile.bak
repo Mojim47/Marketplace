@@ -1,0 +1,29 @@
+# STAGE 1: THE SURGEON (BUILDER)
+FROM node:20-alpine AS builder
+WORKDIR /app
+RUN npm install -g pnpm
+COPY package.json pnpm-lock.yaml ./
+# Install ALL deps (including heavy dev tools) to compile
+RUN pnpm install --frozen-lockfile --shamefully-hoist
+COPY . .
+RUN pnpm prisma generate
+RUN pnpm build:api
+
+# STAGE 2: THE GHOST (RUNNER - THE LIGHTNING CORE)
+FROM node:20-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+RUN npm install -g pnpm
+
+# Only copy what's needed to install PROD-ONLY deps
+COPY --from=builder /app/package.json /app/pnpm-lock.yaml ./
+COPY --from=builder /app/prisma ./prisma
+
+# Install ONLY production dependencies (No Puppeteer, No ONNX)
+RUN pnpm install --prod --frozen-lockfile --shamefully-hoist && pnpm store prune
+
+# Copy the pre-compiled soul of the app
+COPY --from=builder /app/dist ./dist
+
+EXPOSE 3000
+CMD ["node", "dist/apps/api/src/main.js"]

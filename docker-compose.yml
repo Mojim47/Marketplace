@@ -1,256 +1,86 @@
-﻿# NextGen Marketplace - Full Stack (API + Web + Admin + Worker + Infra)
-
-x-logging: &default-logging
-  driver: json-file
-  options:
-    max-size: "10m"
-    max-file: "3"
-
-x-restart: &default-restart
-  restart: unless-stopped
+version: '3.9'
 
 services:
-  # PostgreSQL 16 - Primary Database
   postgres:
-    image: ${POSTGRES_IMAGE:-postgres:16.4-alpine@sha256:5660c2cbfea50c7a9127d17dc4e48543eedd3d7a41a595a2dfa572471e37e64c}
+    image: postgres:16-alpine
     container_name: nextgen-postgres
-    <<: *default-restart
-    ports:
-      - "${POSTGRES_PORT:-5432}:5432"
     environment:
-      POSTGRES_USER: ${DB_USER:?set DB_USER in your environment}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in your environment}
-      POSTGRES_DB: ${DB_NAME:-nextgen_marketplace}
+      POSTGRES_USER: nextgen
+      POSTGRES_PASSWORD: nextgen123
+      POSTGRES_DB: nextgen_marketplace
+    ports:
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-nextgen} -d ${DB_NAME:-nextgen_marketplace}"]
+      test: ["CMD-SHELL", "pg_isready -U nextgen"]
       interval: 10s
       timeout: 5s
       retries: 5
-    logging: *default-logging
     networks:
-      - nextgen-network
+      - nextgen
 
-  # DragonflyDB - Redis-Compatible Cache
   redis:
-    image: ${DRAGONFLY_IMAGE:-docker.dragonflydb.io/dragonflydb/dragonfly:v1.15.1@sha256:48d7f1679a895702262808c83689df94b14d40c07401fad90723ad164d271150}
+    image: redis:7-alpine
     container_name: nextgen-redis
-    <<: *default-restart
     ports:
-      - "${REDIS_PORT:-6379}:6379"
-    command: ["dragonfly", "--requirepass", "${REDIS_PASSWORD:?set REDIS_PASSWORD in your environment}", "--maxmemory", "512mb", "--cache_mode"]
+      - "6379:6379"
+    command: redis-server --requirepass nextgen123 --maxmemory 256mb
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:?set REDIS_PASSWORD in your environment}", "ping"]
+      test: ["CMD", "redis-cli", "-a", "nextgen123", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
-    logging: *default-logging
     networks:
-      - nextgen-network
+      - nextgen
 
-  # MinIO - S3-Compatible Object Storage
   minio:
-    image: ${MINIO_IMAGE:-minio/minio:RELEASE.2024-12-18T13-15-44Z@sha256:1dce27c494a16bae114774f1cec295493f3613142713130c2d22dd5696be6ad3}
+    image: minio/minio:latest
     container_name: nextgen-minio
-    <<: *default-restart
-    ports:
-      - "${MINIO_API_PORT:-9000}:9000"
-      - "${MINIO_CONSOLE_PORT:-9001}:9001"
-    command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?set MINIO_ROOT_USER in your environment}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?set MINIO_ROOT_PASSWORD in your environment}
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    command: server /data --console-address ":9001"
     volumes:
       - minio_data:/data
     healthcheck:
-      test: ["CMD", "sh", "-c", "curl -fsS http://localhost:9000/minio/health/live >/dev/null"]
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 10s
       timeout: 5s
       retries: 5
-    logging: *default-logging
     networks:
-      - nextgen-network
+      - nextgen
 
-  # MinIO bucket init (uploads)
-  minio-init:
-    image: minio/mc:latest
-    container_name: nextgen-minio-init
-    depends_on:
-      - minio
-    entrypoint:
-      - /bin/sh
-      - -c
-      - |
-        set -e
-        mc alias set local http://minio:9000 "$${MINIO_ROOT_USER}" "$${MINIO_ROOT_PASSWORD}"
-        mc mb -p local/"$${MINIO_BUCKET_UPLOADS:-uploads}"
-        mc anonymous set download local/"$${MINIO_BUCKET_UPLOADS:-uploads}"
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?set MINIO_ROOT_USER in your environment}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?set MINIO_ROOT_PASSWORD in your environment}
-      MINIO_BUCKET_UPLOADS: ${MINIO_BUCKET_UPLOADS:-uploads}
-    restart: "no"
-    networks:
-      - nextgen-network
-
-  # Database migrations (run once per deploy)
-  migrate:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: api
-    container_name: nextgen-migrate
-    command: ["pnpm", "exec", "prisma", "migrate", "deploy", "--schema=./prisma/schema.prisma"]
-    environment:
-      NODE_ENV: ${NODE_ENV:-production}
-      DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL in your environment}
-    depends_on:
-      postgres:
-        condition: service_healthy
-    restart: "no"
-    networks:
-      - nextgen-network
-
-  # API Service
   api:
     build:
       context: .
       dockerfile: Dockerfile
-      target: api
     container_name: nextgen-api
-    <<: *default-restart
     ports:
-      - "${API_PORT:-3001}:3001"
+      - "3001:3001"
     environment:
-      NODE_ENV: ${NODE_ENV:-production}
-      NODE_OPTIONS: ${NODE_OPTIONS:---max-old-space-size=512}
-      PORT: 3001
-      API_PREFIX: ${API_PREFIX:-/api}
-      DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL in your environment}
-      REDIS_URL: ${REDIS_URL:?set REDIS_URL in your environment}
-      CORS_ORIGINS: ${CORS_ORIGINS:?set CORS_ORIGINS in your environment}
-      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in your environment}
-      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?set JWT_REFRESH_SECRET in your environment}
-      JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY:?set JWT_PRIVATE_KEY in your environment}
-      JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY:?set JWT_PUBLIC_KEY in your environment}
-      TOTP_ENCRYPTION_KEY: ${TOTP_ENCRYPTION_KEY:?set TOTP_ENCRYPTION_KEY in your environment}
-      SESSION_SECRET: ${SESSION_SECRET:?set SESSION_SECRET in your environment}
+      NODE_ENV: production
+      DATABASE_URL: postgresql://nextgen:nextgen123@postgres:5432/nextgen_marketplace
+      REDIS_URL: redis://:nextgen123@redis:6379/0
       MINIO_ENDPOINT: minio
-      MINIO_API_PORT: 9000
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?set MINIO_ROOT_USER in your environment}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?set MINIO_ROOT_PASSWORD in your environment}
-      MINIO_BUCKET_UPLOADS: ${MINIO_BUCKET_UPLOADS:-uploads}
-      MINIO_USE_SSL: "false"
-      MINIO_PUBLIC_URL: ${MINIO_PUBLIC_URL:-http://localhost:${MINIO_API_PORT:-9000}}
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-      minio-init:
-        condition: service_completed_successfully
-    healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3001/livez', res => process.exit(res.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-    cap_drop: ["ALL"]
-    security_opt:
-      - no-new-privileges:true
-    read_only: true
-    tmpfs:
-      - /tmp
-      - /var/log
-    logging: *default-logging
-    networks:
-      - nextgen-network
-
-  # Web App
-  web:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: web
-    container_name: nextgen-web
-    <<: *default-restart
-    ports:
-      - "${WEB_PORT:-3000}:3000"
-    environment:
-      NODE_ENV: ${NODE_ENV:-production}
-      PORT: 3000
-      NEXT_PUBLIC_API_BASE: ${NEXT_PUBLIC_API_BASE:?set NEXT_PUBLIC_API_BASE in your environment}
-      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:?set NEXT_PUBLIC_SITE_URL in your environment}
-    depends_on:
-      api:
+      minio:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/livez', res => process.exit(res.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-    logging: *default-logging
     networks:
-      - nextgen-network
-
-  # Admin App
-  admin:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: admin
-    container_name: nextgen-admin
-    <<: *default-restart
-    ports:
-      - "${ADMIN_PORT:-3003}:3000"
-    environment:
-      NODE_ENV: ${NODE_ENV:-production}
-      PORT: 3000
-      ADMIN_API_PROXY_TARGET: ${ADMIN_API_PROXY_TARGET:?set ADMIN_API_PROXY_TARGET in your environment}
-      NEXT_PUBLIC_API_BASE: ${NEXT_PUBLIC_API_BASE:?set NEXT_PUBLIC_API_BASE in your environment}
-    depends_on:
-      api:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/livez', res => process.exit(res.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-    logging: *default-logging
-    networks:
-      - nextgen-network
-
-  # Worker Service
-  worker:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: worker
-    container_name: nextgen-worker
-    <<: *default-restart
-    environment:
-      NODE_ENV: ${NODE_ENV:-production}
-      PORT: 3000
-      DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL in your environment}
-      REDIS_URL: ${REDIS_URL:?set REDIS_URL in your environment}
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/livez', res => process.exit(res.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-    logging: *default-logging
-    networks:
-      - nextgen-network
+      - nextgen
+    restart: unless-stopped
 
 networks:
-  nextgen-network:
+  nextgen:
     driver: bridge
 
 volumes:
