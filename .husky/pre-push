@@ -5,7 +5,7 @@
 
 TEST_ARGS=""
 if [ "${SKIP_ORDER_LOCK}" = "1" ]; then
-  TEST_ARGS="${TEST_ARGS} --exclude=tests/integration/orders-lock.integration.test.ts"
+  TEST_ARGS="${TEST_ARGS} --exclude=\"**/orders-lock.integration.test.ts\""
 fi
 
 pnpm test:unit -- ${TEST_ARGS}
