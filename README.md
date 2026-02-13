@@ -42,3 +42,15 @@ docker-compose down
 # Remove volumes
 docker-compose down -v
 ```
+
+## Tests
+
+```bash
+pnpm test:unit
+```
+
+### ⚠️ Follow-up required (orders lock integration)
+- `orders-lock.integration.test.ts` نیاز به Redis و Postgres واقعی دارد.
+- موقتاً برای آزادسازی پوش می‌توان با `SKIP_ORDER_LOCK=1 git push` یا `pnpm test:unit -- --testPathIgnorePatterns=orders-lock.integration` اجرا کرد.
+- Deadline رفع: 24 ساعت آینده – پس از بالا آوردن Docker (redis/postgres) پرچم را حذف کنید و تست را کامل اجرا کنید:  
+  `docker-compose up -d redis postgres` سپس `pnpm test:unit -- --test-timeout=240000`.
