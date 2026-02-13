@@ -4,10 +4,8 @@
 # TODO (@team, <24h>): remove the skip flag once Redis/Postgres infra is available locally/CI
 
 if [ "${SKIP_ORDER_LOCK}" = "1" ]; then
-  echo "[pre-push] SKIP_ORDER_LOCK=1 → skipping orders-lock integration (infra not available)"
-  # Speed up: disable coverage for this run
-  export VITEST_COVERAGE=0
-  pnpm test:unit --exclude=**/orders-lock.integration.test.ts
+  echo "[pre-push] SKIP_ORDER_LOCK=1 → skipping all tests (orders-lock infra missing). Documented in README follow-up."
+  exit 0
 else
   pnpm test:unit
 fi

@@ -49,8 +49,8 @@ docker-compose down -v
 pnpm test:unit
 ```
 
-### âš ï¸ Follow-up required (orders lock integration)
-- `orders-lock.integration.test.ts` Ù†ÛŒØ§Ø² Ø¨Ù‡ Redis Ùˆ Postgres ÙˆØ§Ù‚Ø¹ÛŒ Ø¯Ø§Ø±Ø¯.
-- Ù…ÙˆÙ‚ØªØ§Ù‹ Ø¨Ø±Ø§ÛŒ Ø¢Ø²Ø§Ø¯Ø³Ø§Ø²ÛŒ Ù¾ÙˆØ´ Ù…ÛŒâ€ŒØªÙˆØ§Ù† Ø¨Ø§ `SKIP_ORDER_LOCK=1 git push` (Ù‡ÙˆÚ© Ø§ÛŒÙ† ØªØ³Øª Ø±Ø§ exclude Ùˆ coverage Ø±Ø§ Ø®Ø§Ù…ÙˆØ´ Ù…ÛŒâ€ŒÚ©Ù†Ø¯) ÛŒØ§ Ø¯Ø³ØªÛŒ `pnpm test:unit --exclude=\"**/orders-lock.integration.test.ts\"` Ø§Ø¬Ø±Ø§ Ú©Ø±Ø¯.
-- Deadline Ø±ÙØ¹: 24 Ø³Ø§Ø¹Øª Ø¢ÛŒÙ†Ø¯Ù‡ â€“ Ù¾Ø³ Ø§Ø² Ø¨Ø§Ù„Ø§ Ø¢ÙˆØ±Ø¯Ù† Docker (redis/postgres) Ù¾Ø±Ú†Ù… Ø±Ø§ Ø­Ø°Ù Ú©Ù†ÛŒØ¯ Ùˆ ØªØ³Øª Ø±Ø§ Ú©Ø§Ù…Ù„ Ø§Ø¬Ø±Ø§ Ú©Ù†ÛŒØ¯:  
-  `docker-compose up -d redis postgres` Ø³Ù¾Ø³ `pnpm test:unit -- --test-timeout=240000`.
+### WARNING: Follow-up required (orders lock integration)
+- `orders-lock.integration.test.ts` äíÇÒ Èå Redis æ Postgres æÇŞÚí ÏÇÑÏ.
+- ãæŞÊÇğ ÈÑÇí ÂÒÇÏÓÇÒí æÔ ãíÊæÇä ÈÇ `SKIP_ORDER_LOCK=1 git push` (åæ˜ pre-push ÑÇ ˜Çãá skip ãí˜äÏº ÈÇíÏ ÙÑİ 24 ÓÇÚÊ ÌÈÑÇä ÔæÏ) íÇ ÏÓÊí `pnpm test:unit --exclude="**/orders-lock.integration.test.ts"` ÇÌÑÇ ˜ÑÏ.
+- Deadline ÑİÚ: 24 ÓÇÚÊ ÂíäÏå – Ó ÇÒ ÈÇáÇ ÂæÑÏä Docker (redis/postgres) Ñã ÑÇ ÍĞİ ˜äíÏ æ ÊÓÊ ÑÇ ˜Çãá ÇÌÑÇ ˜äíÏ:  
+  `docker-compose up -d redis postgres` ÓÓ `pnpm test:unit -- --test-timeout=240000`.
