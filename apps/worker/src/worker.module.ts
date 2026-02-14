@@ -1,9 +1,9 @@
+import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { BullModule } from '@nestjs/bullmq';
+import { EmailProcessor } from './email.processor';
 import { WorkerController } from './worker.controller';
 import { WorkerService } from './worker.service';
-import { EmailProcessor } from './email.processor';
 
 @Module({
   imports: [

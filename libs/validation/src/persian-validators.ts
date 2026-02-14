@@ -37,7 +37,7 @@ export function toEnglishDigits(input: string): string {
  */
 export function toPersianDigits(input: string | number): string {
   const persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
-  return input.toString().replace(/\d/g, (d) => persianDigits[parseInt(d)] ?? d);
+  return input.toString().replace(/\d/g, (d) => persianDigits[Number.parseInt(d)] ?? d);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -50,16 +50,20 @@ export function toPersianDigits(input: string | number): string {
 export function validateNationalId(nationalId: string): boolean {
   const cleaned = toEnglishDigits(nationalId).replace(/\D/g, '');
 
-  if (cleaned.length !== 10) return false;
-  if (/^(\d)\1{9}$/.test(cleaned)) return false;
+  if (cleaned.length !== 10) {
+    return false;
+  }
+  if (/^(\d)\1{9}$/.test(cleaned)) {
+    return false;
+  }
 
   let sum = 0;
   for (let i = 0; i < 9; i++) {
-    sum += parseInt(cleaned.charAt(i)) * (10 - i);
+    sum += Number.parseInt(cleaned.charAt(i)) * (10 - i);
   }
 
   const remainder = sum % 11;
-  const checkDigit = parseInt(cleaned.charAt(9));
+  const checkDigit = Number.parseInt(cleaned.charAt(9));
 
   return remainder < 2 ? checkDigit === remainder : checkDigit === 11 - remainder;
 }
@@ -125,13 +129,13 @@ export function validateIBAN(iban: string): boolean {
   }
 
   // IBAN mod-97 validation
-  const rearranged = numericPart + '1827' + cleaned.slice(2, 4);
+  const rearranged = `${numericPart}1827${cleaned.slice(2, 4)}`;
   let remainder = '';
   for (const char of rearranged) {
-    remainder = (parseInt(remainder + char) % 97).toString();
+    remainder = (Number.parseInt(remainder + char) % 97).toString();
   }
 
-  return parseInt(remainder) === 1;
+  return Number.parseInt(remainder) === 1;
 }
 
 /**
@@ -140,13 +144,19 @@ export function validateIBAN(iban: string): boolean {
 export function validatePostalCode(postalCode: string): boolean {
   const cleaned = toEnglishDigits(postalCode).replace(/\D/g, '');
 
-  if (cleaned.length !== 10) return false;
+  if (cleaned.length !== 10) {
+    return false;
+  }
 
   // First digit cannot be 0 or 2
-  if (cleaned[0] === '0' || cleaned[0] === '2') return false;
+  if (cleaned[0] === '0' || cleaned[0] === '2') {
+    return false;
+  }
 
   // Cannot have 5 consecutive same digits
-  if (/(\d)\1{4}/.test(cleaned)) return false;
+  if (/(\d)\1{4}/.test(cleaned)) {
+    return false;
+  }
 
   return true;
 }
@@ -157,15 +167,19 @@ export function validatePostalCode(postalCode: string): boolean {
 export function validateBankCard(cardNumber: string): boolean {
   const cleaned = toEnglishDigits(cardNumber).replace(/\D/g, '');
 
-  if (cleaned.length !== 16) return false;
+  if (cleaned.length !== 16) {
+    return false;
+  }
 
   // Luhn algorithm
   let sum = 0;
   for (let i = 0; i < 16; i++) {
-    let digit = parseInt(cleaned[i] ?? '0');
+    let digit = Number.parseInt(cleaned[i] ?? '0');
     if (i % 2 === 0) {
       digit *= 2;
-      if (digit > 9) digit -= 9;
+      if (digit > 9) {
+        digit -= 9;
+      }
     }
     sum += digit;
   }
@@ -426,7 +440,7 @@ export function normalizeMobile(mobile: string): string {
 
   // Convert +98 to 0
   if (cleaned.startsWith('98') && cleaned.length === 12) {
-    return '0' + cleaned.slice(2);
+    return `0${cleaned.slice(2)}`;
   }
 
   return cleaned;

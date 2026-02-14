@@ -1,24 +1,32 @@
-import { Button, Container, GlassCard, KpiCard, Pill, ProgressBar, SectionTitle } from "@/components/ui";
+import {
+  Button,
+  Container,
+  GlassCard,
+  KpiCard,
+  Pill,
+  ProgressBar,
+  SectionTitle,
+} from '@/components/ui';
 
 const insights = [
   {
-    title: "افزايش تقاضاي موبايل پرچم‌دار",
-    body: "مدل پيش‌بيني نشان مي‌دهد تقاضا در ? روز آينده ??? رشد دارد. تامين موجودي توصيه مي‌شود.",
+    title: 'افزايش تقاضاي موبايل پرچم‌دار',
+    body: 'مدل پيش‌بيني نشان مي‌دهد تقاضا در ? روز آينده ??? رشد دارد. تامين موجودي توصيه مي‌شود.',
   },
   {
-    title: "بهينه‌سازي قيمت",
-    body: "بازه قيمت بهينه براي حفظ نرخ تبديل: 28.9M تا 31.4M ريال.",
+    title: 'بهينه‌سازي قيمت',
+    body: 'بازه قيمت بهينه براي حفظ نرخ تبديل: 28.9M تا 31.4M ريال.',
   },
   {
-    title: "ريسک موجودي",
-    body: "? SKU پرفروش در آستانه اتمام موجودي هستند. هشدار سطح اضطراري فعال شد.",
+    title: 'ريسک موجودي',
+    body: '? SKU پرفروش در آستانه اتمام موجودي هستند. هشدار سطح اضطراري فعال شد.',
   },
 ];
 
 const inventory = [
-  { name: "Galaxy Ultra 5G", status: "ايمن", level: "74%" },
-  { name: "Aero XR Headset", status: "هشدار", level: "29%" },
-  { name: "Nova Camera Pro", status: "بحراني", level: "12%" },
+  { name: 'Galaxy Ultra 5G', status: 'ايمن', level: '74%' },
+  { name: 'Aero XR Headset', status: 'هشدار', level: '29%' },
+  { name: 'Nova Camera Pro', status: 'بحراني', level: '12%' },
 ];
 
 export default function SellerDashboardPage() {
@@ -35,8 +43,12 @@ export default function SellerDashboardPage() {
           </div>
           <div className="flex flex-wrap gap-3">
             <Button loading={false}>افزودن محصول جديد</Button>
-            <Button loading={false} variant="outline">درخواست تحليل AI</Button>
-            <Button loading={false} variant="ghost">دانلود گزارش هفتگي</Button>
+            <Button loading={false} variant="outline">
+              درخواست تحليل AI
+            </Button>
+            <Button loading={false} variant="ghost">
+              دانلود گزارش هفتگي
+            </Button>
           </div>
         </header>
 
@@ -60,10 +72,13 @@ export default function SellerDashboardPage() {
             </div>
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               {[
-                { label: "سبد رها شده", value: "24" },
-                { label: "بازگشت مشتريان", value: "38%" },
+                { label: 'سبد رها شده', value: '24' },
+                { label: 'بازگشت مشتريان', value: '38%' },
               ].map((item) => (
-                <div key={item.label} className="rounded-2xl bg-slate-900/60 p-4 text-sm text-slate-200">
+                <div
+                  key={item.label}
+                  className="rounded-2xl bg-slate-900/60 p-4 text-sm text-slate-200"
+                >
                   <p className="text-xs text-slate-400">{item.label}</p>
                   <p className="mt-2 text-lg font-semibold text-white">{item.value}</p>
                 </div>
@@ -89,18 +104,21 @@ export default function SellerDashboardPage() {
             <SectionTitle className="text-xl text-white">سلامت موجودي</SectionTitle>
             <div className="mt-4 space-y-3">
               {inventory.map((item) => (
-                <div key={item.name} className="flex items-center justify-between rounded-2xl bg-slate-900/60 px-4 py-3 text-sm">
+                <div
+                  key={item.name}
+                  className="flex items-center justify-between rounded-2xl bg-slate-900/60 px-4 py-3 text-sm"
+                >
                   <div>
                     <p className="text-slate-200">{item.name}</p>
                     <p className="text-xs text-slate-400">سطح موجودي: {item.level}</p>
                   </div>
                   <span
                     className={`text-xs ${
-                      item.status === "ايمن"
-                        ? "text-emerald-300"
-                        : item.status === "هشدار"
-                          ? "text-amber-300"
-                          : "text-rose-300"
+                      item.status === 'ايمن'
+                        ? 'text-emerald-300'
+                        : item.status === 'هشدار'
+                          ? 'text-amber-300'
+                          : 'text-rose-300'
                     }`}
                   >
                     {item.status}
@@ -117,12 +135,15 @@ export default function SellerDashboardPage() {
             </p>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               {[
-                { label: "مدل‌هاي آماده", value: "18" },
-                { label: "در صف پردازش", value: "4" },
-                { label: "بازديد AR امروز", value: "2,140" },
-                { label: "نرخ تعامل AR", value: "+26%" },
+                { label: 'مدل‌هاي آماده', value: '18' },
+                { label: 'در صف پردازش', value: '4' },
+                { label: 'بازديد AR امروز', value: '2,140' },
+                { label: 'نرخ تعامل AR', value: '+26%' },
               ].map((item) => (
-                <div key={item.label} className="rounded-2xl bg-slate-900/60 p-4 text-sm text-slate-200">
+                <div
+                  key={item.label}
+                  className="rounded-2xl bg-slate-900/60 p-4 text-sm text-slate-200"
+                >
                   <p className="text-xs text-slate-400">{item.label}</p>
                   <p className="mt-2 text-lg font-semibold text-white">{item.value}</p>
                 </div>
@@ -130,7 +151,9 @@ export default function SellerDashboardPage() {
             </div>
             <div className="mt-6 flex flex-wrap gap-3">
               <Button loading={false}>افزودن مدل جديد</Button>
-              <Button loading={false} variant="outline">مشاهده عملکرد AR</Button>
+              <Button loading={false} variant="outline">
+                مشاهده عملکرد AR
+              </Button>
             </div>
           </GlassCard>
         </section>
@@ -138,4 +161,3 @@ export default function SellerDashboardPage() {
     </div>
   );
 }
-

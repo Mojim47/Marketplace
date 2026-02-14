@@ -4,9 +4,9 @@
 // Moodian Integration Test Script
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { ConfigService } from '@nestjs/config';
+import type { ConfigService } from '@nestjs/config';
+import type { MetricsService } from '../../libs/monitoring/src/metrics.service';
 import { MoodianService } from '../../libs/moodian/src/moodian.service';
-import { MetricsService } from '../../libs/monitoring/src/metrics.service';
 
 interface TestResult {
   test: string;
@@ -45,8 +45,6 @@ class MoodianTester {
   }
 
   async runTests(): Promise<void> {
-    console.log('🔍 Testing Moodian Integration...\n');
-
     const tests = [
       { name: 'Configuration Validation', test: () => this.testConfiguration() },
       { name: 'SUID Generation', test: () => this.testSUIDGeneration() },
@@ -76,13 +74,16 @@ class MoodianTester {
     this.printSummary();
   }
 
-  private async executeTest(testName: string, testFunction: () => Promise<any>): Promise<TestResult> {
+  private async executeTest(
+    testName: string,
+    testFunction: () => Promise<any>
+  ): Promise<TestResult> {
     const startTime = Date.now();
-    
+
     try {
       const data = await testFunction();
       const duration = Date.now() - startTime;
-      
+
       return {
         test: testName,
         success: true,
@@ -91,7 +92,7 @@ class MoodianTester {
       };
     } catch (error) {
       const duration = Date.now() - startTime;
-      
+
       return {
         test: testName,
         success: false,
@@ -119,9 +120,9 @@ class MoodianTester {
     }
 
     return {
-      clientId: clientId.substring(0, 8) + '...',
+      clientId: `${clientId.substring(0, 8)}...`,
       privateKeyConfigured: !!privateKey,
-      memoryId: memoryId.substring(0, 8) + '...',
+      memoryId: `${memoryId.substring(0, 8)}...`,
       sandbox: true,
     };
   }
@@ -143,8 +144,8 @@ class MoodianTester {
     }
 
     return {
-      suid1: suid1.substring(0, 10) + '...',
-      suid2: suid2.substring(0, 10) + '...',
+      suid1: `${suid1.substring(0, 10)}...`,
+      suid2: `${suid2.substring(0, 10)}...`,
       unique: suid1 !== suid2,
       length: suid1.length,
     };
@@ -227,7 +228,7 @@ class MoodianTester {
   }
 
   private async testInvoiceSigning(): Promise<any> {
-    const testInvoice = {
+    const _testInvoice = {
       header: {
         taxid: this.moodianService.generateSUID(),
         indatim: Math.floor(Date.now() / 1000),
@@ -268,7 +269,7 @@ class MoodianTester {
         keyId: mockSignature.keyId,
         dataEncoded: !!mockSignature.data,
       };
-    } catch (error) {
+    } catch (_error) {
       // Expected in test environment without real keys
       return {
         signatureGenerated: false,
@@ -322,13 +323,13 @@ class MoodianTester {
     // Note: This would fail in test environment without proper authentication
     try {
       const result = await this.moodianService.sendInvoice(context, mockInvoice);
-      
+
       return {
         invoiceCreated: result.success,
-        suid: mockInvoice.header.taxid.substring(0, 10) + '...',
+        suid: `${mockInvoice.header.taxid.substring(0, 10)}...`,
         referenceNumber: result.referenceNumber,
       };
-    } catch (error) {
+    } catch (_error) {
       // Expected in test environment
       return {
         invoiceCreated: false,
@@ -340,35 +341,20 @@ class MoodianTester {
   }
 
   private logResult(result: TestResult): void {
-    const statusIcon = result.success ? '✅' : '❌';
-    const duration = result.duration < 1000 ? 
-      `${result.duration}ms` : 
-      `${(result.duration / 1000).toFixed(2)}s`;
-
-    console.log(`${statusIcon} ${result.test.padEnd(30)} ${duration.padStart(8)} ${result.success ? '- PASSED' : `- FAILED: ${result.error}`}`);
+    const _statusIcon = result.success ? '✅' : '❌';
+    const _duration =
+      result.duration < 1000 ? `${result.duration}ms` : `${(result.duration / 1000).toFixed(2)}s`;
   }
 
   private printSummary(): void {
-    const passed = this.results.filter(r => r.success).length;
-    const failed = this.results.filter(r => r.success === false).length;
-    const total = this.results.length;
+    const _passed = this.results.filter((r) => r.success).length;
+    const failed = this.results.filter((r) => r.success === false).length;
+    const _total = this.results.length;
 
-    console.log('\n📊 Moodian Integration Test Summary:');
-    console.log(`   ✅ Passed: ${passed}/${total}`);
-    console.log(`   ❌ Failed: ${failed}/${total}`);
-
-    const overallStatus = failed === 0 ? 'ALL TESTS PASSED' : 'SOME TESTS FAILED';
-    console.log(`\n🎯 Overall Status: ${overallStatus}`);
+    const _overallStatus = failed === 0 ? 'ALL TESTS PASSED' : 'SOME TESTS FAILED';
 
     if (failed === 0) {
-      console.log('\n🎉 Moodian integration is working correctly!');
-      console.log('\n📝 Next steps:');
-      console.log('   1. Configure production client ID and keys');
-      console.log('   2. Test with real tax authority sandbox');
-      console.log('   3. Implement proper RSA signing');
-      console.log('   4. Set up invoice status monitoring');
     } else {
-      console.log('\n🔧 Issues found. Please check the failed tests above.');
     }
 
     // Exit with appropriate code

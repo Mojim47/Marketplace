@@ -326,11 +326,6 @@ class NightmareAnalyzer {
   }
 
   public analyzeNightmares(): void {
-    console.log('💀 NIGHTMARE SCENARIO ANALYSIS - NextGen Marketplace');
-    console.log('═══════════════════════════════════════════════════════════════');
-    console.log('⚠️  WARNING: This analysis identifies REAL risks that could become disasters');
-    console.log('🎯 Purpose: Prevent long-term catastrophic failures');
-    console.log('═══════════════════════════════════════════════════════════════\n');
 
     // Sort by current risk level
     const sortedScenarios = this.scenarios.sort((a, b) => b.currentRisk - a.currentRisk);
@@ -348,115 +343,36 @@ class NightmareAnalyzer {
     this.generateActionPlan();
   }
 
-  private displayScenarios(title: string, scenarios: NightmareScenario[]): void {
-    console.log(`\n${title}`);
-    console.log('═'.repeat(70));
+  private displayScenarios(_title: string, scenarios: NightmareScenario[]): void {
 
-    scenarios.forEach((scenario, index) => {
-      console.log(`\n${index + 1}. ${scenario.title}`);
-      console.log(`   📊 Risk Level: ${scenario.currentRisk}% | Probability: ${scenario.probability}% | Impact: ${scenario.impact}`);
-      console.log(`   ⏰ Time to Manifest: ${scenario.timeToManifest}`);
-      console.log(`   📝 Description: ${scenario.description}`);
-      
-      console.log(`\n   🚨 Symptoms:`);
-      scenario.symptoms.forEach(symptom => console.log(`      • ${symptom}`));
-      
-      console.log(`\n   💥 Consequences:`);
-      scenario.consequences.forEach(consequence => console.log(`      • ${consequence}`));
-      
-      console.log(`\n   🛡️  Mitigation (MISSING/INCOMPLETE):`);
-      scenario.mitigation.forEach(mitigation => console.log(`      • ${mitigation}`));
-      
-      console.log('\n' + '-'.repeat(70));
+    scenarios.forEach((scenario, _index) => {
+      scenario.symptoms.forEach(_symptom => );
+      scenario.consequences.forEach(_consequence => );
+      scenario.mitigation.forEach(_mitigation => );
     });
   }
 
   private generateRiskSummary(): void {
-    console.log('\n📊 RISK SUMMARY');
-    console.log('═══════════════════════════════════════════════════════════════');
 
     const totalScenarios = this.scenarios.length;
-    const criticalCount = this.scenarios.filter(s => s.category === 'CRITICAL').length;
-    const highCount = this.scenarios.filter(s => s.category === 'HIGH').length;
+    const _criticalCount = this.scenarios.filter(s => s.category === 'CRITICAL').length;
+    const _highCount = this.scenarios.filter(s => s.category === 'HIGH').length;
     const averageRisk = Math.round(this.scenarios.reduce((sum, s) => sum + s.currentRisk, 0) / totalScenarios);
-
-    console.log(`📈 Total Nightmare Scenarios: ${totalScenarios}`);
-    console.log(`🔥 Critical Scenarios: ${criticalCount}`);
-    console.log(`⚠️  High Risk Scenarios: ${highCount}`);
-    console.log(`📊 Average Risk Level: ${averageRisk}%`);
 
     // Risk assessment
     if (averageRisk > 70) {
-      console.log('\n🚨 OVERALL ASSESSMENT: EXTREMELY HIGH RISK');
-      console.log('   Current implementation has MAJOR gaps that WILL cause problems');
-      console.log('   Immediate action required before production deployment');
     } else if (averageRisk > 50) {
-      console.log('\n⚠️  OVERALL ASSESSMENT: HIGH RISK');
-      console.log('   Significant risks present that could cause serious problems');
-      console.log('   Address critical issues before production deployment');
     } else if (averageRisk > 30) {
-      console.log('\n📊 OVERALL ASSESSMENT: MODERATE RISK');
-      console.log('   Some risks present but manageable with proper planning');
-      console.log('   Monitor closely and implement mitigations');
     } else {
-      console.log('\n✅ OVERALL ASSESSMENT: LOW RISK');
-      console.log('   Well-designed system with minimal long-term risks');
     }
 
     // Time-based risk analysis
-    const shortTerm = this.scenarios.filter(s => s.timeToManifest.includes('1-3 months')).length;
-    const mediumTerm = this.scenarios.filter(s => s.timeToManifest.includes('3-12 months')).length;
-    const longTerm = this.scenarios.filter(s => s.timeToManifest.includes('6-18 months')).length;
-
-    console.log('\n⏰ TIME-BASED RISK DISTRIBUTION:');
-    console.log(`   🔥 Short-term (1-3 months): ${shortTerm} scenarios`);
-    console.log(`   📊 Medium-term (3-12 months): ${mediumTerm} scenarios`);
-    console.log(`   📈 Long-term (6-18 months): ${longTerm} scenarios`);
+    const _shortTerm = this.scenarios.filter(s => s.timeToManifest.includes('1-3 months')).length;
+    const _mediumTerm = this.scenarios.filter(s => s.timeToManifest.includes('3-12 months')).length;
+    const _longTerm = this.scenarios.filter(s => s.timeToManifest.includes('6-18 months')).length;
   }
 
   private generateActionPlan(): void {
-    console.log('\n🎯 IMMEDIATE ACTION PLAN');
-    console.log('═══════════════════════════════════════════════════════════════');
-
-    console.log('\n🔥 BEFORE PRODUCTION DEPLOYMENT:');
-    console.log('   1. Implement ClickHouse TTL policies and data retention');
-    console.log('   2. Set up comprehensive monitoring and alerting');
-    console.log('   3. Conduct memory leak testing and profiling');
-    console.log('   4. Implement data validation and integrity checks');
-    console.log('   5. Create detailed rollback and disaster recovery procedures');
-
-    console.log('\n📊 WITHIN FIRST MONTH:');
-    console.log('   1. Monitor data growth and performance metrics daily');
-    console.log('   2. Implement cost monitoring and budgeting');
-    console.log('   3. Set up data quality auditing processes');
-    console.log('   4. Create comprehensive documentation');
-    console.log('   5. Train team on troubleshooting procedures');
-
-    console.log('\n📈 WITHIN FIRST QUARTER:');
-    console.log('   1. Conduct security audit and GDPR compliance review');
-    console.log('   2. Implement data archiving and cleanup strategies');
-    console.log('   3. Evaluate alternative solutions and exit strategies');
-    console.log('   4. Optimize performance and resource usage');
-    console.log('   5. Plan for scaling and capacity management');
-
-    console.log('\n🚨 RED FLAGS TO WATCH FOR:');
-    console.log('   • Disk usage growing >1GB per day');
-    console.log('   • Memory usage increasing >10MB per hour');
-    console.log('   • Search response time increasing >5ms per week');
-    console.log('   • Circuit breaker opening more than once per day');
-    console.log('   • Any data inconsistencies or corruption');
-
-    console.log('\n💀 NIGHTMARE PREVENTION CHECKLIST:');
-    console.log('   [ ] TTL policies implemented on all ClickHouse tables');
-    console.log('   [ ] Memory usage monitoring and alerting set up');
-    console.log('   [ ] Data validation and integrity checks in place');
-    console.log('   [ ] Comprehensive backup and recovery procedures');
-    console.log('   [ ] Cost monitoring and budget alerts configured');
-    console.log('   [ ] Security audit completed');
-    console.log('   [ ] Performance baseline established');
-    console.log('   [ ] Team trained on troubleshooting');
-    console.log('   [ ] Rollback procedures tested');
-    console.log('   [ ] Alternative solutions evaluated');
   }
 }
 

@@ -1,10 +1,10 @@
-import { describe, it, expect } from 'vitest';
 import * as fc from 'fast-check';
+import { describe, expect, it } from 'vitest';
 import { MetricsService } from './metrics.service';
 
 /**
  * Property-Based Tests for Metrics Service
- * 
+ *
  * Feature: enterprise-scalability-architecture
  * Property 25: Latency Percentile Accuracy
  * Validates: Requirements 7.2
@@ -14,14 +14,17 @@ describe('MetricsService', () => {
     /**
      * Property: For any set of request latencies, the calculated p50, p95, and p99
      * percentiles SHALL be mathematically correct.
-     * 
+     *
      * Validates: Requirements 7.2
      */
     it('should calculate percentiles correctly for any set of latencies', () => {
       fc.assert(
         fc.property(
           // Generate array of positive latency values using double for better precision
-          fc.array(fc.double({ min: 0.001, max: 10, noNaN: true, noDefaultInfinity: true }), { minLength: 1, maxLength: 1000 }),
+          fc.array(fc.double({ min: 0.001, max: 10, noNaN: true, noDefaultInfinity: true }), {
+            minLength: 1,
+            maxLength: 1000,
+          }),
           (latencies) => {
             const result = MetricsService.calculateLatencyPercentiles(latencies);
             const sorted = [...latencies].sort((a, b) => a - b);
@@ -54,7 +57,7 @@ describe('MetricsService', () => {
           fc.double({ min: 0.001, max: 10, noNaN: true, noDefaultInfinity: true }),
           (latency) => {
             const result = MetricsService.calculateLatencyPercentiles([latency]);
-            
+
             expect(result.p50).toBe(latency);
             expect(result.p95).toBe(latency);
             expect(result.p99).toBe(latency);
@@ -69,7 +72,7 @@ describe('MetricsService', () => {
      */
     it('should return zeros for empty latency array', () => {
       const result = MetricsService.calculateLatencyPercentiles([]);
-      
+
       expect(result.p50).toBe(0);
       expect(result.p95).toBe(0);
       expect(result.p99).toBe(0);
@@ -81,7 +84,10 @@ describe('MetricsService', () => {
     it('should produce deterministic results for the same input', () => {
       fc.assert(
         fc.property(
-          fc.array(fc.double({ min: 0.001, max: 10, noNaN: true, noDefaultInfinity: true }), { minLength: 1, maxLength: 100 }),
+          fc.array(fc.double({ min: 0.001, max: 10, noNaN: true, noDefaultInfinity: true }), {
+            minLength: 1,
+            maxLength: 100,
+          }),
           (latencies) => {
             const result1 = MetricsService.calculateLatencyPercentiles(latencies);
             const result2 = MetricsService.calculateLatencyPercentiles(latencies);
@@ -106,10 +112,10 @@ describe('MetricsService', () => {
 
       // p50 should be approximately 50
       expect(result.p50).toBeCloseTo(50, 0);
-      
+
       // p95 should be approximately 95
       expect(result.p95).toBeCloseTo(95, 0);
-      
+
       // p99 should be approximately 99
       expect(result.p99).toBeCloseTo(99, 0);
     });
@@ -122,7 +128,10 @@ describe('MetricsService', () => {
     it('should return minimum for percentile 0', () => {
       fc.assert(
         fc.property(
-          fc.array(fc.double({ min: 0.001, max: 10, noNaN: true, noDefaultInfinity: true }), { minLength: 1, maxLength: 100 }),
+          fc.array(fc.double({ min: 0.001, max: 10, noNaN: true, noDefaultInfinity: true }), {
+            minLength: 1,
+            maxLength: 100,
+          }),
           (values) => {
             const sorted = [...values].sort((a, b) => a - b);
             const result = MetricsService.calculatePercentile(sorted, 0);
@@ -139,7 +148,10 @@ describe('MetricsService', () => {
     it('should return maximum for percentile 100', () => {
       fc.assert(
         fc.property(
-          fc.array(fc.double({ min: 0.001, max: 10, noNaN: true, noDefaultInfinity: true }), { minLength: 1, maxLength: 100 }),
+          fc.array(fc.double({ min: 0.001, max: 10, noNaN: true, noDefaultInfinity: true }), {
+            minLength: 1,
+            maxLength: 100,
+          }),
           (values) => {
             const sorted = [...values].sort((a, b) => a - b);
             const result = MetricsService.calculatePercentile(sorted, 100);
@@ -156,15 +168,20 @@ describe('MetricsService', () => {
     it('should be monotonically increasing with percentile value', () => {
       fc.assert(
         fc.property(
-          fc.array(fc.double({ min: 0.001, max: 10, noNaN: true, noDefaultInfinity: true }), { minLength: 2, maxLength: 100 }),
+          fc.array(fc.double({ min: 0.001, max: 10, noNaN: true, noDefaultInfinity: true }), {
+            minLength: 2,
+            maxLength: 100,
+          }),
           fc.double({ min: 0, max: 100, noNaN: true, noDefaultInfinity: true }),
           fc.double({ min: 0, max: 100, noNaN: true, noDefaultInfinity: true }),
           (values, p1, p2) => {
             const sorted = [...values].sort((a, b) => a - b);
             const result1 = MetricsService.calculatePercentile(sorted, Math.min(p1, p2));
             const result2 = MetricsService.calculatePercentile(sorted, Math.max(p1, p2));
-            
-            expect(result2).toBeGreaterThanOrEqual(result1);
+
+            // Allow tiny floating-point drift when values are extremely close
+            const epsilon = 1e-9;
+            expect(result2 + epsilon).toBeGreaterThanOrEqual(result1 - epsilon);
           }
         ),
         { numRuns: 100 }

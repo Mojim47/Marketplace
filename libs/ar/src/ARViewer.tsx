@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo } from 'react';
 
 export interface ARViewerProps {
   modelId: string;
@@ -13,11 +13,19 @@ export interface ARViewerProps {
 }
 
 function resolveModelUrl(modelId: string, modelUrl?: string): string {
-  if (modelUrl) return modelUrl;
-  if (modelId.startsWith("http://") || modelId.startsWith("https://")) return modelId;
-  if (modelId.startsWith("/")) return modelId;
-  const base = process.env.NEXT_PUBLIC_AR_MODEL_BASE_URL?.replace(/\/+$/, "");
-  if (base) return `${base}/${modelId}`;
+  if (modelUrl) {
+    return modelUrl;
+  }
+  if (modelId.startsWith('http://') || modelId.startsWith('https://')) {
+    return modelId;
+  }
+  if (modelId.startsWith('/')) {
+    return modelId;
+  }
+  const base = process.env.NEXT_PUBLIC_AR_MODEL_BASE_URL?.replace(/\/+$/, '');
+  if (base) {
+    return `${base}/${modelId}`;
+  }
   return `/models/${modelId}.glb`;
 }
 
@@ -29,35 +37,35 @@ export function ARViewer({
   arEnabled = true,
   autoRotate = true,
   cameraControls = true,
-  backgroundColor = "#f8fafc",
+  backgroundColor = '#f8fafc',
   exposure = 1,
 }: ARViewerProps) {
   useEffect(() => {
-    import("@google/model-viewer");
+    import('@google/model-viewer');
   }, []);
 
   const resolvedModel = useMemo(() => resolveModelUrl(modelId, modelUrl), [modelId, modelUrl]);
 
   return (
-    <div style={{ width: "100%", background: backgroundColor, borderRadius: 12, padding: 12 }}>
+    <div style={{ width: '100%', background: backgroundColor, borderRadius: 12, padding: 12 }}>
       <model-viewer
         src={resolvedModel}
         poster={posterUrl}
-        ar={arEnabled ? "true" : "false"}
+        ar={arEnabled ? 'true' : 'false'}
         ar-modes="webxr scene-viewer quick-look"
-        camera-controls={cameraControls ? "true" : "false"}
-        auto-rotate={autoRotate ? "true" : "false"}
+        camera-controls={cameraControls ? 'true' : 'false'}
+        auto-rotate={autoRotate ? 'true' : 'false'}
         exposure={exposure}
         shadow-intensity="0.7"
-        style={{ width: "100%", height: 420, background: backgroundColor, borderRadius: 10 }}
+        style={{ width: '100%', height: 420, background: backgroundColor, borderRadius: 10 }}
       />
-      <div style={{ marginTop: 8, fontSize: 12, color: "#64748b" }}>
+      <div style={{ marginTop: 8, fontSize: 12, color: '#64748b' }}>
         برای تجربه واقعیت افزوده، دکمه AR را روی دستگاه‌های سازگار لمس کنید.
       </div>
       {usdzUrl ? (
         <a
           href={usdzUrl}
-          style={{ display: "inline-block", marginTop: 6, fontSize: 12, color: "#0f172a" }}
+          style={{ display: 'inline-block', marginTop: 6, fontSize: 12, color: '#0f172a' }}
         >
           دانلود فایل USDZ برای iOS
         </a>

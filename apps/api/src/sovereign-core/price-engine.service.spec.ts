@@ -7,21 +7,25 @@
  * ===========================================================================
  */
 
-import { PriceEngine } from './price-engine.service';
 import { Decimal } from '@prisma/client/runtime/library';
 import type { Redis } from 'ioredis';
+import { PriceEngine } from './price-engine.service';
 
 class InMemoryRedis {
   private readonly store = new Map<string, { value: string; expiresAt?: number }>();
 
   private isExpired(entry: { value: string; expiresAt?: number }) {
-    if (!entry.expiresAt) return false;
+    if (!entry.expiresAt) {
+      return false;
+    }
     return Date.now() >= entry.expiresAt;
   }
 
   private cleanup(key: string, entry?: { value: string; expiresAt?: number }) {
     const current = entry ?? this.store.get(key);
-    if (!current) return true;
+    if (!current) {
+      return true;
+    }
     if (this.isExpired(current)) {
       this.store.delete(key);
       return true;
@@ -65,9 +69,15 @@ class InMemoryRedis {
 
   async ttl(key: string) {
     const entry = this.store.get(key);
-    if (!entry) return -2;
-    if (this.cleanup(key, entry)) return -2;
-    if (!entry.expiresAt) return -1;
+    if (!entry) {
+      return -2;
+    }
+    if (this.cleanup(key, entry)) {
+      return -2;
+    }
+    if (!entry.expiresAt) {
+      return -1;
+    }
     const ttl = Math.ceil((entry.expiresAt - Date.now()) / 1000);
     return ttl > 0 ? ttl : -2;
   }
@@ -173,8 +183,12 @@ const createPricePrismaMock = () => {
       }),
       findUnique: vi.fn(async ({ where }: { where: { id: string; isActive?: boolean } }) => {
         const record = volatilityIndexes.get(where.id);
-        if (!record) return null;
-        if (where.isActive === true && !record.isActive) return null;
+        if (!record) {
+          return null;
+        }
+        if (where.isActive === true && !record.isActive) {
+          return null;
+        }
         return record;
       }),
       delete: vi.fn(async ({ where }: { where: { id: string } }) => {
@@ -197,8 +211,12 @@ const createPricePrismaMock = () => {
       findFirst: vi.fn(async ({ where }: { where: Partial<B2BRelation> }) => {
         return (
           Array.from(b2bRelations.values()).find((relation) => {
-            if (where.buyerId && relation.buyerId !== where.buyerId) return false;
-            if (where.isActive !== undefined && relation.isActive !== where.isActive) return false;
+            if (where.buyerId && relation.buyerId !== where.buyerId) {
+              return false;
+            }
+            if (where.isActive !== undefined && relation.isActive !== where.isActive) {
+              return false;
+            }
             return true;
           }) ?? null
         );
@@ -252,13 +270,23 @@ const createPricePrismaMock = () => {
       }),
       findFirst: vi.fn(async ({ where, orderBy }: { where: any; orderBy?: any }) => {
         const filtered = Array.from(priceLocks.values()).filter((lock) => {
-          if (where.productId && lock.productId !== where.productId) return false;
-          if (where.organizationId && lock.organizationId !== where.organizationId) return false;
-          if (where.isActive !== undefined && lock.isActive !== where.isActive) return false;
-          if (where.expiresAt?.gt && lock.expiresAt <= where.expiresAt.gt) return false;
+          if (where.productId && lock.productId !== where.productId) {
+            return false;
+          }
+          if (where.organizationId && lock.organizationId !== where.organizationId) {
+            return false;
+          }
+          if (where.isActive !== undefined && lock.isActive !== where.isActive) {
+            return false;
+          }
+          if (where.expiresAt?.gt && lock.expiresAt <= where.expiresAt.gt) {
+            return false;
+          }
           return true;
         });
-        if (!filtered.length) return null;
+        if (!filtered.length) {
+          return null;
+        }
         if (orderBy?.lockedAt === 'desc') {
           filtered.sort((a, b) => b.lockedAt.getTime() - a.lockedAt.getTime());
         }
@@ -266,9 +294,15 @@ const createPricePrismaMock = () => {
       }),
       findMany: vi.fn(async ({ where }: { where: any }) => {
         return Array.from(priceLocks.values()).filter((lock) => {
-          if (where.productId && lock.productId !== where.productId) return false;
-          if (where.organizationId && lock.organizationId !== where.organizationId) return false;
-          if (where.isActive !== undefined && lock.isActive !== where.isActive) return false;
+          if (where.productId && lock.productId !== where.productId) {
+            return false;
+          }
+          if (where.organizationId && lock.organizationId !== where.organizationId) {
+            return false;
+          }
+          if (where.isActive !== undefined && lock.isActive !== where.isActive) {
+            return false;
+          }
           return true;
         });
       }),
@@ -278,9 +312,15 @@ const createPricePrismaMock = () => {
       updateMany: vi.fn(async ({ where, data }: { where: any; data: any }) => {
         let count = 0;
         priceLocks.forEach((lock, id) => {
-          if (where.productId && lock.productId !== where.productId) return;
-          if (where.organizationId && lock.organizationId !== where.organizationId) return;
-          if (where.isActive !== undefined && lock.isActive !== where.isActive) return;
+          if (where.productId && lock.productId !== where.productId) {
+            return;
+          }
+          if (where.organizationId && lock.organizationId !== where.organizationId) {
+            return;
+          }
+          if (where.isActive !== undefined && lock.isActive !== where.isActive) {
+            return;
+          }
           priceLocks.set(id, { ...lock, ...data });
           count += 1;
         });
@@ -313,10 +353,7 @@ describe('PriceEngine Service - Financial Integrity Tests', () => {
   beforeAll(async () => {
     redis = new InMemoryRedis();
     const mockPrismaService = createPricePrismaMock();
-    priceEngine = new PriceEngine(
-      mockPrismaService as unknown as any,
-      redis as unknown as Redis
-    );
+    priceEngine = new PriceEngine(mockPrismaService as unknown as any, redis as unknown as Redis);
     prisma = mockPrismaService;
   });
 
@@ -383,19 +420,13 @@ describe('PriceEngine Service - Financial Integrity Tests', () => {
       });
 
       // Calculate final price
-      const result = await priceEngine.getFinalPrice(
-        product.id,
-        org.id,
-        volatilityIndex.id
-      );
+      const result = await priceEngine.getFinalPrice(product.id, org.id, volatilityIndex.id);
 
       // Manual calculation
       const basePrice = new Decimal('1234567.89');
       const indexValue = new Decimal('1.157');
       const tierDiscount = new Decimal('15');
-      const expected = basePrice
-        .mul(indexValue)
-        .mul(new Decimal('1').sub(tierDiscount.div(100)));
+      const expected = basePrice.mul(indexValue).mul(new Decimal('1').sub(tierDiscount.div(100)));
 
       // Assert exact Decimal equality
       expect(result.finalPrice.toString()).toBe(expected.toString());
@@ -500,11 +531,7 @@ describe('PriceEngine Service - Financial Integrity Tests', () => {
       });
 
       // Should flag margin violation because (100 * 0.5) = 50 < (95 * 1.10) = 104.5
-      const result = await priceEngine.getFinalPrice(
-        product.id,
-        org.id,
-        volatilityIndex.id
-      );
+      const result = await priceEngine.getFinalPrice(product.id, org.id, volatilityIndex.id);
       expect(result.isWithinMargin).toBe(false);
       expect(result.finalPrice.lt(result.minimumAllowedPrice)).toBe(true);
 
@@ -610,9 +637,7 @@ describe('PriceEngine Service - Financial Integrity Tests', () => {
       );
 
       const results = await Promise.allSettled(lockPromises);
-      const successfulLocks = results.filter(
-        (r) => r.status === 'fulfilled' && r.value.success
-      );
+      const successfulLocks = results.filter((r) => r.status === 'fulfilled' && r.value.success);
 
       // All lock attempts should succeed, but only one lock remains active.
       expect(successfulLocks.length).toBe(5);
@@ -686,7 +711,7 @@ describe('PriceEngine Service - Financial Integrity Tests', () => {
 
       // Check first lock is deactivated
       const deactivatedLock = await prisma.priceLock.findUnique({
-        where: { id: firstLock.priceLock!.id },
+        where: { id: firstLock.priceLock?.id },
       });
       expect(deactivatedLock?.isActive).toBe(false);
 
@@ -699,7 +724,7 @@ describe('PriceEngine Service - Financial Integrity Tests', () => {
         },
       });
       expect(activeLocks.length).toBe(1);
-      expect(activeLocks[0].id).toBe(secondLock.priceLock!.id);
+      expect(activeLocks[0].id).toBe(secondLock.priceLock?.id);
 
       // Cleanup
       await prisma.priceLock.deleteMany({ where: { productId: product.id } });

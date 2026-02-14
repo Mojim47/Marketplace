@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { emitUiEvent } from '../lib/ui-telemetry';
 import { useTraceId } from '../hooks/use-trace-id';
+import { emitUiEvent } from '../lib/ui-telemetry';
 
 export function LocaleSwitch() {
   const pathname = usePathname() || '/';

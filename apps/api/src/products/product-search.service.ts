@@ -2,24 +2,24 @@
  * ???????????????????????????????????????????????????????????????????????????
  * NextGen Marketplace - Product Search Service
  * ???????????????????????????????????????????????????????????????????????????
- * 
+ *
  * Service for Persian product search with tokenization, fuzzy matching,
  * and stemming support.
- * 
+ *
  * Features:
  * - Persian text tokenization
  * - Fuzzy search with typo tolerance
  * - Stop word removal
  * - Text normalization
  * - Search suggestions
- * 
+ *
  * @module @nextgen/api/products
  * Requirements: 8.1, 8.2, 8.3
  */
 
-import { Injectable, Inject, OnModuleInit } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { PersianTokenizer, SearchService } from '@nextgen/search';
+import { PrismaService } from '../database/prisma.service';
 import { SEARCH_TOKENS } from '../shared/search/tokens';
 
 export interface ProductSearchFilters {
@@ -80,7 +80,7 @@ export class ProductSearchService implements OnModuleInit {
     @Inject(SEARCH_TOKENS.PERSIAN_TOKENIZER)
     private readonly persianTokenizer: PersianTokenizer,
     @Inject(SEARCH_TOKENS.SEARCH_SERVICE)
-    private readonly searchService: SearchService,
+    private readonly searchService: SearchService
   ) {}
 
   async onModuleInit() {
@@ -89,7 +89,7 @@ export class ProductSearchService implements OnModuleInit {
   }
 
   /**
-   * ÌÓÊÌæí ãÍÕæáÇÊ ÈÇ ÔÊíÈÇäí İÇÑÓí
+   * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½
    * Requirements: 8.1, 8.2, 8.3
    */
   async search(options: ProductSearchOptions): Promise<SearchResponse> {
@@ -116,13 +116,13 @@ export class ProductSearchService implements OnModuleInit {
   }
 
   /**
-   * ÌÓÊÌæ ÈÇ MeiliSearch
+   * ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ MeiliSearch
    */
   private async searchWithMeili(
     options: ProductSearchOptions,
     normalizedQuery: string,
     tokens: string[],
-    startTime: number,
+    startTime: number
   ): Promise<SearchResponse> {
     const { filters, limit = 20, offset = 0, sort, facets } = options;
 
@@ -144,10 +144,10 @@ export class ProductSearchService implements OnModuleInit {
       attributesToHighlight: ['name', 'description'],
     });
 
-    const hits: ProductSearchResult[] = result.hits.map(hit => {
+    const hits: ProductSearchResult[] = result.hits.map((hit) => {
       const doc = hit.document as Record<string, unknown>;
       const formatted = hit._formatted as Record<string, string> | undefined;
-      
+
       return {
         id: doc.id as string,
         name: doc.name as string,
@@ -184,14 +184,14 @@ export class ProductSearchService implements OnModuleInit {
   }
 
   /**
-   * ÌÓÊÌæ ÈÇ ÏíÊÇÈíÓ (fallback)
+   * ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ (fallback)
    * Requirements: 8.1, 8.2, 8.3
    */
   private async searchWithDatabase(
     options: ProductSearchOptions,
     normalizedQuery: string,
     tokens: string[],
-    startTime: number,
+    startTime: number
   ): Promise<SearchResponse> {
     const { filters, limit = 20, offset = 0 } = options;
 
@@ -205,19 +205,21 @@ export class ProductSearchService implements OnModuleInit {
     if (filters?.inStockOnly) where.stock = { gt: 0 };
     if (filters?.minPrice !== undefined || filters?.maxPrice !== undefined) {
       where.price = {};
-      if (filters?.minPrice !== undefined) (where.price as Record<string, number>).gte = filters.minPrice;
-      if (filters?.maxPrice !== undefined) (where.price as Record<string, number>).lte = filters.maxPrice;
+      if (filters?.minPrice !== undefined)
+        (where.price as Record<string, number>).gte = filters.minPrice;
+      if (filters?.maxPrice !== undefined)
+        (where.price as Record<string, number>).lte = filters.maxPrice;
     }
 
     // Build search conditions using tokens
     if (tokens.length > 0) {
       where.OR = [
         // Search in name
-        ...tokens.map(token => ({
+        ...tokens.map((token) => ({
           name: { contains: token, mode: 'insensitive' as const },
         })),
         // Search in description
-        ...tokens.map(token => ({
+        ...tokens.map((token) => ({
           description: { contains: token, mode: 'insensitive' as const },
         })),
         // Search with normalized query
@@ -242,18 +244,22 @@ export class ProductSearchService implements OnModuleInit {
     ]);
 
     // Highlight search terms in results
-    const hits: ProductSearchResult[] = products.map(product => ({
+    const hits: ProductSearchResult[] = products.map((product) => ({
       id: product.id,
       name: product.name,
       nameHighlighted: this.persianTokenizer.highlight(product.name, tokens, 'mark'),
       description: product.description || undefined,
-      descriptionHighlighted: product.description 
+      descriptionHighlighted: product.description
         ? this.persianTokenizer.highlight(product.description, tokens, 'mark')
         : undefined,
       price: product.price.toNumber(),
       salePrice: product.salePrice?.toNumber(),
-      category: product.category ? { id: product.category.id, name: product.category.name } : undefined,
-      vendor: product.vendor ? { id: product.vendor.id, businessName: product.vendor.businessName } : undefined,
+      category: product.category
+        ? { id: product.category.id, name: product.category.name }
+        : undefined,
+      vendor: product.vendor
+        ? { id: product.vendor.id, businessName: product.vendor.businessName }
+        : undefined,
       inStock: product.stock > 0,
       stock: product.stock,
       rating: product.rating?.toNumber(),
@@ -278,37 +284,35 @@ export class ProductSearchService implements OnModuleInit {
   }
 
   /**
-   * íÔäåÇÏ ÌÓÊÌæ (autocomplete)
+   * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ (autocomplete)
    * Requirements: 8.2
    */
   async getSuggestions(prefix: string, limit: number = 10): Promise<string[]> {
     await this.ensureCacheIsFresh();
-    
+
     const normalizedPrefix = this.persianTokenizer.normalize(prefix);
     return this.persianTokenizer.generateSuggestions(
       normalizedPrefix,
       this.productNamesCache,
-      limit,
+      limit
     );
   }
 
   /**
-   * ÌÓÊÌæí fuzzy
+   * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ fuzzy
    * Requirements: 8.2
    */
   async fuzzySearch(query: string, threshold: number = 0.6, limit: number = 10): Promise<string[]> {
     await this.ensureCacheIsFresh();
-    
+
     const normalizedQuery = this.persianTokenizer.normalize(query);
-    return this.persianTokenizer.fuzzySearch(
-      normalizedQuery,
-      this.productNamesCache,
-      threshold,
-    ).slice(0, limit);
+    return this.persianTokenizer
+      .fuzzySearch(normalizedQuery, this.productNamesCache, threshold)
+      .slice(0, limit);
   }
 
   /**
-   * ÇíäÏ˜Ó ˜ÑÏä ãÍÕæá ÏÑ MeiliSearch
+   * ï¿½ï¿½ï¿½Ï˜ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ MeiliSearch
    */
   async indexProduct(product: {
     id: string;
@@ -329,26 +333,28 @@ export class ProductSearchService implements OnModuleInit {
 
       // Tokenize name and description for better search
       const nameTokens = this.persianTokenizer.tokenize(product.name).tokens;
-      const descTokens = product.description 
-        ? this.persianTokenizer.tokenize(product.description).tokens 
+      const descTokens = product.description
+        ? this.persianTokenizer.tokenize(product.description).tokens
         : [];
 
-      await this.searchService.indexDocuments('products', [{
-        id: product.id,
-        name: product.name,
-        nameTokens,
-        description: product.description,
-        descTokens,
-        price: product.price,
-        salePrice: product.salePrice,
-        categoryId: product.categoryId,
-        vendorId: product.vendorId,
-        stock: product.stock,
-        inStock: product.stock > 0 ? 1 : 0,
-        status: product.status,
-        images: product.images,
-        rating: product.rating,
-      }]);
+      await this.searchService.indexDocuments('products', [
+        {
+          id: product.id,
+          name: product.name,
+          nameTokens,
+          description: product.description,
+          descTokens,
+          price: product.price,
+          salePrice: product.salePrice,
+          categoryId: product.categoryId,
+          vendorId: product.vendorId,
+          stock: product.stock,
+          inStock: product.stock > 0 ? 1 : 0,
+          status: product.status,
+          images: product.images,
+          rating: product.rating,
+        },
+      ]);
 
       // Invalidate cache
       this.lastCacheUpdate = null;
@@ -358,7 +364,7 @@ export class ProductSearchService implements OnModuleInit {
   }
 
   /**
-   * ÍĞİ ãÍÕæá ÇÒ ÇíäÏ˜Ó
+   * ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½Ï˜ï¿½
    */
   async removeFromIndex(productId: string): Promise<void> {
     try {
@@ -366,7 +372,7 @@ export class ProductSearchService implements OnModuleInit {
       if (!meiliHealthy) return;
 
       await this.searchService.deleteDocuments('products', [productId]);
-      
+
       // Invalidate cache
       this.lastCacheUpdate = null;
     } catch (error) {
@@ -375,7 +381,7 @@ export class ProductSearchService implements OnModuleInit {
   }
 
   /**
-   * ÈåÑæÒÑÓÇäí ˜Ô äÇã ãÍÕæáÇÊ
+   * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
    */
   private async refreshProductNamesCache(): Promise<void> {
     try {
@@ -385,7 +391,7 @@ export class ProductSearchService implements OnModuleInit {
         take: 10000, // Limit for performance
       });
 
-      this.productNamesCache = products.map(p => p.name);
+      this.productNamesCache = products.map((p) => p.name);
       this.lastCacheUpdate = new Date();
     } catch (error) {
       console.error('Failed to refresh product names cache:', error);
@@ -393,7 +399,7 @@ export class ProductSearchService implements OnModuleInit {
   }
 
   /**
-   * ÇØãíäÇä ÇÒ ÊÇÒå ÈæÏä ˜Ô
+   * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½
    */
   private async ensureCacheIsFresh(): Promise<void> {
     const now = new Date();
@@ -406,7 +412,7 @@ export class ProductSearchService implements OnModuleInit {
   }
 
   /**
-   * ÇíäÏ˜Ó ˜ÑÏä åãå ãÍÕæáÇÊ (ÈÑÇí ÑÇåÇäÏÇÒí Çæáíå)
+   * ï¿½ï¿½ï¿½Ï˜ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½)
    */
   async reindexAllProducts(): Promise<{ indexed: number; failed: number }> {
     let indexed = 0;

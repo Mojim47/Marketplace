@@ -1,7 +1,7 @@
-import { Injectable, NestMiddleware, Logger } from '@nestjs/common';
-import { Request, Response, NextFunction } from 'express';
-import { randomUUID } from 'crypto';
-import { AsyncLocalStorage } from 'async_hooks';
+import { AsyncLocalStorage } from 'node:async_hooks';
+import { randomUUID } from 'node:crypto';
+import { Injectable, Logger, type NestMiddleware } from '@nestjs/common';
+import type { NextFunction, Request, Response } from 'express';
 
 /**
  * Correlation context stored in AsyncLocalStorage
@@ -100,10 +100,7 @@ export function getCurrentCorrelationContext(): CorrelationContext | undefined {
  * Run a function with a specific correlation context
  * Useful for background jobs or async operations
  */
-export function runWithCorrelationId<T>(
-  correlationId: string,
-  fn: () => T,
-): T {
+export function runWithCorrelationId<T>(correlationId: string, fn: () => T): T {
   const context: CorrelationContext = {
     correlationId,
     requestId: randomUUID(),
@@ -114,7 +111,7 @@ export function runWithCorrelationId<T>(
 
 /**
  * Correlation ID Middleware
- * 
+ *
  * Features:
  * - Extracts or generates correlation ID for each request
  * - Stores in AsyncLocalStorage for access throughout request lifecycle
@@ -151,9 +148,7 @@ export class CorrelationIdMiddleware implements NestMiddleware {
     response.setHeader(RESPONSE_HEADERS.REQUEST_ID, requestId);
 
     // Log request start with correlation ID
-    this.logger.debug(
-      `[${correlationId}] ${request.method} ${request.url} - Request started`,
-    );
+    this.logger.debug(`[${correlationId}] ${request.method} ${request.url} - Request started`);
 
     // Track response time
     const startTime = Date.now();
@@ -162,7 +157,7 @@ export class CorrelationIdMiddleware implements NestMiddleware {
     response.on('finish', () => {
       const duration = Date.now() - startTime;
       this.logger.debug(
-        `[${correlationId}] ${request.method} ${request.url} - ${response.statusCode} (${duration}ms)`,
+        `[${correlationId}] ${request.method} ${request.url} - ${response.statusCode} (${duration}ms)`
       );
     });
 
@@ -180,12 +175,7 @@ export class CorrelationIdMiddleware implements NestMiddleware {
 export function CorrelationId(): ParameterDecorator {
   return (target, propertyKey, parameterIndex) => {
     // This is a marker decorator - actual injection happens via interceptor
-    Reflect.defineMetadata(
-      'correlation:paramIndex',
-      parameterIndex,
-      target,
-      propertyKey as string,
-    );
+    Reflect.defineMetadata('correlation:paramIndex', parameterIndex, target, propertyKey as string);
   };
 }
 

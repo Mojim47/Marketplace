@@ -1,6 +1,6 @@
-import { jsx as _jsx } from 'react/jsx-runtime';
 import { fireEvent, render } from '@testing-library/react';
 import { format } from 'date-fns-jalali';
+import { jsx as _jsx } from 'react/jsx-runtime';
 import { describe, expect, it } from 'vitest';
 import { PersianDatePicker, toPersianDigits } from './persian-date-picker';
 function pick(input, val) {

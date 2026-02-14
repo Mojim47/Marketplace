@@ -2,55 +2,55 @@
  * ???????????????????????????????????????????????????????????????????????????
  * NextGen Marketplace - Search DTOs
  * ???????????????????????????????????????????????????????????????????????????
- * 
+ *
  * Data Transfer Objects for Persian search operations.
- * 
+ *
  * @module @nextgen/api/shared/search
  * Requirements: 8.1, 8.2, 8.3
  */
 
-import { IsString, IsOptional, IsNumber, Min, Max, IsArray, IsBoolean } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
+import { IsArray, IsBoolean, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
 
 /**
- * ÌÓÊÌæí ãÍÕæáÇÊ
+ * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
  */
 export class SearchProductsDto {
-  @ApiProperty({ description: 'ÚÈÇÑÊ ÌÓÊÌæ (İÇÑÓí íÇ ÇäáíÓí)' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½)' })
   @IsString()
   query: string;
 
-  @ApiPropertyOptional({ description: 'ÔäÇÓå ÏÓÊåÈäÏí ÈÑÇí İíáÊÑ' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsString()
   categoryId?: string;
 
-  @ApiPropertyOptional({ description: 'ÔäÇÓå ÈÑäÏ ÈÑÇí İíáÊÑ' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsString()
   brandId?: string;
 
-  @ApiPropertyOptional({ description: 'ÍÏÇŞá ŞíãÊ' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsNumber()
   @Min(0)
   @Type(() => Number)
   minPrice?: number;
 
-  @ApiPropertyOptional({ description: 'ÍÏÇ˜ËÑ ŞíãÊ' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½Ç˜ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsNumber()
   @Type(() => Number)
   maxPrice?: number;
 
-  @ApiPropertyOptional({ description: 'İŞØ ãÍÕæáÇÊ ãæÌæÏ', default: false })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½', default: false })
   @IsOptional()
   @IsBoolean()
   @Type(() => Boolean)
   inStockOnly?: boolean;
 
-  @ApiPropertyOptional({ description: 'ÊÚÏÇÏ äÊÇíÌ', default: 20 })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½', default: 20 })
   @IsOptional()
   @IsNumber()
   @Min(1)
@@ -58,20 +58,23 @@ export class SearchProductsDto {
   @Type(() => Number)
   limit?: number;
 
-  @ApiPropertyOptional({ description: 'ÔÑæÚ ÇÒ', default: 0 })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½', default: 0 })
   @IsOptional()
   @IsNumber()
   @Min(0)
   @Type(() => Number)
   offset?: number;
 
-  @ApiPropertyOptional({ description: 'ãÑÊÈÓÇÒí', example: ['price:asc', 'rating:desc'] })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½Èï¿½ï¿½ï¿½ï¿½', example: ['price:asc', 'rating:desc'] })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
   sort?: string[];
 
-  @ApiPropertyOptional({ description: 'İíáÏåÇí facet ÈÑÇí İíáÊÑ', example: ['categoryId', 'brandId'] })
+  @ApiPropertyOptional({
+    description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ facet ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½',
+    example: ['categoryId', 'brandId'],
+  })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
@@ -79,14 +82,14 @@ export class SearchProductsDto {
 }
 
 /**
- * ÌÓÊÌæí fuzzy
+ * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ fuzzy
  */
 export class FuzzySearchDto {
-  @ApiProperty({ description: 'ÚÈÇÑÊ ÌÓÊÌæ' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsString()
   query: string;
 
-  @ApiPropertyOptional({ description: 'ÂÓÊÇäå ÔÈÇåÊ (0 ÊÇ 1)', default: 0.6 })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ (0 ï¿½ï¿½ 1)', default: 0.6 })
   @IsOptional()
   @IsNumber()
   @Min(0)
@@ -94,7 +97,7 @@ export class FuzzySearchDto {
   @Type(() => Number)
   threshold?: number;
 
-  @ApiPropertyOptional({ description: 'ÍÏÇ˜ËÑ ÊÚÏÇÏ äÊÇíÌ', default: 10 })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½Ç˜ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½', default: 10 })
   @IsOptional()
   @IsNumber()
   @Min(1)
@@ -104,14 +107,14 @@ export class FuzzySearchDto {
 }
 
 /**
- * íÔäåÇÏ ÌÓÊÌæ (autocomplete)
+ * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ (autocomplete)
  */
 export class SearchSuggestionsDto {
-  @ApiProperty({ description: 'íÔæäÏ ÌÓÊÌæ' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsString()
   prefix: string;
 
-  @ApiPropertyOptional({ description: 'ÍÏÇ˜ËÑ ÊÚÏÇÏ íÔäåÇÏÇÊ', default: 10 })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½Ç˜ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½', default: 10 })
   @IsOptional()
   @IsNumber()
   @Min(1)
@@ -121,20 +124,20 @@ export class SearchSuggestionsDto {
 }
 
 /**
- * Tokenize ãÊä İÇÑÓí
+ * Tokenize ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½
  */
 export class TokenizeTextDto {
-  @ApiProperty({ description: 'ãÊä ÈÑÇí tokenize' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ tokenize' })
   @IsString()
   text: string;
 
-  @ApiPropertyOptional({ description: 'ÍĞİ stop words', default: true })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ stop words', default: true })
   @IsOptional()
   @IsBoolean()
   @Type(() => Boolean)
   removeStopWords?: boolean;
 
-  @ApiPropertyOptional({ description: 'ÇÚãÇá stemming', default: true })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ stemming', default: true })
   @IsOptional()
   @IsBoolean()
   @Type(() => Boolean)
@@ -142,19 +145,19 @@ export class TokenizeTextDto {
 }
 
 /**
- * Highlight ãÊä
+ * Highlight ï¿½ï¿½ï¿½
  */
 export class HighlightTextDto {
-  @ApiProperty({ description: 'ãÊä ÇÕáí' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½' })
   @IsString()
   text: string;
 
-  @ApiProperty({ description: 'ÚÈÇÑÇÊ ÌÓÊÌæ ÈÑÇí highlight' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ highlight' })
   @IsArray()
   @IsString({ each: true })
   searchTerms: string[];
 
-  @ApiPropertyOptional({ description: 'Ê HTML ÈÑÇí highlight', default: 'mark' })
+  @ApiPropertyOptional({ description: 'Ê HTML ï¿½ï¿½ï¿½ï¿½ highlight', default: 'mark' })
   @IsOptional()
   @IsString()
   tag?: string;
@@ -165,68 +168,68 @@ export class HighlightTextDto {
 // ???????????????????????????????????????????????????????????????????????????
 
 /**
- * äÊíÌå ÌÓÊÌæí ãÍÕæá
+ * ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½
  */
 export class ProductSearchHitDto {
-  @ApiProperty({ description: 'ÔäÇÓå ãÍÕæá' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
   id: string;
 
-  @ApiProperty({ description: 'äÇã ãÍÕæá' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
   name: string;
 
-  @ApiPropertyOptional({ description: 'ÊæÖíÍÇÊ' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   description?: string;
 
-  @ApiProperty({ description: 'ŞíãÊ' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½' })
   price: number;
 
-  @ApiPropertyOptional({ description: 'ŞíãÊ ÊÎİíİÎæÑÏå' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½İï¿½ï¿½ï¿½ï¿½ï¿½' })
   salePrice?: number;
 
-  @ApiPropertyOptional({ description: 'ÏÓÊåÈäÏí' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   category?: string;
 
-  @ApiPropertyOptional({ description: 'ÈÑäÏ' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½' })
   brand?: string;
 
-  @ApiProperty({ description: 'ãæÌæÏí' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   inStock: boolean;
 
-  @ApiPropertyOptional({ description: 'ÇãÊíÇÒ' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   rating?: number;
 
-  @ApiPropertyOptional({ description: 'ÊÕÇæíÑ' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   images?: string[];
 
-  @ApiPropertyOptional({ description: 'ãÊä highlight ÔÏå' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ highlight ï¿½ï¿½ï¿½' })
   _formatted?: Record<string, string>;
 }
 
 /**
- * äÊíÌå ÌÓÊÌæ
+ * ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½
  */
 export class SearchResultDto {
-  @ApiProperty({ description: 'äÊÇíÌ ÌÓÊÌæ', type: [ProductSearchHitDto] })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½', type: [ProductSearchHitDto] })
   hits: ProductSearchHitDto[];
 
-  @ApiProperty({ description: 'ÊÚÏÇÏ ˜á äÊÇíÌ' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
   totalHits: number;
 
-  @ApiProperty({ description: 'ÒãÇä ÑÏÇÒÔ Èå ãíáíËÇäíå' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   processingTimeMs: number;
 
-  @ApiProperty({ description: 'ÚÈÇÑÊ ÌÓÊÌæ' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
   query: string;
 
-  @ApiPropertyOptional({ description: 'ÊæÒíÚ facetåÇ' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ facetï¿½ï¿½ï¿½' })
   facetDistribution?: Record<string, Record<string, number>>;
 }
 
 /**
- * äÊíÌå tokenize
+ * ï¿½ï¿½ï¿½ï¿½ï¿½ tokenize
  */
 export class TokenizeResultDto {
-  @ApiProperty({ description: 'Êæ˜äåÇí ÇÓÊÎÑÇÌ ÔÏå' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½' })
   tokens: Array<{
     text: string;
     position: number;
@@ -235,13 +238,13 @@ export class TokenizeResultDto {
     type: 'word' | 'number' | 'mixed';
   }>;
 
-  @ApiProperty({ description: 'ãÊä ÇÕáí' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½' })
   originalText: string;
 
-  @ApiProperty({ description: 'ãÊä äÑãÇáÔÏå' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   normalizedText: string;
 
-  @ApiProperty({ description: 'ÂãÇÑ' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½' })
   stats: {
     totalTokens: number;
     uniqueTokens: number;
@@ -250,37 +253,37 @@ export class TokenizeResultDto {
 }
 
 /**
- * äÊíÌå íÔäåÇÏ
+ * ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
  */
 export class SuggestionsResultDto {
-  @ApiProperty({ description: 'íÔäåÇÏÇÊ' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   suggestions: string[];
 
-  @ApiProperty({ description: 'íÔæäÏ ÌÓÊÌæ' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
   prefix: string;
 }
 
 /**
- * äÊíÌå highlight
+ * ï¿½ï¿½ï¿½ï¿½ï¿½ highlight
  */
 export class HighlightResultDto {
-  @ApiProperty({ description: 'ãÊä highlight ÔÏå' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ highlight ï¿½ï¿½ï¿½' })
   highlightedText: string;
 
-  @ApiProperty({ description: 'ãÊä ÇÕáí' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½' })
   originalText: string;
 }
 
 /**
- * äÊíÌå fuzzy search
+ * ï¿½ï¿½ï¿½ï¿½ï¿½ fuzzy search
  */
 export class FuzzySearchResultDto {
-  @ApiProperty({ description: 'äÊÇíÌ ãÔÇÈå' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
   results: string[];
 
-  @ApiProperty({ description: 'ÚÈÇÑÊ ÌÓÊÌæ' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
   query: string;
 
-  @ApiProperty({ description: 'ÂÓÊÇäå ÔÈÇåÊ' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
   threshold: number;
 }

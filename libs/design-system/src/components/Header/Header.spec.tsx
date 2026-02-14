@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Header } from './Header';
 import type { NavItem, SearchSuggestion, UserMenuItem } from './Header';
 
@@ -36,7 +36,7 @@ describe('Header Component', () => {
     { id: 'logout', label: 'Logout', labelFa: 'خروج', danger: true, divider: true },
   ];
 
-  const mockSearchSuggestions: SearchSuggestion[] = [
+  const _mockSearchSuggestions: SearchSuggestion[] = [
     { id: '1', text: 'iPhone 15', type: 'product', meta: 'Electronics' },
     { id: '2', text: 'Electronics', type: 'category' },
   ];
@@ -76,13 +76,16 @@ describe('Header Component', () => {
   it('should call onSearch when typing in search', async () => {
     const onSearch = vi.fn();
     render(<Header onSearch={onSearch} />);
-    
+
     const searchInput = screen.getByPlaceholderText('Search products...');
     fireEvent.change(searchInput, { target: { value: 'test query' } });
-    
-    await waitFor(() => {
-      expect(onSearch).toHaveBeenCalledWith('test query');
-    }, { timeout: 500 });
+
+    await waitFor(
+      () => {
+        expect(onSearch).toHaveBeenCalledWith('test query');
+      },
+      { timeout: 500 }
+    );
   });
 
   it('should display notification count', () => {
@@ -98,10 +101,10 @@ describe('Header Component', () => {
   it('should call onNotificationClick when notification button clicked', () => {
     const onNotificationClick = vi.fn();
     render(<Header notificationCount={3} onNotificationClick={onNotificationClick} />);
-    
+
     const notificationButton = screen.getByLabelText(/Notifications/);
     fireEvent.click(notificationButton);
-    
+
     expect(onNotificationClick).toHaveBeenCalled();
   });
 
@@ -113,10 +116,10 @@ describe('Header Component', () => {
   it('should call onWalletClick when wallet button clicked', () => {
     const onWalletClick = vi.fn();
     render(<Header walletBalance={1000000} onWalletClick={onWalletClick} />);
-    
+
     const walletButton = screen.getByText(/ریال/).closest('button');
     fireEvent.click(walletButton!);
-    
+
     expect(onWalletClick).toHaveBeenCalled();
   });
 
@@ -133,10 +136,10 @@ describe('Header Component', () => {
 
   it('should toggle user menu on click', () => {
     render(<Header userName="John" userMenuItems={mockUserMenuItems} />);
-    
+
     const userButton = screen.getByText('J').closest('button');
     fireEvent.click(userButton!);
-    
+
     expect(screen.getByText('Profile')).toBeInTheDocument();
     expect(screen.getByText('Settings')).toBeInTheDocument();
     expect(screen.getByText('Logout')).toBeInTheDocument();
@@ -145,19 +148,15 @@ describe('Header Component', () => {
   it('should call onUserMenuClick when menu item clicked', () => {
     const onUserMenuClick = vi.fn();
     render(
-      <Header 
-        userName="John" 
-        userMenuItems={mockUserMenuItems} 
-        onUserMenuClick={onUserMenuClick} 
-      />
+      <Header userName="John" userMenuItems={mockUserMenuItems} onUserMenuClick={onUserMenuClick} />
     );
-    
+
     const userButton = screen.getByText('J').closest('button');
     fireEvent.click(userButton!);
-    
+
     const profileItem = screen.getByText('Profile');
     fireEvent.click(profileItem);
-    
+
     expect(onUserMenuClick).toHaveBeenCalledWith(mockUserMenuItems[0]);
   });
 
@@ -169,10 +168,10 @@ describe('Header Component', () => {
 
   it('should toggle mobile menu', () => {
     render(<Header navItems={mockNavItems} />);
-    
+
     const menuButton = screen.getByLabelText('Toggle menu');
     fireEvent.click(menuButton);
-    
+
     // Mobile menu should be visible
     const mobileNav = screen.getAllByText('Home');
     expect(mobileNav.length).toBeGreaterThan(0);
@@ -180,10 +179,10 @@ describe('Header Component', () => {
 
   it('should have proper accessibility attributes', () => {
     render(<Header notificationCount={5} />);
-    
+
     const notificationButton = screen.getByLabelText('Notifications (5 unread)');
     expect(notificationButton).toBeInTheDocument();
-    
+
     const themeButton = screen.getByLabelText('Switch to dark mode');
     expect(themeButton).toBeInTheDocument();
   });

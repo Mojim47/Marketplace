@@ -1,7 +1,7 @@
-﻿import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards } from '@nestjs/common';
-import { WarehouseService } from '@libs/warehouse';
-import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+﻿import type { WarehouseService } from '@libs/warehouse';
+import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import type { AuthenticatedUser } from '../common/types/authenticated-user.type';
 
 @Controller('warehouses')
@@ -25,13 +25,16 @@ export class WarehouseController {
   }
 
   @Post('transfer')
-  async transfer(@Body() dto: {
-    fromWarehouseId: string;
-    toWarehouseId: string;
-    productId: string;
-    quantity: number;
-    reason?: string;
-  }, @CurrentUser() user: AuthenticatedUser) {
+  async transfer(
+    @Body() dto: {
+      fromWarehouseId: string;
+      toWarehouseId: string;
+      productId: string;
+      quantity: number;
+      reason?: string;
+    },
+    @CurrentUser() user: AuthenticatedUser
+  ) {
     const transferId = await this.warehouse.transfer({ ...dto, initiatedBy: user.id });
     return { transferId };
   }
@@ -47,4 +50,3 @@ export class WarehouseController {
     return this.warehouse.findNearestWarehouse(query.productId, query.lat, query.lng);
   }
 }
-

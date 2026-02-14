@@ -8,15 +8,15 @@
  * - 2.2: XSS sanitization for all user inputs
  */
 
-import { describe, it, expect } from 'vitest';
 import * as fc from 'fast-check';
+import { describe, expect, it } from 'vitest';
 import {
+  escapeHtml,
+  normalizePersianText,
+  removeDangerousPatterns,
   sanitize,
   sanitizeObject,
   sanitizeUrl,
-  escapeHtml,
-  removeDangerousPatterns,
-  normalizePersianText,
 } from './xss.sanitizer';
 
 describe('XSS Sanitization Properties', () => {

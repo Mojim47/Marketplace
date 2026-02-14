@@ -1,36 +1,36 @@
+import { Transform, Type } from 'class-transformer';
 import {
-  IsString,
+  IsArray,
   IsEmail,
+  IsEnum,
   IsNumber,
   IsOptional,
-  IsEnum,
-  IsArray,
-  MinLength,
-  MaxLength,
+  IsString,
   IsStrongPassword,
-  ValidateNested
-} from 'class-validator'
-import { Transform, Type } from 'class-transformer'
+  MaxLength,
+  MinLength,
+  ValidateNested,
+} from 'class-validator';
 
 // ============================================
 // AUTH DTOs
 // ============================================
 export class LoginDto {
   @IsEmail()
-  email!: string
+  email!: string;
 
   @IsString()
   @MinLength(8)
-  password!: string
+  password!: string;
 }
 
 export class RegisterDto {
   @IsEmail()
-  email!: string
+  email!: string;
 
   @IsString()
   @MinLength(2)
-  name!: string
+  name!: string;
 
   @IsString()
   @IsStrongPassword({
@@ -38,29 +38,29 @@ export class RegisterDto {
     minLowercase: 1,
     minNumbers: 1,
     minSymbols: 1,
-    minUppercase: 1
+    minUppercase: 1,
   })
-  password!: string
+  password!: string;
 
   @IsString()
-  tenantName!: string
+  tenantName!: string;
 
   @IsString()
-  tenantSlug!: string
+  tenantSlug!: string;
 }
 
 export class RefreshTokenDto {
   @IsString()
-  refreshToken!: string
+  refreshToken!: string;
 }
 
 export class ChangePasswordDto {
   @IsString()
-  currentPassword!: string
+  currentPassword!: string;
 
   @IsString()
   @IsStrongPassword()
-  newPassword!: string
+  newPassword!: string;
 }
 
 // ============================================
@@ -70,15 +70,15 @@ export class CreateTenantDto {
   @IsString()
   @MinLength(2)
   @MaxLength(100)
-  name!: string
+  name!: string;
 
   @IsString()
   @MinLength(2)
   @MaxLength(50)
-  slug!: string
+  slug!: string;
 
   @IsEmail()
-  ownerEmail!: string
+  ownerEmail!: string;
 
   @IsEnum(['starter', 'professional', 'enterprise'])
   @IsOptional()
@@ -107,10 +107,10 @@ export class UpdateTenantDto {
 export class CreateVendorDto {
   @IsString()
   @MinLength(2)
-  businessName!: string
+  businessName!: string;
 
   @IsEmail()
-  ownerEmail!: string
+  ownerEmail!: string;
 
   @IsString()
   @IsOptional()
@@ -153,29 +153,29 @@ export class UpdateVendorDto {
 export class CreateProductDto {
   @IsString()
   @MinLength(2)
-  name!: string
+  name!: string;
 
   @IsString()
   @IsOptional()
-  description?: string
+  description?: string;
 
   @IsString()
-  sku!: string
+  sku!: string;
 
   @IsNumber()
-  @Transform(({ value }) => parseFloat(value))
-  price!: number
+  @Transform(({ value }) => Number.parseFloat(value))
+  price!: number;
 
   @IsNumber()
-  @Transform(({ value }) => parseFloat(value))
-  costPrice!: number
+  @Transform(({ value }) => Number.parseFloat(value))
+  costPrice!: number;
 
   @IsNumber()
   @IsOptional()
   stock?: number;
 
   @IsString()
-  category!: string
+  category!: string;
 
   @IsString()
   @IsOptional()
@@ -201,15 +201,15 @@ export class CreateProductDto {
 export class UpdateProductDto {
   @IsString()
   @IsOptional()
-  name?: string
+  name?: string;
 
   @IsString()
   @IsOptional()
-  description?: string
+  description?: string;
 
   @IsNumber()
   @IsOptional()
-  price?: number
+  price?: number;
 
   @IsNumber()
   @IsOptional()
@@ -237,21 +237,21 @@ export class UpdateProductDto {
 // ============================================
 export class CreateOrderItemDto {
   @IsString()
-  productId!: string
+  productId!: string;
 
   @IsNumber()
-  quantity!: number
+  quantity!: number;
 
   @IsNumber()
-  price!: number
+  price!: number;
 }
 
 export class CreateOrderDto {
   @IsString()
-  customerId!: string
+  customerId!: string;
 
   @IsEmail()
-  customerEmail!: string
+  customerEmail!: string;
 
   @IsString()
   @IsOptional()
@@ -260,11 +260,11 @@ export class CreateOrderDto {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CreateOrderItemDto)
-  items!: CreateOrderItemDto[]
+  items!: CreateOrderItemDto[];
 
   @IsNumber()
   @IsOptional()
-  discountAmount?: number
+  discountAmount?: number;
 
   @IsString()
   @IsOptional()
@@ -294,19 +294,19 @@ export class UpdateOrderDto {
 // ============================================
 export class EnableFeatureDto {
   @IsString()
-  featureKey!: string
+  featureKey!: string;
 }
 
 export class DisableFeatureDto {
   @IsString()
-  featureKey!: string
+  featureKey!: string;
 }
 
 export class SetFeatureLimitsDto {
   @IsString()
-  featureKey!: string
+  featureKey!: string;
 
-  limits!: Record<string, number>
+  limits!: Record<string, number>;
 }
 
 // ============================================
@@ -315,13 +315,13 @@ export class SetFeatureLimitsDto {
 export class PaginationDto {
   @IsNumber()
   @IsOptional()
-  @Transform(({ value }) => parseInt(value, 10))
-  skip?: number = 0
+  @Transform(({ value }) => Number.parseInt(value, 10))
+  skip?: number = 0;
 
   @IsNumber()
   @IsOptional()
-  @Transform(({ value }) => parseInt(value, 10))
-  take?: number = 10
+  @Transform(({ value }) => Number.parseInt(value, 10))
+  take?: number = 10;
 
   @IsString()
   @IsOptional()
@@ -329,7 +329,7 @@ export class PaginationDto {
 
   @IsEnum(['asc', 'desc'])
   @IsOptional()
-  sortOrder?: 'asc' | 'desc' = 'asc'
+  sortOrder?: 'asc' | 'desc' = 'asc';
 }
 
 export class FilterDto {
@@ -350,26 +350,26 @@ export class FilterDto {
 // RESPONSE DTOs
 // ============================================
 export class PaginatedResponseDto<T> {
-  data!: T[]
-  total!: number
-  skip!: number
-  take!: number
+  data!: T[];
+  total!: number;
+  skip!: number;
+  take!: number;
 }
 
 export class SuccessResponseDto<T> {
-  success!: boolean
-  data!: T
-  timestamp!: Date
+  success!: boolean;
+  data!: T;
+  timestamp!: Date;
 }
 
 export class ErrorResponseDto {
-  success!: false
+  success!: false;
   error!: {
-    code: string
-    message: string
-    details?: Record<string, unknown>
-  }
-  timestamp!: Date
+    code: string;
+    message: string;
+    details?: Record<string, unknown>;
+  };
+  timestamp!: Date;
 }
 
 // ============================================
@@ -395,11 +395,11 @@ export class AuditLogFilterDto extends PaginationDto {
 export class CreateSupportTicketDto {
   @IsString()
   @MinLength(5)
-  title!: string
+  title!: string;
 
   @IsString()
   @MinLength(10)
-  description!: string
+  description!: string;
 
   @IsEnum(['low', 'normal', 'high', 'urgent'])
   @IsOptional()

@@ -13,7 +13,9 @@ export function OfflineClient() {
         const req = indexedDB.open('nextgen-seller', 1);
         req.onupgradeneeded = () => {
           const db = req.result;
-          if (!db.objectStoreNames.contains('kv')) db.createObjectStore('kv');
+          if (!db.objectStoreNames.contains('kv')) {
+            db.createObjectStore('kv');
+          }
         };
       }
     } catch {

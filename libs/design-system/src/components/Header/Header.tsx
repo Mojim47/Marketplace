@@ -5,8 +5,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { cn } from '../../utils/cn';
 import { useTheme } from '../../hooks/useTheme';
+import { cn } from '../../utils/cn';
 
 export interface HeaderProps {
   /** Logo element or URL */
@@ -93,7 +93,7 @@ export const Header: React.FC<HeaderProps> = ({
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-  
+
   const searchRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
@@ -102,7 +102,7 @@ export const Header: React.FC<HeaderProps> = ({
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
     };
-    
+
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -133,7 +133,7 @@ export const Header: React.FC<HeaderProps> = ({
   }, [searchQuery, onSearch]);
 
   const formatCurrency = useCallback((amount: number) => {
-    return new Intl.NumberFormat('fa-IR').format(amount) + ' ریال';
+    return `${new Intl.NumberFormat('fa-IR').format(amount)} ریال`;
   }, []);
 
   return (
@@ -152,9 +152,7 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Logo */}
           <div className="flex-shrink-0">
             {logo || (
-              <span className="text-xl font-bold text-[var(--color-brand-primary)]">
-                NextGen
-              </span>
+              <span className="text-xl font-bold text-[var(--color-brand-primary)]">NextGen</span>
             )}
           </div>
 
@@ -184,9 +182,7 @@ export const Header: React.FC<HeaderProps> = ({
                       {item.badge}
                     </span>
                   )}
-                  {item.children && (
-                    <ChevronDownIcon className="w-4 h-4" />
-                  )}
+                  {item.children && <ChevronDownIcon className="w-4 h-4" />}
                 </a>
 
                 {/* Dropdown Menu */}
@@ -243,7 +239,7 @@ export const Header: React.FC<HeaderProps> = ({
                 )}
               />
               <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-tertiary)]" />
-              
+
               {/* Search Suggestions Dropdown */}
               {isSearchFocused && (searchQuery || searchSuggestions.length > 0) && (
                 <div
@@ -269,7 +265,9 @@ export const Header: React.FC<HeaderProps> = ({
                         'transition-colors duration-fast'
                       )}
                     >
-                      {suggestion.icon || <SearchIcon className="w-4 h-4 text-[var(--color-text-tertiary)]" />}
+                      {suggestion.icon || (
+                        <SearchIcon className="w-4 h-4 text-[var(--color-text-tertiary)]" />
+                      )}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-[var(--color-text-primary)] truncate">
                           {suggestion.text}
@@ -280,13 +278,19 @@ export const Header: React.FC<HeaderProps> = ({
                           </p>
                         )}
                       </div>
-                      <span className={cn(
-                        'text-xs px-2 py-0.5 rounded-full',
-                        suggestion.type === 'product' && 'bg-[var(--color-semantic-infoBg)] text-[var(--color-semantic-info)]',
-                        suggestion.type === 'category' && 'bg-[var(--color-semantic-successBg)] text-[var(--color-semantic-success)]',
-                        suggestion.type === 'brand' && 'bg-[var(--color-semantic-warningBg)] text-[var(--color-semantic-warning)]',
-                        suggestion.type === 'recent' && 'bg-[var(--color-background-sunken)] text-[var(--color-text-tertiary)]'
-                      )}>
+                      <span
+                        className={cn(
+                          'text-xs px-2 py-0.5 rounded-full',
+                          suggestion.type === 'product' &&
+                            'bg-[var(--color-semantic-infoBg)] text-[var(--color-semantic-info)]',
+                          suggestion.type === 'category' &&
+                            'bg-[var(--color-semantic-successBg)] text-[var(--color-semantic-success)]',
+                          suggestion.type === 'brand' &&
+                            'bg-[var(--color-semantic-warningBg)] text-[var(--color-semantic-warning)]',
+                          suggestion.type === 'recent' &&
+                            'bg-[var(--color-background-sunken)] text-[var(--color-text-tertiary)]'
+                        )}
+                      >
                         {suggestion.type}
                       </span>
                     </button>
@@ -341,14 +345,16 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <BellIcon className="w-5 h-5" />
               {notificationCount > 0 && (
-                <span className={cn(
-                  'absolute -top-0.5 -right-0.5',
-                  'min-w-[18px] h-[18px] px-1',
-                  'flex items-center justify-center',
-                  'text-xs font-bold text-white',
-                  'bg-[var(--color-semantic-error)] rounded-full',
-                  'animate-in zoom-in duration-200'
-                )}>
+                <span
+                  className={cn(
+                    'absolute -top-0.5 -right-0.5',
+                    'min-w-[18px] h-[18px] px-1',
+                    'flex items-center justify-center',
+                    'text-xs font-bold text-white',
+                    'bg-[var(--color-semantic-error)] rounded-full',
+                    'animate-in zoom-in duration-200'
+                  )}
+                >
                   {notificationCount > 99 ? '99+' : notificationCount}
                 </span>
               )}
@@ -377,10 +383,12 @@ export const Header: React.FC<HeaderProps> = ({
                     </span>
                   </div>
                 )}
-                <ChevronDownIcon className={cn(
-                  'w-4 h-4 transition-transform duration-fast',
-                  isUserMenuOpen && 'rotate-180'
-                )} />
+                <ChevronDownIcon
+                  className={cn(
+                    'w-4 h-4 transition-transform duration-fast',
+                    isUserMenuOpen && 'rotate-180'
+                  )}
+                />
               </button>
 
               {/* User Dropdown */}
@@ -511,31 +519,56 @@ export const Header: React.FC<HeaderProps> = ({
 // Icon Components
 const SearchIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+    />
   </svg>
 );
 
 const BellIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+    />
   </svg>
 );
 
 const WalletIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+    />
   </svg>
 );
 
 const SunIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+    />
   </svg>
 );
 
 const MoonIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+    />
   </svg>
 );
 
@@ -547,7 +580,12 @@ const ChevronDownIcon: React.FC<{ className?: string }> = ({ className }) => (
 
 const MenuIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M4 6h16M4 12h16M4 18h16"
+    />
   </svg>
 );
 

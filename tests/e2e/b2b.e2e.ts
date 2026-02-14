@@ -9,7 +9,7 @@
  * @requirements 2.4
  */
 
-import { test, expect, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 test.describe('فرآیندهای B2B - B2B Flow', () => {
   test.describe('پیش‌فاکتورها - Proforma Invoices (Quotes)', () => {

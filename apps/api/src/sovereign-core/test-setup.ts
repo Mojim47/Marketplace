@@ -7,11 +7,11 @@
  * ???????????????????????????????????????????????????????????????????????????
  */
 
-import { PostgreSqlContainer, StartedPostgreSqlContainer } from '@testcontainers/postgresql';
-import { GenericContainer, StartedTestContainer } from 'testcontainers';
-import { execSync } from 'child_process';
-import { Redis } from 'ioredis';
+import { execSync } from 'node:child_process';
 import type { PrismaClient } from '@prisma/client';
+import { PostgreSqlContainer, type StartedPostgreSqlContainer } from '@testcontainers/postgresql';
+import { Redis } from 'ioredis';
+import { GenericContainer, type StartedTestContainer } from 'testcontainers';
 
 let postgresContainer: StartedPostgreSqlContainer;
 let redisContainer: StartedTestContainer;
@@ -19,7 +19,6 @@ let prisma: PrismaClient;
 let redis: Redis;
 
 export async function setupTestEnvironment() {
-  console.log('?? Starting PostgreSQL container...');
   postgresContainer = await new PostgreSqlContainer('postgres:16-alpine')
     .withDatabase('test_db')
     .withUsername('test_user')
@@ -27,27 +26,17 @@ export async function setupTestEnvironment() {
     .start();
 
   const databaseUrl = postgresContainer.getConnectionUri();
-  process.env['DATABASE_URL'] = databaseUrl;
-
-  console.log('?? Starting Redis container...');
-  redisContainer = await new GenericContainer('redis:7-alpine')
-    .withExposedPorts(6379)
-    .start();
+  process.env.DATABASE_URL = databaseUrl;
+  redisContainer = await new GenericContainer('redis:7-alpine').withExposedPorts(6379).start();
 
   const redisHost = redisContainer.getHost();
   const redisPort = redisContainer.getMappedPort(6379);
-
-  // Generate Prisma Client
-  console.log('?? Generating Prisma Client...');
   const rootDir = process.cwd().replace(/apps[\\/]api.*$/, '');
   execSync('npx prisma generate', {
     cwd: rootDir,
     env: { ...process.env, DATABASE_URL: databaseUrl },
     stdio: 'inherit',
   });
-
-  // Push schema to test database
-  console.log('?? Pushing Prisma schema to test database...');
   execSync('npx prisma db push --accept-data-loss', {
     cwd: rootDir,
     env: { ...process.env, DATABASE_URL: databaseUrl },
@@ -75,10 +64,8 @@ export async function setupTestEnvironment() {
   });
 
   // Set Redis environment variables for PriceEngine
-  process.env['REDIS_HOST'] = redisHost;
-  process.env['REDIS_PORT'] = redisPort.toString();
-
-  console.log('? Test environment ready!');
+  process.env.REDIS_HOST = redisHost;
+  process.env.REDIS_PORT = redisPort.toString();
 
   return {
     prisma,
@@ -90,8 +77,6 @@ export async function setupTestEnvironment() {
 }
 
 export async function teardownTestEnvironment() {
-  console.log('?? Cleaning up test environment...');
-
   if (redis) {
     await redis.quit();
   }
@@ -107,8 +92,6 @@ export async function teardownTestEnvironment() {
   if (postgresContainer) {
     await postgresContainer.stop();
   }
-
-  console.log('? Test environment cleaned up!');
 }
 
 export function getTestPrisma() {

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthService } from './auth.service';
 
 const createService = () => {
@@ -15,17 +15,22 @@ const createService = () => {
     get: vi.fn(),
   } as any;
 
-  const service = new AuthService(prisma, jwtService, configService);
-  (service as any)._lockoutService = {
+  const lockoutService = {
     recordLoginAttempt: vi.fn().mockResolvedValue({
       allowed: true,
       remainingAttempts: 5,
       message: 'ok',
     }),
     clearFailedAttempts: vi.fn(),
-  };
+  } as any;
 
-  return { service, prisma, jwtService };
+  const totpService = {
+    verify: vi.fn().mockReturnValue({ valid: true }),
+  } as any;
+
+  const service = new AuthService(prisma, jwtService, configService, lockoutService, totpService);
+
+  return { service, prisma, jwtService, lockoutService };
 };
 
 describe('AuthService.signIn', () => {
@@ -71,7 +76,7 @@ describe('AuthService.signIn', () => {
         role: user.role,
         jti: expect.any(String),
         nbf: expect.any(Number),
-      }),
+      })
     );
 
     expect(result).toEqual({

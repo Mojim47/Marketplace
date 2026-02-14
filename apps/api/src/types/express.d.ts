@@ -1,4 +1,4 @@
-import { Session } from 'express-session';
+import type { Session } from 'express-session';
 
 declare module 'express' {
   interface Request {

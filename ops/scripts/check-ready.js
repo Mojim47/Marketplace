@@ -1,4 +1,4 @@
-const fs = require('fs');
+const fs = require('node:fs');
 
 const required = [
   '.copilot/shadow-context.json',
@@ -12,6 +12,4 @@ if (missing.length) {
   console.error('❌ Missing:', missing);
   process.exit(1);
 } else {
-  console.log('✅ All critical files present.');
-  console.log('🚀 Ready for full autonomy.');
 }

@@ -29,7 +29,7 @@ export class ValidationError extends AppError {
 
   constructor(
     message: string,
-    messageFA: string = 'خطای اعتبارسنجی',
+    messageFA = 'خطای اعتبارسنجی',
     details?: Record<string, unknown>,
     code: ErrorCode = ErrorCode.VALIDATION_FAILED
   ) {
@@ -68,7 +68,9 @@ export class ValidationError extends AppError {
   }
 
   /** Schema validation failed (Zod, etc.) */
-  static schemaValidationFailed(errors: Array<{ field: string; message: string }>): ValidationError {
+  static schemaValidationFailed(
+    errors: Array<{ field: string; message: string }>
+  ): ValidationError {
     return new ValidationError(
       'Schema validation failed',
       'اعتبارسنجی ناموفق بود',
@@ -87,8 +89,8 @@ export class AuthenticationError extends AppError {
   readonly code: ErrorCode;
 
   constructor(
-    message: string = 'Authentication required',
-    messageFA: string = 'احراز هویت الزامی است',
+    message = 'Authentication required',
+    messageFA = 'احراز هویت الزامی است',
     details?: Record<string, unknown>,
     code: ErrorCode = ErrorCode.UNAUTHORIZED
   ) {
@@ -222,8 +224,8 @@ export class AuthorizationError extends AppError {
   readonly code: ErrorCode;
 
   constructor(
-    message: string = 'Access denied',
-    messageFA: string = 'دسترسی غیرمجاز',
+    message = 'Access denied',
+    messageFA = 'دسترسی غیرمجاز',
     details?: Record<string, unknown>,
     code: ErrorCode = ErrorCode.FORBIDDEN
   ) {
@@ -267,20 +269,15 @@ export class NotFoundError extends AppError {
   readonly statusCode = HttpStatus.NOT_FOUND;
   readonly code = ErrorCode.RESOURCE_NOT_FOUND;
 
-  constructor(
-    message: string,
-    messageFA: string = 'منبع یافت نشد',
-    details?: Record<string, unknown>
-  ) {
+  constructor(message: string, messageFA = 'منبع یافت نشد', details?: Record<string, unknown>) {
     super(message, messageFA, details);
   }
 
   static resource(resource: string, identifier: string): NotFoundError {
-    return new NotFoundError(
-      `${resource} not found: ${identifier}`,
-      `${resource} یافت نشد`,
-      { resource, identifier }
-    );
+    return new NotFoundError(`${resource} not found: ${identifier}`, `${resource} یافت نشد`, {
+      resource,
+      identifier,
+    });
   }
 
   static byId(resource: string, id: string): NotFoundError {
@@ -302,7 +299,7 @@ export class ConflictError extends AppError {
 
   constructor(
     message: string,
-    messageFA: string = 'تداخل در عملیات',
+    messageFA = 'تداخل در عملیات',
     details?: Record<string, unknown>,
     code: ErrorCode = ErrorCode.CONFLICT
   ) {
@@ -351,7 +348,7 @@ export class BusinessRuleError extends AppError {
 
   constructor(
     message: string,
-    messageFA: string = 'قانون کسب‌وکار نقض شده است',
+    messageFA = 'قانون کسب‌وکار نقض شده است',
     details?: Record<string, unknown>,
     code: ErrorCode = ErrorCode.BUSINESS_RULE_VIOLATION
   ) {
@@ -380,7 +377,11 @@ export class BusinessRuleError extends AppError {
   }
 
   /** Insufficient balance/credit */
-  static insufficientBalance(accountId: string, required: number, available: number): BusinessRuleError {
+  static insufficientBalance(
+    accountId: string,
+    required: number,
+    available: number
+  ): BusinessRuleError {
     return new BusinessRuleError(
       `Insufficient balance in account ${accountId}`,
       'موجودی کافی نیست',
@@ -410,7 +411,11 @@ export class BusinessRuleError extends AppError {
   }
 
   /** Credit limit exceeded */
-  static creditLimitExceeded(customerId: string, limit: number, requested: number): BusinessRuleError {
+  static creditLimitExceeded(
+    customerId: string,
+    limit: number,
+    requested: number
+  ): BusinessRuleError {
     return new BusinessRuleError(
       `Credit limit exceeded for customer ${customerId}`,
       'سقف اعتبار مشتری تمام شده است',
@@ -430,7 +435,11 @@ export class BusinessRuleError extends AppError {
   }
 
   /** Inventory insufficient */
-  static insufficientInventory(productId: string, requested: number, available: number): BusinessRuleError {
+  static insufficientInventory(
+    productId: string,
+    requested: number,
+    available: number
+  ): BusinessRuleError {
     return new BusinessRuleError(
       `Insufficient inventory for product ${productId}`,
       'موجودی انبار کافی نیست',
@@ -453,7 +462,7 @@ export class DomainError extends AppError {
 
   constructor(
     message: string,
-    messageFA: string = 'خطای عملیاتی',
+    messageFA = 'خطای عملیاتی',
     details?: Record<string, unknown>,
     code: ErrorCode = ErrorCode.CONFLICT
   ) {
@@ -531,8 +540,8 @@ export class RateLimitError extends AppError {
   readonly code = ErrorCode.RATE_LIMIT_EXCEEDED;
 
   constructor(
-    message: string = 'Too many requests',
-    messageFA: string = 'تعداد درخواست‌ها بیش از حد مجاز است',
+    message = 'Too many requests',
+    messageFA = 'تعداد درخواست‌ها بیش از حد مجاز است',
     details?: Record<string, unknown>
   ) {
     super(message, messageFA, details);
@@ -564,8 +573,8 @@ export class InternalError extends AppError {
   readonly code: ErrorCode;
 
   constructor(
-    message: string = 'An unexpected error occurred',
-    messageFA: string = 'خطای غیرمنتظره رخ داد',
+    message = 'An unexpected error occurred',
+    messageFA = 'خطای غیرمنتظره رخ داد',
     details?: Record<string, unknown>,
     code: ErrorCode = ErrorCode.INTERNAL_ERROR
   ) {
@@ -633,8 +642,8 @@ export class UnavailableError extends AppError {
   readonly code: ErrorCode;
 
   constructor(
-    message: string = 'Service temporarily unavailable',
-    messageFA: string = 'سرویس موقتاً در دسترس نیست',
+    message = 'Service temporarily unavailable',
+    messageFA = 'سرویس موقتاً در دسترس نیست',
     details?: Record<string, unknown>,
     code: ErrorCode = ErrorCode.SERVICE_UNAVAILABLE
   ) {
@@ -690,8 +699,8 @@ export class BadGatewayError extends AppError {
   readonly code: ErrorCode;
 
   constructor(
-    message: string = 'Bad gateway',
-    messageFA: string = 'خطا در ارتباط با سرویس بالادستی',
+    message = 'Bad gateway',
+    messageFA = 'خطا در ارتباط با سرویس بالادستی',
     details?: Record<string, unknown>,
     code: ErrorCode = ErrorCode.BAD_GATEWAY
   ) {
@@ -739,8 +748,8 @@ export class GatewayTimeoutError extends AppError {
   readonly code: ErrorCode;
 
   constructor(
-    message: string = 'Gateway timeout',
-    messageFA: string = 'زمان انتظار سرویس بالادستی به پایان رسید',
+    message = 'Gateway timeout',
+    messageFA = 'زمان انتظار سرویس بالادستی به پایان رسید',
     details?: Record<string, unknown>,
     code: ErrorCode = ErrorCode.GATEWAY_TIMEOUT
   ) {
@@ -762,7 +771,7 @@ export class GatewayTimeoutError extends AppError {
   static databaseTimeout(operation: string, timeoutMs: number): GatewayTimeoutError {
     return new GatewayTimeoutError(
       `Database operation ${operation} timed out after ${timeoutMs}ms`,
-      `عملیات پایگاه داده به پایان رسید`,
+      'عملیات پایگاه داده به پایان رسید',
       { operation, timeoutMs },
       ErrorCode.GATEWAY_TIMEOUT
     );
@@ -772,7 +781,7 @@ export class GatewayTimeoutError extends AppError {
   static externalApiTimeout(api: string, timeoutMs: number): GatewayTimeoutError {
     return new GatewayTimeoutError(
       `External API ${api} timed out after ${timeoutMs}ms`,
-      `زمان انتظار API خارجی به پایان رسید`,
+      'زمان انتظار API خارجی به پایان رسید',
       { api, timeoutMs },
       ErrorCode.UPSTREAM_TIMEOUT
     );

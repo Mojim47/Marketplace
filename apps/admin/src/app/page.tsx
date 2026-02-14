@@ -30,7 +30,10 @@ export default function AdminHomePage() {
             <h2 className="admin-title text-xl text-white">سلامت سرویس‌ها</h2>
             <div className="mt-4 space-y-3">
               {['API Gateway', 'AI Search', 'AR Storage'].map((service) => (
-                <div key={service} className="flex items-center justify-between rounded-xl bg-white/5 px-4 py-3 text-sm">
+                <div
+                  key={service}
+                  className="flex items-center justify-between rounded-xl bg-white/5 px-4 py-3 text-sm"
+                >
                   <span className="text-slate-200">{service}</span>
                   <span className="text-emerald-300">Healthy</span>
                 </div>

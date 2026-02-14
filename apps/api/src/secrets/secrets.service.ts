@@ -1,31 +1,31 @@
-import { Injectable, Logger } from '@nestjs/common'
+import { Injectable, Logger } from '@nestjs/common';
 
 @Injectable()
 export class SecretsService {
-  private readonly logger = new Logger(SecretsService.name)
+  private readonly logger = new Logger(SecretsService.name);
 
   getSecret(key: string): string | undefined {
-    return process.env[key]
+    return process.env[key];
   }
 
   getSecretOrThrow(key: string): string {
-    const value = process.env[key]
+    const value = process.env[key];
     if (!value) {
-      this.logger.error(`Missing required secret: ${key}`)
-      throw new Error(`Missing required environment variable: ${key}`)
+      this.logger.error(`Missing required secret: ${key}`);
+      throw new Error(`Missing required environment variable: ${key}`);
     }
-    return value
+    return value;
   }
 
   getDatabaseUrl(): string {
-    return this.getSecretOrThrow('DATABASE_URL')
+    return this.getSecretOrThrow('DATABASE_URL');
   }
 
   getJwtSecret(): string {
-    return this.getSecretOrThrow('JWT_SECRET')
+    return this.getSecretOrThrow('JWT_SECRET');
   }
 
   getRedisUrl(): string {
-    return this.getSecretOrThrow('REDIS_URL')
+    return this.getSecretOrThrow('REDIS_URL');
   }
 }

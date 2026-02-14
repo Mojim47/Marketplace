@@ -1,5 +1,5 @@
-import { IsString, IsInt, Min, ValidateNested, IsArray, IsOptional } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsArray, IsInt, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
 
 export class OrderItemDto {
   @IsString()

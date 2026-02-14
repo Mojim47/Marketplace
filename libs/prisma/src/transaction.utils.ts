@@ -108,7 +108,7 @@ function isSerializationError(error: unknown): boolean {
  * Calculate exponential backoff delay with jitter
  */
 function calculateBackoffDelay(attempt: number, baseDelay: number): number {
-  const exponentialDelay = baseDelay * Math.pow(2, attempt);
+  const exponentialDelay = baseDelay * 2 ** attempt;
   const jitter = Math.random() * exponentialDelay * 0.1; // 10% jitter
   return Math.min(exponentialDelay + jitter, 10000); // Cap at 10 seconds
 }

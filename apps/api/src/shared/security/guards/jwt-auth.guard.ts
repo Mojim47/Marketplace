@@ -2,33 +2,33 @@
  * ???????????????????????????????????????????????????????????????????????????
  * NextGen Marketplace - JWT Authentication Guard
  * ???????????????????????????????????????????????????????????????????????????
- * 
+ *
  * JWT authentication guard using RS256 algorithm with key rotation support.
  * Validates access tokens and extracts user payload for request context.
- * 
+ *
  * Features:
  * - RS256 token verification
  * - Automatic key rotation support
  * - Token expiration validation
  * - Issuer and audience validation
  * - Persian error messages
- * 
+ *
  * @module @nextgen/api/shared/security
  * Requirements: 1.1
  */
 
 import {
-  Injectable,
   CanActivate,
   ExecutionContext,
-  UnauthorizedException,
   Inject,
+  Injectable,
   Logger,
   SetMetadata,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Request } from 'express';
 import { JWTManager, JWTPayload } from '@nextgen/security';
+import { Request } from 'express';
 import { SECURITY_TOKENS } from '../tokens';
 
 // Metadata key for public routes
@@ -36,7 +36,7 @@ export const IS_PUBLIC_KEY = 'isPublic';
 
 /**
  * Decorator to mark routes as public (no authentication required)
- * 
+ *
  * @example
  * @Public()
  * @Get('health')
@@ -53,16 +53,16 @@ export interface AuthenticatedRequest extends Request {
 
 /**
  * JWT Authentication Guard
- * 
+ *
  * Validates JWT tokens using the JWTManager from libs/security.
  * Supports RS256 algorithm with automatic key rotation.
- * 
+ *
  * @example
  * // Apply globally in AppModule
  * providers: [
  *   { provide: APP_GUARD, useClass: JWTAuthGuard }
  * ]
- * 
+ *
  * @example
  * // Apply to specific controller
  * @UseGuards(JWTAuthGuard)
@@ -76,7 +76,7 @@ export class JWTAuthGuard implements CanActivate {
   constructor(
     @Inject(SECURITY_TOKENS.JWT_MANAGER)
     private readonly jwtManager: JWTManager,
-    private readonly reflector: Reflector,
+    private readonly reflector: Reflector
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -95,7 +95,7 @@ export class JWTAuthGuard implements CanActivate {
 
     if (!token) {
       this.logAuthFailure(request, 'NO_TOKEN');
-      throw new UnauthorizedException('Êæ˜ä ÇÍÑÇÒ åæíÊ íÇÝÊ äÔÏ');
+      throw new UnauthorizedException('ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½');
     }
 
     // Verify the token
@@ -109,7 +109,7 @@ export class JWTAuthGuard implements CanActivate {
     // Check if this is a refresh token being used as access token
     if (result.payload.scope === 'refresh') {
       this.logAuthFailure(request, 'REFRESH_TOKEN_AS_ACCESS');
-      throw new UnauthorizedException('Êæ˜ä äÇãÚÊÈÑ ÇÓÊ');
+      throw new UnauthorizedException('ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½');
     }
 
     // Attach user payload to request
@@ -163,16 +163,16 @@ export class JWTAuthGuard implements CanActivate {
    */
   private getErrorMessage(error?: string): string {
     const messages: Record<string, string> = {
-      'Invalid token format': 'ÝÑãÊ Êæ˜ä äÇãÚÊÈÑ ÇÓÊ',
-      'Invalid header encoding': 'Êæ˜ä äÇãÚÊÈÑ ÇÓÊ',
-      'Invalid algorithm': 'Êæ˜ä äÇãÚÊÈÑ ÇÓÊ',
-      'Unknown key ID': 'Êæ˜ä ãäÞÖí ÔÏå ÇÓÊ. áØÝÇð ÏæÈÇÑå æÇÑÏ ÔæíÏ',
-      'Invalid signature': 'Êæ˜ä äÇãÚÊÈÑ ÇÓÊ',
-      'Invalid payload encoding': 'Êæ˜ä äÇãÚÊÈÑ ÇÓÊ',
-      'Token expired': 'Êæ˜ä ãäÞÖí ÔÏå ÇÓÊ. áØÝÇð ÏæÈÇÑå æÇÑÏ ÔæíÏ',
-      'Invalid issuer': 'Êæ˜ä äÇãÚÊÈÑ ÇÓÊ',
+      'Invalid token format': 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½',
+      'Invalid header encoding': 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½',
+      'Invalid algorithm': 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½',
+      'Unknown key ID': 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½. ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½',
+      'Invalid signature': 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½',
+      'Invalid payload encoding': 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½',
+      'Token expired': 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½. ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½',
+      'Invalid issuer': 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½',
     };
 
-    return messages[error || ''] || 'Êæ˜ä äÇãÚÊÈÑ ÇÓÊ';
+    return messages[error || ''] || 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½';
   }
 }

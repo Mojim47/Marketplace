@@ -5,17 +5,17 @@
  */
 
 import {
-  Controller,
-  Get,
-  Post,
-  Delete,
   Body,
-  Param,
-  Query,
+  Controller,
+  Delete,
+  Get,
   HttpCode,
   HttpStatus,
+  Param,
+  Post,
+  Query,
 } from '@nestjs/common';
-import { AISearchService, AISearchQuery, AISearchResult } from './ai-search.service';
+import type { AISearchResult, AISearchService } from './ai-search.service';
 
 /** Search request DTO */
 class SearchRequestDto {
@@ -55,7 +55,7 @@ export class AISearchController {
   @Get()
   async search(
     @Query('query') query: string,
-    @Query('useCache') useCache?: string,
+    @Query('useCache') useCache?: string
   ): Promise<AISearchResult> {
     return this.aiSearchService.search({
       query,
@@ -152,10 +152,7 @@ export class AISearchController {
    * GET /api/ai-search/similarity?query1=...&query2=...
    */
   @Get('similarity')
-  async calculateSimilarity(
-    @Query('query1') query1: string,
-    @Query('query2') query2: string,
-  ) {
+  async calculateSimilarity(@Query('query1') query1: string, @Query('query2') query2: string) {
     const similarity = await this.aiSearchService.calculateSimilarity(query1, query2);
     return { query1, query2, similarity };
   }

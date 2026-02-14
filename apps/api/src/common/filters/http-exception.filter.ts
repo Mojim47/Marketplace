@@ -1,13 +1,13 @@
+import { randomUUID } from 'node:crypto';
 import {
-  ExceptionFilter,
+  type ArgumentsHost,
   Catch,
-  ArgumentsHost,
+  type ExceptionFilter,
   HttpException,
   HttpStatus,
-  Logger,
   Injectable,
+  Logger,
 } from '@nestjs/common';
-import { randomUUID } from 'crypto';
 
 interface Request {
   method: string;
@@ -68,26 +68,23 @@ const SENSITIVE_DB_PATTERNS = [
 /**
  * Auth-related status codes that should use generic messages
  */
-const AUTH_STATUS_CODES = [
-  HttpStatus.UNAUTHORIZED,
-  HttpStatus.FORBIDDEN,
-];
+const AUTH_STATUS_CODES = [HttpStatus.UNAUTHORIZED, HttpStatus.FORBIDDEN];
 
 /**
  * Generic messages for different error types (Persian)
  */
 const GENERIC_MESSAGES: Record<number, string> = {
-  [HttpStatus.BAD_REQUEST]: 'ÏÑÎæÇÓÊ äÇãÚÊÈÑ ÇÓÊ',
-  [HttpStatus.UNAUTHORIZED]: 'ÇÍÑÇÒ åæíÊ äÇãæÝÞ ÈæÏ',
-  [HttpStatus.FORBIDDEN]: 'ÏÓÊÑÓí ÛíÑãÌÇÒ',
-  [HttpStatus.NOT_FOUND]: 'ãäÈÚ ÏÑÎæÇÓÊí íÇÝÊ äÔÏ',
-  [HttpStatus.CONFLICT]: 'ÊÏÇÎá ÏÑ ÏÑÎæÇÓÊ',
-  [HttpStatus.UNPROCESSABLE_ENTITY]: 'ÏÇÏååÇí ÇÑÓÇáí ÞÇÈá ÑÏÇÒÔ äíÓÊäÏ',
-  [HttpStatus.TOO_MANY_REQUESTS]: 'ÊÚÏÇÏ ÏÑÎæÇÓÊåÇ ÈíÔ ÇÒ ÍÏ ãÌÇÒ ÇÓÊ',
-  [HttpStatus.INTERNAL_SERVER_ERROR]: 'ÎØÇí ÏÇÎáí ÓÑæÑ',
-  [HttpStatus.BAD_GATEWAY]: 'ÎØÇ ÏÑ ÇÑÊÈÇØ ÈÇ ÓÑæíÓ',
-  [HttpStatus.SERVICE_UNAVAILABLE]: 'ÓÑæíÓ ãæÞÊÇð ÏÑ ÏÓÊÑÓ äíÓÊ',
-  [HttpStatus.GATEWAY_TIMEOUT]: 'ÒãÇä ÇÓÎÏåí ÓÑæíÓ Èå ÇíÇä ÑÓíÏ',
+  [HttpStatus.BAD_REQUEST]: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½',
+  [HttpStatus.UNAUTHORIZED]: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½',
+  [HttpStatus.FORBIDDEN]: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½',
+  [HttpStatus.NOT_FOUND]: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½',
+  [HttpStatus.CONFLICT]: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½',
+  [HttpStatus.UNPROCESSABLE_ENTITY]: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½',
+  [HttpStatus.TOO_MANY_REQUESTS]: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Êï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½',
+  [HttpStatus.INTERNAL_SERVER_ERROR]: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½',
+  [HttpStatus.BAD_GATEWAY]: 'ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½',
+  [HttpStatus.SERVICE_UNAVAILABLE]: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½',
+  [HttpStatus.GATEWAY_TIMEOUT]: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Îï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½',
 };
 
 /**
@@ -101,7 +98,7 @@ function isProduction(): boolean {
  * Check if message contains sensitive database information
  */
 function containsSensitiveDbInfo(message: string): boolean {
-  return SENSITIVE_DB_PATTERNS.some(pattern => pattern.test(message));
+  return SENSITIVE_DB_PATTERNS.some((pattern) => pattern.test(message));
 }
 
 /**
@@ -110,13 +107,10 @@ function containsSensitiveDbInfo(message: string): boolean {
  * - Removes database-specific information
  * - Uses generic messages for auth errors
  */
-function sanitizeErrorMessage(
-  status: number,
-  originalMessage: string,
-): string {
+function sanitizeErrorMessage(status: number, originalMessage: string): string {
   // Always use generic message for auth errors
   if (AUTH_STATUS_CODES.includes(status)) {
-    return GENERIC_MESSAGES[status] || 'ÇÍÑÇÒ åæíÊ äÇãæÝÞ ÈæÏ';
+    return GENERIC_MESSAGES[status] || 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½';
   }
 
   // In production, sanitize all messages
@@ -135,7 +129,7 @@ function sanitizeErrorMessage(
   // For client errors in non-production, return original message
   // unless it contains sensitive info
   if (containsSensitiveDbInfo(originalMessage)) {
-    return GENERIC_MESSAGES[status] || 'ÎØÇ ÏÑ ÑÏÇÒÔ ÏÑÎæÇÓÊ';
+    return GENERIC_MESSAGES[status] || 'ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½';
   }
 
   return originalMessage;
@@ -145,20 +139,21 @@ function sanitizeErrorMessage(
  * Extract correlation ID from request or generate new one
  */
 export function getCorrelationId(request: Request): string {
-  const existingId = request.headers['x-correlation-id'] ||
-                     request.headers['x-request-id'] ||
-                     (request as any).correlationId;
-  
+  const existingId =
+    request.headers['x-correlation-id'] ||
+    request.headers['x-request-id'] ||
+    (request as any).correlationId;
+
   if (typeof existingId === 'string' && existingId.length > 0) {
     return existingId;
   }
-  
+
   return randomUUID();
 }
 
 /**
  * Secure exception filter for production environments
- * 
+ *
  * Security features:
  * - No stack traces in production responses
  * - Sanitized database error messages
@@ -256,7 +251,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       return exception.message;
     }
 
-    return 'ÎØÇí äÇÔäÇÎÊå';
+    return 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½';
   }
 
   /**
@@ -286,9 +281,11 @@ export class AllExceptionsFilter implements ExceptionFilter {
    */
   private isPrismaError(exception: unknown): boolean {
     if (exception instanceof Error) {
-      return exception.constructor.name.includes('Prisma') ||
-             exception.name.includes('Prisma') ||
-             (exception as any).code?.startsWith?.('P');
+      return (
+        exception.constructor.name.includes('Prisma') ||
+        exception.name.includes('Prisma') ||
+        (exception as any).code?.startsWith?.('P')
+      );
     }
     return false;
   }
@@ -298,7 +295,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
    */
   private getPrismaErrorStatus(exception: unknown): number {
     const code = (exception as any).code;
-    
+
     switch (code) {
       case 'P2002': // Unique constraint violation
         return HttpStatus.CONFLICT;
@@ -321,7 +318,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     request: Request,
     exception: unknown,
     correlationId: string,
-    status: number,
+    status: number
   ): void {
     const logContext = {
       correlationId,
@@ -338,12 +335,12 @@ export class AllExceptionsFilter implements ExceptionFilter {
       this.logger.error(
         `[${correlationId}] ${request.method} ${request.url} - ${status}`,
         exception instanceof Error ? exception.stack : String(exception),
-        JSON.stringify(logContext),
+        JSON.stringify(logContext)
       );
     } else if (status >= 400) {
       this.logger.warn(
         `[${correlationId}] ${request.method} ${request.url} - ${status}`,
-        JSON.stringify(logContext),
+        JSON.stringify(logContext)
       );
     }
   }
@@ -354,7 +351,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
  * Used for testing
  */
 export function isMessageSanitized(message: string): boolean {
-  return !SENSITIVE_DB_PATTERNS.some(pattern => pattern.test(message));
+  return !SENSITIVE_DB_PATTERNS.some((pattern) => pattern.test(message));
 }
 
 /**

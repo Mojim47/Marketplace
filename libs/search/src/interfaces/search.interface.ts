@@ -70,7 +70,6 @@ export interface AnalyzerDefinition {
   charFilter?: string[];
 }
 
-
 /**
  * Search query options
  */
@@ -207,7 +206,6 @@ export interface FacetBucket {
   count: number;
 }
 
-
 /**
  * Aggregation query
  */
@@ -282,12 +280,15 @@ export interface IndexStats {
   documentCount: number;
   sizeInBytes: number;
   lastUpdated?: Date;
-  fieldStats?: Record<string, {
-    count: number;
-    cardinality?: number;
-    minValue?: unknown;
-    maxValue?: unknown;
-  }>;
+  fieldStats?: Record<
+    string,
+    {
+      count: number;
+      cardinality?: number;
+      minValue?: unknown;
+      maxValue?: unknown;
+    }
+  >;
 }
 
 /**
@@ -326,10 +327,17 @@ export interface ISearchProvider {
   // ═══════════════════════════════════════════════════════════════════════
 
   index<T extends Record<string, unknown>>(index: string, id: string, document: T): Promise<void>;
-  bulkIndex<T extends Record<string, unknown>>(index: string, documents: Array<{ id: string; doc: T }>): Promise<{ success: number; failed: number; errors?: string[] }>;
+  bulkIndex<T extends Record<string, unknown>>(
+    index: string,
+    documents: Array<{ id: string; doc: T }>
+  ): Promise<{ success: number; failed: number; errors?: string[] }>;
   get<T>(index: string, id: string): Promise<T | null>;
   delete(index: string, id: string): Promise<boolean>;
-  update<T extends Record<string, unknown>>(index: string, id: string, partial: Partial<T>): Promise<void>;
+  update<T extends Record<string, unknown>>(
+    index: string,
+    id: string,
+    partial: Partial<T>
+  ): Promise<void>;
   deleteByQuery(index: string, filters: FilterCondition[]): Promise<number>;
 
   // ═══════════════════════════════════════════════════════════════════════
@@ -339,7 +347,12 @@ export interface ISearchProvider {
   search<T>(index: string, query: SearchQuery): Promise<SearchResult<T>>;
   searchByField<T>(index: string, field: string, value: unknown): Promise<SearchResult<T>>;
   autocomplete(index: string, field: string, prefix: string, limit?: number): Promise<string[]>;
-  fuzzySearch<T>(index: string, field: string, term: string, fuzziness?: number): Promise<SearchResult<T>>;
+  fuzzySearch<T>(
+    index: string,
+    field: string,
+    term: string,
+    fuzziness?: number
+  ): Promise<SearchResult<T>>;
   moreLikeThis<T>(index: string, id: string, fields?: string[]): Promise<SearchResult<T>>;
 
   // ═══════════════════════════════════════════════════════════════════════
@@ -359,7 +372,6 @@ export interface ISearchProvider {
   close(): Promise<void>;
 }
 
-
 /**
  * Search configuration base
  */
@@ -374,12 +386,14 @@ export interface SearchConfigBase {
 export interface ElasticsearchConfig extends SearchConfigBase {
   provider: SearchProviderType.ELASTICSEARCH;
   node: string | string[];
-  auth?: {
-    username: string;
-    password: string;
-  } | {
-    apiKey: string;
-  };
+  auth?:
+    | {
+        username: string;
+        password: string;
+      }
+    | {
+        apiKey: string;
+      };
   cloud?: {
     id: string;
   };
@@ -441,9 +455,9 @@ export interface MemorySearchConfig extends SearchConfigBase {
 /**
  * Union type for all search configurations
  */
-export type SearchConfig = 
-  | ElasticsearchConfig 
-  | MeilisearchConfig 
-  | TypesenseConfig 
+export type SearchConfig =
+  | ElasticsearchConfig
+  | MeilisearchConfig
+  | TypesenseConfig
   | PostgresqlConfig
   | MemorySearchConfig;

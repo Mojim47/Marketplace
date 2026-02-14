@@ -13,18 +13,9 @@
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
-import {
-  PrismaClient,
-  UserRole,
-  ProductStatus,
-  ArType,
-  OrganizationType,
-  DealerTier,
-  ExecutorSkill,
-  ProjectStatus,
-} from '@prisma/client';
+import * as crypto from 'node:crypto';
+import { OrganizationType, PrismaClient, UserRole } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
-import * as crypto from 'crypto';
 
 const prisma = new PrismaClient();
 
@@ -36,7 +27,7 @@ const BCRYPT_ROUNDS = 12;
 
 // Generate secure temporary passwords
 function generateSecurePassword(): string {
-  return crypto.randomBytes(16).toString('base64').slice(0, 20) + '!Aa1';
+  return `${crypto.randomBytes(16).toString('base64').slice(0, 20)}!Aa1`;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -44,15 +35,9 @@ function generateSecurePassword(): string {
 // ═══════════════════════════════════════════════════════════════════════════
 
 async function main() {
-  console.log('═══════════════════════════════════════════════════════════════');
-  console.log('🚀 NextGen Marketplace - Production Database Seed');
-  console.log('═══════════════════════════════════════════════════════════════\n');
-
   // Check if already seeded
   const existingTenant = await prisma.tenant.findFirst();
   if (existingTenant) {
-    console.log('⚠️  Database already seeded. Skipping to prevent duplicates.');
-    console.log('   To re-seed, run: npx prisma migrate reset\n');
     return;
   }
 
@@ -60,11 +45,6 @@ async function main() {
 
   await prisma.$transaction(
     async (tx) => {
-      // ═══════════════════════════════════════════════════════════════════════
-      // 1. TENANT (Platform Configuration)
-      // ═══════════════════════════════════════════════════════════════════════
-      console.log('📦 Creating tenant...');
-
       const tenant = await tx.tenant.create({
         data: {
           name: 'بازار نکست‌جن',
@@ -90,12 +70,6 @@ async function main() {
           },
         },
       });
-      console.log(`   ✅ Tenant created: ${tenant.name}`);
-
-      // ═══════════════════════════════════════════════════════════════════════
-      // 2. PLATFORM SETTINGS
-      // ═══════════════════════════════════════════════════════════════════════
-      console.log('⚙️  Creating platform settings...');
 
       await tx.platformSettings.create({
         data: {
@@ -113,12 +87,6 @@ async function main() {
           isActive: true,
         },
       });
-      console.log('   ✅ Platform settings created');
-
-      // ═══════════════════════════════════════════════════════════════════════
-      // 3. ADMIN USERS
-      // ═══════════════════════════════════════════════════════════════════════
-      console.log('👤 Creating admin users...');
 
       const adminEmails = [
         { email: 'admin@nextgen.ir', name: 'مدیر ارشد سیستم', role: 'SUPER_ADMIN' },
@@ -141,13 +109,7 @@ async function main() {
             mustChangePassword: true,
           },
         });
-        console.log(`   ✅ Admin: ${admin.email}`);
       }
-
-      // ═══════════════════════════════════════════════════════════════════════
-      // 4. CATEGORIES
-      // ═══════════════════════════════════════════════════════════════════════
-      console.log('📂 Creating categories...');
 
       const mainCategories = [
         { name: 'موبایل و تبلت', slug: 'mobile', icon: '📱', executorDiscount: 5 },
@@ -177,7 +139,6 @@ async function main() {
           },
         });
       }
-      console.log(`   ✅ Created ${mainCategories.length} main categories`);
 
       // Subcategories
       const subCategories = [
@@ -221,16 +182,13 @@ async function main() {
           },
         });
       }
-      console.log(`   ✅ Created ${subCategories.length} subcategories`);
 
       // ═══════════════════════════════════════════════════════════════════════
       // 5. SAMPLE USERS (for testing - should be removed in real production)
       // ═══════════════════════════════════════════════════════════════════════
       if (process.env.SEED_SAMPLE_DATA === 'true') {
-        console.log('👥 Creating sample users (SEED_SAMPLE_DATA=true)...');
-
         const sampleUserPassword = generateSecurePassword();
-        tempPasswords['sample_users'] = sampleUserPassword;
+        tempPasswords.sample_users = sampleUserPassword;
         const userHash = await bcrypt.hash(sampleUserPassword, BCRYPT_ROUNDS);
 
         // Sample customers
@@ -275,15 +233,12 @@ async function main() {
             },
           });
         }
-        console.log(`   ✅ Created ${sampleUsers.length} sample users`);
       }
 
       // ═══════════════════════════════════════════════════════════════════════
       // 6. B2B ORGANIZATIONS (Sample)
       // ═══════════════════════════════════════════════════════════════════════
       if (process.env.SEED_SAMPLE_DATA === 'true') {
-        console.log('🏭 Creating sample B2B organizations...');
-
         await tx.organization.createMany({
           data: [
             {
@@ -320,7 +275,6 @@ async function main() {
             },
           ],
         });
-        console.log('   ✅ Created sample B2B organizations');
       }
 
       // ═══════════════════════════════════════════════════════════════════════
@@ -347,26 +301,8 @@ async function main() {
     }
   );
 
-  // ═══════════════════════════════════════════════════════════════════════
-  // OUTPUT TEMPORARY PASSWORDS
-  // ═══════════════════════════════════════════════════════════════════════
-  console.log('\n═══════════════════════════════════════════════════════════════');
-  console.log('🔐 TEMPORARY PASSWORDS (CHANGE IMMEDIATELY!)');
-  console.log('═══════════════════════════════════════════════════════════════');
-
-  for (const [email, password] of Object.entries(tempPasswords)) {
-    console.log(`   ${email}: ${password}`);
+  for (const [_email, _password] of Object.entries(tempPasswords)) {
   }
-
-  console.log('\n⚠️  IMPORTANT SECURITY ACTIONS:');
-  console.log('   1. Change all passwords immediately after first login');
-  console.log('   2. Enable 2FA for all admin accounts');
-  console.log('   3. Delete this output from logs');
-  console.log('   4. Store passwords securely in Vault');
-
-  console.log('\n═══════════════════════════════════════════════════════════════');
-  console.log('✅ Production seed completed successfully!');
-  console.log('═══════════════════════════════════════════════════════════════\n');
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

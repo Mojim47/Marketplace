@@ -2,9 +2,9 @@
 // Immutable Log Service Tests
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { describe, it, expect, beforeEach } from 'vitest';
-import { ImmutableLogService } from './immutable-log.service';
+import { beforeEach, describe, expect, it } from 'vitest';
 import type { LogEntryType } from '../types';
+import { ImmutableLogService } from './immutable-log.service';
 
 describe('ImmutableLogService', () => {
   let service: ImmutableLogService;
@@ -16,7 +16,7 @@ describe('ImmutableLogService', () => {
   describe('createLog', () => {
     it('should create empty log with genesis hash', () => {
       const log = service.createLog('test-log');
-      
+
       expect(log.id).toBeDefined();
       expect(log.name).toBe('test-log');
       expect(log.entries).toHaveLength(0);
@@ -28,7 +28,7 @@ describe('ImmutableLogService', () => {
   describe('appendEntry', () => {
     it('should append entry with correct chain linking', () => {
       const log = service.createLog('test-log');
-      
+
       const entry1 = service.appendEntry(log.id, {
         type: 'BUILD_STARTED' as LogEntryType,
         build_id: 'build-1',
@@ -53,7 +53,7 @@ describe('ImmutableLogService', () => {
     it('should update log head hash after append', () => {
       const log = service.createLog('test-log');
       const initialHead = log.head_hash;
-      
+
       service.appendEntry(log.id, {
         type: 'ARTIFACT_CREATED' as LogEntryType,
         artifact_hash: 'abc123',
@@ -68,7 +68,7 @@ describe('ImmutableLogService', () => {
     it('should throw when appending to sealed log', () => {
       const log = service.createLog('test-log');
       service.sealLog(log.id);
-      
+
       expect(() => {
         service.appendEntry(log.id, {
           type: 'BUILD_STARTED' as LogEntryType,
@@ -86,17 +86,17 @@ describe('ImmutableLogService', () => {
 
     it('should verify log with entries', () => {
       const log = service.createLog('test-log');
-      
+
       service.appendEntry(log.id, {
         type: 'BUILD_STARTED' as LogEntryType,
         payload: { step: 1 },
       });
-      
+
       service.appendEntry(log.id, {
         type: 'BUILD_COMPLETED' as LogEntryType,
         payload: { step: 2 },
       });
-      
+
       service.appendEntry(log.id, {
         type: 'ARTIFACT_CREATED' as LogEntryType,
         artifact_hash: 'hash123',
@@ -109,7 +109,7 @@ describe('ImmutableLogService', () => {
 
     it('should detect tampered entries', () => {
       const log = service.createLog('test-log');
-      
+
       service.appendEntry(log.id, {
         type: 'BUILD_STARTED' as LogEntryType,
         payload: { original: true },
@@ -118,7 +118,7 @@ describe('ImmutableLogService', () => {
       const tamperedLog = service.getLog(log.id)!;
       // Tamper with entry
       tamperedLog.entries[0].payload = { tampered: true };
-      
+
       // Chain should still be valid since we only check hash chain
       // Data hash mismatch would be caught by signature verification
       expect(service.verifyChainIntegrity(tamperedLog)).toBe(true);
@@ -128,7 +128,7 @@ describe('ImmutableLogService', () => {
   describe('containsArtifactHash', () => {
     it('should find artifact hash in log', () => {
       const log = service.createLog('test-log');
-      
+
       service.appendEntry(log.id, {
         type: 'ARTIFACT_CREATED' as LogEntryType,
         artifact_hash: 'abc123',
@@ -144,13 +144,13 @@ describe('ImmutableLogService', () => {
   describe('verifyLog', () => {
     it('should pass verification for valid log', async () => {
       const log = service.createLog('test-log');
-      
+
       service.appendEntry(log.id, {
         type: 'ARTIFACT_CREATED' as LogEntryType,
         artifact_hash: 'hash1',
         payload: {},
       });
-      
+
       service.appendEntry(log.id, {
         type: 'ARTIFACT_CREATED' as LogEntryType,
         artifact_hash: 'hash2',
@@ -171,7 +171,7 @@ describe('ImmutableLogService', () => {
 
     it('should fail when artifact hash missing', async () => {
       const log = service.createLog('test-log');
-      
+
       service.appendEntry(log.id, {
         type: 'ARTIFACT_CREATED' as LogEntryType,
         artifact_hash: 'hash1',
@@ -193,7 +193,7 @@ describe('ImmutableLogService', () => {
 
     it('should fail when timestamp exceeds bound', async () => {
       const log = service.createLog('test-log');
-      
+
       service.appendEntry(log.id, {
         type: 'BUILD_STARTED' as LogEntryType,
         payload: {},
@@ -214,7 +214,7 @@ describe('ImmutableLogService', () => {
   describe('computeMerkleRoot', () => {
     it('should compute merkle root for entries', () => {
       const log = service.createLog('test-log');
-      
+
       service.appendEntry(log.id, { type: 'BUILD_STARTED' as LogEntryType, payload: {} });
       service.appendEntry(log.id, { type: 'BUILD_COMPLETED' as LogEntryType, payload: {} });
       service.appendEntry(log.id, { type: 'ARTIFACT_CREATED' as LogEntryType, payload: {} });
@@ -222,7 +222,7 @@ describe('ImmutableLogService', () => {
 
       const updatedLog = service.getLog(log.id)!;
       const root = service.computeMerkleRoot(updatedLog.entries);
-      
+
       expect(root).toHaveLength(64);
       expect(root).not.toBe('0'.repeat(64));
     });
@@ -236,7 +236,7 @@ describe('ImmutableLogService', () => {
   describe('exportLog / importLog', () => {
     it('should export and import log', () => {
       const log = service.createLog('test-log');
-      
+
       service.appendEntry(log.id, {
         type: 'BUILD_STARTED' as LogEntryType,
         payload: { test: true },

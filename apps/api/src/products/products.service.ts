@@ -1,6 +1,11 @@
-﻿import { Injectable, NotFoundException, BadRequestException, Inject, Optional } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
-import type { Prisma } from '@prisma/client';
+﻿import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+  Optional,
+} from '@nestjs/common';
+import type { PrismaService } from '../database/prisma.service';
 
 type ProductStatus = 'DRAFT' | 'ACTIVE' | 'INACTIVE' | 'ARCHIVED';
 
@@ -26,18 +31,19 @@ interface ProductSearchServiceInterface {
 export class ProductsService {
   constructor(
     private readonly prisma: PrismaService,
-    @Optional() @Inject('PRODUCT_SEARCH_SERVICE')
-    private readonly searchService?: ProductSearchServiceInterface,
+    @Optional()
+    @Inject('PRODUCT_SEARCH_SERVICE')
+    private readonly searchService?: ProductSearchServiceInterface
   ) {}
 
   async create(vendorId: string, data: Record<string, unknown>) {
     // Ensure required fields are present
     const productData = {
       name: data.name as string,
-      slug: data.slug as string || (data.name as string).toLowerCase().replace(/\s+/g, '-'),
-      sku: data.sku as string || `SKU-${Date.now()}`,
+      slug: (data.slug as string) || (data.name as string).toLowerCase().replace(/\s+/g, '-'),
+      sku: (data.sku as string) || `SKU-${Date.now()}`,
       price: data.price as number,
-      description: data.description as string || '',
+      description: (data.description as string) || '',
       stock: (data.stock as number) || 0,
       ...data,
       vendor: { connect: { id: vendorId } },
@@ -102,13 +108,17 @@ export class ProductsService {
       },
     });
 
-    if (!product) throw new NotFoundException('محصول يافت نشد');
+    if (!product) {
+      throw new NotFoundException('محصول يافت نشد');
+    }
     return product;
   }
 
   async update(id: string, vendorId: string, data: Record<string, unknown>) {
     const product = await this.prisma.product.findFirst({ where: { id, vendorId } });
-    if (!product) throw new NotFoundException('محصول يافت نشد يا دسترسي نداريد');
+    if (!product) {
+      throw new NotFoundException('محصول يافت نشد يا دسترسي نداريد');
+    }
 
     const updatedProduct = await this.prisma.product.update({
       where: { id },
@@ -143,7 +153,9 @@ export class ProductsService {
 
   async delete(id: string, vendorId: string) {
     const product = await this.prisma.product.findFirst({ where: { id, vendorId } });
-    if (!product) throw new NotFoundException('محصول يافت نشد يا دسترسي نداريد');
+    if (!product) {
+      throw new NotFoundException('محصول يافت نشد يا دسترسي نداريد');
+    }
 
     // Remove from search index (Requirements: 8.1)
     if (this.searchService) {
@@ -154,8 +166,10 @@ export class ProductsService {
   }
 
   async updateStock(id: string, quantity: number) {
-    if (quantity < 0) throw new BadRequestException('موجودي نميتواند منفي باشد');
-    
+    if (quantity < 0) {
+      throw new BadRequestException('موجودي نميتواند منفي باشد');
+    }
+
     const product = await this.prisma.product.update({
       where: { id },
       data: { stock: quantity },
@@ -181,4 +195,3 @@ export class ProductsService {
     return product;
   }
 }
-

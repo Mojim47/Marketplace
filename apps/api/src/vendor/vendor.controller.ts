@@ -1,22 +1,22 @@
-import { 
-  Controller, 
-  Get, 
-  Post, 
-  Body, 
-  Param, 
-  Patch, 
+import {
+  Body,
+  Controller,
   Delete,
-  Query,
-  Logger,
-  UseGuards,
-  Request,
+  Get,
   HttpCode,
-  HttpStatus
+  HttpStatus,
+  Logger,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Request,
+  UseGuards,
 } from '@nestjs/common';
-import { VendorService, VendorWithProducts } from './vendor.service';
-import { CreateVendorDto, UpdateVendorDto, PaginationDto } from '../common/dto/index';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { RolesGuard, Roles } from '../auth/roles.guard';
+import { Roles, RolesGuard } from '../auth/roles.guard';
+import type { CreateVendorDto, PaginationDto, UpdateVendorDto } from '../common/dto/index';
+import type { VendorService, VendorWithProducts } from './vendor.service';
 
 @Controller('v1/vendors')
 export class VendorController {
@@ -33,10 +33,7 @@ export class VendorController {
   @Post()
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.CREATED)
-  async create(
-    @Body() dto: CreateVendorDto,
-    @Request() req: any
-  ): Promise<VendorWithProducts> {
+  async create(@Body() dto: CreateVendorDto, @Request() req: any): Promise<VendorWithProducts> {
     const userId = req.user.sub;
     const tenantId = req.user.tenantId;
     this.logger.log(`Creating vendor profile for user: ${userId}`);
@@ -109,10 +106,7 @@ export class VendorController {
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
-  async deactivate(
-    @Param('id') id: string,
-    @Request() req: any
-  ): Promise<void> {
+  async deactivate(@Param('id') id: string, @Request() req: any): Promise<void> {
     const userId = req.user.sub;
     this.logger.log(`Deactivating vendor profile: ${id}`);
     await this.vendorService.deactivate(id, userId);
@@ -135,7 +129,7 @@ export class VendorController {
     const slug = await this.vendorService.generateSlug(id, data.slug);
     return {
       message: 'Slug generated successfully',
-      slug
+      slug,
     };
   }
 
@@ -144,9 +138,7 @@ export class VendorController {
    * GET /v1/vendors/slug/:slug
    */
   @Get('slug/:slug')
-  async findBySlug(
-    @Param('slug') slug: string
-  ): Promise<VendorWithProducts> {
+  async findBySlug(@Param('slug') slug: string): Promise<VendorWithProducts> {
     this.logger.log(`Fetching vendor by slug: ${slug}`);
     return this.vendorService.findBySlug(slug);
   }

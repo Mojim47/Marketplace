@@ -1,5 +1,5 @@
-import { IsString, IsOptional, Length, IsBoolean } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional, IsString, Length } from 'class-validator';
 
 /**
  * DTO for enabling 2FA - returns QR code and backup codes
@@ -19,9 +19,9 @@ export class Enable2FAResponseDto {
  * DTO for verifying TOTP code to complete 2FA setup
  */
 export class Verify2FADto {
-  @ApiProperty({ example: '123456', description: '˜Ï 6 ÑŞãí ÇÒ Çáí˜íÔä ÇÍÑÇÒ åæíÊ' })
+  @ApiProperty({ example: '123456', description: 'ï¿½ï¿½ 6 ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ Çï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½' })
   @IsString()
-  @Length(6, 6, { message: '˜Ï ÈÇíÏ 6 ÑŞã ÈÇÔÏ' })
+  @Length(6, 6, { message: 'ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ 6 ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½' })
   code: string;
 }
 
@@ -29,11 +29,11 @@ export class Verify2FADto {
  * DTO for disabling 2FA
  */
 export class Disable2FADto {
-  @ApiProperty({ example: 'password123', description: 'ÑãÒ ÚÈæÑ İÚáí ÈÑÇí ÊÇííÏ' })
+  @ApiProperty({ example: 'password123', description: 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsString()
   password: string;
 
-  @ApiPropertyOptional({ example: '123456', description: '˜Ï 2FA (ÏÑ ÕæÑÊ İÚÇá ÈæÏä)' })
+  @ApiPropertyOptional({ example: '123456', description: 'ï¿½ï¿½ 2FA (ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)' })
   @IsOptional()
   @IsString()
   @Length(6, 6)
@@ -44,9 +44,9 @@ export class Disable2FADto {
  * DTO for verifying backup code
  */
 export class VerifyBackupCodeDto {
-  @ApiProperty({ example: 'ABCD1234', description: '˜Ï ÔÊíÈÇä 8 ˜ÇÑÇ˜ÊÑí' })
+  @ApiProperty({ example: 'ABCD1234', description: 'ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 8 ï¿½ï¿½ï¿½Ç˜ï¿½ï¿½ï¿½' })
   @IsString()
-  @Length(8, 8, { message: '˜Ï ÔÊíÈÇä ÈÇíÏ 8 ˜ÇÑÇ˜ÊÑ ÈÇÔÏ' })
+  @Length(8, 8, { message: 'ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ 8 ï¿½ï¿½ï¿½Ç˜ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½' })
   backupCode: string;
 }
 
@@ -54,9 +54,9 @@ export class VerifyBackupCodeDto {
  * Response DTO for 2FA status
  */
 export class TwoFactorStatusDto {
-  @ApiProperty({ description: 'ÂíÇ 2FA İÚÇá ÇÓÊ' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ 2FA ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½' })
   enabled: boolean;
 
-  @ApiProperty({ description: 'ÊÚÏÇÏ ˜ÏåÇí ÔÊíÈÇä ÈÇŞíãÇäÏå' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   remainingBackupCodes: number;
 }

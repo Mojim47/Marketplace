@@ -17,7 +17,11 @@ export interface LogEvent {
 export class LoggingService {
   private readonly logger = new Logger(LoggingService.name);
 
-  async logEvent(level: 'info' | 'warn' | 'error', message: string, metadata?: Record<string, any>): Promise<void> {
+  async logEvent(
+    level: 'info' | 'warn' | 'error',
+    message: string,
+    metadata?: Record<string, any>
+  ): Promise<void> {
     const logEvent: LogEvent = {
       timestamp: new Date(),
       level,
@@ -50,7 +54,13 @@ export class LoggingService {
     await this.sendToLogBackend(logEvent);
   }
 
-  async logApiRequest(method: string, path: string, statusCode: number, duration: number, metadata?: Record<string, any>): Promise<void> {
+  async logApiRequest(
+    method: string,
+    path: string,
+    statusCode: number,
+    duration: number,
+    metadata?: Record<string, any>
+  ): Promise<void> {
     await this.logEvent('info', `${method} ${path} ${statusCode} ${duration}ms`, {
       type: 'api_request',
       method,
@@ -61,7 +71,11 @@ export class LoggingService {
     });
   }
 
-  async logDatabaseQuery(query: string, duration: number, metadata?: Record<string, any>): Promise<void> {
+  async logDatabaseQuery(
+    query: string,
+    duration: number,
+    metadata?: Record<string, any>
+  ): Promise<void> {
     await this.logEvent('info', `Database query completed in ${duration}ms`, {
       type: 'database_query',
       query: query.substring(0, 100), // Truncate for security
@@ -70,7 +84,11 @@ export class LoggingService {
     });
   }
 
-  async logSecurityEvent(event: string, severity: 'low' | 'medium' | 'high', metadata?: Record<string, any>): Promise<void> {
+  async logSecurityEvent(
+    event: string,
+    severity: 'low' | 'medium' | 'high',
+    metadata?: Record<string, any>
+  ): Promise<void> {
     await this.logEvent('warn', `Security event: ${event}`, {
       type: 'security_event',
       event,

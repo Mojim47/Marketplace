@@ -1,5 +1,5 @@
-import { IsString, Matches, IsOptional, Length, IsEnum } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsEnum, IsOptional, IsString, Length, Matches } from 'class-validator';
 
 /**
  * Purpose of SMS verification
@@ -15,15 +15,15 @@ export enum SMSVerificationPurpose {
  * DTO for sending verification code
  */
 export class SendVerificationCodeDto {
-  @ApiProperty({ example: '09123456789', description: 'ÔãÇÑå ãæÈÇíá ÇíÑÇäí' })
+  @ApiProperty({ example: '09123456789', description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsString()
-  @Matches(/^09\d{9}$/, { message: 'ÔãÇÑå ãæÈÇíá äÇãÚÊÈÑ ÇÓÊ. İÑãÊ ÕÍíÍ: 09xxxxxxxxx' })
+  @Matches(/^09\d{9}$/, { message: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½. ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: 09xxxxxxxxx' })
   mobile: string;
 
-  @ApiPropertyOptional({ 
-    enum: SMSVerificationPurpose, 
+  @ApiPropertyOptional({
+    enum: SMSVerificationPurpose,
     default: SMSVerificationPurpose.VERIFY_MOBILE,
-    description: 'åÏİ ÇÑÓÇá ˜Ï' 
+    description: 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½',
   })
   @IsOptional()
   @IsEnum(SMSVerificationPurpose)
@@ -34,14 +34,14 @@ export class SendVerificationCodeDto {
  * DTO for verifying SMS code
  */
 export class VerifySMSCodeDto {
-  @ApiProperty({ example: '09123456789', description: 'ÔãÇÑå ãæÈÇíá ÇíÑÇäí' })
+  @ApiProperty({ example: '09123456789', description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsString()
-  @Matches(/^09\d{9}$/, { message: 'ÔãÇÑå ãæÈÇíá äÇãÚÊÈÑ ÇÓÊ' })
+  @Matches(/^09\d{9}$/, { message: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½' })
   mobile: string;
 
-  @ApiProperty({ example: '1234', description: '˜Ï ÊÇííÏ 4 ÑŞãí' })
+  @ApiProperty({ example: '1234', description: 'ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ 4 ï¿½ï¿½ï¿½ï¿½' })
   @IsString()
-  @Length(4, 4, { message: '˜Ï ÊÇííÏ ÈÇíÏ 4 ÑŞã ÈÇÔÏ' })
+  @Length(4, 4, { message: 'ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ 4 ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½' })
   code: string;
 }
 
@@ -49,9 +49,9 @@ export class VerifySMSCodeDto {
  * DTO for forgot password request
  */
 export class ForgotPasswordDto {
-  @ApiProperty({ example: '09123456789', description: 'ÔãÇÑå ãæÈÇíá ËÈÊ ÔÏå' })
+  @ApiProperty({ example: '09123456789', description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½' })
   @IsString()
-  @Matches(/^09\d{9}$/, { message: 'ÔãÇÑå ãæÈÇíá äÇãÚÊÈÑ ÇÓÊ' })
+  @Matches(/^09\d{9}$/, { message: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½' })
   mobile: string;
 }
 
@@ -59,19 +59,19 @@ export class ForgotPasswordDto {
  * DTO for reset password with SMS code
  */
 export class ResetPasswordDto {
-  @ApiProperty({ example: '09123456789', description: 'ÔãÇÑå ãæÈÇíá' })
+  @ApiProperty({ example: '09123456789', description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsString()
-  @Matches(/^09\d{9}$/, { message: 'ÔãÇÑå ãæÈÇíá äÇãÚÊÈÑ ÇÓÊ' })
+  @Matches(/^09\d{9}$/, { message: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½' })
   mobile: string;
 
-  @ApiProperty({ example: '1234', description: '˜Ï ÊÇííÏ ÏÑíÇİÊí' })
+  @ApiProperty({ example: '1234', description: 'ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsString()
-  @Length(4, 4, { message: '˜Ï ÊÇííÏ ÈÇíÏ 4 ÑŞã ÈÇÔÏ' })
+  @Length(4, 4, { message: 'ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ 4 ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½' })
   code: string;
 
-  @ApiProperty({ example: 'NewPassword@123', description: 'ÑãÒ ÚÈæÑ ÌÏíÏ' })
+  @ApiProperty({ example: 'NewPassword@123', description: 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½' })
   @IsString()
-  @Length(8, 100, { message: 'ÑãÒ ÚÈæÑ ÈÇíÏ ÍÏÇŞá 8 ˜ÇÑÇ˜ÊÑ ÈÇÔÏ' })
+  @Length(8, 100, { message: 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ 8 ï¿½ï¿½ï¿½Ç˜ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½' })
   newPassword: string;
 }
 
@@ -79,12 +79,12 @@ export class ResetPasswordDto {
  * Response DTO for SMS operations
  */
 export class SMSResponseDto {
-  @ApiProperty({ description: 'ÂíÇ ÚãáíÇÊ ãæİŞ ÈæÏ' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½' })
   success: boolean;
 
-  @ApiProperty({ description: 'íÇã äÊíÌå' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
   message: string;
 
-  @ApiPropertyOptional({ description: 'ÒãÇä ÇäŞÖÇí ˜Ï (ËÇäíå)' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ï¿½)' })
   expiresIn?: number;
 }

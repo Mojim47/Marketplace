@@ -5,8 +5,8 @@
 // Generates cryptographically secure secrets for production deployment
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { randomBytes, createHash } from 'crypto';
-import { writeFileSync } from 'fs';
+import { randomBytes } from 'node:crypto';
+import { writeFileSync } from 'node:fs';
 
 interface ProductionSecrets {
   JWT_SECRET: string;
@@ -19,25 +19,23 @@ interface ProductionSecrets {
   SMTP_PASSWORD: string;
 }
 
-function generateSecureSecret(length: number = 64): string {
+function generateSecureSecret(length = 64): string {
   return randomBytes(length).toString('base64url');
 }
 
-function generatePassword(length: number = 32): string {
+function generatePassword(length = 32): string {
   const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
   let password = '';
-  
+
   for (let i = 0; i < length; i++) {
     const randomIndex = Math.floor(Math.random() * charset.length);
     password += charset[randomIndex];
   }
-  
+
   return password;
 }
 
 function generateProductionSecrets(): ProductionSecrets {
-  console.log('🔐 Generating production secrets...');
-  
   const secrets: ProductionSecrets = {
     JWT_SECRET: generateSecureSecret(64),
     JWT_REFRESH_SECRET: generateSecureSecret(64),
@@ -175,42 +173,17 @@ COMPANY_PHONE=CONFIGURE_WITH_REAL_PHONE
 `;
 
   writeFileSync('.env.production', envContent);
-  console.log('✅ Production .env file created: .env.production');
 }
 
 function displaySecrets(secrets: ProductionSecrets): void {
-  console.log('\n🔐 Generated Production Secrets:');
-  console.log('═══════════════════════════════════════════════════════════════');
-  
-  Object.entries(secrets).forEach(([key, value]) => {
-    console.log(`${key}: ${value.substring(0, 8)}...${value.substring(value.length - 8)}`);
-  });
-  
-  console.log('═══════════════════════════════════════════════════════════════');
-  console.log('\n🚨 IMPORTANT SECURITY NOTES:');
-  console.log('1. Store these secrets securely (use a password manager)');
-  console.log('2. Never commit .env.production to git');
-  console.log('3. Use environment-specific secret management in production');
-  console.log('4. Rotate secrets regularly');
-  console.log('5. Configure remaining secrets marked with "CONFIGURE_WITH_REAL_*"');
-  console.log('\n✅ Secrets generated successfully!');
+  Object.entries(secrets).forEach(([_key, _value]) => {});
 }
 
 function main(): void {
   try {
-    console.log('🚀 NextGen Marketplace - Production Secrets Generator');
-    console.log('═══════════════════════════════════════════════════════════════');
-    
     const secrets = generateProductionSecrets();
     createProductionEnvFile(secrets);
     displaySecrets(secrets);
-    
-    console.log('\n🎯 Next Steps:');
-    console.log('1. Review .env.production file');
-    console.log('2. Configure external service credentials');
-    console.log('3. Test all services with new secrets');
-    console.log('4. Deploy to production environment');
-    
   } catch (error) {
     console.error('❌ Error generating secrets:', error);
     process.exit(1);
@@ -222,4 +195,4 @@ if (require.main === module) {
   main();
 }
 
-export { generateProductionSecrets, ProductionSecrets };
+export { generateProductionSecrets, type ProductionSecrets };

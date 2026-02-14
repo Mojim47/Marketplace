@@ -1,11 +1,11 @@
 ﻿'use client';
 
-import { useEffect, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/Button';
 import { LocaleSwitch } from '@/components/LocaleSwitch';
-import { emitUiEvent } from '@/lib/ui-telemetry';
+import { Button } from '@/components/ui/Button';
 import { useTraceId } from '@/hooks/use-trace-id';
+import { emitUiEvent } from '@/lib/ui-telemetry';
+import { useRouter } from 'next/navigation';
+import { useEffect, useMemo } from 'react';
 
 type CartItem = {
   id: string;
@@ -44,7 +44,7 @@ export default function CartPage() {
             total: 'جمع کل',
             checkout: 'ادامه به تسویه',
           },
-    [locale],
+    [locale]
   );
 
   const total = ITEMS.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -81,7 +81,10 @@ export default function CartPage() {
             </div>
             <div className="mt-6 space-y-4">
               {ITEMS.map((item) => (
-                <div key={item.id} className="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-white/5 px-4 py-3">
+                <div
+                  key={item.id}
+                  className="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-white/5 px-4 py-3"
+                >
                   <div className="space-y-1">
                     <p className="text-sm text-white">{item.name}</p>
                     <p className="text-xs text-slate-300">{item.sku}</p>

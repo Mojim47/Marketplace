@@ -1,17 +1,17 @@
 'use client';
-import { jsx as _jsx, jsxs as _jsxs } from 'react/jsx-runtime';
 // Offline AI demand prediction page (Farsi)
 import { AIService } from '@nextgen/ai/src/core/ai.service';
 import { IranDemandPredictionStrategy } from '@nextgen/ai/src/iran/demand-prediction.strategy';
 import { useState } from 'react';
+import { jsx as _jsx, jsxs as _jsxs } from 'react/jsx-runtime';
 export default function AIDemandPage() {
   const [history, setHistory] = useState('1200000,1500000,1800000');
   const [output, setOutput] = useState('');
   async function runPrediction() {
     const sales = history
       .split(',')
-      .map((s) => parseInt(s.trim(), 10))
-      .filter((n) => !isNaN(n));
+      .map((s) => Number.parseInt(s.trim(), 10))
+      .filter((n) => !Number.isNaN(n));
     const svc = new AIService(new IranDemandPredictionStrategy());
     const jalaliDates = sales.map((_val, i) => `1403/01/${String(10 + i).padStart(2, '0')}`);
     const res = await svc.predict({

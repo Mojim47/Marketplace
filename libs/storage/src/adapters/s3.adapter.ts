@@ -4,37 +4,37 @@
 // Production-ready S3 adapter with full feature support
 // ═══════════════════════════════════════════════════════════════════════════
 
+import type { Readable } from 'node:stream';
 import {
-  S3Client,
-  PutObjectCommand,
-  GetObjectCommand,
+  AbortMultipartUploadCommand,
+  CompleteMultipartUploadCommand,
+  CopyObjectCommand,
+  CreateBucketCommand,
+  CreateMultipartUploadCommand,
   DeleteObjectCommand,
   DeleteObjectsCommand,
+  GetObjectCommand,
+  HeadBucketCommand,
   HeadObjectCommand,
   ListObjectsV2Command,
-  CopyObjectCommand,
-  CreateMultipartUploadCommand,
+  PutObjectCommand,
+  S3Client,
   UploadPartCommand,
-  CompleteMultipartUploadCommand,
-  AbortMultipartUploadCommand,
-  CreateBucketCommand,
-  HeadBucketCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { Readable } from 'stream';
 import type {
-  IStorageProvider,
-  FileMetadata,
-  UploadOptions,
+  CopyOptions,
   DownloadOptions,
+  FileMetadata,
+  IStorageProvider,
   ListOptions,
   ListResult,
-  SignedUrlOptions,
-  CopyOptions,
   MultipartUpload,
-  UploadedPart,
-  StorageHealthCheck,
   S3StorageConfig,
+  SignedUrlOptions,
+  StorageHealthCheck,
+  UploadOptions,
+  UploadedPart,
 } from '../interfaces/storage.interface';
 import { StorageProviderType } from '../interfaces/storage.interface';
 
@@ -45,7 +45,7 @@ import { StorageProviderType } from '../interfaces/storage.interface';
 export class S3StorageAdapter implements IStorageProvider {
   readonly providerType = StorageProviderType.S3;
   readonly bucket: string;
-  
+
   private readonly client: S3Client;
   private readonly region: string;
   private readonly basePath: string;
@@ -59,12 +59,13 @@ export class S3StorageAdapter implements IStorageProvider {
 
     this.client = new S3Client({
       region: config.region,
-      ...(config.accessKeyId && config.secretAccessKey && {
-        credentials: {
-          accessKeyId: config.accessKeyId,
-          secretAccessKey: config.secretAccessKey,
-        },
-      }),
+      ...(config.accessKeyId &&
+        config.secretAccessKey && {
+          credentials: {
+            accessKeyId: config.accessKeyId,
+            secretAccessKey: config.secretAccessKey,
+          },
+        }),
       ...(config.endpoint && {
         endpoint: config.endpoint,
         forcePathStyle: config.forcePathStyle ?? true,
@@ -101,7 +102,7 @@ export class S3StorageAdapter implements IStorageProvider {
     options?: UploadOptions
   ): Promise<FileMetadata> {
     const fullKey = this.getFullKey(key);
-    
+
     let body: Buffer;
     if (Buffer.isBuffer(data)) {
       body = data;
@@ -148,9 +149,10 @@ export class S3StorageAdapter implements IStorageProvider {
     const command = new GetObjectCommand({
       Bucket: this.bucket,
       Key: fullKey,
-      Range: options?.rangeStart !== undefined || options?.rangeEnd !== undefined
-        ? `bytes=${options?.rangeStart || 0}-${options?.rangeEnd || ''}`
-        : undefined,
+      Range:
+        options?.rangeStart !== undefined || options?.rangeEnd !== undefined
+          ? `bytes=${options?.rangeStart || 0}-${options?.rangeEnd || ''}`
+          : undefined,
       IfMatch: options?.ifMatch,
       IfNoneMatch: options?.ifNoneMatch,
       IfModifiedSince: options?.ifModifiedSince,
@@ -158,7 +160,7 @@ export class S3StorageAdapter implements IStorageProvider {
     });
 
     const response = await this.client.send(command);
-    
+
     if (!response.Body) {
       throw new Error(`Empty response body for key: ${key}`);
     }
@@ -172,9 +174,10 @@ export class S3StorageAdapter implements IStorageProvider {
     const command = new GetObjectCommand({
       Bucket: this.bucket,
       Key: fullKey,
-      Range: options?.rangeStart !== undefined || options?.rangeEnd !== undefined
-        ? `bytes=${options?.rangeStart || 0}-${options?.rangeEnd || ''}`
-        : undefined,
+      Range:
+        options?.rangeStart !== undefined || options?.rangeEnd !== undefined
+          ? `bytes=${options?.rangeStart || 0}-${options?.rangeEnd || ''}`
+          : undefined,
       IfMatch: options?.ifMatch,
       IfNoneMatch: options?.ifNoneMatch,
       IfModifiedSince: options?.ifModifiedSince,
@@ -182,7 +185,7 @@ export class S3StorageAdapter implements IStorageProvider {
     });
 
     const response = await this.client.send(command);
-    
+
     if (!response.Body) {
       throw new Error(`Empty response body for key: ${key}`);
     }
@@ -202,9 +205,11 @@ export class S3StorageAdapter implements IStorageProvider {
   }
 
   async deleteMany(keys: string[]): Promise<string[]> {
-    if (keys.length === 0) return [];
+    if (keys.length === 0) {
+      return [];
+    }
 
-    const fullKeys = keys.map(k => this.getFullKey(k));
+    const fullKeys = keys.map((k) => this.getFullKey(k));
     const failed: string[] = [];
 
     // S3 allows max 1000 objects per delete request
@@ -217,13 +222,13 @@ export class S3StorageAdapter implements IStorageProvider {
       const command = new DeleteObjectsCommand({
         Bucket: this.bucket,
         Delete: {
-          Objects: batch.map(Key => ({ Key })),
+          Objects: batch.map((Key) => ({ Key })),
           Quiet: true,
         },
       });
 
       const response = await this.client.send(command);
-      
+
       if (response.Errors) {
         for (const error of response.Errors) {
           if (error.Key) {
@@ -294,7 +299,7 @@ export class S3StorageAdapter implements IStorageProvider {
 
     const response = await this.client.send(command);
 
-    const files: FileMetadata[] = (response.Contents || []).map(obj => ({
+    const files: FileMetadata[] = (response.Contents || []).map((obj) => ({
       key: this.stripBasePath(obj.Key || ''),
       size: obj.Size || 0,
       contentType: 'application/octet-stream', // S3 list doesn't return content type
@@ -305,8 +310,8 @@ export class S3StorageAdapter implements IStorageProvider {
     }));
 
     const prefixes = (response.CommonPrefixes || [])
-      .map(p => this.stripBasePath(p.Prefix || ''))
-      .filter(p => p);
+      .map((p) => this.stripBasePath(p.Prefix || ''))
+      .filter((p) => p);
 
     return {
       files,
@@ -321,7 +326,11 @@ export class S3StorageAdapter implements IStorageProvider {
   // Advanced Operations
   // ═══════════════════════════════════════════════════════════════════════
 
-  async copy(sourceKey: string, destinationKey: string, options?: CopyOptions): Promise<FileMetadata> {
+  async copy(
+    sourceKey: string,
+    destinationKey: string,
+    options?: CopyOptions
+  ): Promise<FileMetadata> {
     const sourceBucket = options?.sourceBucket || this.bucket;
     const sourceFullKey = this.basePath ? `${this.basePath}/${sourceKey}` : sourceKey;
     const destFullKey = this.getFullKey(destinationKey);
@@ -341,7 +350,11 @@ export class S3StorageAdapter implements IStorageProvider {
     return this.getMetadata(destinationKey);
   }
 
-  async move(sourceKey: string, destinationKey: string, options?: CopyOptions): Promise<FileMetadata> {
+  async move(
+    sourceKey: string,
+    destinationKey: string,
+    options?: CopyOptions
+  ): Promise<FileMetadata> {
     const metadata = await this.copy(sourceKey, destinationKey, options);
     await this.delete(sourceKey);
     return metadata;
@@ -376,11 +389,11 @@ export class S3StorageAdapter implements IStorageProvider {
 
   getPublicUrl(key: string): string {
     const fullKey = this.getFullKey(key);
-    
+
     if (this.endpoint) {
       return `${this.endpoint}/${this.bucket}/${fullKey}`;
     }
-    
+
     return `https://${this.bucket}.s3.${this.region}.amazonaws.com/${fullKey}`;
   }
 
@@ -434,7 +447,7 @@ export class S3StorageAdapter implements IStorageProvider {
 
     return {
       partNumber,
-      etag: response.ETag!.replace(/"/g, ''),
+      etag: response.ETag?.replace(/"/g, ''),
       size: data.length,
     };
   }
@@ -453,7 +466,7 @@ export class S3StorageAdapter implements IStorageProvider {
       MultipartUpload: {
         Parts: parts
           .sort((a, b) => a.partNumber - b.partNumber)
-          .map(p => ({
+          .map((p) => ({
             PartNumber: p.partNumber,
             ETag: `"${p.etag}"`,
           })),

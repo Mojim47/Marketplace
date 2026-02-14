@@ -2,42 +2,37 @@
  * ???????????????????????????????????????????????????????????????????????????
  * NextGen Marketplace - Tax Controller
  * ???????????????????????????????????????????????????????????????????????????
- * 
+ *
  * REST API endpoints for Iranian tax authority (Moodian/SENA) integration.
- * 
+ *
  * Features:
  * - Submit invoices to Moodian
  * - Poll invoice status
  * - Generate VAT reports
- * 
+ *
  * @module @nextgen/api/shared/tax
  * Requirements: 9.1, 9.2, 9.3
  */
 
 import {
-  Controller,
-  Post,
-  Get,
   Body,
-  Param,
-  UseGuards,
+  Controller,
+  Get,
   HttpCode,
   HttpStatus,
+  Param,
+  Post,
+  UseGuards,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-} from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { TaxService } from './tax.service';
 import {
-  SubmitInvoiceDto,
   GenerateReportDto,
   SubmissionResultDto,
+  SubmitInvoiceDto,
   TaxReportResultDto,
 } from './dto';
+import { TaxService } from './tax.service';
 
 @ApiTags('tax')
 @Controller('tax')
@@ -47,18 +42,18 @@ export class TaxController {
   constructor(private readonly taxService: TaxService) {}
 
   /**
-   * ÇÑÓÇá İÇ˜ÊæÑ Èå ÓÇãÇäå ãæÏíÇä
+   * ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ç˜ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
    * Requirements: 9.1
    */
   @Post('submit')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'ÇÑÓÇá İÇ˜ÊæÑ Èå ÓÇãÇäå ãæÏíÇä' })
+  @ApiOperation({ summary: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ç˜ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @ApiResponse({
     status: 200,
-    description: 'İÇ˜ÊæÑ ÈÇ ãæİŞíÊ ÇÑÓÇá ÔÏ',
+    description: 'ï¿½Ç˜ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½',
     type: SubmissionResultDto,
   })
-  @ApiResponse({ status: 400, description: 'ÎØÇ ÏÑ ÇÑÓÇá İÇ˜ÊæÑ' })
+  @ApiResponse({ status: 400, description: 'ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ç˜ï¿½ï¿½ï¿½' })
   async submitInvoice(@Body() dto: SubmitInvoiceDto): Promise<SubmissionResultDto> {
     const result = await this.taxService.submitInvoice({
       id: dto.invoiceId,
@@ -77,28 +72,28 @@ export class TaxController {
   }
 
   /**
-   * ÈÑÑÓí æÖÚíÊ İÇ˜ÊæÑ ÏÑ ãæÏíÇä
+   * ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ç˜ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
    * Requirements: 9.2
    */
   @Get('status/:invoiceId')
-  @ApiOperation({ summary: 'ÈÑÑÓí æÖÚíÊ İÇ˜ÊæÑ ÏÑ ãæÏíÇä' })
+  @ApiOperation({ summary: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ç˜ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @ApiResponse({
     status: 200,
-    description: 'æÖÚíÊ İÇ˜ÊæÑ',
+    description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ç˜ï¿½ï¿½ï¿½',
     type: SubmissionResultDto,
   })
-  @ApiResponse({ status: 404, description: 'İÇ˜ÊæÑ íÇİÊ äÔÏ' })
+  @ApiResponse({ status: 404, description: 'ï¿½Ç˜ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½' })
   async getStatus(@Param('invoiceId') invoiceId: string): Promise<SubmissionResultDto> {
     // First check local database
     let submission = await this.taxService.getSubmission(invoiceId);
-    
+
     // If pending, poll Moodian for latest status
     if (submission && submission.status === 'PENDING') {
       submission = await this.taxService.pollStatus(invoiceId);
     }
 
     if (!submission) {
-      throw new Error('İÇ˜ÊæÑ íÇİÊ äÔÏ');
+      throw new Error('ï¿½Ç˜ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½');
     }
 
     return {
@@ -111,15 +106,15 @@ export class TaxController {
   }
 
   /**
-   * ÈåÑæÒÑÓÇäí æÖÚíÊ İÇ˜ÊæÑ ÇÒ ãæÏíÇä
+   * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ç˜ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
    * Requirements: 9.2
    */
   @Post('refresh/:invoiceId')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'ÈåÑæÒÑÓÇäí æÖÚíÊ İÇ˜ÊæÑ ÇÒ ãæÏíÇä' })
+  @ApiOperation({ summary: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ç˜ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @ApiResponse({
     status: 200,
-    description: 'æÖÚíÊ ÈåÑæÒ ÔÏ',
+    description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½',
     type: SubmissionResultDto,
   })
   async refreshStatus(@Param('invoiceId') invoiceId: string): Promise<SubmissionResultDto> {
@@ -135,15 +130,15 @@ export class TaxController {
   }
 
   /**
-   * ÊæáíÏ ÒÇÑÔ ãÇáíÇÊí
+   * ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
    * Requirements: 9.3
    */
   @Post('report')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'ÊæáíÏ ÒÇÑÔ ãÇáíÇÊí VAT' })
+  @ApiOperation({ summary: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ VAT' })
   @ApiResponse({
     status: 200,
-    description: 'ÒÇÑÔ ÊæáíÏ ÔÏ',
+    description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½',
     type: TaxReportResultDto,
   })
   async generateReport(@Body() dto: GenerateReportDto): Promise<TaxReportResultDto> {
@@ -157,30 +152,30 @@ export class TaxController {
   }
 
   /**
-   * ÈåÑæÒÑÓÇäí åãå İÇ˜ÊæÑåÇí ÏÑ ÇäÊÙÇÑ
+   * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½Ç˜ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
    */
   @Post('refresh-all')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'ÈåÑæÒÑÓÇäí æÖÚíÊ åãå İÇ˜ÊæÑåÇí ÏÑ ÇäÊÙÇÑ' })
+  @ApiOperation({ summary: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½Ç˜ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @ApiResponse({
     status: 200,
-    description: 'äÊíÌå ÈåÑæÒÑÓÇäí',
+    description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½',
   })
   async refreshAllPending(): Promise<{ updated: number; failed: number; message: string }> {
     const result = await this.taxService.refreshPendingStatuses();
 
     return {
       ...result,
-      message: `${result.updated} İÇ˜ÊæÑ ÈåÑæÒ ÔÏ¡ ${result.failed} ÎØÇ`,
+      message: `${result.updated} ï¿½Ç˜ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ï¡ ${result.failed} ï¿½ï¿½ï¿½`,
     };
   }
 
   /**
-   * ÈÑÑÓí ÓáÇãÊ ÓÑæíÓ ãÇáíÇÊí
+   * ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
    */
   @Get('health')
-  @ApiOperation({ summary: 'ÈÑÑÓí ÓáÇãÊ ÓÑæíÓ ãÇáíÇÊí' })
-  @ApiResponse({ status: 200, description: 'æÖÚíÊ ÓáÇãÊ' })
+  @ApiOperation({ summary: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
+  @ApiResponse({ status: 200, description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
   async healthCheck(): Promise<{ healthy: boolean; timestamp: string }> {
     return {
       healthy: true,

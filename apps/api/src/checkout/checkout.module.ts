@@ -5,10 +5,10 @@
  */
 
 import { Module } from '@nestjs/common';
-import { CheckoutController } from './checkout.controller';
-import { CheckoutService } from './checkout.service';
 import { CartModule } from '../cart/cart.module';
 import { DatabaseModule } from '../database/database.module';
+import { CheckoutController } from './checkout.controller';
+import { CheckoutService } from './checkout.service';
 
 @Module({
   imports: [DatabaseModule, CartModule],

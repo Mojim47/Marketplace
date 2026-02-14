@@ -2,13 +2,13 @@
  * Redis Module
  * Enterprise Scalability Architecture - Stateless Backend
  * Requirements: 2.1, 2.2, 2.3, 2.4, 2.5
- * 
+ *
  * Provides Redis-backed services for stateless API:
  * - STATE_SERVICE: General state storage with distributed locking
  * - SESSION_SERVICE: User session management
  */
 
-import { Module, Global, DynamicModule } from '@nestjs/common';
+import { type DynamicModule, Global, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 
@@ -43,7 +43,9 @@ class RedisStateService {
   async getState<T>(key: string): Promise<T | null> {
     const stateKey = this.getStateKey(key);
     const data = await this.redis.get(stateKey);
-    if (!data) return null;
+    if (!data) {
+      return null;
+    }
     return JSON.parse(data) as T;
   }
 
@@ -69,7 +71,7 @@ class RedisStateService {
         return { key, token };
       }
       if (attempt < retryAttempts - 1) {
-        await new Promise(resolve => setTimeout(resolve, retryDelayMs));
+        await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
       }
     }
     return null;
@@ -134,13 +136,17 @@ class RedisSessionService {
   async getSession(sessionId: string): Promise<any | null> {
     const sessionKey = this.getSessionKey(sessionId);
     const data = await this.redis.get(sessionKey);
-    if (!data) return null;
+    if (!data) {
+      return null;
+    }
     return JSON.parse(data);
   }
 
   async touchSession(sessionId: string): Promise<boolean> {
     const session = await this.getSession(sessionId);
-    if (!session) return false;
+    if (!session) {
+      return false;
+    }
 
     session.lastAccessedAt = new Date().toISOString();
     const sessionKey = this.getSessionKey(sessionId);
@@ -150,7 +156,9 @@ class RedisSessionService {
 
   async destroySession(sessionId: string): Promise<boolean> {
     const session = await this.getSession(sessionId);
-    if (!session) return false;
+    if (!session) {
+      return false;
+    }
 
     const sessionKey = this.getSessionKey(sessionId);
     const userSessionsKey = this.getUserSessionsKey(session.userId);

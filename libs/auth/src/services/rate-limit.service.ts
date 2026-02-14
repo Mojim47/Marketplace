@@ -8,9 +8,9 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import type { ConfigService } from '@nestjs/config';
 import { Redis } from 'ioredis';
-import type { RateLimitConfig, RateLimitResult, AuthConfig } from '../types';
+import type { AuthConfig, RateLimitConfig, RateLimitResult } from '../types';
 
 export type RateLimitAction = 'login' | 'register' | 'password_reset' | 'totp_verify';
 
@@ -61,10 +61,7 @@ export class RateLimitService {
   /**
    * Check if action is allowed and increment counter
    */
-  async checkAndIncrement(
-    action: RateLimitAction,
-    identifier: string,
-  ): Promise<RateLimitResult> {
+  async checkAndIncrement(action: RateLimitAction, identifier: string): Promise<RateLimitResult> {
     const config = this.configs[action];
     const key = `${this.RATE_LIMIT_PREFIX}${action}:${identifier}`;
     const blockKey = `${this.BLOCK_PREFIX}${action}:${identifier}`;
@@ -86,16 +83,16 @@ export class RateLimitService {
 
     // Use Redis transaction for atomic operations
     const multi = this.redis.multi();
-    
+
     // Remove old entries outside the window
     multi.zremrangebyscore(key, 0, windowStart);
-    
+
     // Count current attempts
     multi.zcard(key);
-    
+
     // Add current attempt
     multi.zadd(key, now, `${now}`);
-    
+
     // Set expiry on the key
     multi.expire(key, config.window_seconds);
 
@@ -106,7 +103,7 @@ export class RateLimitService {
     if (currentCount >= config.max_attempts) {
       // Block the identifier
       await this.redis.setex(blockKey, config.block_seconds, '1');
-      
+
       this.logger.warn('Rate limit exceeded', {
         action,
         identifier: this.maskIdentifier(identifier),
@@ -169,10 +166,7 @@ export class RateLimitService {
     const key = `${this.RATE_LIMIT_PREFIX}${action}:${identifier}`;
     const blockKey = `${this.BLOCK_PREFIX}${action}:${identifier}`;
 
-    await Promise.all([
-      this.redis.del(key),
-      this.redis.del(blockKey),
-    ]);
+    await Promise.all([this.redis.del(key), this.redis.del(blockKey)]);
 
     this.logger.debug('Rate limit reset', { action, identifier: this.maskIdentifier(identifier) });
   }
@@ -180,10 +174,7 @@ export class RateLimitService {
   /**
    * Get rate limit headers for response
    */
-  async getHeaders(
-    action: RateLimitAction,
-    identifier: string,
-  ): Promise<Record<string, string>> {
+  async getHeaders(action: RateLimitAction, identifier: string): Promise<Record<string, string>> {
     const result = await this.check(action, identifier);
     const config = this.configs[action];
 

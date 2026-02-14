@@ -31,10 +31,5 @@
   "peerDependencies": {
     "react": "^18.0.0"
   },
-  "keywords": [
-    "ar",
-    "augmented-reality",
-    "webxr",
-    "model-viewer"
-  ]
+  "keywords": ["ar", "augmented-reality", "webxr", "model-viewer"]
 }

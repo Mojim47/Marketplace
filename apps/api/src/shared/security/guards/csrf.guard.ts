@@ -2,10 +2,10 @@
  * ???????????????????????????????????????????????????????????????????????????
  * NextGen Marketplace - CSRF Guard
  * ???????????????????????????????????????????????????????????????????????????
- * 
+ *
  * Cross-Site Request Forgery protection guard using double-submit cookie pattern.
  * Validates CSRF tokens for state-changing requests (POST, PUT, DELETE, PATCH).
- * 
+ *
  * Features:
  * - Double-submit cookie pattern
  * - Automatic token generation
@@ -13,23 +13,23 @@
  * - Safe method bypass (GET, HEAD, OPTIONS)
  * - Path-based exclusions
  * - Persian error messages
- * 
+ *
  * @module @nextgen/api/shared/security
  * Requirements: 1.4
  */
 
 import {
-  Injectable,
   CanActivate,
   ExecutionContext,
   ForbiddenException,
   Inject,
+  Injectable,
   Logger,
   SetMetadata,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Request, Response } from 'express';
 import { CSRFManager } from '@nextgen/security';
+import { Request, Response } from 'express';
 import { SECURITY_TOKENS } from '../tokens';
 
 // Metadata key for skipping CSRF validation
@@ -38,7 +38,7 @@ export const SKIP_CSRF_KEY = 'skipCsrf';
 /**
  * Decorator to skip CSRF validation for an endpoint
  * Use with caution - only for endpoints that don't modify state
- * 
+ *
  * @example
  * @SkipCSRF()
  * @Post('webhook')
@@ -48,16 +48,16 @@ export const SkipCSRF = () => SetMetadata(SKIP_CSRF_KEY, true);
 
 /**
  * CSRF Guard
- * 
+ *
  * Validates CSRF tokens for state-changing HTTP methods.
  * Uses double-submit cookie pattern for protection.
- * 
+ *
  * @example
  * // Apply globally in AppModule
  * providers: [
  *   { provide: APP_GUARD, useClass: CSRFGuard }
  * ]
- * 
+ *
  * @example
  * // Skip for specific endpoint
  * @SkipCSRF()
@@ -71,7 +71,7 @@ export class CSRFGuard implements CanActivate {
   constructor(
     @Inject(SECURITY_TOKENS.CSRF_MANAGER)
     private readonly csrfManager: CSRFManager,
-    private readonly reflector: Reflector,
+    private readonly reflector: Reflector
   ) {}
 
   canActivate(context: ExecutionContext): boolean {
@@ -106,7 +106,7 @@ export class CSRFGuard implements CanActivate {
 
     if (!result.valid) {
       this.logCSRFFailure(request, result.error);
-      throw new ForbiddenException(result.errorFa || 'Êæ˜ä CSRF äÇãÚÊÈÑ ÇÓÊ');
+      throw new ForbiddenException(result.errorFa || 'ï¿½ï¿½ï¿½ CSRF ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½');
     }
 
     // Rotate token if configured
@@ -122,7 +122,7 @@ export class CSRFGuard implements CanActivate {
    */
   private ensureCSRFToken(request: Request, response: Response): void {
     const config = this.csrfManager.getConfig();
-    
+
     // Check if token already exists
     if (request.cookies?.[config.cookieName]) {
       return;

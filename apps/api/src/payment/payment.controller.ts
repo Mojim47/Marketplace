@@ -2,45 +2,39 @@
  * ???????????????????????????????????????????????????????????????????????????
  * NextGen Marketplace - Payment Controller
  * ???????????????????????????????????????????????????????????????????????????
- * 
+ *
  * REST API endpoints for payment operations.
  * Integrates with ZarinPal payment gateway.
- * 
+ *
  * Requirements: 4.1, 4.2, 4.3, 4.4, 4.5
  */
 
 import {
-  Controller,
-  Post,
-  Get,
   Body,
-  Query,
-  Param,
-  UseGuards,
-  Req,
+  Controller,
+  Get,
   HttpCode,
   HttpStatus,
+  Param,
+  Post,
+  Query,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiBearerAuth,
-  ApiResponse,
-  ApiQuery,
-} from '@nestjs/swagger';
 import { Request } from 'express';
-import { PaymentService } from './payment.service';
-import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import {
   CreatePaymentDto,
-  VerifyPaymentDto,
-  RefundPaymentDto,
   PaymentRequestResponse,
   PaymentVerifyResponse,
+  RefundPaymentDto,
   TransactionDetailsResponse,
+  VerifyPaymentDto,
 } from './dto/payment.dto';
+import { PaymentService } from './payment.service';
 
 /**
  * Extract client IP from request
@@ -60,28 +54,28 @@ export class PaymentController {
 
   /**
    * Request a new payment
-   * Requirements: 4.1 - WHEN ˜ÇÑÈÑ ÑÏÇÎÊ ÑÇ ÔÑæÚ ãí˜äÏ THEN THE Payment_Service SHALL ÏÑÎæÇÓÊ ÑÏÇÎÊ Èå ÒÑíäÇá ÇÑÓÇá ˜äÏ
+   * Requirements: 4.1 - WHEN ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½í˜ï¿½ï¿½ THEN THE Payment_Service SHALL ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½äï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
    */
   @Post('request')
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ 
-    summary: 'ÏÑÎæÇÓÊ ÑÏÇÎÊ',
-    description: 'ÇíÌÇÏ ÏÑÎæÇÓÊ ÑÏÇÎÊ ÌÏíÏ ÈÑÇí í˜ ÓİÇÑÔ æ ÏÑíÇİÊ áíä˜ ÑÏÇÎÊ ÒÑíäÇá',
+  @ApiOperation({
+    summary: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½',
+    description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½äï¿½ï¿½',
   })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'ÏÑÎæÇÓÊ ÑÏÇÎÊ ÈÇ ãæİŞíÊ ÇíÌÇÏ ÔÏ',
+  @ApiResponse({
+    status: 200,
+    description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½',
     type: PaymentRequestResponse,
   })
-  @ApiResponse({ status: 400, description: 'ÎØÇ ÏÑ ÇíÌÇÏ ÏÑÎæÇÓÊ ÑÏÇÎÊ' })
-  @ApiResponse({ status: 401, description: 'ÇÍÑÇÒ åæíÊ äÔÏå' })
+  @ApiResponse({ status: 400, description: 'ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
+  @ApiResponse({ status: 401, description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½' })
   async requestPayment(
     @CurrentUser() user: { id: string },
     @Body() dto: CreatePaymentDto,
-    @Req() req: Request,
+    @Req() req: Request
   ): Promise<PaymentRequestResponse> {
     const ipAddress = getClientIp(req);
     return this.paymentService.requestPayment(dto, user.id, ipAddress);
@@ -89,25 +83,25 @@ export class PaymentController {
 
   /**
    * Verify payment callback from ZarinPal
-   * Requirements: 4.2, 4.3, 4.4 - ÊÇííÏ ÑÏÇÎÊ æ ÈåÑæÒÑÓÇäí æÖÚíÊ ÓİÇÑÔ
+   * Requirements: 4.2, 4.3, 4.4 - ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½
    */
   @Get('verify')
-  @ApiOperation({ 
-    summary: 'ÊÇííÏ ÑÏÇÎÊ',
-    description: 'ÊÇííÏ ÑÏÇÎÊ Ó ÇÒ ÈÇÒÔÊ ˜ÇÑÈÑ ÇÒ ÏÑÇå ÈÇä˜',
+  @ApiOperation({
+    summary: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½',
+    description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½Òï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Ñï¿½ï¿½ ï¿½ï¿½ï¿½',
   })
-  @ApiQuery({ name: 'Authority', description: '˜Ï ÇÊæÑíÊí ÒÑíäÇá', required: true })
-  @ApiQuery({ name: 'Status', description: 'æÖÚíÊ ÑÏÇÎÊ', required: true })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'äÊíÌå ÊÇííÏ ÑÏÇÎÊ',
+  @ApiQuery({ name: 'Authority', description: 'ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½äï¿½ï¿½', required: true })
+  @ApiQuery({ name: 'Status', description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½', required: true })
+  @ApiResponse({
+    status: 200,
+    description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½',
     type: PaymentVerifyResponse,
   })
-  @ApiResponse({ status: 404, description: 'ÊÑÇ˜äÔ íÇİÊ äÔÏ' })
+  @ApiResponse({ status: 404, description: 'ï¿½ï¿½Ç˜ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½' })
   async verifyPayment(
     @Query('Authority') authority: string,
     @Query('Status') status: string,
-    @Req() req: Request,
+    @Req() req: Request
   ): Promise<PaymentVerifyResponse> {
     const ipAddress = getClientIp(req);
     return this.paymentService.verifyPayment({ authority, status }, ipAddress);
@@ -115,24 +109,24 @@ export class PaymentController {
 
   /**
    * Process refund for a transaction
-   * Requirements: 4.5 - WHEN ÏÑÎæÇÓÊ ÇÓÊÑÏÇÏ ÇÑÓÇá ãíÔæÏ THEN THE Payment_Service SHALL ÇÓÊÑÏÇÏ ÑÇ ÑÏÇÒÔ ˜äÏ
+   * Requirements: 4.5 - WHEN ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ THEN THE Payment_Service SHALL ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
    */
   @Post('refund')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ 
-    summary: 'ÇÓÊÑÏÇÏ æÌå',
-    description: 'ÏÑÎæÇÓÊ ÇÓÊÑÏÇÏ æÌå ÈÑÇí í˜ ÊÑÇ˜äÔ ÑÏÇÎÊ ÔÏå',
+  @ApiOperation({
+    summary: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½',
+    description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ ï¿½ï¿½Ç˜ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½',
   })
-  @ApiResponse({ status: 200, description: 'ÇÓÊÑÏÇÏ ÈÇ ãæİŞíÊ ÇäÌÇã ÔÏ' })
-  @ApiResponse({ status: 400, description: 'ÎØÇ ÏÑ ÇÓÊÑÏÇÏ æÌå' })
-  @ApiResponse({ status: 401, description: 'ÇÍÑÇÒ åæíÊ äÔÏå' })
-  @ApiResponse({ status: 404, description: 'ÊÑÇ˜äÔ íÇİÊ äÔÏ' })
+  @ApiResponse({ status: 200, description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½' })
+  @ApiResponse({ status: 400, description: 'ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½' })
+  @ApiResponse({ status: 401, description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½' })
+  @ApiResponse({ status: 404, description: 'ï¿½ï¿½Ç˜ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½' })
   async refundPayment(
     @CurrentUser() user: { id: string },
     @Body() dto: RefundPaymentDto,
-    @Req() req: Request,
+    @Req() req: Request
   ): Promise<{ success: boolean; message: string }> {
     const ipAddress = getClientIp(req);
     return this.paymentService.refundPayment(dto, user.id, ipAddress);
@@ -144,20 +138,20 @@ export class PaymentController {
   @Get('transaction/:id')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ 
-    summary: 'ÌÒÆíÇÊ ÊÑÇ˜äÔ',
-    description: 'ÏÑíÇİÊ ÌÒÆíÇÊ í˜ ÊÑÇ˜äÔ ÑÏÇÎÊ',
+  @ApiOperation({
+    summary: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ç˜ï¿½ï¿½',
+    description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ ï¿½ï¿½Ç˜ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½',
   })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'ÌÒÆíÇÊ ÊÑÇ˜äÔ',
+  @ApiResponse({
+    status: 200,
+    description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ç˜ï¿½ï¿½',
     type: TransactionDetailsResponse,
   })
-  @ApiResponse({ status: 401, description: 'ÇÍÑÇÒ åæíÊ äÔÏå' })
-  @ApiResponse({ status: 404, description: 'ÊÑÇ˜äÔ íÇİÊ äÔÏ' })
+  @ApiResponse({ status: 401, description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½' })
+  @ApiResponse({ status: 404, description: 'ï¿½ï¿½Ç˜ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½' })
   async getTransaction(
     @CurrentUser() user: { id: string },
-    @Param('id') transactionId: string,
+    @Param('id') transactionId: string
   ): Promise<TransactionDetailsResponse> {
     return this.paymentService.getTransaction(transactionId, user.id);
   }
@@ -168,26 +162,26 @@ export class PaymentController {
   @Get('transactions')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ 
-    summary: 'ÊÇÑíÎå ÊÑÇ˜äÔåÇ',
-    description: 'ÏÑíÇİÊ áíÓÊ ÊÑÇ˜äÔåÇí ÑÏÇÎÊ ˜ÇÑÈÑ',
+  @ApiOperation({
+    summary: 'ï¿½ï¿½ï¿½ï¿½Îï¿½ ï¿½ï¿½Ç˜ï¿½Ôï¿½ï¿½',
+    description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ç˜ï¿½Ôï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½',
   })
-  @ApiQuery({ name: 'page', description: 'ÔãÇÑå ÕİÍå', required: false })
-  @ApiQuery({ name: 'limit', description: 'ÊÚÏÇÏ ÏÑ åÑ ÕİÍå', required: false })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'áíÓÊ ÊÑÇ˜äÔåÇ',
+  @ApiQuery({ name: 'page', description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½', required: false })
+  @ApiQuery({ name: 'limit', description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½', required: false })
+  @ApiResponse({
+    status: 200,
+    description: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ç˜ï¿½Ôï¿½ï¿½',
   })
-  @ApiResponse({ status: 401, description: 'ÇÍÑÇÒ åæíÊ äÔÏå' })
+  @ApiResponse({ status: 401, description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½' })
   async getUserTransactions(
     @CurrentUser() user: { id: string },
     @Query('page') page?: string,
-    @Query('limit') limit?: string,
+    @Query('limit') limit?: string
   ): Promise<{ transactions: TransactionDetailsResponse[]; total: number }> {
     return this.paymentService.getUserTransactions(
       user.id,
       page ? parseInt(page, 10) : 1,
-      limit ? parseInt(limit, 10) : 10,
+      limit ? parseInt(limit, 10) : 10
     );
   }
 
@@ -195,11 +189,11 @@ export class PaymentController {
    * Get payment gateway status
    */
   @Get('status')
-  @ApiOperation({ 
-    summary: 'æÖÚíÊ ÏÑÇå ÑÏÇÎÊ',
-    description: 'ÈÑÑÓí æÖÚíÊ ÇÊÕÇá Èå ÏÑÇå ÑÏÇÎÊ',
+  @ApiOperation({
+    summary: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ñï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½',
+    description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Ñï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½',
   })
-  @ApiResponse({ status: 200, description: 'æÖÚíÊ ÏÑÇå' })
+  @ApiResponse({ status: 200, description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ñï¿½ï¿½' })
   async getGatewayStatus(): Promise<{ gateway: string; sandbox: boolean; status: string }> {
     return {
       gateway: 'zarinpal',

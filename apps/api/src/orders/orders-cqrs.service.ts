@@ -2,7 +2,7 @@
  * Orders CQRS Service - CQRS Pattern with Transactional Outbox
  * Enterprise Scalability Architecture
  * Requirements: 3.1, 5.1, 5.2
- * 
+ *
  * Features:
  * - Write operations go to PostgreSQL (Write_DB)
  * - Transactional outbox for guaranteed event delivery
@@ -10,11 +10,11 @@
  * - Domain events for order lifecycle
  */
 
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import type { DomainEvent } from '@nextgen/cqrs';
 import { Decimal } from '@prisma/client/runtime/library';
 import { v4 as uuidv4 } from 'uuid';
-import type { DomainEvent } from '@nextgen/cqrs';
+import type { PrismaService } from '../database/prisma.service';
 
 /** Order status enum */
 type OrderStatus = 'PENDING' | 'CONFIRMED' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
@@ -79,12 +79,12 @@ export class OrdersCqrsService {
       for (const item of data.items) {
         const product = await tx.product.findUnique({ where: { id: item.productId } });
         if (!product || product.stock < item.quantity) {
-          throw new BadRequestException(`ãæÌæÏí ˜ÇÝí äíÓÊ: ${product?.name || item.productId}`);
+          throw new BadRequestException(`ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: ${product?.name || item.productId}`);
         }
       }
 
       // Calculate totals
-      const subtotal = data.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      const subtotal = data.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
       const taxAmount = subtotal * 0.09; // 9% VAT
       const shippingCost = data.shippingCost || 0;
       const totalAmount = subtotal + taxAmount + shippingCost;
@@ -128,11 +128,16 @@ export class OrdersCqrsService {
         });
 
         // Write stock update event to outbox
-        const stockEvent = this.createDomainEvent('Product', item.productId, 'product.stock_decremented', {
-          productId: item.productId,
-          quantity: item.quantity,
-          orderId,
-        });
+        const stockEvent = this.createDomainEvent(
+          'Product',
+          item.productId,
+          'product.stock_decremented',
+          {
+            productId: item.productId,
+            quantity: item.quantity,
+            orderId,
+          }
+        );
         await this.writeToOutbox(tx, stockEvent);
       }
 
@@ -183,7 +188,11 @@ export class OrdersCqrsService {
    * Update payment status with outbox event
    * Property 20: Atomic Outbox Write
    */
-  async updatePaymentStatus(id: string, paymentStatus: PaymentStatus, paymentDetails?: Record<string, unknown>): Promise<Order> {
+  async updatePaymentStatus(
+    id: string,
+    paymentStatus: PaymentStatus,
+    paymentDetails?: Record<string, unknown>
+  ): Promise<Order> {
     return this.prisma.$transaction(async (tx) => {
       const order = await tx.order.update({
         where: { id },
@@ -230,11 +239,11 @@ export class OrdersCqrsService {
       });
 
       if (!order) {
-        throw new NotFoundException('ÓÝÇÑÔ íÇÝÊ äÔÏ');
+        throw new NotFoundException('ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½');
       }
 
       if (order.status !== 'PENDING' && order.status !== 'CONFIRMED') {
-        throw new BadRequestException('Çíä ÓÝÇÑÔ ÞÇÈá áÛæ äíÓÊ');
+        throw new BadRequestException('ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½');
       }
 
       // Restore stock
@@ -244,11 +253,16 @@ export class OrdersCqrsService {
           data: { stock: { increment: item.quantity } },
         });
 
-        const stockEvent = this.createDomainEvent('Product', item.productId, 'product.stock_restored', {
-          productId: item.productId,
-          quantity: item.quantity,
-          orderId: id,
-        });
+        const stockEvent = this.createDomainEvent(
+          'Product',
+          item.productId,
+          'product.stock_restored',
+          {
+            productId: item.productId,
+            quantity: item.quantity,
+            orderId: id,
+          }
+        );
         await this.writeToOutbox(tx, stockEvent);
       }
 
@@ -304,7 +318,7 @@ export class OrdersCqrsService {
     });
 
     if (!order) {
-      throw new NotFoundException('ÓÝÇÑÔ íÇÝÊ äÔÏ');
+      throw new NotFoundException('ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½');
     }
 
     return order as unknown as Order;

@@ -2,11 +2,11 @@
 // Local Storage Adapter Tests
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import * as fs from 'fs';
-import * as path from 'path';
-import { LocalStorageAdapter } from './local.adapter';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { StorageProviderType } from '../interfaces/storage.interface';
+import { LocalStorageAdapter } from './local.adapter';
 
 describe('LocalStorageAdapter', () => {
   const testRootDir = path.join(process.cwd(), '.test-storage');
@@ -87,7 +87,7 @@ describe('LocalStorageAdapter', () => {
     });
 
     it('should upload from readable stream', async () => {
-      const { Readable } = await import('stream');
+      const { Readable } = await import('node:stream');
       const data = 'Stream content';
       const stream = Readable.from([data]);
       const key = 'stream-file.txt';
@@ -132,7 +132,7 @@ describe('LocalStorageAdapter', () => {
 
       const stream = await adapter.getStream(key);
       const chunks: Buffer[] = [];
-      
+
       for await (const chunk of stream) {
         chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
       }
@@ -231,7 +231,7 @@ describe('LocalStorageAdapter', () => {
     it('should filter by prefix', async () => {
       const result = await adapter.list({ prefix: 'dir/' });
 
-      expect(result.files.every(f => f.key.startsWith('dir/'))).toBe(true);
+      expect(result.files.every((f) => f.key.startsWith('dir/'))).toBe(true);
     });
 
     it('should respect maxKeys', async () => {

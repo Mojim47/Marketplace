@@ -1,6 +1,6 @@
 // iso27001:A.12.4.1 | fata:1404-07.art8 | data-residency:IR
-import { webcrypto, randomUUID } from 'crypto';
-import { PointsEscrow, EscrowRecord } from '../points-escrow.js';
+import { randomUUID, webcrypto } from 'node:crypto';
+import { type EscrowRecord, PointsEscrow } from '../points-escrow.js';
 
 const COFFEE_RATE = 1000; // points per coffee
 const encoder = new TextEncoder();
@@ -24,13 +24,17 @@ export class LoyaltyMarketplaceService {
   private readonly escrow: PointsEscrow;
 
   constructor(secretSeed: string, escrow = new PointsEscrow()) {
-    if (!secretSeed) throw new Error('کلید محرمانه الزامی است');
+    if (!secretSeed) {
+      throw new Error('کلید محرمانه الزامی است');
+    }
     this.keyPromise = this.deriveKey(secretSeed);
     this.escrow = escrow;
   }
 
   coffeesToPoints(coffees: number): number {
-    if (coffees <= 0) throw new Error('حداقل یک قهوه لازم است');
+    if (coffees <= 0) {
+      throw new Error('حداقل یک قهوه لازم است');
+    }
     return coffees * COFFEE_RATE;
   }
 

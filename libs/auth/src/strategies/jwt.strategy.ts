@@ -2,14 +2,14 @@
 // JWT Strategy - Passport JWT Strategy for Token Validation
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import type { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
+import type { Request } from 'express';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { ConfigService } from '@nestjs/config';
-import { Request } from 'express';
-import type { TokenPayload, AuthenticatedUser, AuthConfig } from '../types';
-import { AuthService } from '../services/auth.service';
-import { SessionService } from '../services/session.service';
+import type { AuthService } from '../services/auth.service';
+import type { SessionService } from '../services/session.service';
+import type { AuthConfig, AuthenticatedUser, TokenPayload } from '../types';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
@@ -18,7 +18,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(
     private readonly configService: ConfigService,
     private readonly authService: AuthService,
-    private readonly sessionService: SessionService,
+    private readonly sessionService: SessionService
   ) {
     const jwtConfig = configService.get<AuthConfig['jwt']>('auth.jwt');
 
@@ -58,7 +58,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       const validation = await this.sessionService.validateSession(
         payload.sid,
         deviceFingerprint,
-        request.ip,
+        request.ip
       );
 
       if (!validation.valid) {

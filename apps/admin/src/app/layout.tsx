@@ -1,8 +1,8 @@
 import './globals.css';
-import { Vazirmatn, Fraunces } from 'next/font/google';
 import type { Metadata } from 'next';
-import type { ReactNode } from 'react';
+import { Fraunces, Vazirmatn } from 'next/font/google';
 import { cookies } from 'next/headers';
+import type { ReactNode } from 'react';
 
 const vazirmatn = Vazirmatn({
   subsets: ['latin', 'arabic'],

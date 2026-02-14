@@ -1,18 +1,18 @@
-import { describe, it, expect } from 'vitest';
 import { HttpStatus } from '@nestjs/common';
+import { describe, expect, it } from 'vitest';
 import {
-  ValidationError,
+  AppError,
   AuthenticationError,
   AuthorizationError,
-  NotFoundError,
-  ConflictError,
   BusinessRuleError,
+  ConflictError,
   DomainError,
-  RateLimitError,
-  InternalError,
-  UnavailableError,
   ErrorCode,
-  AppError,
+  InternalError,
+  NotFoundError,
+  RateLimitError,
+  UnavailableError,
+  ValidationError,
 } from './index';
 
 describe('Unified Error System', () => {

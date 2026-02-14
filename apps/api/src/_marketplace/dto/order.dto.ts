@@ -1,167 +1,174 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
-  IsString,
+  IsArray,
+  IsEmail,
   IsNumber,
   IsOptional,
-  IsArray,
+  IsString,
   IsUUID,
-  IsEnum,
   Min,
   ValidateNested,
-  IsEmail,
-  IsObject,
 } from 'class-validator';
-import { Type } from 'class-transformer';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CartItemDto {
-  @ApiProperty({ description: 'ÔäÇÓå ãÍÕæá' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsUUID()
   productId: string;
 
-  @ApiPropertyOptional({ description: 'ÔäÇÓå æÇÑíÇäÊ' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsUUID()
   variantId?: string;
 
-  @ApiProperty({ description: 'ÔäÇÓå İÑæÔäÏå' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsUUID()
   sellerId: string;
 
-  @ApiPropertyOptional({ description: 'ÔäÇÓå íÔäåÇÏ İÑæÔäÏå' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsUUID()
   sellerOfferId?: string;
 
-  @ApiProperty({ description: 'ÊÚÏÇÏ' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsNumber()
   @Min(1)
   quantity: number;
 
-  @ApiProperty({ description: 'ŞíãÊ æÇÍÏ' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½' })
   @IsNumber()
   @Min(0)
   unitPrice: number;
 
-  @ApiProperty({ description: 'äÇã ãÍÕæá' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsString()
   productName: string;
 
-  @ApiPropertyOptional({ description: 'SKU ãÍÕæá' })
+  @ApiPropertyOptional({ description: 'SKU ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsString()
   productSku?: string;
 
-  @ApiPropertyOptional({ description: 'äÇã æÇÑíÇäÊ' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsString()
   variantName?: string;
 }
 
 export class AddressDto {
-  @ApiProperty({ description: 'ÇÓÊÇä' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsString()
   province: string;
 
-  @ApiProperty({ description: 'ÔåÑ' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½' })
   @IsString()
   city: string;
 
-  @ApiProperty({ description: 'ÂÏÑÓ ˜Çãá' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½' })
   @IsString()
   address: string;
 
-  @ApiProperty({ description: '˜Ï ÓÊí' })
+  @ApiProperty({ description: 'ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½' })
   @IsString()
   postalCode: string;
 
-  @ApiPropertyOptional({ description: 'äÇã íÑäÏå' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsString()
   recipientName?: string;
 
-  @ApiPropertyOptional({ description: 'Êáİä íÑäÏå' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsString()
   recipientPhone?: string;
 }
 
 export class CreateOrderDto {
-  @ApiProperty({ type: [CartItemDto], description: 'ÂíÊãåÇí ÓÈÏ ÎÑíÏ' })
+  @ApiProperty({ type: [CartItemDto], description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½' })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CartItemDto)
   items: CartItemDto[];
 
-  @ApiPropertyOptional({ description: 'ÔäÇÓå Ñæå' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsUUID()
   projectId?: string;
 
-  @ApiPropertyOptional({ description: 'Çíãíá ãÔÊÑí' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsEmail()
   customerEmail?: string;
 
-  @ApiPropertyOptional({ description: 'Êáİä ãÔÊÑí' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsString()
   customerPhone?: string;
 
-  @ApiProperty({ type: AddressDto, description: 'ÂÏÑÓ ÇÑÓÇá' })
+  @ApiProperty({ type: AddressDto, description: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @ValidateNested()
   @Type(() => AddressDto)
   shippingAddress: AddressDto;
 
-  @ApiPropertyOptional({ type: AddressDto, description: 'ÂÏÑÓ ÕæÑÊÍÓÇÈ' })
+  @ApiPropertyOptional({ type: AddressDto, description: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @ValidateNested()
   @Type(() => AddressDto)
   billingAddress?: AddressDto;
 
-  @ApiPropertyOptional({ description: 'ÑæÔ ÇÑÓÇá' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsString()
   shippingMethod?: string;
 
-  @ApiPropertyOptional({ description: 'ÑæÔ ÑÏÇÎÊ' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsString()
   paymentMethod?: string;
 
-  @ApiPropertyOptional({ description: 'íÇÏÏÇÔÊ ãÔÊÑí' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsString()
   customerNote?: string;
 }
 
 export class UpdateOrderStatusDto {
-  @ApiProperty({ 
-    description: 'æÖÚíÊ ÌÏíÏ',
-    enum: ['PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'REFUNDED']
+  @ApiProperty({
+    description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½',
+    enum: ['PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'REFUNDED'],
   })
   @IsString()
   status: string;
 
-  @ApiPropertyOptional({ description: 'íÇÏÏÇÔÊ ÇÏãíä' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsString()
   adminNote?: string;
 }
 
 export class UpdateSubOrderStatusDto {
-  @ApiProperty({ 
-    description: 'æÖÚíÊ ÌÏíÏ',
-    enum: ['PENDING', 'CONFIRMED', 'PROCESSING', 'READY_TO_SHIP', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'RETURNED']
+  @ApiProperty({
+    description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½',
+    enum: [
+      'PENDING',
+      'CONFIRMED',
+      'PROCESSING',
+      'READY_TO_SHIP',
+      'SHIPPED',
+      'DELIVERED',
+      'CANCELLED',
+      'RETURNED',
+    ],
   })
   @IsString()
   status: string;
 
-  @ApiPropertyOptional({ description: 'ÔãÇÑå ííÑí' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsString()
   trackingNumber?: string;
 
-  @ApiPropertyOptional({ description: 'ÑæÔ ÇÑÓÇá' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsString()
   shippingMethod?: string;

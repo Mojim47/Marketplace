@@ -2,51 +2,37 @@
  * ???????????????????????????????????????????????????????????????????????????
  * NextGen Marketplace - Search Controller
  * ???????????????????????????????????????????????????????????????????????????
- * 
+ *
  * REST API endpoints for Persian product search operations.
- * 
+ *
  * Features:
  * - Product search with Persian tokenization
  * - Fuzzy search with typo tolerance
  * - Search suggestions (autocomplete)
  * - Text tokenization API
  * - Text highlighting
- * 
+ *
  * @module @nextgen/api/shared/search
  * Requirements: 8.1, 8.2, 8.3
  */
 
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Query,
-  Inject,
-  HttpCode,
-  HttpStatus,
-} from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiQuery,
-} from '@nestjs/swagger';
+import { Body, Controller, Get, HttpCode, HttpStatus, Inject, Post, Query } from '@nestjs/common';
+import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { PersianTokenizer, SearchService } from '@nextgen/search';
-import { SEARCH_TOKENS } from './tokens';
 import {
-  SearchProductsDto,
   FuzzySearchDto,
-  SearchSuggestionsDto,
-  TokenizeTextDto,
-  HighlightTextDto,
-  SearchResultDto,
-  TokenizeResultDto,
-  SuggestionsResultDto,
-  HighlightResultDto,
   FuzzySearchResultDto,
+  HighlightResultDto,
+  HighlightTextDto,
+  SearchProductsDto,
+  SearchResultDto,
+  SearchSuggestionsDto,
+  SuggestionsResultDto,
+  TokenizeResultDto,
+  TokenizeTextDto,
 } from './dto';
+import { SEARCH_TOKENS } from './tokens';
 
 @ApiTags('search')
 @Controller('search')
@@ -55,28 +41,28 @@ export class SearchController {
     @Inject(SEARCH_TOKENS.PERSIAN_TOKENIZER)
     private readonly persianTokenizer: PersianTokenizer,
     @Inject(SEARCH_TOKENS.SEARCH_SERVICE)
-    private readonly searchService: SearchService,
+    private readonly searchService: SearchService
   ) {}
 
   /**
-   * ÌÓÊÌæí ãÍÕæáÇÊ
+   * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
    * Requirements: 8.1, 8.2, 8.3
    */
   @Get('products')
-  @ApiOperation({ summary: 'ÌÓÊÌæí ãÍÕæáÇÊ ÈÇ ÔÊíÈÇäí İÇÑÓí' })
-  @ApiResponse({ status: 200, description: 'äÊÇíÌ ÌÓÊÌæ', type: SearchResultDto })
-  @ApiQuery({ name: 'query', required: true, description: 'ÚÈÇÑÊ ÌÓÊÌæ' })
-  @ApiQuery({ name: 'categoryId', required: false, description: 'İíáÊÑ ÏÓÊåÈäÏí' })
-  @ApiQuery({ name: 'brandId', required: false, description: 'İíáÊÑ ÈÑäÏ' })
-  @ApiQuery({ name: 'minPrice', required: false, description: 'ÍÏÇŞá ŞíãÊ' })
-  @ApiQuery({ name: 'maxPrice', required: false, description: 'ÍÏÇ˜ËÑ ŞíãÊ' })
-  @ApiQuery({ name: 'inStockOnly', required: false, description: 'İŞØ ãæÌæÏ' })
-  @ApiQuery({ name: 'limit', required: false, description: 'ÊÚÏÇÏ äÊÇíÌ' })
-  @ApiQuery({ name: 'offset', required: false, description: 'ÔÑæÚ ÇÒ' })
+  @ApiOperation({ summary: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
+  @ApiResponse({ status: 200, description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½', type: SearchResultDto })
+  @ApiQuery({ name: 'query', required: true, description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
+  @ApiQuery({ name: 'categoryId', required: false, description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
+  @ApiQuery({ name: 'brandId', required: false, description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½' })
+  @ApiQuery({ name: 'minPrice', required: false, description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½' })
+  @ApiQuery({ name: 'maxPrice', required: false, description: 'ï¿½ï¿½Ç˜ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½' })
+  @ApiQuery({ name: 'inStockOnly', required: false, description: 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
+  @ApiQuery({ name: 'limit', required: false, description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
+  @ApiQuery({ name: 'offset', required: false, description: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½' })
   async searchProducts(@Query() dto: SearchProductsDto): Promise<SearchResultDto> {
     // Build filters object
     const filters: Record<string, string | string[] | number | number[]> = {};
-    
+
     if (dto.categoryId) {
       filters.categoryId = dto.categoryId;
     }
@@ -109,7 +95,7 @@ export class SearchController {
     });
 
     return {
-      hits: result.hits.map(hit => ({
+      hits: result.hits.map((hit) => ({
         id: (hit.document as any).id,
         name: (hit.document as any).name,
         description: (hit.document as any).description,
@@ -130,25 +116,25 @@ export class SearchController {
   }
 
   /**
-   * ÌÓÊÌæí ãÍÕæáÇÊ ÈÇ POST
+   * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ POST
    * Requirements: 8.1, 8.2, 8.3
    */
   @Post('products')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'ÌÓÊÌæí ãÍÕæáÇÊ ÈÇ ÒíäååÇí ˜Çãá' })
-  @ApiResponse({ status: 200, description: 'äÊÇíÌ ÌÓÊÌæ', type: SearchResultDto })
+  @ApiOperation({ summary: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½' })
+  @ApiResponse({ status: 200, description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½', type: SearchResultDto })
   async searchProductsPost(@Body() dto: SearchProductsDto): Promise<SearchResultDto> {
     return this.searchProducts(dto);
   }
 
   /**
-   * Tokenize ãÊä İÇÑÓí
+   * Tokenize ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½
    * Requirements: 8.1, 8.3
    */
   @Post('tokenize')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Tokenize ãÊä İÇÑÓí' })
-  @ApiResponse({ status: 200, description: 'äÊíÌå tokenize', type: TokenizeResultDto })
+  @ApiOperation({ summary: 'Tokenize ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
+  @ApiResponse({ status: 200, description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ tokenize', type: TokenizeResultDto })
   async tokenizeText(@Body() dto: TokenizeTextDto): Promise<TokenizeResultDto> {
     // Create a new tokenizer instance with custom options if provided
     const tokenizer = PersianTokenizer.getInstance({
@@ -169,28 +155,30 @@ export class SearchController {
   }
 
   /**
-   * ÌÓÊÌæí fuzzy
+   * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ fuzzy
    * Requirements: 8.2
    */
   @Post('fuzzy')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'ÌÓÊÌæí fuzzy ÈÇ ÊÍãá ÛáØ ÇãáÇíí' })
-  @ApiResponse({ status: 200, description: 'äÊÇíÌ ãÔÇÈå', type: FuzzySearchResultDto })
+  @ApiOperation({ summary: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ fuzzy ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
+  @ApiResponse({ status: 200, description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½', type: FuzzySearchResultDto })
   async fuzzySearch(@Body() dto: FuzzySearchDto): Promise<FuzzySearchResultDto> {
     // Get product names from search index for fuzzy matching
     // In a real implementation, this would query the search index
     // For now, we'll use the tokenizer's fuzzy search capability
-    
+
     const threshold = dto.threshold ?? 0.6;
     const limit = dto.limit ?? 10;
 
     // This is a simplified implementation
     // In production, you would query MeiliSearch with typo tolerance
-    const results = this.persianTokenizer.fuzzySearch(
-      dto.query,
-      [], // Would be populated with product names from index
-      threshold,
-    ).slice(0, limit);
+    const results = this.persianTokenizer
+      .fuzzySearch(
+        dto.query,
+        [], // Would be populated with product names from index
+        threshold
+      )
+      .slice(0, limit);
 
     return {
       results,
@@ -200,14 +188,14 @@ export class SearchController {
   }
 
   /**
-   * íÔäåÇÏ ÌÓÊÌæ (autocomplete)
+   * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ (autocomplete)
    * Requirements: 8.2
    */
   @Get('suggestions')
-  @ApiOperation({ summary: 'íÔäåÇÏ ÌÓÊÌæ (autocomplete)' })
-  @ApiResponse({ status: 200, description: 'íÔäåÇÏÇÊ', type: SuggestionsResultDto })
-  @ApiQuery({ name: 'prefix', required: true, description: 'íÔæäÏ ÌÓÊÌæ' })
-  @ApiQuery({ name: 'limit', required: false, description: 'ÊÚÏÇÏ íÔäåÇÏÇÊ' })
+  @ApiOperation({ summary: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ (autocomplete)' })
+  @ApiResponse({ status: 200, description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½', type: SuggestionsResultDto })
+  @ApiQuery({ name: 'prefix', required: true, description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
+  @ApiQuery({ name: 'limit', required: false, description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   async getSuggestions(@Query() dto: SearchSuggestionsDto): Promise<SuggestionsResultDto> {
     const limit = dto.limit ?? 10;
 
@@ -216,7 +204,7 @@ export class SearchController {
     const suggestions = this.persianTokenizer.generateSuggestions(
       dto.prefix,
       [], // Would be populated with product names from index
-      limit,
+      limit
     );
 
     return {
@@ -226,20 +214,16 @@ export class SearchController {
   }
 
   /**
-   * Highlight ãÊä
+   * Highlight ï¿½ï¿½ï¿½
    * Requirements: 8.1
    */
   @Post('highlight')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Highlight ÚÈÇÑÇÊ ÌÓÊÌæ ÏÑ ãÊä' })
-  @ApiResponse({ status: 200, description: 'ãÊä highlight ÔÏå', type: HighlightResultDto })
+  @ApiOperation({ summary: 'Highlight ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½' })
+  @ApiResponse({ status: 200, description: 'ï¿½ï¿½ï¿½ highlight ï¿½ï¿½ï¿½', type: HighlightResultDto })
   async highlightText(@Body() dto: HighlightTextDto): Promise<HighlightResultDto> {
     const tag = dto.tag ?? 'mark';
-    const highlightedText = this.persianTokenizer.highlight(
-      dto.text,
-      dto.searchTerms,
-      tag,
-    );
+    const highlightedText = this.persianTokenizer.highlight(dto.text, dto.searchTerms, tag);
 
     return {
       highlightedText,
@@ -248,14 +232,16 @@ export class SearchController {
   }
 
   /**
-   * äÑãÇáÓÇÒí ãÊä İÇÑÓí
+   * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½
    * Requirements: 8.1
    */
   @Post('normalize')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'äÑãÇáÓÇÒí ãÊä İÇÑÓí (ÊÈÏíá ˜ÇÑÇ˜ÊÑåÇí ÚÑÈí Èå İÇÑÓí)' })
-  @ApiResponse({ status: 200, description: 'ãÊä äÑãÇáÔÏå' })
-  async normalizeText(@Body() body: { text: string }): Promise<{ normalizedText: string; originalText: string }> {
+  @ApiOperation({ summary: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ç˜ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½)' })
+  @ApiResponse({ status: 200, description: 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
+  async normalizeText(
+    @Body() body: { text: string }
+  ): Promise<{ normalizedText: string; originalText: string }> {
     const normalizedText = this.persianTokenizer.normalize(body.text);
 
     return {
@@ -265,17 +251,17 @@ export class SearchController {
   }
 
   /**
-   * ãÍÇÓÈå ÔÈÇåÊ Ïæ ãÊä
+   * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½
    * Requirements: 8.2
    */
   @Get('similarity')
-  @ApiOperation({ summary: 'ãÍÇÓÈå ÔÈÇåÊ Ïæ ãÊä' })
-  @ApiResponse({ status: 200, description: 'ãíÒÇä ÔÈÇåÊ' })
-  @ApiQuery({ name: 'text1', required: true, description: 'ãÊä Çæá' })
-  @ApiQuery({ name: 'text2', required: true, description: 'ãÊä Ïæã' })
+  @ApiOperation({ summary: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½' })
+  @ApiResponse({ status: 200, description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
+  @ApiQuery({ name: 'text1', required: true, description: 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½' })
+  @ApiQuery({ name: 'text2', required: true, description: 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½' })
   async calculateSimilarity(
     @Query('text1') text1: string,
-    @Query('text2') text2: string,
+    @Query('text2') text2: string
   ): Promise<{ text1: string; text2: string; similarity: number }> {
     const similarity = this.persianTokenizer.similarity(text1, text2);
 
@@ -287,12 +273,12 @@ export class SearchController {
   }
 
   /**
-   * áíÓÊ stop words İÇÑÓí
+   * ï¿½ï¿½ï¿½ï¿½ stop words ï¿½ï¿½ï¿½ï¿½ï¿½
    * Requirements: 8.3
    */
   @Get('stop-words')
-  @ApiOperation({ summary: 'áíÓÊ stop words İÇÑÓí' })
-  @ApiResponse({ status: 200, description: 'áíÓÊ stop words' })
+  @ApiOperation({ summary: 'ï¿½ï¿½ï¿½ï¿½ stop words ï¿½ï¿½ï¿½ï¿½ï¿½' })
+  @ApiResponse({ status: 200, description: 'ï¿½ï¿½ï¿½ï¿½ stop words' })
   async getStopWords(): Promise<{ stopWords: string[] }> {
     return {
       stopWords: this.persianTokenizer.getStopWords(),
@@ -300,11 +286,11 @@ export class SearchController {
   }
 
   /**
-   * ÈÑÑÓí ÓáÇãÊ ÓÑæíÓ ÌÓÊÌæ
+   * ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½
    */
   @Get('health')
-  @ApiOperation({ summary: 'ÈÑÑÓí ÓáÇãÊ ÓÑæíÓ ÌÓÊÌæ' })
-  @ApiResponse({ status: 200, description: 'æÖÚíÊ ÓáÇãÊ' })
+  @ApiOperation({ summary: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
+  @ApiResponse({ status: 200, description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
   async healthCheck(): Promise<{ healthy: boolean; meiliSearch: boolean; timestamp: string }> {
     const meiliHealthy = await this.searchService.isHealthy();
 
@@ -316,11 +302,11 @@ export class SearchController {
   }
 
   /**
-   * ÂãÇÑ ÇíäÏ˜Ó ÌÓÊÌæ
+   * ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ï˜ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½
    */
   @Get('stats')
-  @ApiOperation({ summary: 'ÂãÇÑ ÇíäÏ˜Ó ÌÓÊÌæ' })
-  @ApiResponse({ status: 200, description: 'ÂãÇÑ ÇíäÏ˜Ó' })
+  @ApiOperation({ summary: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ï˜ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
+  @ApiResponse({ status: 200, description: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ï˜ï¿½' })
   async getIndexStats(): Promise<{
     numberOfDocuments: number;
     isIndexing: boolean;

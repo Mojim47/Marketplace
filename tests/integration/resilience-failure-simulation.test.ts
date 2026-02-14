@@ -13,7 +13,7 @@
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Mock Infrastructure Services
@@ -75,7 +75,9 @@ class MockCircuitBreaker {
         this.state = CircuitState.HALF_OPEN;
         this.successCount = 0;
       } else {
-        if (fallback) return fallback();
+        if (fallback) {
+          return fallback();
+        }
         throw new Error('Circuit breaker is OPEN');
       }
     }
@@ -86,7 +88,9 @@ class MockCircuitBreaker {
       return result;
     } catch (error) {
       this.onFailure();
-      if (fallback) return fallback();
+      if (fallback) {
+        return fallback();
+      }
       throw error;
     }
   }
@@ -133,7 +137,7 @@ class MockDatabaseService {
   private latency = 10;
   private failureMode: 'none' | 'timeout' | 'connection' | 'query' = 'none';
 
-  async query<T>(sql: string): Promise<T> {
+  async query<T>(_sql: string): Promise<T> {
     if (!this.isConnected) {
       throw new Error('Database connection lost');
     }
@@ -205,7 +209,9 @@ class MockCacheService {
     }
 
     const item = this.store.get(key);
-    if (!item) return null;
+    if (!item) {
+      return null;
+    }
     if (item.expiry && item.expiry < Date.now()) {
       this.store.delete(key);
       return null;
@@ -299,7 +305,9 @@ class MockQueueService {
     processor: (data: unknown) => Promise<void>
   ): Promise<boolean> {
     const queue = this.queues.get(queueName);
-    if (!queue || queue.length === 0) return false;
+    if (!queue || queue.length === 0) {
+      return false;
+    }
 
     const job = queue.shift()!;
     job.attempts++;
@@ -373,7 +381,10 @@ class MockPaymentGateway {
   private rateLimitWindow = 60000;
   private windowStart = Date.now();
 
-  async initiatePayment(amount: number, orderId: string): Promise<{ authority: string; url: string }> {
+  async initiatePayment(
+    _amount: number,
+    _orderId: string
+  ): Promise<{ authority: string; url: string }> {
     this.checkRateLimit();
 
     if (this.failureMode === 'timeout') {
@@ -398,7 +409,10 @@ class MockPaymentGateway {
     };
   }
 
-  async verifyPayment(authority: string, amount: number): Promise<{ success: boolean; refId?: string }> {
+  async verifyPayment(
+    _authority: string,
+    _amount: number
+  ): Promise<{ success: boolean; refId?: string }> {
     this.checkRateLimit();
 
     if (this.failureMode === 'timeout') {
@@ -452,7 +466,6 @@ class MockPaymentGateway {
     return this.failureMode === 'none';
   }
 }
-
 
 // ═══════════════════════════════════════════════════════════════════════════
 // SECTION 1: DATABASE OUTAGE SIMULATION
@@ -529,7 +542,7 @@ describe('Database Outage Simulation', () => {
     circuitBreaker.advanceTime(6000);
 
     // Next call should transition to HALF_OPEN and succeed
-    const result = await circuitBreaker.execute(() => db.query('SELECT 1'));
+    const _result = await circuitBreaker.execute(() => db.query('SELECT 1'));
     expect(circuitBreaker.getState()).toBe(CircuitState.HALF_OPEN);
 
     // Another success should close the circuit
@@ -654,9 +667,18 @@ describe('Cache Outage Simulation', () => {
 
     // System should continue operating with degraded performance
     const operations = [
-      circuitBreaker.execute(() => cache.get('key1'), () => null),
-      circuitBreaker.execute(() => cache.get('key2'), () => null),
-      circuitBreaker.execute(() => cache.get('key3'), () => null),
+      circuitBreaker.execute(
+        () => cache.get('key1'),
+        () => null
+      ),
+      circuitBreaker.execute(
+        () => cache.get('key2'),
+        () => null
+      ),
+      circuitBreaker.execute(
+        () => cache.get('key3'),
+        () => null
+      ),
     ];
 
     const results = await Promise.allSettled(operations);
@@ -788,7 +810,6 @@ describe('Queue Saturation Simulation', () => {
   });
 });
 
-
 // ═══════════════════════════════════════════════════════════════════════════
 // SECTION 4: PAYMENT GATEWAY FAILURE SIMULATION
 // ═══════════════════════════════════════════════════════════════════════════
@@ -829,9 +850,7 @@ describe('Payment Gateway Failure Simulation', () => {
 
     for (let i = 0; i < 3; i++) {
       try {
-        await circuitBreaker.execute(() =>
-          paymentGateway.initiatePayment(1000000, `order-${i}`)
-        );
+        await circuitBreaker.execute(() => paymentGateway.initiatePayment(1000000, `order-${i}`));
       } catch {
         // Expected
       }
@@ -906,9 +925,7 @@ describe('Payment Gateway Failure Simulation', () => {
     // Fail some operations
     for (let i = 0; i < 3; i++) {
       try {
-        await circuitBreaker.execute(() =>
-          paymentGateway.initiatePayment(1000000, `order-${i}`)
-        );
+        await circuitBreaker.execute(() => paymentGateway.initiatePayment(1000000, `order-${i}`));
       } catch {
         // Expected
       }
@@ -1242,13 +1259,19 @@ describe('Deterministic Recovery Verification', () => {
 
     // Recovery sequence
     db.recover();
-    if (db.isHealthy()) recoveryOrder.push('db');
+    if (db.isHealthy()) {
+      recoveryOrder.push('db');
+    }
 
     cache.recover();
-    if (cache.isHealthy()) recoveryOrder.push('cache');
+    if (cache.isHealthy()) {
+      recoveryOrder.push('cache');
+    }
 
     queue.recover();
-    if (queue.isHealthy()) recoveryOrder.push('queue');
+    if (queue.isHealthy()) {
+      recoveryOrder.push('queue');
+    }
 
     expect(recoveryOrder).toEqual(['db', 'cache', 'queue']);
   });
@@ -1278,7 +1301,9 @@ describe('Deterministic Recovery Verification', () => {
       const success = await queue.processJob('pending-writes', async (data) => {
         await db.query(`${(data as any).type} ...`);
       });
-      if (success) processed++;
+      if (success) {
+        processed++;
+      }
     }
 
     expect(processed).toBe(3);

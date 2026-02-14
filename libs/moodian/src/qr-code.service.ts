@@ -15,11 +15,11 @@
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
+import * as crypto from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import * as crypto from 'crypto';
+import type { ConfigService } from '@nestjs/config';
 import * as QRCode from 'qrcode';
-import { QRCodeData, QRCodeResult } from './interfaces';
+import type { QRCodeData, QRCodeResult } from './interfaces';
 
 @Injectable()
 export class QRCodeService {

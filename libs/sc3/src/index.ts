@@ -57,7 +57,10 @@ export { SC3Service, DEFAULT_SC3_CONFIG } from './services/sc3.service';
 export type { SC3VerificationInput } from './services/sc3.service';
 
 export { BuildVerifierService } from './services/build-verifier.service';
-export type { BuildVerificationOptions, CanonicalHashOptions } from './services/build-verifier.service';
+export type {
+  BuildVerificationOptions,
+  CanonicalHashOptions,
+} from './services/build-verifier.service';
 
 export { DependencyScannerService } from './services/dependency-scanner.service';
 export type { DependencyScanOptions, CVEFetchResult } from './services/dependency-scanner.service';
@@ -69,4 +72,7 @@ export { ProvenanceService } from './services/provenance.service';
 export type { ProvenanceVerificationOptions } from './services/provenance.service';
 
 export { ImmutableLogService } from './services/immutable-log.service';
-export type { LogVerificationOptions, CreateLogEntryOptions } from './services/immutable-log.service';
+export type {
+  LogVerificationOptions,
+  CreateLogEntryOptions,
+} from './services/immutable-log.service';

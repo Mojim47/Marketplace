@@ -7,11 +7,11 @@
 // - Secure secret storage
 // ═══════════════════════════════════════════════════════════════════════════
 
+import { createCipheriv, createDecipheriv, createHmac, randomBytes } from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { PrismaClient } from '@prisma/client';
-import { createHmac, randomBytes, createCipheriv, createDecipheriv } from 'crypto';
-import type { TotpSetupResponse, AuthConfig } from '../types';
+import type { ConfigService } from '@nestjs/config';
+import type { PrismaClient } from '@prisma/client';
+import type { AuthConfig, TotpSetupResponse } from '../types';
 
 @Injectable()
 export class TotpService {
@@ -27,7 +27,7 @@ export class TotpService {
 
   constructor(
     private readonly prisma: PrismaClient,
-    private readonly configService: ConfigService,
+    private readonly configService: ConfigService
   ) {
     const totpConfig = this.configService.get<AuthConfig['totp']>('auth.totp');
     this.issuer = totpConfig?.issuer || 'NextGen Marketplace';
@@ -35,9 +35,7 @@ export class TotpService {
 
     // Encryption key for storing secrets (must be 32 bytes for AES-256)
     const key = this.configService.get<string>('TOTP_ENCRYPTION_KEY', '');
-    this.encryptionKey = key
-      ? Buffer.from(key, 'hex')
-      : randomBytes(32);
+    this.encryptionKey = key ? Buffer.from(key, 'hex') : randomBytes(32);
   }
 
   /**
@@ -50,7 +48,7 @@ export class TotpService {
 
     // Encrypt secret before storing
     const encryptedSecret = this.encryptSecret(secret);
-    const hashedBackupCodes = backupCodes.map(code => this.hashBackupCode(code));
+    const _hashedBackupCodes = backupCodes.map((code) => this.hashBackupCode(code));
 
     // Store temporarily (not enabled yet)
     await this.prisma.user.update({
@@ -133,12 +131,12 @@ export class TotpService {
     // In production, backup codes would be stored in a separate table
     // and marked as used after verification
     const normalizedCode = code.replace(/\s/g, '').toUpperCase();
-    const hashedCode = this.hashBackupCode(normalizedCode);
+    const _hashedCode = this.hashBackupCode(normalizedCode);
 
     // This is a simplified implementation
     // In production, query backup_codes table and mark as used
     this.logger.log('Backup code used', { user_id: userId });
-    
+
     return true; // Placeholder - implement with actual backup code storage
   }
 
@@ -182,7 +180,7 @@ export class TotpService {
    */
   private verifyCode(secret: Buffer, code: string): boolean {
     const normalizedCode = code.replace(/\s/g, '');
-    
+
     if (normalizedCode.length !== this.DIGITS) {
       return false;
     }
@@ -222,7 +220,7 @@ export class TotpService {
       (hash[offset + 3] & 0xff);
 
     // Generate digits
-    const otp = binary % Math.pow(10, this.DIGITS);
+    const otp = binary % 10 ** this.DIGITS;
     return otp.toString().padStart(this.DIGITS, '0');
   }
 
@@ -252,12 +250,9 @@ export class TotpService {
   private encryptSecret(secret: Buffer): string {
     const iv = randomBytes(16);
     const cipher = createCipheriv('aes-256-gcm', this.encryptionKey, iv);
-    
-    const encrypted = Buffer.concat([
-      cipher.update(secret),
-      cipher.final(),
-    ]);
-    
+
+    const encrypted = Buffer.concat([cipher.update(secret), cipher.final()]);
+
     const authTag = cipher.getAuthTag();
 
     // Format: iv:authTag:encrypted (all base64)
@@ -269,7 +264,7 @@ export class TotpService {
    */
   private decryptSecret(encrypted: string): Buffer {
     const [ivB64, authTagB64, dataB64] = encrypted.split(':');
-    
+
     const iv = Buffer.from(ivB64, 'base64');
     const authTag = Buffer.from(authTagB64, 'base64');
     const data = Buffer.from(dataB64, 'base64');
@@ -277,19 +272,14 @@ export class TotpService {
     const decipher = createDecipheriv('aes-256-gcm', this.encryptionKey, iv);
     decipher.setAuthTag(authTag);
 
-    return Buffer.concat([
-      decipher.update(data),
-      decipher.final(),
-    ]);
+    return Buffer.concat([decipher.update(data), decipher.final()]);
   }
 
   /**
    * Hash backup code for storage
    */
   private hashBackupCode(code: string): string {
-    return createHmac('sha256', this.encryptionKey)
-      .update(code)
-      .digest('hex');
+    return createHmac('sha256', this.encryptionKey).update(code).digest('hex');
   }
 
   /**

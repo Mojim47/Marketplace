@@ -1,0 +1,784 @@
+---
+# ════════════════════════════════════════════════════════════════════════════
+# NextGen Marketplace - Kubernetes Production Deployment
+# 2026 Ready: Auto-scaling, Self-healing, High Availability
+# ════════════════════════════════════════════════════════════════════════════
+
+# Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nextgen-prod
+  labels:
+    environment: production
+
+---
+
+# ConfigMap - Application Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nextgen-api-config
+  namespace: nextgen-prod
+data:
+  NODE_ENV: "production"
+  LOG_LEVEL: "info"
+  API_PORT: "3001"
+  API_HOST: "0.0.0.0"
+  MINIO_PORT: "9000"
+  MINIO_USE_SSL: "false"
+  ALLOWED_ORIGINS: "https://app.nextgen.ir,https://admin.nextgen.ir,https://vendor.nextgen.ir"
+  WORKER_CONCURRENCY: "10"
+
+---
+
+# Secret - Database Credentials
+apiVersion: v1
+kind: Secret
+metadata:
+  name: nextgen-db-secret
+  namespace: nextgen-prod
+type: Opaque
+stringData:
+  username: nextgen-prod
+  password: "CHANGE_THIS_STRONG_PASSWORD_IN_PRODUCTION"
+  database: nextgen_marketplace_prod
+  connection-string: "postgresql://nextgen-prod:CHANGE_THIS_STRONG_PASSWORD_IN_PRODUCTION@postgres:5432/nextgen_marketplace_prod"
+
+---
+
+# Secret - Redis Credentials
+apiVersion: v1
+kind: Secret
+metadata:
+  name: nextgen-redis-secret
+  namespace: nextgen-prod
+type: Opaque
+stringData:
+  password: "CHANGE_THIS_STRONG_PASSWORD_IN_PRODUCTION"
+  connection-string: "redis://:CHANGE_THIS_STRONG_PASSWORD_IN_PRODUCTION@redis:6379/0"
+
+---
+
+# Secret - MinIO Credentials
+apiVersion: v1
+kind: Secret
+metadata:
+  name: nextgen-minio-secret
+  namespace: nextgen-prod
+type: Opaque
+stringData:
+  root-user: "CHANGE_THIS_IN_PRODUCTION"
+  root-password: "CHANGE_THIS_STRONG_PASSWORD_IN_PRODUCTION"
+  bucket: "nextgen-uploads"
+
+---
+
+# Secret - JWT Configuration
+apiVersion: v1
+kind: Secret
+metadata:
+  name: nextgen-jwt-secret
+  namespace: nextgen-prod
+type: Opaque
+stringData:
+  jwt-secret: "CHANGE_THIS_RANDOM_JWT_SECRET_IN_PRODUCTION"
+  jwt-expiration: "7d"
+
+---
+
+# PersistentVolumeClaim - PostgreSQL Data
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  namespace: nextgen-prod
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: fast-ssd
+  resources:
+    requests:
+      storage: 100Gi
+
+---
+
+# PersistentVolumeClaim - Redis Data
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-pvc
+  namespace: nextgen-prod
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: standard
+  resources:
+    requests:
+      storage: 20Gi
+
+---
+
+# PersistentVolumeClaim - MinIO Data
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: minio-pvc
+  namespace: nextgen-prod
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: standard
+  resources:
+    requests:
+      storage: 200Gi
+
+---
+
+# Service - PostgreSQL
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: nextgen-prod
+  labels:
+    app: postgres
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5432
+      targetPort: 5432
+      protocol: TCP
+  selector:
+    app: postgres
+
+---
+
+# Deployment - PostgreSQL
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: nextgen-prod
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      securityContext:
+        fsGroup: 999
+        runAsNonRoot: true
+        runAsUser: 999
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: nextgen-db-secret
+                  key: username
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: nextgen-db-secret
+                  key: password
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: nextgen-db-secret
+                  key: database
+            - name: POSTGRES_INITDB_ARGS
+              value: "--encoding=UTF8 --locale=en_US.UTF-8"
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", "$(POSTGRES_USER)"]
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "$(POSTGRES_USER)"]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 2
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          volumeMounts:
+            - name: postgres-storage
+              mountPath: /var/lib/postgresql/data
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+      volumes:
+        - name: postgres-storage
+          persistentVolumeClaim:
+            claimName: postgres-pvc
+
+---
+
+# Service - Redis
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: nextgen-prod
+  labels:
+    app: redis
+spec:
+  type: ClusterIP
+  ports:
+    - port: 6379
+      targetPort: 6379
+      protocol: TCP
+  selector:
+    app: redis
+
+---
+
+# Deployment - Redis
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: nextgen-prod
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      securityContext:
+        fsGroup: 999
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 6379
+          command:
+            - redis-server
+            - "--requirepass"
+            - "$(REDIS_PASSWORD)"
+            - "--maxmemory"
+            - "512mb"
+            - "--maxmemory-policy"
+            - "allkeys-lru"
+            - "--appendonly"
+            - "yes"
+            - "--appendfsync"
+            - "everysec"
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: nextgen-redis-secret
+                  key: password
+          livenessProbe:
+            exec:
+              command:
+                - redis-cli
+                - -a
+                - "$(REDIS_PASSWORD)"
+                - ping
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command:
+                - redis-cli
+                - -a
+                - "$(REDIS_PASSWORD)"
+                - ping
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 2
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "250m"
+          volumeMounts:
+            - name: redis-storage
+              mountPath: /data
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+      volumes:
+        - name: redis-storage
+          persistentVolumeClaim:
+            claimName: redis-pvc
+
+---
+
+# Service - MinIO
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio
+  namespace: nextgen-prod
+  labels:
+    app: minio
+spec:
+  type: ClusterIP
+  ports:
+    - port: 9000
+      name: api
+      targetPort: 9000
+    - port: 9001
+      name: console
+      targetPort: 9001
+  selector:
+    app: minio
+
+---
+
+# Deployment - MinIO
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio
+  namespace: nextgen-prod
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minio
+  template:
+    metadata:
+      labels:
+        app: minio
+    spec:
+      containers:
+        - name: minio
+          image: minio/minio:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 9000
+              name: api
+            - containerPort: 9001
+              name: console
+          command:
+            - minio
+            - server
+            - /data
+            - --console-address
+            - ":9001"
+          env:
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: nextgen-minio-secret
+                  key: root-user
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: nextgen-minio-secret
+                  key: root-password
+          livenessProbe:
+            httpGet:
+              path: /minio/health/live
+              port: 9000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /minio/health/ready
+              port: 9000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 2
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "250m"
+          volumeMounts:
+            - name: minio-storage
+              mountPath: /data
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+      volumes:
+        - name: minio-storage
+          persistentVolumeClaim:
+            claimName: minio-pvc
+
+---
+
+# Service - API Server
+apiVersion: v1
+kind: Service
+metadata:
+  name: nextgen-api
+  namespace: nextgen-prod
+  labels:
+    app: nextgen-api
+spec:
+  type: ClusterIP
+  selector:
+    app: nextgen-api
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3001
+      name: http
+
+---
+
+# Deployment - API Server
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nextgen-api
+  namespace: nextgen-prod
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: nextgen-api
+  template:
+    metadata:
+      labels:
+        app: nextgen-api
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - nextgen-api
+                topologyKey: kubernetes.io/hostname
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 1001
+      containers:
+        - name: api
+          image: nextgen-marketplace:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 3001
+          env:
+            - name: NODE_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: nextgen-api-config
+                  key: NODE_ENV
+            - name: LOG_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: nextgen-api-config
+                  key: LOG_LEVEL
+            - name: API_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: nextgen-api-config
+                  key: API_PORT
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: nextgen-db-secret
+                  key: connection-string
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: nextgen-redis-secret
+                  key: connection-string
+            - name: MINIO_ENDPOINT
+              value: "minio"
+            - name: MINIO_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: nextgen-minio-secret
+                  key: root-user
+            - name: MINIO_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: nextgen-minio-secret
+                  key: root-password
+            - name: MINIO_BUCKET
+              valueFrom:
+                secretKeyRef:
+                  name: nextgen-minio-secret
+                  key: bucket
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: nextgen-jwt-secret
+                  key: jwt-secret
+            - name: JWT_EXPIRATION
+              valueFrom:
+                secretKeyRef:
+                  name: nextgen-jwt-secret
+                  key: jwt-expiration
+          livenessProbe:
+            httpGet:
+              path: /api/v3/health
+              port: 3001
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /api/v3/health
+              port: 3001
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 2
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+            capabilities:
+              add:
+                - NET_BIND_SERVICE
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+
+---
+
+# HorizontalPodAutoscaler - API Server
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: nextgen-api-hpa
+  namespace: nextgen-prod
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: nextgen-api
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 50
+          periodSeconds: 15
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 15
+        - type: Pods
+          value: 2
+          periodSeconds: 15
+      selectPolicy: Max
+
+---
+
+# Deployment - Worker Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nextgen-worker
+  namespace: nextgen-prod
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nextgen-worker
+  template:
+    metadata:
+      labels:
+        app: nextgen-worker
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 1001
+      containers:
+        - name: worker
+          image: nextgen-marketplace:latest
+          imagePullPolicy: Always
+          command: ["node", "dist/worker.js"]
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: LOG_LEVEL
+              value: "info"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: nextgen-db-secret
+                  key: connection-string
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: nextgen-redis-secret
+                  key: connection-string
+            - name: WORKER_CONCURRENCY
+              value: "10"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "512Mi"
+              cpu: "400m"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+
+---
+
+# NetworkPolicy - Default Deny All Ingress
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: nextgen-default-deny
+  namespace: nextgen-prod
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+
+---
+
+# NetworkPolicy - Allow API Traffic
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: nextgen-api-ingress
+  namespace: nextgen-prod
+spec:
+  podSelector:
+    matchLabels:
+      app: nextgen-api
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              role: frontend
+      ports:
+        - protocol: TCP
+          port: 3001
+
+---
+
+# NetworkPolicy - Allow Database Access
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: nextgen-postgres-ingress
+  namespace: nextgen-prod
+spec:
+  podSelector:
+    matchLabels:
+      app: postgres
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: nextgen-api
+        - podSelector:
+            matchLabels:
+              app: nextgen-worker
+      ports:
+        - protocol: TCP
+          port: 5432
+
+---
+
+# PodDisruptionBudget - API Server
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: nextgen-api-pdb
+  namespace: nextgen-prod
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: nextgen-api

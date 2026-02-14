@@ -5,7 +5,10 @@
 /**
  * Message handler callback type
  */
-export type PubSubMessageHandler<T = unknown> = (message: T, channel: string) => void | Promise<void>;
+export type PubSubMessageHandler<T = unknown> = (
+  message: T,
+  channel: string
+) => void | Promise<void>;
 
 /**
  * Pub/Sub subscription
@@ -39,7 +42,10 @@ export interface IPubSubProvider {
    * @param handler - Message handler callback
    * @returns Subscription object
    */
-  subscribe<T = unknown>(channel: string, handler: PubSubMessageHandler<T>): Promise<PubSubSubscription>;
+  subscribe<T = unknown>(
+    channel: string,
+    handler: PubSubMessageHandler<T>
+  ): Promise<PubSubSubscription>;
 
   /**
    * Subscribe to channels matching a pattern
@@ -47,7 +53,10 @@ export interface IPubSubProvider {
    * @param handler - Message handler callback
    * @returns Subscription object
    */
-  psubscribe<T = unknown>(pattern: string, handler: PubSubMessageHandler<T>): Promise<PubSubSubscription>;
+  psubscribe<T = unknown>(
+    pattern: string,
+    handler: PubSubMessageHandler<T>
+  ): Promise<PubSubSubscription>;
 
   /**
    * Unsubscribe from a channel

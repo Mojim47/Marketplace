@@ -14,5 +14,4 @@ export const REQUIRED_SCOPES_KEY = 'requiredScopes';
  * @Get('orders')
  * getOrders() {}
  */
-export const RequireScopes = (...scopes: TokenScope[]) =>
-  SetMetadata(REQUIRED_SCOPES_KEY, scopes);
+export const RequireScopes = (...scopes: TokenScope[]) => SetMetadata(REQUIRED_SCOPES_KEY, scopes);

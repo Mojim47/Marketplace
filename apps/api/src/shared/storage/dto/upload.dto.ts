@@ -2,15 +2,15 @@
  * ???????????????????????????????????????????????????????????????????????????
  * NextGen Marketplace - Storage DTOs
  * ???????????????????????????????????????????????????????????????????????????
- * 
+ *
  * Data Transfer Objects for storage operations.
- * 
+ *
  * @module @nextgen/api/shared/storage
  * Requirements: 6.1, 6.2, 6.3, 6.4
  */
 
-import { IsString, IsOptional, IsBoolean, IsNumber, Min, Max, IsEnum } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsBoolean, IsEnum, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
 
 export enum FileType {
   IMAGE = 'image',
@@ -20,80 +20,80 @@ export enum FileType {
 }
 
 export class UploadFileDto {
-  @ApiPropertyOptional({ description: 'äÇã İÇíá ÓİÇÑÔí' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsString()
   filename?: string;
 
-  @ApiPropertyOptional({ description: 'ÂíÇ İÇíá Úãæãí ÇÓÊ¿', default: false })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ê¿', default: false })
   @IsOptional()
   @IsBoolean()
   isPublic?: boolean;
 
-  @ApiPropertyOptional({ description: 'ãÓíÑ ĞÎíÑåÓÇÒí' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsString()
   path?: string;
 
-  @ApiPropertyOptional({ description: 'äæÚ İÇíá ÈÑÇí ÇÚÊÈÇÑÓäÌí', enum: FileType })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½', enum: FileType })
   @IsOptional()
   @IsEnum(FileType)
   fileType?: FileType;
 }
 
 export class GetSignedUrlDto {
-  @ApiProperty({ description: '˜áíÏ İÇíá ÏÑ storage' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ storage' })
   @IsString()
   key: string;
 
-  @ApiPropertyOptional({ description: 'ãÏÊ ÇÚÊÈÇÑ URL Èå ËÇäíå', default: 3600 })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ URL ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½', default: 3600 })
   @IsOptional()
   @IsNumber()
   @Min(60)
   @Max(604800) // Max 7 days
   expiresIn?: number;
 
-  @ApiPropertyOptional({ description: 'äÇã bucket' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ bucket' })
   @IsOptional()
   @IsString()
   bucket?: string;
 }
 
 export class GetUploadUrlDto {
-  @ApiProperty({ description: '˜áíÏ İÇíá ÈÑÇí ÂáæÏ' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Âï¿½ï¿½ï¿½' })
   @IsString()
   key: string;
 
-  @ApiPropertyOptional({ description: 'ãÏÊ ÇÚÊÈÇÑ URL Èå ËÇäíå', default: 3600 })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ URL ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½', default: 3600 })
   @IsOptional()
   @IsNumber()
   @Min(60)
   @Max(3600)
   expiresIn?: number;
 
-  @ApiPropertyOptional({ description: 'äÇã bucket' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ bucket' })
   @IsOptional()
   @IsString()
   bucket?: string;
 }
 
 export class DeleteFileDto {
-  @ApiProperty({ description: '˜áíÏ İÇíá ÈÑÇí ÍĞİ' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½' })
   @IsString()
   key: string;
 
-  @ApiPropertyOptional({ description: 'äÇã bucket' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ bucket' })
   @IsOptional()
   @IsString()
   bucket?: string;
 }
 
 export class ListFilesDto {
-  @ApiProperty({ description: 'íÔæäÏ ãÓíÑ ÈÑÇí áíÓÊ İÇíáåÇ' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsString()
   prefix: string;
 
-  @ApiPropertyOptional({ description: 'äÇã bucket' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ bucket' })
   @IsOptional()
   @IsString()
   bucket?: string;
@@ -101,43 +101,43 @@ export class ListFilesDto {
 
 // Response DTOs
 export class UploadResultDto {
-  @ApiProperty({ description: '˜áíÏ İÇíá ÏÑ storage' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ storage' })
   key: string;
 
-  @ApiProperty({ description: 'URL İÇíá' })
+  @ApiProperty({ description: 'URL ï¿½ï¿½ï¿½ï¿½' })
   url: string;
 
-  @ApiProperty({ description: 'äÇã bucket' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ bucket' })
   bucket: string;
 
-  @ApiProperty({ description: 'ÍÌã İÇíá Èå ÈÇíÊ' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½' })
   size: number;
 
-  @ApiProperty({ description: 'ETag İÇíá' })
+  @ApiProperty({ description: 'ETag ï¿½ï¿½ï¿½ï¿½' })
   etag: string;
 }
 
 export class SignedUrlResultDto {
-  @ApiProperty({ description: 'URL ÇãÖÇÔÏå' })
+  @ApiProperty({ description: 'URL ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   url: string;
 
-  @ApiProperty({ description: 'ÒãÇä ÇäŞÖÇ' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
   expiresAt: Date;
 }
 
 export class FileMetadataDto {
-  @ApiProperty({ description: '˜áíÏ İÇíá' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½' })
   key: string;
 
-  @ApiProperty({ description: 'ÍÌã İÇíá Èå ÈÇíÊ' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½' })
   size: number;
 
-  @ApiProperty({ description: 'ÊÇÑíÎ ÂÎÑíä ÊÛííÑ' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
   lastModified: Date;
 
-  @ApiProperty({ description: 'äæÚ ãÍÊæÇ' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
   contentType: string;
 
-  @ApiProperty({ description: 'ETag İÇíá' })
+  @ApiProperty({ description: 'ETag ï¿½ï¿½ï¿½ï¿½' })
   etag: string;
 }

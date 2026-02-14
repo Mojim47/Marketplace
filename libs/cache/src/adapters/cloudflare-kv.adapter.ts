@@ -5,14 +5,14 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import type {
-  ICacheProvider,
-  CacheSetOptions,
+  CacheConfigBase,
   CacheGetOptions,
+  CacheHealthCheck,
   CacheScanOptions,
   CacheScanResult,
+  CacheSetOptions,
   CacheStats,
-  CacheHealthCheck,
-  CacheConfigBase,
+  ICacheProvider,
 } from '../interfaces/cache.interface';
 import { CacheProviderType } from '../interfaces/cache.interface';
 
@@ -90,14 +90,11 @@ export class CloudflareKVAdapter implements ICacheProvider {
     return `${this.baseUrl}/accounts/${this.accountId}/storage/kv/namespaces/${this.namespaceId}`;
   }
 
-  private async request<T>(
-    path: string,
-    options: RequestInit = {}
-  ): Promise<T> {
+  private async request<T>(path: string, options: RequestInit = {}): Promise<T> {
     const response = await fetch(`${this.apiBase}${path}`, {
       ...options,
       headers: {
-        'Authorization': `Bearer ${this.apiToken}`,
+        Authorization: `Bearer ${this.apiToken}`,
         'Content-Type': 'application/json',
         ...options.headers,
       },
@@ -110,17 +107,16 @@ export class CloudflareKVAdapter implements ICacheProvider {
     return response.json() as Promise<T>;
   }
 
-
   // ═══════════════════════════════════════════════════════════════════════
   // Basic Operations
   // ═══════════════════════════════════════════════════════════════════════
 
   async get<T = unknown>(key: string, _options?: CacheGetOptions): Promise<T | null> {
     const prefixedKey = this.prefixKey(key);
-    
+
     try {
       const response = await fetch(`${this.apiBase}/values/${encodeURIComponent(prefixedKey)}`, {
-        headers: { 'Authorization': `Bearer ${this.apiToken}` },
+        headers: { Authorization: `Bearer ${this.apiToken}` },
       });
 
       if (response.status === 404) {
@@ -134,7 +130,7 @@ export class CloudflareKVAdapter implements ICacheProvider {
 
       this.hits++;
       const text = await response.text();
-      
+
       try {
         return JSON.parse(text) as T;
       } catch {
@@ -153,8 +149,12 @@ export class CloudflareKVAdapter implements ICacheProvider {
     // Handle NX/XX conditions
     if (options?.nx || options?.xx) {
       const exists = await this.exists(key);
-      if (options.nx && exists) return false;
-      if (options.xx && !exists) return false;
+      if (options.nx && exists) {
+        return false;
+      }
+      if (options.xx && !exists) {
+        return false;
+      }
     }
 
     const params = new URLSearchParams();
@@ -162,12 +162,12 @@ export class CloudflareKVAdapter implements ICacheProvider {
       params.set('expiration_ttl', ttl.toString());
     }
 
-    const url = `${this.apiBase}/values/${encodeURIComponent(prefixedKey)}${params.toString() ? '?' + params : ''}`;
-    
+    const url = `${this.apiBase}/values/${encodeURIComponent(prefixedKey)}${params.toString() ? `?${params}` : ''}`;
+
     const response = await fetch(url, {
       method: 'PUT',
       headers: {
-        'Authorization': `Bearer ${this.apiToken}`,
+        Authorization: `Bearer ${this.apiToken}`,
         'Content-Type': 'text/plain',
       },
       body: JSON.stringify(value),
@@ -182,10 +182,10 @@ export class CloudflareKVAdapter implements ICacheProvider {
 
   async delete(key: string): Promise<boolean> {
     const prefixedKey = this.prefixKey(key);
-    
+
     const response = await fetch(`${this.apiBase}/values/${encodeURIComponent(prefixedKey)}`, {
       method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${this.apiToken}` },
+      headers: { Authorization: `Bearer ${this.apiToken}` },
     });
 
     return response.ok;
@@ -213,7 +213,7 @@ export class CloudflareKVAdapter implements ICacheProvider {
   private async addToTagIndex(key: string, tags: string[]): Promise<void> {
     for (const tag of tags) {
       const tagKey = `${this.tagIndexPrefix}${tag}`;
-      const existing = await this.get<string[]>(tagKey) || [];
+      const existing = (await this.get<string[]>(tagKey)) || [];
       if (!existing.includes(key)) {
         existing.push(key);
         await this.set(tagKey, existing);
@@ -227,7 +227,7 @@ export class CloudflareKVAdapter implements ICacheProvider {
 
   async mget<T = unknown>(keys: string[]): Promise<Map<string, T | null>> {
     const result = new Map<string, T | null>();
-    
+
     // Cloudflare KV doesn't have native mget, parallel fetch
     await Promise.all(
       keys.map(async (key) => {
@@ -240,7 +240,7 @@ export class CloudflareKVAdapter implements ICacheProvider {
 
   async mset<T = unknown>(entries: Map<string, T>, options?: CacheSetOptions): Promise<boolean> {
     const ttl = options?.ttl ?? this.defaultTtl;
-    
+
     const bulkData = Array.from(entries).map(([key, value]) => ({
       key: this.prefixKey(key),
       value: JSON.stringify(value),
@@ -256,8 +256,8 @@ export class CloudflareKVAdapter implements ICacheProvider {
   }
 
   async mdelete(keys: string[]): Promise<number> {
-    const prefixedKeys = keys.map(k => this.prefixKey(k));
-    
+    const prefixedKeys = keys.map((k) => this.prefixKey(k));
+
     const response = await this.request<KVBulkResponse>('/bulk', {
       method: 'DELETE',
       body: JSON.stringify(prefixedKeys),
@@ -277,13 +277,15 @@ export class CloudflareKVAdapter implements ICacheProvider {
 
     do {
       const params = new URLSearchParams();
-      if (cursor) params.set('cursor', cursor);
+      if (cursor) {
+        params.set('cursor', cursor);
+      }
       if (prefixedPattern !== '*') {
         params.set('prefix', prefixedPattern.replace(/\*/g, ''));
       }
 
       const response = await this.request<KVListResponse>(`/keys?${params}`);
-      
+
       for (const item of response.result) {
         if (this.matchPattern(item.name, prefixedPattern)) {
           allKeys.push(this.unprefixKey(item.name));
@@ -297,7 +299,7 @@ export class CloudflareKVAdapter implements ICacheProvider {
   }
 
   private matchPattern(key: string, pattern: string): boolean {
-    const regex = new RegExp('^' + pattern.replace(/\*/g, '.*').replace(/\?/g, '.') + '$');
+    const regex = new RegExp(`^${pattern.replace(/\*/g, '.*').replace(/\?/g, '.')}$`);
     return regex.test(key);
   }
 
@@ -307,9 +309,11 @@ export class CloudflareKVAdapter implements ICacheProvider {
     const cursor = options?.cursor || '';
 
     const params = new URLSearchParams();
-    if (cursor) params.set('cursor', cursor);
+    if (cursor) {
+      params.set('cursor', cursor);
+    }
     params.set('limit', count.toString());
-    
+
     const prefixedPattern = this.prefixKey(pattern);
     if (prefixedPattern !== '*') {
       params.set('prefix', prefixedPattern.replace(/\*/g, ''));
@@ -318,7 +322,7 @@ export class CloudflareKVAdapter implements ICacheProvider {
     const response = await this.request<KVListResponse>(`/keys?${params}`);
 
     return {
-      keys: response.result.map(item => this.unprefixKey(item.name)),
+      keys: response.result.map((item) => this.unprefixKey(item.name)),
       cursor: response.result_info.cursor || '',
       hasMore: !!response.result_info.cursor,
     };
@@ -326,7 +330,9 @@ export class CloudflareKVAdapter implements ICacheProvider {
 
   async deletePattern(pattern: string): Promise<number> {
     const keys = await this.keys(pattern);
-    if (keys.length === 0) return 0;
+    if (keys.length === 0) {
+      return 0;
+    }
     return this.mdelete(keys);
   }
 
@@ -337,12 +343,14 @@ export class CloudflareKVAdapter implements ICacheProvider {
   async invalidateTag(tag: string): Promise<number> {
     const tagKey = `${this.tagIndexPrefix}${tag}`;
     const keys = await this.get<string[]>(tagKey);
-    
-    if (!keys || keys.length === 0) return 0;
 
-    await this.mdelete(keys.map(k => this.unprefixKey(k)));
+    if (!keys || keys.length === 0) {
+      return 0;
+    }
+
+    await this.mdelete(keys.map((k) => this.unprefixKey(k)));
     await this.delete(tagKey);
-    
+
     return keys.length;
   }
 
@@ -358,14 +366,14 @@ export class CloudflareKVAdapter implements ICacheProvider {
   // Atomic Operations (Simulated - KV doesn't support true atomics)
   // ═══════════════════════════════════════════════════════════════════════
 
-  async increment(key: string, delta: number = 1): Promise<number> {
-    const current = await this.get<number>(key) || 0;
+  async increment(key: string, delta = 1): Promise<number> {
+    const current = (await this.get<number>(key)) || 0;
     const newValue = current + delta;
     await this.set(key, newValue);
     return newValue;
   }
 
-  async decrement(key: string, delta: number = 1): Promise<number> {
+  async decrement(key: string, delta = 1): Promise<number> {
     return this.increment(key, -delta);
   }
 
@@ -393,7 +401,7 @@ export class CloudflareKVAdapter implements ICacheProvider {
   }
 
   async hset<T = unknown>(key: string, field: string, value: T): Promise<boolean> {
-    const hash = await this.get<Record<string, T>>(key) || {};
+    const hash = (await this.get<Record<string, T>>(key)) || {};
     const isNew = !(field in hash);
     hash[field] = value;
     await this.set(key, hash);
@@ -401,13 +409,15 @@ export class CloudflareKVAdapter implements ICacheProvider {
   }
 
   async hgetall<T = unknown>(key: string): Promise<Map<string, T>> {
-    const hash = await this.get<Record<string, T>>(key) || {};
+    const hash = (await this.get<Record<string, T>>(key)) || {};
     return new Map(Object.entries(hash));
   }
 
   async hdel(key: string, field: string): Promise<boolean> {
     const hash = await this.get<Record<string, unknown>>(key);
-    if (!hash || !(field in hash)) return false;
+    if (!hash || !(field in hash)) {
+      return false;
+    }
     delete hash[field];
     await this.set(key, hash);
     return true;
@@ -423,14 +433,14 @@ export class CloudflareKVAdapter implements ICacheProvider {
   // ═══════════════════════════════════════════════════════════════════════
 
   async rpush<T = unknown>(key: string, value: T): Promise<number> {
-    const list = await this.get<T[]>(key) || [];
+    const list = (await this.get<T[]>(key)) || [];
     list.push(value);
     await this.set(key, list);
     return list.length;
   }
 
   async lpush<T = unknown>(key: string, value: T): Promise<number> {
-    const list = await this.get<T[]>(key) || [];
+    const list = (await this.get<T[]>(key)) || [];
     list.unshift(value);
     await this.set(key, list);
     return list.length;
@@ -438,7 +448,9 @@ export class CloudflareKVAdapter implements ICacheProvider {
 
   async rpop<T = unknown>(key: string): Promise<T | null> {
     const list = await this.get<T[]>(key);
-    if (!list || list.length === 0) return null;
+    if (!list || list.length === 0) {
+      return null;
+    }
     const value = list.pop()!;
     await this.set(key, list);
     return value;
@@ -446,7 +458,9 @@ export class CloudflareKVAdapter implements ICacheProvider {
 
   async lpop<T = unknown>(key: string): Promise<T | null> {
     const list = await this.get<T[]>(key);
-    if (!list || list.length === 0) return null;
+    if (!list || list.length === 0) {
+      return null;
+    }
     const value = list.shift()!;
     await this.set(key, list);
     return value;
@@ -459,7 +473,9 @@ export class CloudflareKVAdapter implements ICacheProvider {
 
   async lrange<T = unknown>(key: string, start: number, stop: number): Promise<T[]> {
     const list = await this.get<T[]>(key);
-    if (!list) return [];
+    if (!list) {
+      return [];
+    }
     const end = stop === -1 ? undefined : stop + 1;
     return list.slice(start, end);
   }
@@ -469,10 +485,12 @@ export class CloudflareKVAdapter implements ICacheProvider {
   // ═══════════════════════════════════════════════════════════════════════
 
   async sadd<T = unknown>(key: string, member: T): Promise<boolean> {
-    const set = await this.get<T[]>(key) || [];
+    const set = (await this.get<T[]>(key)) || [];
     const serialized = JSON.stringify(member);
-    const exists = set.some(m => JSON.stringify(m) === serialized);
-    if (exists) return false;
+    const exists = set.some((m) => JSON.stringify(m) === serialized);
+    if (exists) {
+      return false;
+    }
     set.push(member);
     await this.set(key, set);
     return true;
@@ -480,10 +498,14 @@ export class CloudflareKVAdapter implements ICacheProvider {
 
   async srem<T = unknown>(key: string, member: T): Promise<boolean> {
     const set = await this.get<T[]>(key);
-    if (!set) return false;
+    if (!set) {
+      return false;
+    }
     const serialized = JSON.stringify(member);
-    const index = set.findIndex(m => JSON.stringify(m) === serialized);
-    if (index === -1) return false;
+    const index = set.findIndex((m) => JSON.stringify(m) === serialized);
+    if (index === -1) {
+      return false;
+    }
     set.splice(index, 1);
     await this.set(key, set);
     return true;
@@ -491,13 +513,15 @@ export class CloudflareKVAdapter implements ICacheProvider {
 
   async sismember<T = unknown>(key: string, member: T): Promise<boolean> {
     const set = await this.get<T[]>(key);
-    if (!set) return false;
+    if (!set) {
+      return false;
+    }
     const serialized = JSON.stringify(member);
-    return set.some(m => JSON.stringify(m) === serialized);
+    return set.some((m) => JSON.stringify(m) === serialized);
   }
 
   async smembers<T = unknown>(key: string): Promise<T[]> {
-    return await this.get<T[]>(key) || [];
+    return (await this.get<T[]>(key)) || [];
   }
 
   async scard(key: string): Promise<number> {

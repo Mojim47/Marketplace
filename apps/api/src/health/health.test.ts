@@ -1,12 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { Response } from 'express';
 import * as fc from 'fast-check';
-import { Response } from 'express';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  type DependencyHealth,
   HealthController,
   HealthStatus,
-  DependencyHealth,
-  SystemMetrics,
-  HealthCheckConfig,
+  type SystemMetrics,
   __testing,
 } from './health.controller';
 
@@ -25,7 +24,7 @@ describe('Health Check', () => {
     const healthStatusArb = fc.constantFrom(
       HealthStatus.HEALTHY,
       HealthStatus.DEGRADED,
-      HealthStatus.UNHEALTHY,
+      HealthStatus.UNHEALTHY
     );
 
     // Arbitrary for dependency health
@@ -58,7 +57,7 @@ describe('Health Check', () => {
           systemMetricsArb,
           (dependencies, metrics) => {
             // Ensure at least one unhealthy dependency
-            const unhealthyDeps = dependencies.map((d, i) => 
+            const unhealthyDeps = dependencies.map((d, i) =>
               i === 0 ? { ...d, status: HealthStatus.UNHEALTHY } : d
             );
 
@@ -103,7 +102,7 @@ describe('Health Check', () => {
           systemMetricsArb,
           (dependencies, metrics) => {
             // Make all dependencies healthy
-            const healthyDeps = dependencies.map(d => ({
+            const healthyDeps = dependencies.map((d) => ({
               ...d,
               status: HealthStatus.HEALTHY,
             }));
@@ -129,7 +128,7 @@ describe('Health Check', () => {
           fc.integer({ min: 91, max: 100 }),
           (dependencies, memoryPercent) => {
             // Make all dependencies healthy
-            const healthyDeps = dependencies.map(d => ({
+            const healthyDeps = dependencies.map((d) => ({
               ...d,
               status: HealthStatus.HEALTHY,
             }));
@@ -195,7 +194,7 @@ describe('Health Check', () => {
       const mockPrismaService = {
         $queryRaw: vi.fn().mockResolvedValue([{ '?column?': 1 }]),
       };
-      
+
       const checker = new DatabaseHealthChecker(mockPrismaService as any);
       const result = await checker.check();
 
@@ -210,7 +209,7 @@ describe('Health Check', () => {
       const mockRedisClient = {
         ping: vi.fn().mockResolvedValue('PONG'),
       };
-      
+
       const checker = new RedisHealthChecker(mockRedisClient as any);
       const result = await checker.check();
 
@@ -224,7 +223,7 @@ describe('Health Check', () => {
       const slowChecker = {
         name: 'slow-service',
         check: async () => {
-          await new Promise(resolve => setTimeout(resolve, 10000));
+          await new Promise((resolve) => setTimeout(resolve, 10000));
           return {
             name: 'slow-service',
             status: HealthStatus.HEALTHY,
@@ -331,17 +330,19 @@ describe('Health Check', () => {
     it('should return 503 when unhealthy', async () => {
       // Create controller with failing dependency
       const unhealthyController = new HealthController();
-      
+
       // Mock the dependency checkers to return unhealthy
-      (unhealthyController as any).dependencyCheckers = [{
-        name: 'failing-service',
-        check: async () => ({
+      (unhealthyController as any).dependencyCheckers = [
+        {
           name: 'failing-service',
-          status: HealthStatus.UNHEALTHY,
-          message: 'Service unavailable',
-          lastChecked: new Date().toISOString(),
-        }),
-      }];
+          check: async () => ({
+            name: 'failing-service',
+            status: HealthStatus.UNHEALTHY,
+            message: 'Service unavailable',
+            lastChecked: new Date().toISOString(),
+          }),
+        },
+      ];
 
       const mockResponse = {
         status: vi.fn().mockReturnThis(),

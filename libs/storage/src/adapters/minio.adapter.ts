@@ -4,22 +4,22 @@
 // Self-hosted S3-compatible object storage
 // ═══════════════════════════════════════════════════════════════════════════
 
+import * as crypto from 'node:crypto';
+import type { Readable } from 'node:stream';
 import * as Minio from 'minio';
-import { Readable } from 'stream';
-import * as crypto from 'crypto';
 import type {
-  IStorageProvider,
-  FileMetadata,
-  UploadOptions,
+  CopyOptions,
   DownloadOptions,
+  FileMetadata,
+  IStorageProvider,
   ListOptions,
   ListResult,
-  SignedUrlOptions,
-  CopyOptions,
-  MultipartUpload,
-  UploadedPart,
-  StorageHealthCheck,
   MinioStorageConfig,
+  MultipartUpload,
+  SignedUrlOptions,
+  StorageHealthCheck,
+  UploadOptions,
+  UploadedPart,
 } from '../interfaces/storage.interface';
 import { StorageProviderType } from '../interfaces/storage.interface';
 
@@ -30,7 +30,7 @@ import { StorageProviderType } from '../interfaces/storage.interface';
 export class MinioStorageAdapter implements IStorageProvider {
   readonly providerType = StorageProviderType.MINIO;
   readonly bucket: string;
-  
+
   private readonly client: Minio.Client;
   private readonly basePath: string;
   private readonly endPoint: string;
@@ -83,7 +83,7 @@ export class MinioStorageAdapter implements IStorageProvider {
     options?: UploadOptions
   ): Promise<FileMetadata> {
     const fullKey = this.getFullKey(key);
-    
+
     let buffer: Buffer;
     let size: number;
 
@@ -107,13 +107,7 @@ export class MinioStorageAdapter implements IStorageProvider {
       metaData['Content-Disposition'] = options.contentDisposition;
     }
 
-    const result = await this.client.putObject(
-      this.bucket,
-      fullKey,
-      buffer,
-      size,
-      metaData
-    );
+    const result = await this.client.putObject(this.bucket, fullKey, buffer, size, metaData);
 
     return {
       key,
@@ -147,9 +141,7 @@ export class MinioStorageAdapter implements IStorageProvider {
 
     if (options?.rangeStart !== undefined || options?.rangeEnd !== undefined) {
       const offset = options.rangeStart || 0;
-      const length = options.rangeEnd !== undefined 
-        ? options.rangeEnd - offset + 1 
-        : 0; // 0 means read to end
+      const length = options.rangeEnd !== undefined ? options.rangeEnd - offset + 1 : 0; // 0 means read to end
 
       return this.client.getPartialObject(this.bucket, fullKey, offset, length || undefined);
     }
@@ -163,14 +155,16 @@ export class MinioStorageAdapter implements IStorageProvider {
   }
 
   async deleteMany(keys: string[]): Promise<string[]> {
-    if (keys.length === 0) return [];
+    if (keys.length === 0) {
+      return [];
+    }
 
-    const fullKeys = keys.map(k => this.getFullKey(k));
+    const fullKeys = keys.map((k) => this.getFullKey(k));
     const failed: string[] = [];
 
     try {
       await this.client.removeObjects(this.bucket, fullKeys);
-    } catch (error) {
+    } catch (_error) {
       // MinIO doesn't provide detailed error info for batch deletes
       // Return all keys as potentially failed
       return keys;
@@ -230,17 +224,22 @@ export class MinioStorageAdapter implements IStorageProvider {
 
     return new Promise((resolve, reject) => {
       stream.on('data', (obj) => {
-        if (keyCount >= maxKeys) return;
+        if (keyCount >= maxKeys) {
+          return;
+        }
 
         if (obj.name) {
           const strippedKey = this.stripBasePath(obj.name);
-          
+
           if (options?.delimiter) {
             const afterPrefix = strippedKey.slice((options.prefix || '').length);
             const delimiterIndex = afterPrefix.indexOf(options.delimiter);
-            
+
             if (delimiterIndex !== -1) {
-              const commonPrefix = strippedKey.slice(0, (options.prefix || '').length + delimiterIndex + 1);
+              const commonPrefix = strippedKey.slice(
+                0,
+                (options.prefix || '').length + delimiterIndex + 1
+              );
               prefixes.add(commonPrefix);
               return;
             }
@@ -277,7 +276,11 @@ export class MinioStorageAdapter implements IStorageProvider {
   // Advanced Operations
   // ═══════════════════════════════════════════════════════════════════════
 
-  async copy(sourceKey: string, destinationKey: string, options?: CopyOptions): Promise<FileMetadata> {
+  async copy(
+    sourceKey: string,
+    destinationKey: string,
+    options?: CopyOptions
+  ): Promise<FileMetadata> {
     const sourceBucket = options?.sourceBucket || this.bucket;
     const sourceFullKey = this.basePath ? `${this.basePath}/${sourceKey}` : sourceKey;
     const destFullKey = this.getFullKey(destinationKey);
@@ -303,7 +306,11 @@ export class MinioStorageAdapter implements IStorageProvider {
     return this.getMetadata(destinationKey);
   }
 
-  async move(sourceKey: string, destinationKey: string, options?: CopyOptions): Promise<FileMetadata> {
+  async move(
+    sourceKey: string,
+    destinationKey: string,
+    options?: CopyOptions
+  ): Promise<FileMetadata> {
     const metadata = await this.copy(sourceKey, destinationKey, options);
     await this.delete(sourceKey);
     return metadata;
@@ -331,10 +338,11 @@ export class MinioStorageAdapter implements IStorageProvider {
   getPublicUrl(key: string): string {
     const fullKey = this.getFullKey(key);
     const protocol = this.useSSL ? 'https' : 'http';
-    const portPart = (this.useSSL && this.port === 443) || (!this.useSSL && this.port === 80)
-      ? ''
-      : `:${this.port}`;
-    
+    const portPart =
+      (this.useSSL && this.port === 443) || (!this.useSSL && this.port === 80)
+        ? ''
+        : `:${this.port}`;
+
     return `${protocol}://${this.endPoint}${portPart}/${this.bucket}/${fullKey}`;
   }
 
@@ -342,13 +350,16 @@ export class MinioStorageAdapter implements IStorageProvider {
   // Multipart Upload
   // ═══════════════════════════════════════════════════════════════════════
 
-  private multipartUploads: Map<string, { parts: Map<number, { etag: string; size: number }>; key: string }> = new Map();
+  private multipartUploads: Map<
+    string,
+    { parts: Map<number, { etag: string; size: number }>; key: string }
+  > = new Map();
 
   async initiateMultipartUpload(key: string, _options?: UploadOptions): Promise<MultipartUpload> {
     // MinIO SDK doesn't expose multipart upload directly in the same way as S3
     // We'll simulate it by tracking parts and combining them at completion
     const uploadId = crypto.randomUUID();
-    
+
     this.multipartUploads.set(uploadId, {
       parts: new Map(),
       key,
@@ -405,7 +416,7 @@ export class MinioStorageAdapter implements IStorageProvider {
       const partKey = `${this.getFullKey(key)}.part.${part.partNumber}`;
       const partData = await this.client.getObject(this.bucket, partKey);
       buffers.push(await this.streamToBuffer(partData));
-      
+
       // Clean up part
       await this.client.removeObject(this.bucket, partKey);
     }

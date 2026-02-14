@@ -12,10 +12,10 @@
  */
 
 import {
-  Injectable,
-  CanActivate,
-  ExecutionContext,
+  type CanActivate,
+  type ExecutionContext,
   ForbiddenException,
+  Injectable,
   Logger,
 } from '@nestjs/common';
 
@@ -30,7 +30,7 @@ export class AdminRoleGuard implements CanActivate {
     // User not authenticated
     if (!user) {
       this.logUnauthorizedAccess(request, 'NO_USER');
-      throw new ForbiddenException('ÏÓÊÑÓí ÛíÑãÌÇÒ');
+      throw new ForbiddenException('ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½');
     }
 
     // Check if user has admin role
@@ -46,7 +46,7 @@ export class AdminRoleGuard implements CanActivate {
 
     if (!hasAdminRole) {
       this.logUnauthorizedAccess(request, 'NOT_ADMIN', user.id);
-      throw new ForbiddenException('ÏÓÊÑÓí ÇÏãíä ÇáÒÇãí ÇÓÊ');
+      throw new ForbiddenException('ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½');
     }
 
     return true;
@@ -55,11 +55,7 @@ export class AdminRoleGuard implements CanActivate {
   /**
    * Log unauthorized access attempts for security auditing
    */
-  private logUnauthorizedAccess(
-    request: any,
-    reason: string,
-    userId?: string,
-  ): void {
+  private logUnauthorizedAccess(request: any, reason: string, userId?: string): void {
     const logData = {
       event: 'UNAUTHORIZED_ADMIN_ACCESS',
       reason,

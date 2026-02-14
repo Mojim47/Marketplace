@@ -4,12 +4,12 @@ const laptopCategory = await tx.category.findFirst({ where: { slug: 'laptop-sub'
 const fridgeCategory = await tx.category.findFirst({ where: { slug: 'refrigerator' } });
 const toolsCategory = await tx.category.findFirst({ where: { slug: 'power-tools' } });
 
-const products = await tx.product.createMany({
+const _products = await tx.product.createMany({
   data: [
     // Mobile phones
     {
       vendorId: vendors[0].id,
-      categoryId: mobileCategory!.id,
+      categoryId: mobileCategory?.id,
       name: 'سامسونگ Galaxy S24 Ultra 256GB',
       slug: 'samsung-s24-ultra-256',
       description: 'گوشی پرچمدار سامسونگ با دوربین 200MP و قلم S Pen',
@@ -27,7 +27,7 @@ const products = await tx.product.createMany({
     },
     {
       vendorId: vendors[0].id,
-      categoryId: mobileCategory!.id,
+      categoryId: mobileCategory?.id,
       name: 'اپل iPhone 15 Pro Max 256GB',
       slug: 'iphone-15-pro-max-256',
       description: 'آیفون 15 پرو مکس با تراشه A17 Pro و بدنه تیتانیوم',
@@ -45,7 +45,7 @@ const products = await tx.product.createMany({
     },
     {
       vendorId: vendors[1].id,
-      categoryId: mobileCategory!.id,
+      categoryId: mobileCategory?.id,
       name: 'شیائومی Redmi Note 13 Pro 256GB',
       slug: 'xiaomi-note13-pro-256',
       description: 'گوشی میانرده با شارژ سریع 67 وات و دوربین 200MP',
@@ -61,7 +61,7 @@ const products = await tx.product.createMany({
     },
     {
       vendorId: vendors[1].id,
-      categoryId: mobileCategory!.id,
+      categoryId: mobileCategory?.id,
       name: 'هوآوی Nova 12 Pro',
       slug: 'huawei-nova12-pro',
       description: 'گوشی هوآوی با دوربین سلفی 60MP',
@@ -77,7 +77,7 @@ const products = await tx.product.createMany({
     },
     {
       vendorId: vendors[0].id,
-      categoryId: mobileCategory!.id,
+      categoryId: mobileCategory?.id,
       name: 'نوکیا G42 5G',
       slug: 'nokia-g42-5g',
       description: 'گوشی نوکیا با پشتیبانی 5G و باتری 5000mAh',
@@ -95,7 +95,7 @@ const products = await tx.product.createMany({
     // Laptops
     {
       vendorId: vendors[1].id,
-      categoryId: laptopCategory!.id,
+      categoryId: laptopCategory?.id,
       name: 'لپتاپ ایسوس ROG Strix G16',
       slug: 'asus-rog-strix-g16',
       description: 'لپتاپ گیمینگ با RTX 4060 و Core i7-13650HX',
@@ -112,7 +112,7 @@ const products = await tx.product.createMany({
     },
     {
       vendorId: vendors[1].id,
-      categoryId: laptopCategory!.id,
+      categoryId: laptopCategory?.id,
       name: 'لپتاپ اپل MacBook Air M3',
       slug: 'macbook-air-m3',
       description: 'مک بوک ایر با تراشه M3 و نمایشگر Liquid Retina',
@@ -129,7 +129,7 @@ const products = await tx.product.createMany({
     },
     {
       vendorId: vendors[0].id,
-      categoryId: laptopCategory!.id,
+      categoryId: laptopCategory?.id,
       name: 'لپتاپ لنوو ThinkPad X1 Carbon',
       slug: 'lenovo-thinkpad-x1',
       description: 'لپتاپ بیزینس با Core i7 و صفحه 14 اینچ',
@@ -145,7 +145,7 @@ const products = await tx.product.createMany({
     },
     {
       vendorId: vendors[1].id,
-      categoryId: laptopCategory!.id,
+      categoryId: laptopCategory?.id,
       name: 'لپتاپ HP Pavilion 15',
       slug: 'hp-pavilion-15',
       description: 'لپتاپ همه کاره با Core i5 و 16GB RAM',
@@ -161,7 +161,7 @@ const products = await tx.product.createMany({
     },
     {
       vendorId: vendors[0].id,
-      categoryId: laptopCategory!.id,
+      categoryId: laptopCategory?.id,
       name: 'لپتاپ دل Inspiron 16',
       slug: 'dell-inspiron-16',
       description: 'لپتاپ 16 اینچ با Ryzen 7 و صفحه FHD+',
@@ -179,7 +179,7 @@ const products = await tx.product.createMany({
     // Appliances
     {
       vendorId: vendors[2].id,
-      categoryId: fridgeCategory!.id,
+      categoryId: fridgeCategory?.id,
       name: 'یخچال فریزر سامسونگ 30 فوت',
       slug: 'samsung-fridge-30ft',
       description: 'یخچال ساید بای ساید با دیسپنسر آب و یخ',
@@ -196,7 +196,7 @@ const products = await tx.product.createMany({
     },
     {
       vendorId: vendors[2].id,
-      categoryId: fridgeCategory!.id,
+      categoryId: fridgeCategory?.id,
       name: 'یخچال ال جی 28 فوت اینورتر',
       slug: 'lg-fridge-28ft-inverter',
       description: 'یخچال فریزر با کمپرسور اینورتر و فناوری Door Cooling',
@@ -212,7 +212,7 @@ const products = await tx.product.createMany({
     },
     {
       vendorId: vendors[2].id,
-      categoryId: fridgeCategory!.id,
+      categoryId: fridgeCategory?.id,
       name: 'یخچال اسنوا 20 فوت',
       slug: 'snowa-fridge-20ft',
       description: 'یخچال فریزر ایرانی با گارانتی 5 ساله',
@@ -230,7 +230,7 @@ const products = await tx.product.createMany({
     // Tools
     {
       vendorId: vendors[1].id,
-      categoryId: toolsCategory!.id,
+      categoryId: toolsCategory?.id,
       name: 'دریل شارژی بوش 18V',
       slug: 'bosch-drill-18v',
       description: 'دریل پیچ گوشتی شارژی با 2 باتری',
@@ -246,7 +246,7 @@ const products = await tx.product.createMany({
     },
     {
       vendorId: vendors[1].id,
-      categoryId: toolsCategory!.id,
+      categoryId: toolsCategory?.id,
       name: 'فرز آهنگری ماکیتا 2200W',
       slug: 'makita-grinder-2200w',
       description: 'فرز 230 میلیمتری صنعتی',
@@ -262,5 +262,3 @@ const products = await tx.product.createMany({
     },
   ],
 });
-
-console.log('✅ Created 20 products');

@@ -130,7 +130,7 @@ const SENSITIVE_VALUE_PATTERNS: SensitivePattern[] = [
   {
     name: 'iranian_national_id',
     pattern: /\b\d{10}\b/g,
-    mask: (v) => v.slice(0, 3) + '****' + v.slice(-3),
+    mask: (v) => `${v.slice(0, 3)}****${v.slice(-3)}`,
   },
 
   // Iranian Bank Card Number - 16 digits
@@ -139,7 +139,7 @@ const SENSITIVE_VALUE_PATTERNS: SensitivePattern[] = [
     pattern: /\b\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}\b/g,
     mask: (v) => {
       const digits = v.replace(/[-\s]/g, '');
-      return digits.slice(0, 6) + '******' + digits.slice(-4);
+      return `${digits.slice(0, 6)}******${digits.slice(-4)}`;
     },
   },
 
@@ -147,7 +147,7 @@ const SENSITIVE_VALUE_PATTERNS: SensitivePattern[] = [
   {
     name: 'iban',
     pattern: /\bIR\d{24}\b/gi,
-    mask: (v) => v.slice(0, 4) + '****' + v.slice(-4),
+    mask: (v) => `${v.slice(0, 4)}****${v.slice(-4)}`,
   },
 
   // Email addresses
@@ -158,7 +158,7 @@ const SENSITIVE_VALUE_PATTERNS: SensitivePattern[] = [
       const parts = v.split('@');
       const local = parts[0] ?? '';
       const domain = parts[1] ?? '';
-      const maskedLocal = local.length > 2 ? local[0] + '***' + local[local.length - 1] : '***';
+      const maskedLocal = local.length > 2 ? `${local[0]}***${local[local.length - 1]}` : '***';
       return `${maskedLocal}@${domain}`;
     },
   },
@@ -167,7 +167,7 @@ const SENSITIVE_VALUE_PATTERNS: SensitivePattern[] = [
   {
     name: 'iranian_mobile',
     pattern: /\b09\d{9}\b/g,
-    mask: (v) => v.slice(0, 4) + '***' + v.slice(-3),
+    mask: (v) => `${v.slice(0, 4)}***${v.slice(-3)}`,
   },
 
   // JWT Tokens (header.payload.signature)
@@ -188,7 +188,7 @@ const SENSITIVE_VALUE_PATTERNS: SensitivePattern[] = [
   {
     name: 'api_key',
     pattern: /\b(sk|pk|api|key)[-_][A-Za-z0-9]{20,}\b/gi,
-    mask: (v) => v.slice(0, 8) + '...[REDACTED]',
+    mask: (v) => `${v.slice(0, 8)}...[REDACTED]`,
   },
 
   // Note: UUIDs are NOT masked by default as they are often used as public identifiers
@@ -198,7 +198,7 @@ const SENSITIVE_VALUE_PATTERNS: SensitivePattern[] = [
   {
     name: 'base64_secret',
     pattern: /\b[A-Za-z0-9+/]{40,}={0,2}\b/g,
-    mask: (v) => v.slice(0, 10) + '...[REDACTED]...' + v.slice(-4),
+    mask: (v) => `${v.slice(0, 10)}...[REDACTED]...${v.slice(-4)}`,
   },
 
   // Password-like patterns in URLs
@@ -284,7 +284,7 @@ export class LogSanitizer {
   /**
    * Recursively sanitize an object
    */
-  private sanitizeObject(obj: unknown, depth: number = 0): unknown {
+  private sanitizeObject(obj: unknown, depth = 0): unknown {
     // Prevent infinite recursion
     if (depth > this.config.maxDepth) {
       return '[MAX_DEPTH_EXCEEDED]';
@@ -444,7 +444,7 @@ export function sanitizeMessage(message: string): string {
  * ```
  */
 export function SanitizeArgs() {
-  return function (_target: unknown, _propertyKey: string, descriptor: PropertyDescriptor) {
+  return (_target: unknown, _propertyKey: string, descriptor: PropertyDescriptor) => {
     const originalMethod = descriptor.value;
 
     descriptor.value = function (...args: any[]) {

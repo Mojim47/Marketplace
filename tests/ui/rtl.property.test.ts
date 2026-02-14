@@ -12,16 +12,16 @@
  * @module tests/ui/rtl.property
  */
 
-import { describe, it, expect } from 'vitest';
 import * as fc from 'fast-check';
+import { describe, it } from 'vitest';
 import {
-  isRTLLocale,
-  getTextDirection,
-  getTextAlignment,
   containsPersianChars,
-  shouldBeRTL,
   createRTLStyles,
   flipHorizontalSpacing,
+  getTextAlignment,
+  getTextDirection,
+  isRTLLocale,
+  shouldBeRTL,
   validateRTLElement,
 } from './rtl.test';
 
@@ -225,7 +225,7 @@ const persianDominantTextArb = fc
     ),
     fc.stringOf(fc.constantFrom('a', 'b', 'c', 'd', 'e'), { minLength: 0, maxLength: 2 })
   )
-  .map(([persian, english]) => persian + (english.length > 0 ? ' ' + english : ''));
+  .map(([persian, english]) => persian + (english.length > 0 ? ` ${english}` : ''));
 
 /**
  * Generator for mixed Persian and English text with more English
@@ -266,7 +266,7 @@ const englishDominantTextArb = fc
     ),
     fc.stringOf(fc.constantFrom('ا', 'ب', 'پ'), { minLength: 0, maxLength: 2 })
   )
-  .map(([english, persian]) => english + (persian.length > 0 ? ' ' + persian : ''));
+  .map(([english, persian]) => english + (persian.length > 0 ? ` ${persian}` : ''));
 
 /**
  * Generator for 4-value CSS spacing (e.g., "10px 20px 30px 40px")
@@ -382,7 +382,9 @@ describe('RTL Layout Consistency Property Tests', () => {
       fc.assert(
         fc.property(persianTextArb, (text) => {
           // Filter out whitespace-only strings
-          if (text.trim().length === 0) return true;
+          if (text.trim().length === 0) {
+            return true;
+          }
           return containsPersianChars(text);
         }),
         { numRuns: 100 }
@@ -402,7 +404,9 @@ describe('RTL Layout Consistency Property Tests', () => {
       fc.assert(
         fc.property(persianDominantTextArb, (text) => {
           // Filter out whitespace-only strings
-          if (text.trim().length === 0) return true;
+          if (text.trim().length === 0) {
+            return true;
+          }
           return shouldBeRTL(text);
         }),
         { numRuns: 100 }
@@ -413,7 +417,9 @@ describe('RTL Layout Consistency Property Tests', () => {
       fc.assert(
         fc.property(englishDominantTextArb, (text) => {
           // Filter out whitespace-only strings
-          if (text.trim().length === 0) return true;
+          if (text.trim().length === 0) {
+            return true;
+          }
           return !shouldBeRTL(text);
         }),
         { numRuns: 100 }
@@ -431,13 +437,12 @@ describe('RTL Layout Consistency Property Tests', () => {
               styles.textAlign === 'right' &&
               styles.unicodeBidi === 'embed'
             );
-          } else {
-            return (
-              styles.direction === 'ltr' &&
-              styles.textAlign === 'left' &&
-              styles.unicodeBidi === 'embed'
-            );
           }
+          return (
+            styles.direction === 'ltr' &&
+            styles.textAlign === 'left' &&
+            styles.unicodeBidi === 'embed'
+          );
         }),
         { numRuns: 100 }
       );
@@ -530,9 +535,8 @@ describe('RTL Layout Consistency Property Tests', () => {
 
           if (isRTL) {
             return direction === 'rtl';
-          } else {
-            return direction === 'ltr';
           }
+          return direction === 'ltr';
         }),
         { numRuns: 100 }
       );
@@ -546,9 +550,8 @@ describe('RTL Layout Consistency Property Tests', () => {
 
           if (isRTL) {
             return alignment === 'right';
-          } else {
-            return alignment === 'left';
           }
+          return alignment === 'left';
         }),
         { numRuns: 100 }
       );

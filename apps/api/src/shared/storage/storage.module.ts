@@ -2,21 +2,21 @@
  * ???????????????????????????????????????????????????????????????????????????
  * NextGen Marketplace - Shared Storage Module
  * ???????????????????????????????????????????????????????????????????????????
- * 
+ *
  * Central storage module that integrates MinIO/S3-compatible storage service
  * from libs/storage for file uploads and management.
- * 
+ *
  * Features:
  * - File upload with validation
  * - Presigned URL generation for secure access
  * - Multipart upload support for large files
  * - File deletion and management
- * 
+ *
  * @module @nextgen/api/shared/storage
  * Requirements: 6.1, 6.2, 6.3, 6.4
  */
 
-import { Module, Global, DynamicModule } from '@nestjs/common';
+import { type DynamicModule, Global, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
 // Import storage service from libs/storage
@@ -54,7 +54,7 @@ export class StorageModule {
         // Storage Service Provider
         {
           provide: STORAGE_TOKENS.STORAGE_SERVICE,
-          useFactory: (configService: ConfigService) => {
+          useFactory: (_configService: ConfigService) => {
             // Set environment variables if config is provided
             if (config?.endpoint) {
               process.env.MINIO_ENDPOINT = config.endpoint;
@@ -90,10 +90,7 @@ export class StorageModule {
           inject: [STORAGE_TOKENS.STORAGE_SERVICE],
         },
       ],
-      exports: [
-        STORAGE_TOKENS.STORAGE_SERVICE,
-        StorageService,
-      ],
+      exports: [STORAGE_TOKENS.STORAGE_SERVICE, StorageService],
     };
   }
 
@@ -153,10 +150,7 @@ export class StorageModule {
           inject: [STORAGE_TOKENS.STORAGE_SERVICE],
         },
       ],
-      exports: [
-        STORAGE_TOKENS.STORAGE_SERVICE,
-        StorageService,
-      ],
+      exports: [STORAGE_TOKENS.STORAGE_SERVICE, StorageService],
     };
   }
 }

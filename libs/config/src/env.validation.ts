@@ -1,7 +1,7 @@
-import { z } from 'zod';
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 import { config as dotenvConfig } from 'dotenv';
+import { z } from 'zod';
 
 type ServiceType = 'api' | 'worker' | 'web' | 'admin' | 'generic';
 
@@ -28,8 +28,7 @@ export function loadEnvFiles(options: LoadEnvOptions = {}): string[] {
     process.env.NODE_ENV = DEFAULT_NODE_ENV;
   }
   const nodeEnv = (process.env.NODE_ENV || DEFAULT_NODE_ENV).trim();
-  const allowProduction =
-    options.allowProduction ?? process.env.ALLOW_ENV_FILE_IN_PROD === 'true';
+  const allowProduction = options.allowProduction ?? process.env.ALLOW_ENV_FILE_IN_PROD === 'true';
   const shouldLoad = !isProdLike(nodeEnv) || allowProduction;
 
   if (!shouldLoad) {
@@ -47,7 +46,9 @@ export function loadEnvFiles(options: LoadEnvOptions = {}): string[] {
 
   const loaded: string[] = [];
   for (const file of files) {
-    if (!file || !fs.existsSync(file)) continue;
+    if (!file || !fs.existsSync(file)) {
+      continue;
+    }
     const result = dotenvConfig({ path: file, override: true });
     if (result.error) {
       continue;
@@ -65,41 +66,28 @@ const baseSchema = z
     REDIS_URL: z.string().optional(),
     KEYDB_URL: z.string().optional(),
   })
-  .refine(
-    (data) => Boolean(data.REDIS_URL || data.KEYDB_URL),
-    {
-      message: 'REDIS_URL or KEYDB_URL is required',
-      path: ['REDIS_URL'],
-    },
-  );
+  .refine((data) => Boolean(data.REDIS_URL || data.KEYDB_URL), {
+    message: 'REDIS_URL or KEYDB_URL is required',
+    path: ['REDIS_URL'],
+  });
 
 const apiCommonSchema = z.object({
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
-  JWT_REFRESH_SECRET: z
-    .string()
-    .min(32, 'JWT_REFRESH_SECRET must be at least 32 characters'),
+  JWT_REFRESH_SECRET: z.string().min(32, 'JWT_REFRESH_SECRET must be at least 32 characters'),
 });
 
 const apiProdSchema = apiCommonSchema.extend({
   JWT_SECRET: z.string().min(64, 'JWT_SECRET must be at least 64 characters'),
-  JWT_REFRESH_SECRET: z
-    .string()
-    .min(64, 'JWT_REFRESH_SECRET must be at least 64 characters'),
+  JWT_REFRESH_SECRET: z.string().min(64, 'JWT_REFRESH_SECRET must be at least 64 characters'),
   JWT_PRIVATE_KEY: z
     .string()
     .regex(/^-----BEGIN (RSA )?PRIVATE KEY-----/, 'JWT_PRIVATE_KEY must be PEM'),
   JWT_PUBLIC_KEY: z
     .string()
     .regex(/^-----BEGIN (RSA )?PUBLIC KEY-----/, 'JWT_PUBLIC_KEY must be PEM'),
-  TOTP_ENCRYPTION_KEY: z
-    .string()
-    .min(32, 'TOTP_ENCRYPTION_KEY must be at least 32 characters'),
-  SESSION_SECRET: z
-    .string()
-    .min(32, 'SESSION_SECRET must be at least 32 characters'),
-  ZARINPAL_MERCHANT_ID: z
-    .string()
-    .min(36, 'ZARINPAL_MERCHANT_ID must be at least 36 characters'),
+  TOTP_ENCRYPTION_KEY: z.string().min(32, 'TOTP_ENCRYPTION_KEY must be at least 32 characters'),
+  SESSION_SECRET: z.string().min(32, 'SESSION_SECRET must be at least 32 characters'),
+  ZARINPAL_MERCHANT_ID: z.string().min(36, 'ZARINPAL_MERCHANT_ID must be at least 36 characters'),
   ZARINPAL_WEBHOOK_SECRET: z
     .string()
     .min(32, 'ZARINPAL_WEBHOOK_SECRET must be at least 32 characters'),
@@ -157,7 +145,10 @@ export function validateEnv(options: ValidateEnvOptions = {}): EnvConfig {
 export class EnvironmentValidationService {
   constructor(private readonly service: ServiceType = 'generic') {}
 
-  validateAtStartup(): { success: boolean; warnings?: Array<{ field: string; message: string; recommendation?: string }> } {
+  validateAtStartup(): {
+    success: boolean;
+    warnings?: Array<{ field: string; message: string; recommendation?: string }>;
+  } {
     const schema = getServiceSchema(process.env, this.service);
     const result = schema.safeParse(process.env);
     if (result.success) {
@@ -178,7 +169,7 @@ export class EnvironmentValidationService {
     }
 
     return result.error.issues
-      .map(issue => `- ${issue.path.join('.')}: ${issue.message}`)
+      .map((issue) => `- ${issue.path.join('.')}: ${issue.message}`)
       .join('\n');
   }
 }

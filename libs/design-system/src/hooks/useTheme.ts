@@ -4,8 +4,8 @@
 
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { ThemeMode, ThemeColors, getTheme, generateCSSVariables } from '../themes';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { type ThemeColors, type ThemeMode, generateCSSVariables, getTheme } from '../themes';
 
 const THEME_STORAGE_KEY = 'nextgen-theme-mode';
 
@@ -13,18 +13,20 @@ const THEME_STORAGE_KEY = 'nextgen-theme-mode';
  * Detect system color scheme preference
  */
 function getSystemPreference(): ThemeMode {
-  if (typeof window === 'undefined') return 'light';
-  
+  if (typeof window === 'undefined') {
+    return 'light';
+  }
+
   // Check for high contrast mode
   if (window.matchMedia('(forced-colors: active)').matches) {
     return 'high-contrast';
   }
-  
+
   // Check for dark mode preference
   if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
     return 'dark';
   }
-  
+
   return 'light';
 }
 
@@ -32,8 +34,10 @@ function getSystemPreference(): ThemeMode {
  * Get stored theme preference
  */
 function getStoredPreference(): ThemeMode | null {
-  if (typeof window === 'undefined') return null;
-  
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
   try {
     const stored = localStorage.getItem(THEME_STORAGE_KEY);
     if (stored && ['light', 'dark', 'high-contrast'].includes(stored)) {
@@ -42,7 +46,7 @@ function getStoredPreference(): ThemeMode | null {
   } catch {
     // localStorage not available
   }
-  
+
   return null;
 }
 
@@ -50,8 +54,10 @@ function getStoredPreference(): ThemeMode | null {
  * Store theme preference
  */
 function storePreference(mode: ThemeMode): void {
-  if (typeof window === 'undefined') return;
-  
+  if (typeof window === 'undefined') {
+    return;
+  }
+
   try {
     localStorage.setItem(THEME_STORAGE_KEY, mode);
   } catch {
@@ -63,19 +69,21 @@ function storePreference(mode: ThemeMode): void {
  * Apply theme CSS variables to document
  */
 function applyThemeToDocument(theme: ThemeColors, mode: ThemeMode): void {
-  if (typeof document === 'undefined') return;
-  
+  if (typeof document === 'undefined') {
+    return;
+  }
+
   const root = document.documentElement;
   const vars = generateCSSVariables(theme);
-  
+
   // Apply CSS variables
   for (const [key, value] of Object.entries(vars)) {
     root.style.setProperty(key, value);
   }
-  
+
   // Set data attribute for CSS selectors
   root.setAttribute('data-theme', mode);
-  
+
   // Set color-scheme for native elements
   root.style.colorScheme = mode === 'light' ? 'light' : 'dark';
 }
@@ -109,7 +117,7 @@ export function useTheme(): UseThemeReturn {
   useEffect(() => {
     const stored = getStoredPreference();
     const system = getSystemPreference();
-    
+
     setSystemPreference(system);
     setModeState(stored || system);
     setIsInitialized(true);
@@ -117,7 +125,9 @@ export function useTheme(): UseThemeReturn {
 
   // Listen for system preference changes
   useEffect(() => {
-    if (typeof window === 'undefined') return undefined;
+    if (typeof window === 'undefined') {
+      return undefined;
+    }
 
     const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const contrastQuery = window.matchMedia('(forced-colors: active)');
@@ -125,7 +135,7 @@ export function useTheme(): UseThemeReturn {
     const handleChange = () => {
       const newPreference = getSystemPreference();
       setSystemPreference(newPreference);
-      
+
       // Only auto-update if no stored preference
       if (!getStoredPreference()) {
         setModeState(newPreference);
@@ -143,8 +153,10 @@ export function useTheme(): UseThemeReturn {
 
   // Apply theme when mode changes
   useEffect(() => {
-    if (!isInitialized) return;
-    
+    if (!isInitialized) {
+      return;
+    }
+
     const theme = getTheme(mode);
     applyThemeToDocument(theme, mode);
   }, [mode, isInitialized]);
@@ -157,7 +169,7 @@ export function useTheme(): UseThemeReturn {
   }, []);
 
   const toggleMode = useCallback(() => {
-    setModeState(current => {
+    setModeState((current) => {
       const newMode = current === 'light' ? 'dark' : 'light';
       storePreference(newMode);
       return newMode;

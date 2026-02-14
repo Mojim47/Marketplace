@@ -2,10 +2,10 @@
  * ???????????????????????????????????????????????????????????????????????????
  * NextGen Marketplace - Brute Force Guard
  * ???????????????????????????????????????????????????????????????????????????
- * 
+ *
  * Brute force protection guard that tracks failed login attempts and
  * temporarily blocks accounts/IPs after exceeding the threshold.
- * 
+ *
  * Features:
  * - Failed attempt tracking
  * - Account lockout after 5 failed attempts
@@ -13,24 +13,24 @@
  * - Automatic unblock after cooldown
  * - Whitelisted IPs support
  * - Persian error messages
- * 
+ *
  * @module @nextgen/api/shared/security
  * Requirements: 1.6
  */
 
 import {
-  Injectable,
   CanActivate,
   ExecutionContext,
   HttpException,
   HttpStatus,
   Inject,
+  Injectable,
   Logger,
   SetMetadata,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Request } from 'express';
 import { BruteForceProtection } from '@nextgen/security';
+import { Request } from 'express';
 import { SECURITY_TOKENS } from '../tokens';
 
 // Metadata key for brute force protection
@@ -38,7 +38,7 @@ export const BRUTE_FORCE_KEY = 'bruteForceProtected';
 
 /**
  * Decorator to enable brute force protection for an endpoint
- * 
+ *
  * @example
  * @BruteForceProtected()
  * @Post('login')
@@ -48,7 +48,7 @@ export const BruteForceProtected = () => SetMetadata(BRUTE_FORCE_KEY, true);
 
 /**
  * Decorator to skip brute force protection
- * 
+ *
  * @example
  * @SkipBruteForce()
  * @Post('register')
@@ -59,12 +59,12 @@ export const SkipBruteForce = () => SetMetadata(SKIP_BRUTE_FORCE_KEY, true);
 
 /**
  * Brute Force Guard
- * 
+ *
  * Protects authentication endpoints from brute force attacks by tracking
  * failed attempts and temporarily blocking after threshold is exceeded.
- * 
+ *
  * Default: 5 failed attempts ? 15 minute lockout
- * 
+ *
  * @example
  * // Apply to login endpoint
  * @UseGuards(BruteForceGuard)
@@ -79,7 +79,7 @@ export class BruteForceGuard implements CanActivate {
   constructor(
     @Inject(SECURITY_TOKENS.BRUTE_FORCE)
     private readonly bruteForceProtection: BruteForceProtection,
-    private readonly reflector: Reflector,
+    private readonly reflector: Reflector
   ) {}
 
   canActivate(context: ExecutionContext): boolean {
@@ -110,7 +110,7 @@ export class BruteForceGuard implements CanActivate {
     // Check if identifier is blocked
     if (this.bruteForceProtection.isBlocked(identifier)) {
       const attempts = this.bruteForceProtection.getAttempts(identifier);
-      const remainingTime = attempts?.blockedUntil 
+      const remainingTime = attempts?.blockedUntil
         ? Math.ceil((attempts.blockedUntil - Date.now()) / 60000)
         : 15;
 
@@ -120,11 +120,13 @@ export class BruteForceGuard implements CanActivate {
         {
           statusCode: HttpStatus.TOO_MANY_REQUESTS,
           error: 'Too Many Requests',
-          message: `ÍÓÇÈ ÔãÇ Èå Ïáíá ÊáÇÔåÇí äÇãæİŞ ãÊÚÏÏ Şİá ÔÏå ÇÓÊ. áØİÇğ ${remainingTime} ÏŞíŞå ÏíÑ ÊáÇÔ ˜äíÏ.`,
-          blockedUntil: attempts?.blockedUntil ? new Date(attempts.blockedUntil).toISOString() : null,
+          message: `ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ôï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½. ï¿½ï¿½ï¿½ï¿½ï¿½ ${remainingTime} ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.`,
+          blockedUntil: attempts?.blockedUntil
+            ? new Date(attempts.blockedUntil).toISOString()
+            : null,
           remainingMinutes: remainingTime,
         },
-        HttpStatus.TOO_MANY_REQUESTS,
+        HttpStatus.TOO_MANY_REQUESTS
       );
     }
 
@@ -141,7 +143,7 @@ export class BruteForceGuard implements CanActivate {
   private getIdentifier(request: Request): string {
     const ip = this.extractClientIP(request);
     const email = request.body?.email || request.body?.username || '';
-    
+
     // Combine IP and email for identifier
     // This prevents attackers from trying different emails from same IP
     return `${ip}:${email}`.toLowerCase();
@@ -153,9 +155,7 @@ export class BruteForceGuard implements CanActivate {
   private extractClientIP(request: Request): string {
     const forwardedFor = request.headers['x-forwarded-for'];
     if (forwardedFor) {
-      const ips = Array.isArray(forwardedFor) 
-        ? forwardedFor[0] 
-        : forwardedFor.split(',')[0];
+      const ips = Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor.split(',')[0];
       return ips.trim();
     }
 
@@ -194,7 +194,7 @@ export class BruteForceGuard implements CanActivate {
 export class BruteForceService {
   constructor(
     @Inject(SECURITY_TOKENS.BRUTE_FORCE)
-    private readonly bruteForceProtection: BruteForceProtection,
+    private readonly bruteForceProtection: BruteForceProtection
   ) {}
 
   /**
@@ -202,7 +202,11 @@ export class BruteForceService {
    * @param identifier - The identifier (IP:email combination)
    * @returns Object with allowed status and remaining attempts
    */
-  recordFailedAttempt(identifier: string): { allowed: boolean; remainingAttempts: number; blockedUntil?: Date } {
+  recordFailedAttempt(identifier: string): {
+    allowed: boolean;
+    remainingAttempts: number;
+    blockedUntil?: Date;
+  } {
     return this.bruteForceProtection.recordAttempt(identifier, false);
   }
 

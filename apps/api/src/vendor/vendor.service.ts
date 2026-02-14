@@ -1,6 +1,12 @@
-import { Injectable, Logger, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
-import { CreateVendorDto, UpdateVendorDto, PaginationDto } from '../common/dto/index';
+import {
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
+import type { CreateVendorDto, PaginationDto, UpdateVendorDto } from '../common/dto/index';
+import type { PrismaService } from '../database/prisma.service';
 
 export interface VendorWithProducts {
   id: string;
@@ -28,12 +34,16 @@ export class VendorService {
    * Create a new vendor profile for a user
    * One user can only have one vendor profile (One-to-One relation)
    */
-  async create(userId: string, tenantId: string, dto: CreateVendorDto): Promise<VendorWithProducts> {
+  async create(
+    userId: string,
+    tenantId: string,
+    dto: CreateVendorDto
+  ): Promise<VendorWithProducts> {
     this.logger.log(`Creating vendor profile for user: ${userId}`);
 
     // Check if user already has a vendor profile
     const existingVendor = await this.prisma.vendor.findUnique({
-      where: { userId }
+      where: { userId },
     });
 
     if (existingVendor) {
@@ -53,7 +63,7 @@ export class VendorService {
         city: '',
         postalCode: '',
         address: '',
-        userId
+        userId,
       },
       include: {
         products: {
@@ -62,10 +72,10 @@ export class VendorService {
             name: true,
             price: true,
             stock: true,
-            category: true
-          }
-        }
-      }
+            category: true,
+          },
+        },
+      },
     });
 
     this.logger.log(`Vendor profile created: ${vendor.id}`);
@@ -95,21 +105,21 @@ export class VendorService {
               name: true,
               price: true,
               stock: true,
-              category: true
+              category: true,
             },
-            take: 5 // Limit products per vendor in list view
-          }
+            take: 5, // Limit products per vendor in list view
+          },
         },
-        orderBy: { createdAt: 'desc' }
+        orderBy: { createdAt: 'desc' },
       }),
-      this.prisma.vendor.count()
+      this.prisma.vendor.count(),
     ]);
 
     return {
       vendors,
       total,
       page: Math.floor(skip / take) + 1,
-      pageSize: take
+      pageSize: take,
     };
   }
 
@@ -129,11 +139,11 @@ export class VendorService {
             stock: true,
             category: true,
             description: true,
-            createdAt: true
+            createdAt: true,
           },
-          orderBy: { createdAt: 'desc' }
-        }
-      }
+          orderBy: { createdAt: 'desc' },
+        },
+      },
     });
 
     if (!vendor) {
@@ -156,10 +166,10 @@ export class VendorService {
             name: true,
             price: true,
             stock: true,
-            category: true
-          }
-        }
-      }
+            category: true,
+          },
+        },
+      },
     });
   }
 
@@ -170,7 +180,7 @@ export class VendorService {
   async update(id: string, userId: string, dto: UpdateVendorDto): Promise<VendorWithProducts> {
     // Check if vendor exists and belongs to user
     const vendor = await this.prisma.vendor.findUnique({
-      where: { id }
+      where: { id },
     });
 
     if (!vendor) {
@@ -185,7 +195,7 @@ export class VendorService {
     const updatedVendor = await this.prisma.vendor.update({
       where: { id },
       data: {
-        businessName: dto.businessName
+        businessName: dto.businessName,
       },
       include: {
         products: {
@@ -194,10 +204,10 @@ export class VendorService {
             name: true,
             price: true,
             stock: true,
-            category: true
-          }
-        }
-      }
+            category: true,
+          },
+        },
+      },
     });
 
     this.logger.log(`Vendor profile updated: ${id}`);
@@ -209,7 +219,7 @@ export class VendorService {
    */
   async deactivate(id: string, userId: string): Promise<void> {
     const vendor = await this.prisma.vendor.findUnique({
-      where: { id }
+      where: { id },
     });
 
     if (!vendor) {
@@ -222,7 +232,7 @@ export class VendorService {
 
     await this.prisma.vendor.update({
       where: { id },
-      data: { status: 'inactive' }
+      data: { status: 'inactive' },
     });
 
     this.logger.log(`Vendor profile deactivated: ${id}`);
@@ -234,7 +244,7 @@ export class VendorService {
    */
   async generateSlug(id: string, customSlug?: string): Promise<string> {
     const vendor = await this.prisma.vendor.findUnique({
-      where: { id }
+      where: { id },
     });
 
     if (!vendor) {
@@ -242,23 +252,25 @@ export class VendorService {
     }
 
     // Generate slug from business name or use custom slug
-    let baseSlug = customSlug || vendor.businessName
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-') // Replace non-alphanumeric with hyphens
-      .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
+    const baseSlug =
+      customSlug ||
+      vendor.businessName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-') // Replace non-alphanumeric with hyphens
+        .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
 
     // Ensure uniqueness by checking existing slugs
     let slug = baseSlug;
     let counter = 1;
     while (true) {
       const existing = await this.prisma.vendor.findUnique({
-        where: { businessSlug: slug }
+        where: { businessSlug: slug },
       });
-      
+
       if (!existing || existing.id === id) {
         break; // Slug is unique or belongs to current vendor
       }
-      
+
       slug = `${baseSlug}-${counter}`;
       counter++;
     }
@@ -266,7 +278,7 @@ export class VendorService {
     // Update vendor with new slug
     await this.prisma.vendor.update({
       where: { id },
-      data: { businessSlug: slug }
+      data: { businessSlug: slug },
     });
 
     this.logger.log(`Slug generated for vendor ${id}: ${slug}`);
@@ -286,19 +298,17 @@ export class VendorService {
             name: true,
             price: true,
             stock: true,
-            category: true
+            category: true,
           },
 
-          orderBy: { createdAt: 'desc' }
-        }
-      }
+          orderBy: { createdAt: 'desc' },
+        },
+      },
     });
 
     if (!vendor) {
       throw new NotFoundException(`Vendor with slug "${slug}" not found`);
     }
-
-
 
     this.logger.log(`Fetched vendor by slug: ${slug}`);
     return vendor;

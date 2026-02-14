@@ -4,7 +4,8 @@
 
 'use client';
 
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import type React from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { cn } from '../../utils/cn';
 
 export interface DashboardWidget {
@@ -30,7 +31,6 @@ export interface DashboardLayoutProps {
   rtl?: boolean;
   className?: string;
 }
-
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   widgets: initialWidgets,
@@ -65,42 +65,57 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     4: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4',
   };
 
-  const handleDragStart = useCallback((e: React.DragEvent, widgetId: string) => {
-    if (!editable) return;
-    setDraggedWidget(widgetId);
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', widgetId);
-  }, [editable]);
+  const handleDragStart = useCallback(
+    (e: React.DragEvent, widgetId: string) => {
+      if (!editable) {
+        return;
+      }
+      setDraggedWidget(widgetId);
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', widgetId);
+    },
+    [editable]
+  );
 
-  const handleDragOver = useCallback((e: React.DragEvent, widgetId: string) => {
-    if (!editable || !draggedWidget || draggedWidget === widgetId) return;
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    setDragOverWidget(widgetId);
-  }, [editable, draggedWidget]);
+  const handleDragOver = useCallback(
+    (e: React.DragEvent, widgetId: string) => {
+      if (!editable || !draggedWidget || draggedWidget === widgetId) {
+        return;
+      }
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      setDragOverWidget(widgetId);
+    },
+    [editable, draggedWidget]
+  );
 
   const handleDragLeave = useCallback(() => {
     setDragOverWidget(null);
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent, targetId: string) => {
-    if (!editable || !draggedWidget || draggedWidget === targetId) return;
-    e.preventDefault();
+  const handleDrop = useCallback(
+    (e: React.DragEvent, targetId: string) => {
+      if (!editable || !draggedWidget || draggedWidget === targetId) {
+        return;
+      }
+      e.preventDefault();
 
-    const newWidgets = [...widgets];
-    const draggedIndex = newWidgets.findIndex(w => w.id === draggedWidget);
-    const targetIndex = newWidgets.findIndex(w => w.id === targetId);
+      const newWidgets = [...widgets];
+      const draggedIndex = newWidgets.findIndex((w) => w.id === draggedWidget);
+      const targetIndex = newWidgets.findIndex((w) => w.id === targetId);
 
-    if (draggedIndex !== -1 && targetIndex !== -1) {
-      const [removed] = newWidgets.splice(draggedIndex, 1);
-      newWidgets.splice(targetIndex, 0, removed);
-      setWidgets(newWidgets);
-      onLayoutChange?.(newWidgets);
-    }
+      if (draggedIndex !== -1 && targetIndex !== -1) {
+        const [removed] = newWidgets.splice(draggedIndex, 1);
+        newWidgets.splice(targetIndex, 0, removed);
+        setWidgets(newWidgets);
+        onLayoutChange?.(newWidgets);
+      }
 
-    setDraggedWidget(null);
-    setDragOverWidget(null);
-  }, [editable, draggedWidget, widgets, onLayoutChange]);
+      setDraggedWidget(null);
+      setDragOverWidget(null);
+    },
+    [editable, draggedWidget, widgets, onLayoutChange]
+  );
 
   const handleDragEnd = useCallback(() => {
     setDraggedWidget(null);
@@ -108,7 +123,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   }, []);
 
   const toggleCollapse = useCallback((widgetId: string) => {
-    setCollapsedWidgets(prev => {
+    setCollapsedWidgets((prev) => {
       const next = new Set(prev);
       if (next.has(widgetId)) {
         next.delete(widgetId);
@@ -119,14 +134,17 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     });
   }, []);
 
-  const removeWidget = useCallback((widgetId: string) => {
-    const newWidgets = widgets.filter(w => w.id !== widgetId);
-    setWidgets(newWidgets);
-    onWidgetRemove?.(widgetId);
-    onLayoutChange?.(newWidgets);
-  }, [widgets, onWidgetRemove, onLayoutChange]);
+  const removeWidget = useCallback(
+    (widgetId: string) => {
+      const newWidgets = widgets.filter((w) => w.id !== widgetId);
+      setWidgets(newWidgets);
+      onWidgetRemove?.(widgetId);
+      onLayoutChange?.(newWidgets);
+    },
+    [widgets, onWidgetRemove, onLayoutChange]
+  );
 
-  const getColSpanClass = (span: number = 1) => {
+  const getColSpanClass = (span = 1) => {
     const classes: Record<number, string> = {
       1: 'col-span-1',
       2: 'col-span-1 md:col-span-2',
@@ -136,7 +154,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     return classes[span] || classes[1];
   };
 
-  const getRowSpanClass = (span: number = 1) => {
+  const getRowSpanClass = (span = 1) => {
     const classes: Record<number, string> = {
       1: 'row-span-1',
       2: 'row-span-2',
@@ -178,11 +196,13 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             )}
           >
             {/* Widget Header */}
-            <div className={cn(
-              'flex items-center justify-between px-4 py-3',
-              'border-b border-[var(--color-border-light)]',
-              'bg-[var(--color-background-paper)]'
-            )}>
+            <div
+              className={cn(
+                'flex items-center justify-between px-4 py-3',
+                'border-b border-[var(--color-border-light)]',
+                'bg-[var(--color-background-paper)]'
+              )}
+            >
               <h3 className="font-medium text-[var(--color-text-primary)]">
                 {rtl && widget.titleFa ? widget.titleFa : widget.title}
               </h3>
@@ -199,10 +219,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                     )}
                     aria-label={isCollapsed ? 'Expand' : 'Collapse'}
                   >
-                    <ChevronIcon className={cn(
-                      'w-4 h-4 transition-transform duration-200',
-                      isCollapsed && 'rotate-180'
-                    )} />
+                    <ChevronIcon
+                      className={cn(
+                        'w-4 h-4 transition-transform duration-200',
+                        isCollapsed && 'rotate-180'
+                      )}
+                    />
                   </button>
                 )}
                 {widget.removable && editable && (
@@ -224,13 +246,13 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             </div>
 
             {/* Widget Content */}
-            <div className={cn(
-              'transition-all duration-200 overflow-hidden',
-              isCollapsed ? 'max-h-0' : 'max-h-[2000px]'
-            )}>
-              <div className="p-4">
-                {widget.component}
-              </div>
+            <div
+              className={cn(
+                'transition-all duration-200 overflow-hidden',
+                isCollapsed ? 'max-h-0' : 'max-h-[2000px]'
+              )}
+            >
+              <div className="p-4">{widget.component}</div>
             </div>
           </div>
         );

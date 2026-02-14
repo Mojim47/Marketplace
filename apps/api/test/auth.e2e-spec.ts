@@ -1,10 +1,10 @@
-import { beforeAll, afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { Test } from '@nestjs/testing';
+import { execSync } from 'node:child_process';
 import type { INestApplication } from '@nestjs/common';
-import request from 'supertest';
-import { execSync } from 'child_process';
-import { PostgreSqlContainer } from '@testcontainers/postgresql';
+import { Test } from '@nestjs/testing';
 import { PrismaClient } from '@prisma/client';
+import { PostgreSqlContainer } from '@testcontainers/postgresql';
+import request from 'supertest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@nextgen/waf', () => ({
   WAFService: class WAFService {},
@@ -97,26 +97,20 @@ describe('Auth E2E', () => {
       lastName: 'User',
     };
 
-    await request(app.getHttpServer())
-      .post('/auth/register')
-      .send(payload);
+    await request(app.getHttpServer()).post('/auth/register').send(payload);
 
-    const loginResponse = await request(app.getHttpServer())
-      .post('/auth/login')
-      .send({
-        email: payload.email,
-        password: payload.password,
-      });
+    const loginResponse = await request(app.getHttpServer()).post('/auth/login').send({
+      email: payload.email,
+      password: payload.password,
+    });
 
     expect(loginResponse.status).toBe(200);
     expect(loginResponse.body).toHaveProperty('access_token');
 
-    const invalidLoginResponse = await request(app.getHttpServer())
-      .post('/auth/login')
-      .send({
-        email: payload.email,
-        password: 'wrong-password',
-      });
+    const invalidLoginResponse = await request(app.getHttpServer()).post('/auth/login').send({
+      email: payload.email,
+      password: 'wrong-password',
+    });
 
     expect(invalidLoginResponse.status).toBe(401);
   });

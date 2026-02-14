@@ -8,9 +8,9 @@
  */
 
 import { Module } from '@nestjs/common';
+import { SovereignCoreModule } from '../sovereign-core/sovereign-core.module';
 import { FactoryPricingController } from './factory-pricing.controller';
 import { FactoryPricingService } from './factory-pricing.service';
-import { SovereignCoreModule } from '../sovereign-core/sovereign-core.module';
 
 @Module({
   imports: [SovereignCoreModule], // Import to use PriceEngine

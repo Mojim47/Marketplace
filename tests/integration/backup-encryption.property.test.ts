@@ -12,12 +12,12 @@
  * @module tests/integration/backup-encryption
  */
 
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import * as crypto from 'node:crypto';
+import * as fs from 'node:fs';
+import * as os from 'node:os';
+import * as path from 'node:path';
 import * as fc from 'fast-check';
-import * as crypto from 'crypto';
-import * as fs from 'fs';
-import * as path from 'path';
-import * as os from 'os';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Encryption Configuration (matches backup-db.sh)
@@ -452,7 +452,9 @@ describe('Backup File Operations Property Tests', () => {
           } finally {
             // Cleanup
             [originalFile, encryptedFile, checksumFile, decryptedFile].forEach((f) => {
-              if (fs.existsSync(f)) fs.unlinkSync(f);
+              if (fs.existsSync(f)) {
+                fs.unlinkSync(f);
+              }
             });
           }
         }

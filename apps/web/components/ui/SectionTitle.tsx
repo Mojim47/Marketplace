@@ -1,5 +1,8 @@
-import type { ReactNode } from "react";
+import type { ReactNode } from 'react';
 
-export function SectionTitle({ children, className = "" }: { children: ReactNode; className?: string }) {
+export function SectionTitle({
+  children,
+  className = '',
+}: { children: ReactNode; className?: string }) {
   return <h2 className={`section-title ${className}`}>{children}</h2>;
 }

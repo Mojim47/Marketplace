@@ -4,19 +4,26 @@
 
 'use client';
 
-import React, {
+import type React from 'react';
+import {
   createContext,
-  useContext,
-  useState,
   useCallback,
+  useContext,
   useEffect,
-  useRef,
   useMemo,
+  useRef,
+  useState,
 } from 'react';
 import { cn } from '../../utils/cn';
 
 export type NotificationType = 'success' | 'error' | 'warning' | 'info';
-export type NotificationPosition = 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left' | 'top-center' | 'bottom-center';
+export type NotificationPosition =
+  | 'top-right'
+  | 'top-left'
+  | 'bottom-right'
+  | 'bottom-left'
+  | 'top-center'
+  | 'bottom-center';
 
 export interface Notification {
   id: string;
@@ -82,44 +89,59 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     return `notif-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }, []);
 
-  const show = useCallback((notification: Omit<Notification, 'id' | 'timestamp' | 'read'>): string => {
-    const id = generateId();
-    const newNotification: Notification = {
-      ...notification,
-      id,
-      timestamp: new Date(),
-      read: false,
-      duration: notification.duration ?? defaultDuration,
-      dismissible: notification.dismissible ?? true,
-    };
+  const show = useCallback(
+    (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>): string => {
+      const id = generateId();
+      const newNotification: Notification = {
+        ...notification,
+        id,
+        timestamp: new Date(),
+        read: false,
+        duration: notification.duration ?? defaultDuration,
+        dismissible: notification.dismissible ?? true,
+      };
 
-    setNotifications(prev => [newNotification, ...prev]);
-    
-    if (!notification.persistent) {
-      setToasts(prev => [newNotification, ...prev].slice(0, maxVisible));
-    }
+      setNotifications((prev) => [newNotification, ...prev]);
 
-    return id;
-  }, [generateId, defaultDuration, maxVisible]);
+      if (!notification.persistent) {
+        setToasts((prev) => [newNotification, ...prev].slice(0, maxVisible));
+      }
 
-  const success = useCallback((title: string, message?: string) => {
-    return show({ type: 'success', title, message });
-  }, [show]);
+      return id;
+    },
+    [generateId, defaultDuration, maxVisible]
+  );
 
-  const error = useCallback((title: string, message?: string) => {
-    return show({ type: 'error', title, message, duration: 8000 });
-  }, [show]);
+  const success = useCallback(
+    (title: string, message?: string) => {
+      return show({ type: 'success', title, message });
+    },
+    [show]
+  );
 
-  const warning = useCallback((title: string, message?: string) => {
-    return show({ type: 'warning', title, message });
-  }, [show]);
+  const error = useCallback(
+    (title: string, message?: string) => {
+      return show({ type: 'error', title, message, duration: 8000 });
+    },
+    [show]
+  );
 
-  const info = useCallback((title: string, message?: string) => {
-    return show({ type: 'info', title, message });
-  }, [show]);
+  const warning = useCallback(
+    (title: string, message?: string) => {
+      return show({ type: 'warning', title, message });
+    },
+    [show]
+  );
+
+  const info = useCallback(
+    (title: string, message?: string) => {
+      return show({ type: 'info', title, message });
+    },
+    [show]
+  );
 
   const dismiss = useCallback((id: string) => {
-    setToasts(prev => prev.filter(n => n.id !== id));
+    setToasts((prev) => prev.filter((n) => n.id !== id));
   }, []);
 
   const dismissAll = useCallback(() => {
@@ -127,13 +149,11 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
   }, []);
 
   const markAsRead = useCallback((id: string) => {
-    setNotifications(prev =>
-      prev.map(n => (n.id === id ? { ...n, read: true } : n))
-    );
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
   }, []);
 
   const markAllAsRead = useCallback(() => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   }, []);
 
   const clearAll = useCallback(() => {
@@ -142,20 +162,20 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
   }, []);
 
   const unreadCount = useMemo(() => {
-    return notifications.filter(n => !n.read).length;
+    return notifications.filter((n) => !n.read).length;
   }, [notifications]);
 
   // WebSocket connection
   useEffect(() => {
-    if (!websocketUrl) return undefined;
+    if (!websocketUrl) {
+      return undefined;
+    }
 
     const connect = () => {
       try {
         wsRef.current = new WebSocket(websocketUrl);
 
-        wsRef.current.onopen = () => {
-          console.log('[Notifications] WebSocket connected');
-        };
+        wsRef.current.onopen = () => {};
 
         wsRef.current.onmessage = (event) => {
           try {
@@ -172,7 +192,6 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
         };
 
         wsRef.current.onclose = () => {
-          console.log('[Notifications] WebSocket disconnected, reconnecting...');
           reconnectTimeoutRef.current = setTimeout(connect, 3000);
         };
 
@@ -201,7 +220,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
   useEffect(() => {
     const timers: NodeJS.Timeout[] = [];
 
-    toasts.forEach(toast => {
+    toasts.forEach((toast) => {
       if (toast.duration && toast.duration > 0) {
         const timer = setTimeout(() => {
           dismiss(toast.id);
@@ -211,7 +230,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     });
 
     return () => {
-      timers.forEach(timer => clearTimeout(timer));
+      timers.forEach((timer) => clearTimeout(timer));
     };
   }, [toasts, dismiss]);
 
@@ -242,13 +261,10 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
   return (
     <NotificationContext.Provider value={value}>
       {children}
-      
+
       {/* Toast Container */}
       <div
-        className={cn(
-          'fixed z-toast pointer-events-none',
-          positionClasses[position]
-        )}
+        className={cn('fixed z-toast pointer-events-none', positionClasses[position])}
         dir={rtl ? 'rtl' : 'ltr'}
         aria-live="polite"
         aria-label="Notifications"
@@ -318,9 +334,7 @@ const Toast: React.FC<ToastProps> = ({ notification, onDismiss, rtl, style }) =>
       role="alert"
     >
       {/* Icon */}
-      <div className={cn('flex-shrink-0 p-1 rounded-lg', bg)}>
-        {icon}
-      </div>
+      <div className={cn('flex-shrink-0 p-1 rounded-lg', bg)}>{icon}</div>
 
       {/* Content */}
       <div className="flex-1 min-w-0">
@@ -381,25 +395,45 @@ export function useNotifications(): NotificationContextValue {
 // Icons
 const CheckCircleIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+    />
   </svg>
 );
 
 const XCircleIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+    />
   </svg>
 );
 
 const ExclamationIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+    />
   </svg>
 );
 
 const InfoIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+    />
   </svg>
 );
 

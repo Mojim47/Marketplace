@@ -1,18 +1,18 @@
 /**
  * Property-Based Tests for JWT Token Security
- * 
+ *
  * These tests validate the security properties of JWT token generation
  * and validation using fast-check for property-based testing.
- * 
+ *
  * Requirements validated:
  * - 1.3: RS256 algorithm support
  * - 1.4: Proper JWT claims (iss, aud, exp, nbf, jti)
  */
 
-import { describe, it, expect, beforeAll } from 'vitest';
-import * as fc from 'fast-check';
+import { randomUUID } from 'node:crypto';
 import { JwtService } from '@nestjs/jwt';
-import { randomUUID } from 'crypto';
+import * as fc from 'fast-check';
+import { beforeAll, describe, expect, it } from 'vitest';
 
 /**
  * JWT Configuration Constants
@@ -91,16 +91,16 @@ describe('JWT Token Security Properties', () => {
           (userId, email, role) => {
             const payload = generateTestPayload(userId, email, role);
             const token = jwtService.sign(payload);
-            
+
             // JWT must have exactly 3 parts separated by dots
             const parts = token.split('.');
             expect(parts).toHaveLength(3);
-            
+
             // Each part must be non-empty
-            parts.forEach((part, index) => {
+            parts.forEach((part, _index) => {
               expect(part.length).toBeGreaterThan(0);
             });
-            
+
             // Each part must be valid base64url
             parts.forEach((part) => {
               expect(() => Buffer.from(part, 'base64url')).not.toThrow();
@@ -123,7 +123,7 @@ describe('JWT Token Security Properties', () => {
             const payload = generateTestPayload(userId, email, role);
             const token = jwtService.sign(payload);
             const decoded = decodeJwtPayload(token);
-            
+
             // Required claims must be present
             expect(decoded).toHaveProperty('sub');
             expect(decoded).toHaveProperty('email');
@@ -150,7 +150,7 @@ describe('JWT Token Security Properties', () => {
             const payload = generateTestPayload(userId, email, role);
             const token = jwtService.sign(payload);
             const decoded = decodeJwtPayload(token);
-            
+
             // Payload values must be preserved
             expect(decoded.sub).toBe(userId);
             expect(decoded.email).toBe(email);
@@ -165,34 +165,26 @@ describe('JWT Token Security Properties', () => {
   describe('Property 3: Issuer and Audience Claims', () => {
     it('should always set correct issuer', () => {
       fc.assert(
-        fc.property(
-          fc.uuid(),
-          fc.emailAddress(),
-          (userId, email) => {
-            const payload = generateTestPayload(userId, email, 'USER');
-            const token = jwtService.sign(payload);
-            const decoded = decodeJwtPayload(token);
-            
-            expect(decoded.iss).toBe(JWT_CONFIG.ISSUER);
-          }
-        ),
+        fc.property(fc.uuid(), fc.emailAddress(), (userId, email) => {
+          const payload = generateTestPayload(userId, email, 'USER');
+          const token = jwtService.sign(payload);
+          const decoded = decodeJwtPayload(token);
+
+          expect(decoded.iss).toBe(JWT_CONFIG.ISSUER);
+        }),
         { numRuns: 50 }
       );
     });
 
     it('should always set correct audience', () => {
       fc.assert(
-        fc.property(
-          fc.uuid(),
-          fc.emailAddress(),
-          (userId, email) => {
-            const payload = generateTestPayload(userId, email, 'USER');
-            const token = jwtService.sign(payload);
-            const decoded = decodeJwtPayload(token);
-            
-            expect(decoded.aud).toBe(JWT_CONFIG.AUDIENCE);
-          }
-        ),
+        fc.property(fc.uuid(), fc.emailAddress(), (userId, email) => {
+          const payload = generateTestPayload(userId, email, 'USER');
+          const token = jwtService.sign(payload);
+          const decoded = decodeJwtPayload(token);
+
+          expect(decoded.aud).toBe(JWT_CONFIG.AUDIENCE);
+        }),
         { numRuns: 50 }
       );
     });
@@ -201,63 +193,51 @@ describe('JWT Token Security Properties', () => {
   describe('Property 4: Temporal Claims Validity', () => {
     it('should have exp > iat (expiration after issued)', () => {
       fc.assert(
-        fc.property(
-          fc.uuid(),
-          fc.emailAddress(),
-          (userId, email) => {
-            const payload = generateTestPayload(userId, email, 'USER');
-            const token = jwtService.sign(payload);
-            const decoded = decodeJwtPayload(token);
-            
-            const iat = decoded.iat as number;
-            const exp = decoded.exp as number;
-            
-            expect(exp).toBeGreaterThan(iat);
-          }
-        ),
+        fc.property(fc.uuid(), fc.emailAddress(), (userId, email) => {
+          const payload = generateTestPayload(userId, email, 'USER');
+          const token = jwtService.sign(payload);
+          const decoded = decodeJwtPayload(token);
+
+          const iat = decoded.iat as number;
+          const exp = decoded.exp as number;
+
+          expect(exp).toBeGreaterThan(iat);
+        }),
         { numRuns: 50 }
       );
     });
 
     it('should have nbf <= iat (not before at or before issued)', () => {
       fc.assert(
-        fc.property(
-          fc.uuid(),
-          fc.emailAddress(),
-          (userId, email) => {
-            const payload = generateTestPayload(userId, email, 'USER');
-            const token = jwtService.sign(payload);
-            const decoded = decodeJwtPayload(token);
-            
-            const iat = decoded.iat as number;
-            const nbf = decoded.nbf as number;
-            
-            expect(nbf).toBeLessThanOrEqual(iat);
-          }
-        ),
+        fc.property(fc.uuid(), fc.emailAddress(), (userId, email) => {
+          const payload = generateTestPayload(userId, email, 'USER');
+          const token = jwtService.sign(payload);
+          const decoded = decodeJwtPayload(token);
+
+          const iat = decoded.iat as number;
+          const nbf = decoded.nbf as number;
+
+          expect(nbf).toBeLessThanOrEqual(iat);
+        }),
         { numRuns: 50 }
       );
     });
 
     it('should have reasonable token lifetime', () => {
       fc.assert(
-        fc.property(
-          fc.uuid(),
-          fc.emailAddress(),
-          (userId, email) => {
-            const payload = generateTestPayload(userId, email, 'USER');
-            const token = jwtService.sign(payload);
-            const decoded = decodeJwtPayload(token);
-            
-            const iat = decoded.iat as number;
-            const exp = decoded.exp as number;
-            const lifetime = exp - iat;
-            
-            // Token lifetime should be within reasonable bounds
-            expect(lifetime).toBeGreaterThanOrEqual(JWT_CONFIG.MIN_TOKEN_AGE_SECONDS);
-            expect(lifetime).toBeLessThanOrEqual(JWT_CONFIG.MAX_TOKEN_AGE_SECONDS);
-          }
-        ),
+        fc.property(fc.uuid(), fc.emailAddress(), (userId, email) => {
+          const payload = generateTestPayload(userId, email, 'USER');
+          const token = jwtService.sign(payload);
+          const decoded = decodeJwtPayload(token);
+
+          const iat = decoded.iat as number;
+          const exp = decoded.exp as number;
+          const lifetime = exp - iat;
+
+          // Token lifetime should be within reasonable bounds
+          expect(lifetime).toBeGreaterThanOrEqual(JWT_CONFIG.MIN_TOKEN_AGE_SECONDS);
+          expect(lifetime).toBeLessThanOrEqual(JWT_CONFIG.MAX_TOKEN_AGE_SECONDS);
+        }),
         { numRuns: 50 }
       );
     });
@@ -266,28 +246,22 @@ describe('JWT Token Security Properties', () => {
   describe('Property 5: JTI Uniqueness', () => {
     it('should generate unique JTI for each token', () => {
       const jtis = new Set<string>();
-      
+
       fc.assert(
-        fc.property(
-          fc.uuid(),
-          fc.emailAddress(),
-          (userId, email) => {
-            const payload = generateTestPayload(userId, email, 'USER');
-            const token = jwtService.sign(payload);
-            const decoded = decodeJwtPayload(token);
-            
-            const jti = decoded.jti as string;
-            
-            // JTI must be a valid UUID format
-            expect(jti).toMatch(
-              /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-            );
-            
-            // JTI must be unique (not seen before)
-            expect(jtis.has(jti)).toBe(false);
-            jtis.add(jti);
-          }
-        ),
+        fc.property(fc.uuid(), fc.emailAddress(), (userId, email) => {
+          const payload = generateTestPayload(userId, email, 'USER');
+          const token = jwtService.sign(payload);
+          const decoded = decodeJwtPayload(token);
+
+          const jti = decoded.jti as string;
+
+          // JTI must be a valid UUID format
+          expect(jti).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+
+          // JTI must be unique (not seen before)
+          expect(jtis.has(jti)).toBe(false);
+          jtis.add(jti);
+        }),
         { numRuns: 100 }
       );
     });
@@ -303,7 +277,7 @@ describe('JWT Token Security Properties', () => {
           (userId, email, role) => {
             const payload = generateTestPayload(userId, email, role);
             const token = jwtService.sign(payload);
-            
+
             // Token should verify successfully
             const verified = jwtService.verify(token);
             expect(verified.sub).toBe(userId);
@@ -325,12 +299,12 @@ describe('JWT Token Security Properties', () => {
             const payload = generateTestPayload(userId, email, 'USER');
             const token = jwtService.sign(payload);
             const parts = token.split('.');
-            
+
             // Tamper with one part
-            const tamperedPart = parts[partIndex] + 'x';
+            const tamperedPart = `${parts[partIndex]}x`;
             parts[partIndex] = tamperedPart;
             const tamperedToken = parts.join('.');
-            
+
             // Tampered token should fail verification
             expect(() => jwtService.verify(tamperedToken)).toThrow();
           }
@@ -343,35 +317,27 @@ describe('JWT Token Security Properties', () => {
   describe('Property 7: Algorithm Header Validation', () => {
     it('should use approved algorithm in header', () => {
       fc.assert(
-        fc.property(
-          fc.uuid(),
-          fc.emailAddress(),
-          (userId, email) => {
-            const payload = generateTestPayload(userId, email, 'USER');
-            const token = jwtService.sign(payload);
-            const header = decodeJwtHeader(token);
-            
-            // Algorithm must be one of the approved algorithms
-            expect(JWT_CONFIG.SUPPORTED_ALGORITHMS).toContain(header.alg);
-          }
-        ),
+        fc.property(fc.uuid(), fc.emailAddress(), (userId, email) => {
+          const payload = generateTestPayload(userId, email, 'USER');
+          const token = jwtService.sign(payload);
+          const header = decodeJwtHeader(token);
+
+          // Algorithm must be one of the approved algorithms
+          expect(JWT_CONFIG.SUPPORTED_ALGORITHMS).toContain(header.alg);
+        }),
         { numRuns: 50 }
       );
     });
 
     it('should have typ JWT in header', () => {
       fc.assert(
-        fc.property(
-          fc.uuid(),
-          fc.emailAddress(),
-          (userId, email) => {
-            const payload = generateTestPayload(userId, email, 'USER');
-            const token = jwtService.sign(payload);
-            const header = decodeJwtHeader(token);
-            
-            expect(header.typ).toBe('JWT');
-          }
-        ),
+        fc.property(fc.uuid(), fc.emailAddress(), (userId, email) => {
+          const payload = generateTestPayload(userId, email, 'USER');
+          const token = jwtService.sign(payload);
+          const header = decodeJwtHeader(token);
+
+          expect(header.typ).toBe('JWT');
+        }),
         { numRuns: 50 }
       );
     });
@@ -400,13 +366,13 @@ describe('JWT Secret Security Properties', () => {
           (validSecret) => {
             // Valid secrets should meet minimum length
             expect(validSecret.length).toBeGreaterThanOrEqual(JWT_CONFIG.MIN_SECRET_LENGTH);
-            
+
             // Should be able to create JwtService with valid secret
             const service = new JwtService({
               secret: validSecret,
               signOptions: { expiresIn: '1h' },
             });
-            
+
             const token = service.sign({ sub: 'test' });
             expect(token.split('.')).toHaveLength(3);
           }
@@ -449,14 +415,14 @@ describe('JWT Payload Security Properties', () => {
               nbf: Math.floor(Date.now() / 1000),
               // Intentionally NOT including password
             };
-            
+
             const token = jwtService.sign(payload);
             const decoded = decodeJwtPayload(token);
-            
+
             // Token should not contain password field
             expect(decoded).not.toHaveProperty('password');
             expect(decoded).not.toHaveProperty('passwordHash');
-            
+
             // Token string should not contain the password
             expect(token).not.toContain(password);
           }
@@ -469,7 +435,7 @@ describe('JWT Payload Security Properties', () => {
   describe('Property 10: Role Validation', () => {
     it('should only accept valid role values', () => {
       const validRoles = ['USER', 'ADMIN', 'VENDOR', 'EXECUTOR', 'DEALER'];
-      
+
       fc.assert(
         fc.property(
           fc.uuid(),
@@ -479,7 +445,7 @@ describe('JWT Payload Security Properties', () => {
             const payload = generateTestPayload(userId, email, role);
             const token = jwtService.sign(payload);
             const decoded = decodeJwtPayload(token);
-            
+
             expect(validRoles).toContain(decoded.role);
           }
         ),

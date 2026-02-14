@@ -12,9 +12,9 @@
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
 import * as fc from 'fast-check';
-import { LogSanitizer, sanitizeForLog, sanitizeMessage, getLogSanitizer } from './log-sanitizer';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { LogSanitizer, getLogSanitizer, sanitizeForLog } from './log-sanitizer';
 
 // Helper to generate digit strings
 const digitArbitrary = (length: number) =>
@@ -351,7 +351,9 @@ describe('Log Sanitizer - Property Tests', () => {
     it('should handle deeply nested objects without stack overflow', () => {
       // Create deeply nested object
       const createDeepObject = (depth: number): any => {
-        if (depth === 0) return { value: 'leaf' };
+        if (depth === 0) {
+          return { value: 'leaf' };
+        }
         return { nested: createDeepObject(depth - 1) };
       };
 

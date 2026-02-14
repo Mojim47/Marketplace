@@ -1,4 +1,5 @@
-﻿import schema from './ui-event-schema.json';
+// @ts-nocheck
+import schema from './ui-event-schema.json';
 
 type UiSchema = typeof schema;
 
@@ -48,7 +49,7 @@ export function redactUiPayload(payload: Record<string, unknown>): Record<string
 export function trackUiEvent(
   name: UiEventName,
   payload: Record<string, unknown> = {},
-  options?: { traceId?: string; now?: () => Date },
+  options?: { traceId?: string; now?: () => Date }
 ) {
   validateUiEventName(name);
   validateUiEventPayload(name, payload);
@@ -61,3 +62,4 @@ export function trackUiEvent(
     ts: now.toISOString(),
   };
 }
+

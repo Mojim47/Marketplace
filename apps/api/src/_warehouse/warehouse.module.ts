@@ -1,7 +1,7 @@
-import { Module } from '@nestjs/common';
 import { WarehouseService } from '@libs/warehouse';
-import { WarehouseController } from './warehouse.controller';
+import { Module } from '@nestjs/common';
 import { DatabaseModule } from '../database/database.module';
+import { WarehouseController } from './warehouse.controller';
 
 @Module({
   imports: [DatabaseModule],

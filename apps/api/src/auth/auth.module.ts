@@ -1,19 +1,19 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { AuthService } from './auth.service';
-import { AuthController } from './auth.controller';
-import { JwtStrategy } from './jwt.strategy';
-import { AccountLockoutService } from './account-lockout.service';
-import { EnhancedTOTPService } from './totp.service';
-import { SMSVerificationService } from './sms-verification.service';
 import { DatabaseModule } from '../database/database.module';
 import { SecurityModule } from '../shared/security/security.module';
+import { AccountLockoutService } from './account-lockout.service';
+import { AuthController } from './auth.controller';
+import { AuthService } from './auth.service';
+import { JwtStrategy } from './jwt.strategy';
+import { SMSVerificationService } from './sms-verification.service';
+import { EnhancedTOTPService } from './totp.service';
 
 /**
  * Authentication Module
- * 
+ *
  * Security Features:
  * - RS256 asymmetric JWT signing (2048-bit RSA keys) via JWTManager from libs/security
  * - Proper JWT claims (issuer, audience, not-before)
@@ -21,14 +21,14 @@ import { SecurityModule } from '../shared/security/security.module';
  * - TOTP 2FA support
  * - Brute force protection via BruteForceProtection from libs/security
  * - SMS verification via KavehNegar
- * 
+ *
  * Environment Variables Required:
  * - JWT_PRIVATE_KEY: RSA private key (PEM format)
  * - JWT_PUBLIC_KEY: RSA public key (PEM format)
  * - JWT_ISSUER: Token issuer (e.g., 'nextgen-marketplace')
  * - JWT_AUDIENCE: Token audience (e.g., 'nextgen-api')
  * - KAVEHNEGAR_API_KEY: KavehNegar SMS API key (for production)
- * 
+ *
  * Requirements: 1.1, 1.6, 2.1, 2.2, 2.3, 2.4, 5.1, 5.2, 5.3, 5.4
  */
 @Module({
@@ -50,8 +50,8 @@ import { SecurityModule } from '../shared/security/security.module';
           if (!privateKey || !publicKey) {
             throw new Error(
               'JWT_PRIVATE_KEY and JWT_PUBLIC_KEY are required in production. ' +
-              'Generate RSA keys with: openssl genrsa -out private.pem 2048 && ' +
-              'openssl rsa -in private.pem -pubout -out public.pem'
+                'Generate RSA keys with: openssl genrsa -out private.pem 2048 && ' +
+                'openssl rsa -in private.pem -pubout -out public.pem'
             );
           }
         }
@@ -79,7 +79,7 @@ import { SecurityModule } from '../shared/security/security.module';
         // Development fallback - HS256 with warning
         console.warn(
           '??  WARNING: Using HS256 JWT algorithm. ' +
-          'Configure JWT_PRIVATE_KEY and JWT_PUBLIC_KEY for RS256 in production.'
+            'Configure JWT_PRIVATE_KEY and JWT_PUBLIC_KEY for RS256 in production.'
         );
 
         const secret = config.get<string>('JWT_SECRET');
@@ -107,16 +107,16 @@ import { SecurityModule } from '../shared/security/security.module';
   ],
   controllers: [AuthController],
   providers: [
-    AuthService, 
-    JwtStrategy, 
-    AccountLockoutService, 
+    AuthService,
+    JwtStrategy,
+    AccountLockoutService,
     EnhancedTOTPService,
     SMSVerificationService,
   ],
   exports: [
-    AuthService, 
-    JwtStrategy, 
-    AccountLockoutService, 
+    AuthService,
+    JwtStrategy,
+    AccountLockoutService,
     EnhancedTOTPService,
     SMSVerificationService,
   ],

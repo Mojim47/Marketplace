@@ -1,18 +1,20 @@
+import { randomUUID } from 'node:crypto';
 import {
+  type CallHandler,
+  type ExecutionContext,
   Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
+  type NestInterceptor,
 } from '@nestjs/common';
-import { Observable } from 'rxjs';
-import { tap, catchError } from 'rxjs/operators';
-import { randomUUID } from 'crypto';
+import type { Observable } from 'rxjs';
+import { catchError, tap } from 'rxjs/operators';
 
 /**
  * Extract trace ID from request headers
  */
-function extractTraceIdFromHeaders(headers: Record<string, string | string[] | undefined>): string | null {
-  const traceId = headers['x-trace-id'] || headers['traceparent'];
+function extractTraceIdFromHeaders(
+  headers: Record<string, string | string[] | undefined>
+): string | null {
+  const traceId = headers['x-trace-id'] || headers.traceparent;
   if (typeof traceId === 'string') {
     // If traceparent format (00-traceId-spanId-flags), extract traceId
     if (traceId.includes('-')) {
@@ -27,13 +29,15 @@ function extractTraceIdFromHeaders(headers: Record<string, string | string[] | u
 /**
  * Extract span ID from request headers
  */
-function extractSpanIdFromHeaders(headers: Record<string, string | string[] | undefined>): string | null {
+function extractSpanIdFromHeaders(
+  headers: Record<string, string | string[] | undefined>
+): string | null {
   const spanId = headers['x-span-id'];
   if (typeof spanId === 'string') {
     return spanId;
   }
   // Try to extract from traceparent
-  const traceparent = headers['traceparent'];
+  const traceparent = headers.traceparent;
   if (typeof traceparent === 'string' && traceparent.includes('-')) {
     const parts = traceparent.split('-');
     return parts[2] || null;
@@ -43,13 +47,13 @@ function extractSpanIdFromHeaders(headers: Record<string, string | string[] | un
 
 /**
  * Tracing Interceptor
- * 
+ *
  * Automatically propagates trace IDs across requests:
  * - Extracts trace ID from incoming request headers
  * - Generates new trace ID if not present
  * - Adds trace ID to response headers
  * - Stores trace ID in request for downstream use
- * 
+ *
  * Validates: Requirements 7.4
  */
 @Injectable()
@@ -82,7 +86,7 @@ export class TracingInterceptor implements NestInterceptor {
       tap(() => {
         // Add trace ID to response headers for client correlation
         response.setHeader('X-Trace-Id', traceId);
-        
+
         // Clear trace context after request completes
         this.currentTraceId = null;
         this.currentSpanId = null;
@@ -90,13 +94,13 @@ export class TracingInterceptor implements NestInterceptor {
       catchError((error) => {
         // Add trace ID to error response headers
         response.setHeader('X-Trace-Id', traceId);
-        
+
         // Clear trace context after request completes
         this.currentTraceId = null;
         this.currentSpanId = null;
 
         throw error;
-      }),
+      })
     );
   }
 }

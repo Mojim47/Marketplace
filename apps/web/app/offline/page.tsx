@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { Button, Container, GlassCard, SectionTitle } from "@/components/ui";
+import { Button, Container, GlassCard, SectionTitle } from '@/components/ui';
 
 export default function OfflinePage() {
   return (
@@ -19,9 +19,9 @@ export default function OfflinePage() {
 
         <div className="mt-8 grid gap-4 lg:grid-cols-3">
           {[
-            "برخي صفحات ذخيره شده و قابل مشاهده‌اند.",
-            "سبد خريد و علاقه‌مندي‌ها حفظ مي‌شوند.",
-            "پس از اتصال، داده‌ها به‌روزرساني مي‌شوند.",
+            'برخي صفحات ذخيره شده و قابل مشاهده‌اند.',
+            'سبد خريد و علاقه‌مندي‌ها حفظ مي‌شوند.',
+            'پس از اتصال، داده‌ها به‌روزرساني مي‌شوند.',
           ].map((item) => (
             <GlassCard key={item} className="rounded-2xl p-4 text-sm text-slate-300">
               {item}
@@ -32,4 +32,3 @@ export default function OfflinePage() {
     </div>
   );
 }
-

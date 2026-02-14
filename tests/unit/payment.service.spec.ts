@@ -1,11 +1,3 @@
-/**
- * PaymentService Unit Tests
- * Payment Processing & Zarinpal Integration
- *
- * @module test/unit/payment.service.spec
- */
-
-import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, InternalServerErrorException } from '@nestjs/common';
 
 describe('PaymentService', () => {
@@ -120,7 +112,7 @@ describe('PaymentService', () => {
     });
 
     it('should handle network errors gracefully', () => {
-      const handleNetworkError = (error: Error) => {
+      const handleNetworkError = (_error: Error) => {
         throw new InternalServerErrorException(
           'Payment gateway unavailable. Please try again later.'
         );
@@ -219,7 +211,7 @@ describe('PaymentService', () => {
 
     it('should format amount with Persian number separators', () => {
       const formatPersianAmount = (amount: number): string => {
-        return amount.toLocaleString('fa-IR') + ' تومان';
+        return `${amount.toLocaleString('fa-IR')} تومان`;
       };
 
       // Note: toLocaleString may vary by environment

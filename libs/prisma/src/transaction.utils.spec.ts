@@ -12,18 +12,17 @@
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as fc from 'fast-check';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  executeTransaction,
-  executeFinancialTransaction,
-  executeBatchTransaction,
-  executeReadOnlyTransaction,
-  withOptimisticLock,
+  FINANCIAL_TRANSACTION_OPTIONS,
   IsolationLevel,
   OptimisticLockError,
-  TransactionResult,
-  FINANCIAL_TRANSACTION_OPTIONS,
+  executeBatchTransaction,
+  executeFinancialTransaction,
+  executeReadOnlyTransaction,
+  executeTransaction,
+  withOptimisticLock,
 } from './transaction.utils';
 
 // Mock PrismaClient type
@@ -336,7 +335,9 @@ describe('Transaction Utils - Property Tests', () => {
           fc.integer({ min: 1, max: 100 }),
           async (expectedVersion, actualVersion) => {
             // Skip if versions match
-            if (expectedVersion === actualVersion) return;
+            if (expectedVersion === actualVersion) {
+              return;
+            }
 
             const mockEntity = { id: 'test-id', version: actualVersion };
 
@@ -355,7 +356,7 @@ describe('Transaction Utils - Property Tests', () => {
               'testModel',
               'test-id',
               expectedVersion,
-              async (tx, entity) => entity
+              async (_tx, entity) => entity
             );
 
             expect(result.success).toBe(false);
@@ -378,7 +379,9 @@ describe('Transaction Utils - Property Tests', () => {
           }
 
           const result = await executeTransaction(mockPrisma as any, async () => {
-            if (!shouldSucceed) throw new Error('Test error');
+            if (!shouldSucceed) {
+              throw new Error('Test error');
+            }
             return data;
           });
 

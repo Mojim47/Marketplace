@@ -2,7 +2,7 @@
  * ???????????????????????????????????????????????????????????????????????????
  * B2B Integration Service - Unified B2B Operations
  * ???????????????????????????????????????????????????????????????????????????
- * 
+ *
  * Integrates all B2B calculator functions into a cohesive NestJS service
  * ???????????????????????????????????????????????????????????????????????????
  */
@@ -11,65 +11,62 @@ import { Injectable, Logger } from '@nestjs/common';
 
 // Import calculator functions from libs
 import {
-  calculatePriceWithAudit,
-  type PriceCalculationInput,
+  type DealerTier,
   type PriceCalculationContext,
+  type PriceCalculationInput,
   type PriceCalculationWithAuditResult,
-  DealerTier,
+  calculatePriceWithAudit,
 } from '@libs/pricing';
 
 import {
+  type CreditCheckForConversion,
+  type PriceFreezeResult,
+  type ProformaStatus,
+  type StockLockResult,
+  canConvertToOrder,
+  checkCreditForConversion,
   freezePrices,
   lockStock,
-  checkCreditForConversion,
-  canConvertToOrder,
-  type PriceFreezeResult,
-  type StockLockResult,
-  type CreditCheckForConversion,
-  ProformaStatus,
 } from '@libs/proforma';
 
 import {
-  validateSayadiNumber,
-  isValidTransition,
-  calculateBounceImpact,
+  type ChequeStatus,
   applyBouncePenalty,
+  calculateBounceImpact,
   calculateNewDebt,
+  isValidTransition,
   shouldBlockCredit,
-  ChequeStatus,
+  validateSayadiNumber,
 } from '@libs/cheque';
 
 import {
-  calculateRiskScoreFromEvents,
-  calculateAvailableCredit,
-  isCreditSufficient,
-  calculateVouchPenalty,
-  adjustRiskScore,
+  type FinancialEventType,
   type RiskScoreCalculation,
-  FinancialEventType,
+  adjustRiskScore,
+  calculateAvailableCredit,
+  calculateRiskScoreFromEvents,
+  calculateVouchPenalty,
+  isCreditSufficient,
 } from '@libs/credit';
 
 import {
-  determineApprovalRequirement,
-  isWorkflowComplete,
-  getRequiredSteps,
+  type ApprovalAction,
   type ApprovalRequirement,
-  WorkflowStatus,
-  ApprovalAction,
+  type WorkflowStatus,
+  determineApprovalRequirement,
+  getRequiredSteps,
+  isWorkflowComplete,
 } from '@libs/workflow';
 
-import {
-  trackPriceChange,
-  type PriceChangeTracking,
-} from '@libs/audit';
+import { type PriceChangeTracking, trackPriceChange } from '@libs/audit';
 
 import {
+  ACCOUNT_NAMES,
+  type CreateLedgerEntryDto,
+  type GeneralLedgerEntry,
   createOrderLedgerEntries,
   createPaymentLedgerEntries,
   validateDoubleEntry,
-  type CreateLedgerEntryDto,
-  type GeneralLedgerEntry,
-  ACCOUNT_NAMES,
 } from '@libs/ledger';
 
 // ???????????????????????????????????????????????????????????????????????????
@@ -95,7 +92,10 @@ export interface B2BProformaRequest {
     productName: string;
     quantity: number;
   }>;
-  currentPrices: Map<string, { basePrice: number; tierDiscount: number; volumeDiscount: number; finalPrice: number }>;
+  currentPrices: Map<
+    string,
+    { basePrice: number; tierDiscount: number; volumeDiscount: number; finalPrice: number }
+  >;
   availableStock: Map<string, number>;
   validityHours?: number;
 }
@@ -146,8 +146,10 @@ export class B2BIntegrationService {
     };
 
     const result = calculatePriceWithAudit(input, context);
-    
-    this.logger.log(`Price calculated: ${result.priceResult.finalPrice} for tier ${request.tierLevel}`);
+
+    this.logger.log(
+      `Price calculated: ${result.priceResult.finalPrice} for tier ${request.tierLevel}`
+    );
     return result;
   }
 
@@ -166,7 +168,7 @@ export class B2BIntegrationService {
     const priceFreezeResult = freezePrices(
       request.items,
       request.currentPrices,
-      request.validityHours,
+      request.validityHours
     );
 
     // Lock stock
@@ -174,10 +176,12 @@ export class B2BIntegrationService {
       proformaId,
       request.items,
       request.availableStock,
-      request.validityHours,
+      request.validityHours
     );
 
-    this.logger.log(`Proforma ${proformaId}: prices frozen=${priceFreezeResult.frozen}, stock locked=${stockLockResult.locked}`);
+    this.logger.log(
+      `Proforma ${proformaId}: prices frozen=${priceFreezeResult.frozen}, stock locked=${stockLockResult.locked}`
+    );
 
     return {
       priceFreezeResult,
@@ -191,14 +195,14 @@ export class B2BIntegrationService {
    */
   validateCheque(request: B2BChequeRequest): { valid: boolean; error?: string } {
     this.logger.log(`Validating cheque ${request.sayadiNumber}`);
-    
+
     const existingNumbers = request.existingSayadiNumbers ?? new Set<string>();
     const result = validateSayadiNumber(
-      request.sayadiNumber, 
-      request.organizationId, 
+      request.sayadiNumber,
+      request.organizationId,
       existingNumbers
     );
-    
+
     this.logger.log(`Cheque validation: valid=${result.valid}`);
     return result;
   }
@@ -216,18 +220,18 @@ export class B2BIntegrationService {
   handleBouncedCheque(
     organizationId: string,
     currentRiskScore: number,
-    bouncedCount: number = 1,
+    bouncedCount = 1
   ): {
     bounceImpact: { riskScorePenalty: number; creditBlocked: boolean; organizationId: string };
     newRiskScore: number;
     creditBlocked: boolean;
   } {
     this.logger.log(`Processing bounced cheque for organization ${organizationId}`);
-    
+
     const bounceImpact = calculateBounceImpact(organizationId);
     const newRiskScore = applyBouncePenalty(currentRiskScore);
     const creditBlocked = shouldBlockCredit(bouncedCount);
-    
+
     return {
       bounceImpact,
       newRiskScore,
@@ -238,15 +242,18 @@ export class B2BIntegrationService {
   /**
    * Process cheque cash and reduce debt
    */
-  processChequePayment(currentDebt: number, chequeAmount: number): {
+  processChequePayment(
+    currentDebt: number,
+    chequeAmount: number
+  ): {
     newDebt: number;
     debtReduction: number;
   } {
     this.logger.log(`Processing cheque payment: ${chequeAmount}`);
-    
+
     const newDebt = calculateNewDebt(currentDebt, chequeAmount);
     const debtReduction = currentDebt - newDebt;
-    
+
     return {
       newDebt,
       debtReduction,
@@ -259,13 +266,15 @@ export class B2BIntegrationService {
   checkCredit(
     creditLimit: number,
     currentDebt: number,
-    requestedAmount: number,
+    requestedAmount: number
   ): { available: number; sufficient: boolean } {
-    this.logger.log(`Checking credit: limit=${creditLimit}, debt=${currentDebt}, requested=${requestedAmount}`);
-    
+    this.logger.log(
+      `Checking credit: limit=${creditLimit}, debt=${currentDebt}, requested=${requestedAmount}`
+    );
+
     const available = calculateAvailableCredit(creditLimit, currentDebt);
     const sufficient = isCreditSufficient(available, requestedAmount);
-    
+
     return { available, sufficient };
   }
 
@@ -274,7 +283,12 @@ export class B2BIntegrationService {
    */
   calculateRisk(
     baseScore: number,
-    events: Array<{ id: string; eventType: FinancialEventType; impactValue: number; occurredAt: Date }>,
+    events: Array<{
+      id: string;
+      eventType: FinancialEventType;
+      impactValue: number;
+      occurredAt: Date;
+    }>
   ): RiskScoreCalculation {
     return calculateRiskScoreFromEvents(baseScore, events);
   }
@@ -305,8 +319,16 @@ export class B2BIntegrationService {
    * Check if workflow is complete
    */
   checkWorkflowComplete(
-    instance: { status: WorkflowStatus; approvals: Array<{ stepOrder: number; action: ApprovalAction; userId: string; timestamp: Date }> },
-    requiredSteps: number,
+    instance: {
+      status: WorkflowStatus;
+      approvals: Array<{
+        stepOrder: number;
+        action: ApprovalAction;
+        userId: string;
+        timestamp: Date;
+      }>;
+    },
+    requiredSteps: number
   ): boolean {
     return isWorkflowComplete(instance, requiredSteps);
   }
@@ -321,16 +343,13 @@ export class B2BIntegrationService {
   } {
     this.logger.log(`Converting proforma ${request.proformaId} to order`);
 
-    const creditCheck = checkCreditForConversion(
-      request.availableCredit,
-      request.totalAmount,
-    );
+    const creditCheck = checkCreditForConversion(request.availableCredit, request.totalAmount);
 
     const conversionCheck = canConvertToOrder(
       request.proformaStatus,
       request.validUntil,
       request.availableCredit,
-      request.totalAmount,
+      request.totalAmount
     );
 
     return {
@@ -347,12 +366,12 @@ export class B2BIntegrationService {
     orderId: string,
     organizationId: string,
     orderTotal: number,
-    vatAmount: number,
+    vatAmount: number
   ): { entries: CreateLedgerEntryDto[]; balanced: boolean } {
     this.logger.log(`Creating ledger entries for order ${orderId}`);
 
     const entries = createOrderLedgerEntries(orderId, orderTotal, vatAmount, organizationId);
-    
+
     // Convert to GeneralLedgerEntry for validation
     const now = new Date();
     const ledgerEntries: GeneralLedgerEntry[] = entries.map((entry, i) => ({
@@ -382,12 +401,12 @@ export class B2BIntegrationService {
     paymentId: string,
     organizationId: string,
     amount: number,
-    paymentMethod: 'CASH' | 'BANK' = 'BANK',
+    paymentMethod: 'CASH' | 'BANK' = 'BANK'
   ): { entries: CreateLedgerEntryDto[]; balanced: boolean } {
     this.logger.log(`Creating ledger entries for payment ${paymentId}`);
 
     const entries = createPaymentLedgerEntries(paymentId, amount, paymentMethod, organizationId);
-    
+
     // Convert to GeneralLedgerEntry for validation
     const now = new Date();
     const ledgerEntries: GeneralLedgerEntry[] = entries.map((entry, i) => ({

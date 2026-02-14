@@ -1,20 +1,29 @@
-﻿import { Injectable, UnauthorizedException, ConflictException, Logger, HttpException, HttpStatus, Inject, Optional } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../database/prisma.service';
+﻿import { randomUUID } from 'node:crypto';
+import {
+  ConflictException,
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+  Logger,
+  Optional,
+  UnauthorizedException,
+} from '@nestjs/common';
+import type { ConfigService } from '@nestjs/config';
+import type { JwtService } from '@nestjs/jwt';
+import type { BruteForceProtection, JWTManager } from '@nextgen/security';
 import * as argon2 from 'argon2';
-import { randomUUID } from 'crypto';
-import { AccountLockoutService } from './account-lockout.service';
-import { EnhancedTOTPService } from './totp.service';
-import { JWTManager, BruteForceProtection } from '@nextgen/security';
+import type { PrismaService } from '../database/prisma.service';
 import { SECURITY_TOKENS } from '../shared/security/tokens';
+import type { AccountLockoutService } from './account-lockout.service';
+import type { EnhancedTOTPService } from './totp.service';
 
 /**
  * Argon2id Configuration - OWASP Recommended Settings
  * Memory: 65536 KiB (64 MiB)
  * Time: 3 iterations
  * Parallelism: 4 threads
- * 
+ *
  * These settings provide strong protection against:
  * - GPU-based attacks
  * - Side-channel attacks
@@ -22,10 +31,10 @@ import { SECURITY_TOKENS } from '../shared/security/tokens';
  */
 const ARGON2_CONFIG: argon2.Options = {
   type: argon2.argon2id,
-  memoryCost: 65536,  // 64 MiB - OWASP minimum recommendation
-  timeCost: 3,        // 3 iterations - OWASP minimum recommendation
-  parallelism: 4,     // 4 threads
-  hashLength: 32,     // 256-bit hash output
+  memoryCost: 65536, // 64 MiB - OWASP minimum recommendation
+  timeCost: 3, // 3 iterations - OWASP minimum recommendation
+  parallelism: 4, // 4 threads
+  hashLength: 32, // 256-bit hash output
 };
 
 export interface LoginDto {
@@ -68,10 +77,12 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly lockoutService: AccountLockoutService,
     private readonly totpService: EnhancedTOTPService,
-    @Optional() @Inject(SECURITY_TOKENS.JWT_MANAGER)
+    @Optional()
+    @Inject(SECURITY_TOKENS.JWT_MANAGER)
     private readonly jwtManager?: JWTManager,
-    @Optional() @Inject(SECURITY_TOKENS.BRUTE_FORCE)
-    private readonly bruteForceProtection?: BruteForceProtection,
+    @Optional()
+    @Inject(SECURITY_TOKENS.BRUTE_FORCE)
+    private readonly bruteForceProtection?: BruteForceProtection
   ) {
     this.jwtIssuer = this.configService?.get<string>('JWT_ISSUER') || 'nextgen-marketplace';
     this.jwtAudience = this.configService?.get<string>('JWT_AUDIENCE') || 'nextgen-api';
@@ -80,7 +91,7 @@ export class AuthService {
   /**
    * Generate JWT token with proper claims using JWTManager from libs/security
    * Falls back to NestJS JwtService if JWTManager is not available
-   * 
+   *
    * Standard claims included:
    * - sub: Subject (user ID)
    * - iss: Issuer (configured via JWT_ISSUER)
@@ -106,13 +117,15 @@ export class AuthService {
         });
         return tokenResult.accessToken;
       } catch (error) {
-        this.logger.warn(`JWTManager token generation failed, falling back to JwtService: ${error.message}`);
+        this.logger.warn(
+          `JWTManager token generation failed, falling back to JwtService: ${error.message}`
+        );
       }
     }
 
     // Fallback to NestJS JwtService
     const now = Math.floor(Date.now() / 1000);
-    
+
     return this.jwtService.sign({
       ...payload,
       jti: randomUUID(), // Unique token ID for revocation support
@@ -158,7 +171,9 @@ export class AuthService {
   /**
    * Verify and refresh an access token using refresh token
    */
-  async refreshAccessToken(refreshToken: string): Promise<{ accessToken: string; refreshToken: string; expiresAt: number } | null> {
+  async refreshAccessToken(
+    refreshToken: string
+  ): Promise<{ accessToken: string; refreshToken: string; expiresAt: number } | null> {
     if (!this.jwtManager) {
       this.logger.warn('JWTManager not available for token refresh');
       return null;
@@ -206,7 +221,10 @@ export class AuthService {
    * Check brute force protection status for an identifier
    * Uses BruteForceProtection from libs/security if available
    */
-  private checkBruteForceStatus(identifier: string, ipAddress: string): { allowed: boolean; remainingAttempts: number; blockedUntil?: Date } {
+  private checkBruteForceStatus(
+    identifier: string,
+    ipAddress: string
+  ): { allowed: boolean; remainingAttempts: number; blockedUntil?: Date } {
     if (this.bruteForceProtection) {
       const combinedKey = `${ipAddress}:${identifier}`.toLowerCase();
       if (this.bruteForceProtection.isBlocked(combinedKey)) {
@@ -252,7 +270,7 @@ export class AuthService {
     try {
       // argon2.verify uses constant-time comparison internally
       return await argon2.verify(hash, password);
-    } catch (error) {
+    } catch (_error) {
       // Log error but don't expose details to prevent information leakage
       this.logger.warn('Password verification failed - invalid hash format');
       return false;
@@ -276,21 +294,21 @@ export class AuthService {
   }
   async login(dto: LoginDto): Promise<AuthResponse> {
     const ipAddress = dto.ipAddress || '0.0.0.0';
-    
+
     // Check brute force protection from libs/security first
     const bruteForceStatus = this.checkBruteForceStatus(dto.email, ipAddress);
     if (!bruteForceStatus.allowed) {
-      const remainingMinutes = bruteForceStatus.blockedUntil 
+      const remainingMinutes = bruteForceStatus.blockedUntil
         ? Math.ceil((bruteForceStatus.blockedUntil.getTime() - Date.now()) / 60000)
         : 15;
-      
+
       throw new HttpException(
         {
           statusCode: HttpStatus.TOO_MANY_REQUESTS,
           message: `حساب شما به دليل تلاش‌هاي ناموفق متعدد قفل شده است. لطفاً ${remainingMinutes} دقيقه ديگر تلاش کنيد.`,
           lockedUntil: bruteForceStatus.blockedUntil,
         },
-        HttpStatus.TOO_MANY_REQUESTS,
+        HttpStatus.TOO_MANY_REQUESTS
       );
     }
 
@@ -298,7 +316,7 @@ export class AuthService {
     const lockoutCheck = await this.lockoutService.recordLoginAttempt(
       dto.email,
       ipAddress,
-      false, // We'll update this after verification
+      false // We'll update this after verification
     );
 
     // If account is locked, throw immediately
@@ -309,7 +327,7 @@ export class AuthService {
           message: lockoutCheck.message,
           lockedUntil: lockoutCheck.lockedUntil,
         },
-        HttpStatus.TOO_MANY_REQUESTS,
+        HttpStatus.TOO_MANY_REQUESTS
       );
     }
 
@@ -349,10 +367,7 @@ export class AuthService {
           throw new UnauthorizedException('کد 2FA الزامي است');
         }
 
-        const verifyResult = this.totpService.verify(
-          admin.twoFactorSecret!,
-          dto.totpCode,
-        );
+        const verifyResult = this.totpService.verify(admin.twoFactorSecret!, dto.totpCode);
 
         if (!verifyResult.valid) {
           await this.recordFailedLogin(dto.email, ipAddress, 'INVALID_2FA');
@@ -426,7 +441,9 @@ export class AuthService {
     if (user.isBanned) {
       await this.recordFailedLogin(dto.email, ipAddress, 'ACCOUNT_BANNED');
       this.recordBruteForceAttempt(dto.email, ipAddress, false);
-      throw new UnauthorizedException(`حساب کاربري مسدود شده است. دليل: ${user.bannedReason || 'نامشخص'}`);
+      throw new UnauthorizedException(
+        `حساب کاربري مسدود شده است. دليل: ${user.bannedReason || 'نامشخص'}`
+      );
     }
 
     // Successful login - clear failed attempts
@@ -463,7 +480,7 @@ export class AuthService {
   private async recordFailedLogin(
     identifier: string,
     ipAddress: string,
-    reason: string,
+    reason: string
   ): Promise<void> {
     await this.prisma.loginAttempt.create({
       data: {
@@ -479,16 +496,13 @@ export class AuthService {
    * Delay helper for exponential backoff
    */
   private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   async register(dto: RegisterDto): Promise<AuthResponse> {
     const existingUser = await this.prisma.user.findFirst({
       where: {
-        OR: [
-          { email: dto.email },
-          { mobile: dto.mobile },
-        ],
+        OR: [{ email: dto.email }, { mobile: dto.mobile }],
       },
     });
 
@@ -672,7 +686,11 @@ export class AuthService {
    * Disable 2FA for a user
    * Requirements: 2.4 - Delete TOTP secret when disabled
    */
-  async disable2FA(userId: string, password: string, totpCode?: string): Promise<{ success: boolean }> {
+  async disable2FA(
+    userId: string,
+    password: string,
+    totpCode?: string
+  ): Promise<{ success: boolean }> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -782,7 +800,10 @@ export class AuthService {
   /**
    * Regenerate backup codes
    */
-  async regenerateBackupCodes(userId: string, password: string): Promise<{ backupCodes: string[] }> {
+  async regenerateBackupCodes(
+    userId: string,
+    password: string
+  ): Promise<{ backupCodes: string[] }> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -820,4 +841,3 @@ export class AuthService {
     return { backupCodes: codes };
   }
 }
-

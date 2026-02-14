@@ -11,8 +11,8 @@ db.createUser({
   pwd: 'nextgen_app_secret_2024',
   roles: [
     { role: 'readWrite', db: 'nextgen_catalog' },
-    { role: 'dbAdmin', db: 'nextgen_catalog' }
-  ]
+    { role: 'dbAdmin', db: 'nextgen_catalog' },
+  ],
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -38,10 +38,10 @@ db.createCollection('products', {
         images: { bsonType: 'array', items: { bsonType: 'string' } },
         tags: { bsonType: 'array', items: { bsonType: 'string' } },
         createdAt: { bsonType: 'date' },
-        updatedAt: { bsonType: 'date' }
-      }
-    }
-  }
+        updatedAt: { bsonType: 'date' },
+      },
+    },
+  },
 });
 
 // Categories Collection (Hierarchical)
@@ -60,10 +60,10 @@ db.createCollection('categories', {
         attributeSchema: { bsonType: 'array' },
         isActive: { bsonType: 'bool' },
         createdAt: { bsonType: 'date' },
-        updatedAt: { bsonType: 'date' }
-      }
-    }
-  }
+        updatedAt: { bsonType: 'date' },
+      },
+    },
+  },
 });
 
 // Reviews Collection
@@ -82,10 +82,10 @@ db.createCollection('reviews', {
         isVerifiedPurchase: { bsonType: 'bool' },
         status: { enum: ['pending', 'approved', 'rejected'] },
         createdAt: { bsonType: 'date' },
-        updatedAt: { bsonType: 'date' }
-      }
-    }
-  }
+        updatedAt: { bsonType: 'date' },
+      },
+    },
+  },
 });
 
 // AI Embeddings Collection
@@ -99,10 +99,10 @@ db.createCollection('ai_embeddings', {
         productId: { bsonType: 'string' },
         embedding: { bsonType: 'array', items: { bsonType: 'double' } },
         embeddingModel: { bsonType: 'string' },
-        lastUpdated: { bsonType: 'date' }
-      }
-    }
-  }
+        lastUpdated: { bsonType: 'date' },
+      },
+    },
+  },
 });
 
 // Inventory Logs Collection (Time-series like)
@@ -121,10 +121,10 @@ db.createCollection('inventory_logs', {
         newStock: { bsonType: 'int' },
         reason: { bsonType: 'string' },
         userId: { bsonType: ['string', 'null'] },
-        createdAt: { bsonType: 'date' }
-      }
-    }
-  }
+        createdAt: { bsonType: 'date' },
+      },
+    },
+  },
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -136,10 +136,13 @@ db.products.createIndex({ slug: 1 }, { unique: true });
 db.products.createIndex({ vendorId: 1, status: 1 });
 db.products.createIndex({ categoryId: 1, status: 1 });
 db.products.createIndex({ status: 1, price: 1 });
-db.products.createIndex({ name: 'text', 'specifications.brand': 'text', tags: 'text' }, { 
-  default_language: 'none',
-  name: 'product_search_index'
-});
+db.products.createIndex(
+  { name: 'text', 'specifications.brand': 'text', tags: 'text' },
+  {
+    default_language: 'none',
+    name: 'product_search_index',
+  }
+);
 db.products.createIndex({ 'attributes.brand': 1 });
 db.products.createIndex({ createdAt: -1 });
 db.products.createIndex({ updatedAt: -1 });

@@ -17,11 +17,11 @@
  * @module @nextgen/validation
  */
 
-import { Injectable, PipeTransform, ArgumentMetadata, Logger } from '@nestjs/common';
-import { z, ZodSchema, ZodError, ZodIssue } from 'zod';
+import { type ArgumentMetadata, Injectable, Logger, type PipeTransform } from '@nestjs/common';
+import { ValidationError as ValidationErrorClass } from '@nextgen/errors';
 import DOMPurify from 'dompurify';
 import { JSDOM } from 'jsdom';
-import { ValidationError as ValidationErrorClass } from '@nextgen/errors';
+import { ZodError, type ZodIssue, type ZodSchema } from 'zod';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Types and Interfaces
@@ -48,7 +48,13 @@ export interface SecurityValidationResult {
 }
 
 export interface SecurityViolation {
-  type: 'sql_injection' | 'xss' | 'path_traversal' | 'command_injection' | 'malformed_data' | 'suspicious_pattern';
+  type:
+    | 'sql_injection'
+    | 'xss'
+    | 'path_traversal'
+    | 'command_injection'
+    | 'malformed_data'
+    | 'suspicious_pattern';
   severity: 'low' | 'medium' | 'high' | 'critical';
   field: string;
   originalValue: unknown;
@@ -164,7 +170,17 @@ export class ValidationService {
       maxStringLength: 10000,
       maxArrayLength: 1000,
       maxObjectDepth: 10,
-      allowedFileExtensions: ['.jpg', '.jpeg', '.png', '.gif', '.pdf', '.doc', '.docx', '.glb', '.usdz'],
+      allowedFileExtensions: [
+        '.jpg',
+        '.jpeg',
+        '.png',
+        '.gif',
+        '.pdf',
+        '.doc',
+        '.docx',
+        '.glb',
+        '.usdz',
+      ],
       blockedPatterns: [
         /eval\s*\(/gi,
         /Function\s*\(/gi,
@@ -269,10 +285,7 @@ export class ValidationService {
   /**
    * Main security validation method - validates and sanitizes input
    */
-  async validateAndSanitize(
-    data: unknown,
-    fieldName: string = 'input'
-  ): Promise<SecurityValidationResult> {
+  async validateAndSanitize(data: unknown, fieldName = 'input'): Promise<SecurityValidationResult> {
     const violations: SecurityViolation[] = [];
     let riskScore = 0;
     let sanitizedValue = data;
@@ -309,7 +322,7 @@ export class ValidationService {
         return score + severityScore[violation.severity];
       }, 0);
 
-      const isValid = violations.filter(v => v.blocked).length === 0;
+      const isValid = violations.filter((v) => v.blocked).length === 0;
 
       return {
         isValid,
@@ -321,14 +334,16 @@ export class ValidationService {
       this.logger.error('Security validation error:', error);
       return {
         isValid: false,
-        violations: [{
-          type: 'malformed_data',
-          severity: 'high',
-          field: fieldName,
-          originalValue: data,
-          description: 'Security validation failed',
-          blocked: true,
-        }],
+        violations: [
+          {
+            type: 'malformed_data',
+            severity: 'high',
+            field: fieldName,
+            originalValue: data,
+            description: 'Security validation failed',
+            blocked: true,
+          },
+        ],
         riskScore: 10,
       };
     }
@@ -339,7 +354,7 @@ export class ValidationService {
    */
   private detectSQLInjection(data: unknown, fieldName: string): SecurityViolation[] {
     const violations: SecurityViolation[] = [];
-    
+
     if (typeof data === 'string') {
       for (const pattern of this.sqlPatterns) {
         if (pattern.test(data)) {
@@ -355,14 +370,17 @@ export class ValidationService {
         }
       }
     }
-    
+
     return violations;
   }
 
   /**
    * Detect and sanitize XSS
    */
-  private detectAndSanitizeXSS(data: unknown, fieldName: string): { violations: SecurityViolation[], sanitized: unknown } {
+  private detectAndSanitizeXSS(
+    data: unknown,
+    fieldName: string
+  ): { violations: SecurityViolation[]; sanitized: unknown } {
     const violations: SecurityViolation[] = [];
     let sanitized: unknown = data;
 
@@ -398,7 +416,7 @@ export class ValidationService {
    */
   private detectPathTraversal(data: unknown, fieldName: string): SecurityViolation[] {
     const violations: SecurityViolation[] = [];
-    
+
     if (typeof data === 'string') {
       for (const pattern of this.pathTraversalPatterns) {
         if (pattern.test(data)) {
@@ -414,7 +432,7 @@ export class ValidationService {
         }
       }
     }
-    
+
     return violations;
   }
 
@@ -423,7 +441,7 @@ export class ValidationService {
    */
   private detectCommandInjection(data: unknown, fieldName: string): SecurityViolation[] {
     const violations: SecurityViolation[] = [];
-    
+
     if (typeof data === 'string') {
       for (const pattern of this.commandInjectionPatterns) {
         if (pattern.test(data)) {
@@ -439,7 +457,7 @@ export class ValidationService {
         }
       }
     }
-    
+
     return violations;
   }
 
@@ -463,7 +481,7 @@ export class ValidationService {
 export class ZodValidationPipe implements PipeTransform {
   constructor(private schema: ZodSchema) {}
 
-  transform(value: unknown, metadata: ArgumentMetadata) {
+  transform(value: unknown, _metadata: ArgumentMetadata) {
     const validationService = new ValidationService();
     return validationService.validateOrThrow(this.schema, value);
   }

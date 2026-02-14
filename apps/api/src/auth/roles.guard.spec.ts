@@ -1,7 +1,7 @@
+import { type ExecutionContext, ForbiddenException } from '@nestjs/common';
+import type { Reflector } from '@nestjs/core';
 import { describe, expect, it, vi } from 'vitest';
-import { ForbiddenException, ExecutionContext } from '@nestjs/common';
-import { RolesGuard, ROLES_KEY } from './roles.guard';
-import { Reflector } from '@nestjs/core';
+import { RolesGuard } from './roles.guard';
 
 const createContext = (user?: { role?: string }) => {
   const request = {

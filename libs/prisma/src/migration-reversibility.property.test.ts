@@ -13,10 +13,10 @@
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
-import { describe, it, expect, beforeAll } from 'vitest';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import * as fc from 'fast-check';
-import * as fs from 'fs';
-import * as path from 'path';
+import { describe, expect, it } from 'vitest';
 
 /**
  * Migration operation types that should be reversible
@@ -151,20 +151,28 @@ function isValidMigrationSQL(sql: string): boolean {
   const trimmed = sql.trim();
 
   // Should not be empty
-  if (!trimmed) return false;
+  if (!trimmed) {
+    return false;
+  }
 
   // Should not have unbalanced parentheses
   const openParens = (trimmed.match(/\(/g) || []).length;
   const closeParens = (trimmed.match(/\)/g) || []).length;
-  if (openParens !== closeParens) return false;
+  if (openParens !== closeParens) {
+    return false;
+  }
 
   // Should not have unbalanced quotes
   const singleQuotes = (trimmed.match(/'/g) || []).length;
-  if (singleQuotes % 2 !== 0) return false;
+  if (singleQuotes % 2 !== 0) {
+    return false;
+  }
 
   // Should contain at least one SQL keyword
   const hasKeyword = /\b(CREATE|ALTER|DROP|INSERT|UPDATE|DELETE|SELECT)\b/i.test(trimmed);
-  if (!hasKeyword) return false;
+  if (!hasKeyword) {
+    return false;
+  }
 
   return true;
 }

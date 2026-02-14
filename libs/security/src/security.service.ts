@@ -7,11 +7,11 @@ export class SecurityService {
   async checkAccess(
     context: { tenantId: string; userId?: string; roles: string[] },
     permission: string,
-    resource: string
+    _resource: string
   ): Promise<{ allowed: boolean; reason?: string }> {
     // Basic permission check - in production, implement proper RBAC
     const adminRoles = ['ADMIN', 'SUPER_ADMIN'];
-    if (context.roles.some(role => adminRoles.includes(role))) {
+    if (context.roles.some((role) => adminRoles.includes(role))) {
       return { allowed: true };
     }
 

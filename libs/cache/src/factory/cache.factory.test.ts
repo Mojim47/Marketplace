@@ -2,10 +2,10 @@
 // Cache Factory Tests
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { CacheFactory } from './cache.factory';
-import { CacheProviderType } from '../interfaces/cache.interface';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryCacheAdapter } from '../adapters/memory.adapter';
+import { CacheProviderType } from '../interfaces/cache.interface';
+import { CacheFactory } from './cache.factory';
 
 describe('CacheFactory', () => {
   let factory: CacheFactory;
@@ -45,8 +45,9 @@ describe('CacheFactory', () => {
     });
 
     it('should throw for unsupported provider', () => {
-      expect(() => factory.create({ provider: 'invalid' as any }))
-        .toThrow('Unsupported cache provider');
+      expect(() => factory.create({ provider: 'invalid' as any })).toThrow(
+        'Unsupported cache provider'
+      );
     });
   });
 
@@ -61,8 +62,7 @@ describe('CacheFactory', () => {
     });
 
     it('should throw when provider env is missing', () => {
-      expect(() => factory.createFromEnv('MISSING'))
-        .toThrow('Missing environment variable');
+      expect(() => factory.createFromEnv('MISSING')).toThrow('Missing environment variable');
     });
   });
 
@@ -107,9 +107,9 @@ describe('CacheFactory', () => {
     it('should clear all providers', async () => {
       factory.create({ provider: CacheProviderType.MEMORY }, 'p1');
       factory.create({ provider: CacheProviderType.MEMORY }, 'p2');
-      
+
       await factory.clear();
-      
+
       expect(factory.has('p1')).toBe(false);
       expect(factory.has('p2')).toBe(false);
     });
@@ -119,7 +119,7 @@ describe('CacheFactory', () => {
     it('should return all provider names', () => {
       factory.create({ provider: CacheProviderType.MEMORY }, 'n1');
       factory.create({ provider: CacheProviderType.MEMORY }, 'n2');
-      
+
       const names = factory.getProviderNames();
       expect(names).toContain('n1');
       expect(names).toContain('n2');

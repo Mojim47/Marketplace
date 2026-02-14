@@ -4,15 +4,15 @@
 // Implements: ∃log∈L: immutable(log) ∧ contains(log, hash(a)) ∧ timestamp(log) ≤ T
 // ═══════════════════════════════════════════════════════════════════════════
 
+import * as crypto from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
-import * as crypto from 'crypto';
 import {
-  SC3FailureCategory,
   type ImmutableLog,
   type ImmutableLogEntry,
   type LogEntryType,
   type LogVerificationResult,
   type SC3Failure,
+  SC3FailureCategory,
 } from '../types';
 
 /**
@@ -58,7 +58,7 @@ export class ImmutableLogService {
    */
   async verifyLog(
     log: ImmutableLog,
-    options: LogVerificationOptions,
+    options: LogVerificationOptions
   ): Promise<{ result: LogVerificationResult; failures: SC3Failure[] }> {
     const failures: SC3Failure[] = [];
     const missingArtifacts: string[] = [];
@@ -81,7 +81,7 @@ export class ImmutableLogService {
     // 2. Verify all required artifact hashes are in log
     // contains(log, hash(a))
     for (const hash of options.required_artifact_hashes) {
-      const found = log.entries.some(e => e.artifact_hash === hash);
+      const found = log.entries.some((e) => e.artifact_hash === hash);
       if (!found) {
         missingArtifacts.push(hash);
         failures.push({
@@ -170,21 +170,21 @@ export class ImmutableLogService {
 
       // Compute expected previous hash
       const expectedPreviousHash = this.computeEntryHash(previousEntry);
-      
+
       if (currentEntry.previous_hash !== expectedPreviousHash) {
-        this.logger.warn(
-          `Log ${log.id} chain broken at entry ${currentEntry.id}`,
-          { expected: expectedPreviousHash, actual: currentEntry.previous_hash },
-        );
+        this.logger.warn(`Log ${log.id} chain broken at entry ${currentEntry.id}`, {
+          expected: expectedPreviousHash,
+          actual: currentEntry.previous_hash,
+        });
         return false;
       }
 
       // Verify sequence numbers are consecutive
       if (currentEntry.sequence !== previousEntry.sequence + 1) {
-        this.logger.warn(
-          `Log ${log.id} sequence broken at entry ${currentEntry.id}`,
-          { expected: previousEntry.sequence + 1, actual: currentEntry.sequence },
-        );
+        this.logger.warn(`Log ${log.id} sequence broken at entry ${currentEntry.id}`, {
+          expected: previousEntry.sequence + 1,
+          actual: currentEntry.sequence,
+        });
         return false;
       }
     }
@@ -192,7 +192,7 @@ export class ImmutableLogService {
     // Verify head hash matches last entry
     const lastEntry = log.entries[log.entries.length - 1];
     const expectedHeadHash = this.computeEntryHash(lastEntry);
-    
+
     if (log.head_hash !== expectedHeadHash) {
       this.logger.warn(`Log ${log.id} head hash mismatch`);
       return false;
@@ -206,14 +206,14 @@ export class ImmutableLogService {
    * contains(log, hash(a))
    */
   containsArtifactHash(log: ImmutableLog, artifactHash: string): boolean {
-    return log.entries.some(entry => entry.artifact_hash === artifactHash);
+    return log.entries.some((entry) => entry.artifact_hash === artifactHash);
   }
 
   /**
    * Get entries for artifact hash
    */
   getEntriesForArtifact(log: ImmutableLog, artifactHash: string): ImmutableLogEntry[] {
-    return log.entries.filter(entry => entry.artifact_hash === artifactHash);
+    return log.entries.filter((entry) => entry.artifact_hash === artifactHash);
   }
 
   /**
@@ -252,9 +252,8 @@ export class ImmutableLogService {
     }
 
     const sequence = log.entries.length;
-    const previousHash = sequence === 0 
-      ? this.getGenesisHash() 
-      : this.computeEntryHash(log.entries[sequence - 1]);
+    const previousHash =
+      sequence === 0 ? this.getGenesisHash() : this.computeEntryHash(log.entries[sequence - 1]);
 
     const entry: ImmutableLogEntry = {
       id: crypto.randomUUID(),
@@ -355,7 +354,7 @@ export class ImmutableLogService {
    */
   private signEntry(entry: ImmutableLogEntry): string {
     const dataToSign = `${entry.id}:${entry.data_hash}:${entry.previous_hash}`;
-    
+
     if (this.signingKey) {
       try {
         const sign = crypto.createSign('RSA-SHA256');
@@ -387,22 +386,23 @@ export class ImmutableLogService {
       return this.getGenesisHash();
     }
 
-    let hashes = entries.map(e => e.data_hash);
+    let hashes = entries.map((e) => e.data_hash);
 
     while (hashes.length > 1) {
       const newHashes: string[] = [];
-      
+
       for (let i = 0; i < hashes.length; i += 2) {
         const left = hashes[i];
         const right = hashes[i + 1] || left; // Duplicate last if odd
-        
-        const combined = crypto.createHash('sha256')
+
+        const combined = crypto
+          .createHash('sha256')
           .update(left + right)
           .digest('hex');
-        
+
         newHashes.push(combined);
       }
-      
+
       hashes = newHashes;
     }
 
@@ -426,7 +426,7 @@ export class ImmutableLogService {
    */
   importLog(logJson: string): ImmutableLog {
     const log = JSON.parse(logJson) as ImmutableLog;
-    
+
     // Verify chain integrity before importing
     if (!this.verifyChainIntegrity(log)) {
       throw new Error('Imported log has invalid chain integrity');
@@ -439,12 +439,8 @@ export class ImmutableLogService {
   /**
    * Get entries within time range
    */
-  getEntriesInRange(
-    log: ImmutableLog,
-    startTime: Date,
-    endTime: Date,
-  ): ImmutableLogEntry[] {
-    return log.entries.filter(entry => {
+  getEntriesInRange(log: ImmutableLog, startTime: Date, endTime: Date): ImmutableLogEntry[] {
+    return log.entries.filter((entry) => {
       const entryTime = new Date(entry.timestamp);
       return entryTime >= startTime && entryTime <= endTime;
     });
@@ -454,6 +450,6 @@ export class ImmutableLogService {
    * Get entries by type
    */
   getEntriesByType(log: ImmutableLog, type: LogEntryType): ImmutableLogEntry[] {
-    return log.entries.filter(entry => entry.type === type);
+    return log.entries.filter((entry) => entry.type === type);
   }
 }

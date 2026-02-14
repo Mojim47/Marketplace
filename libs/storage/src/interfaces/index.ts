@@ -2,9 +2,7 @@
 // Storage Interfaces - Barrel Export
 // ═══════════════════════════════════════════════════════════════════════════
 
-export {
-  StorageProviderType,
-} from './storage.interface';
+export { StorageProviderType } from './storage.interface';
 
 export type {
   IStorageProvider,
@@ -24,3 +22,6 @@ export type {
   MinioStorageConfig,
   StorageConfig,
 } from './storage.interface';
+
+export interface UploadFile { buffer: Buffer; filename?: string; originalName?: string; mimeType?: string; mimetype?: string; size?: number; [key: string]: any; }
+

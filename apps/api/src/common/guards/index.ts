@@ -1,18 +1,18 @@
 import {
-  Injectable,
-  CanActivate,
-  ExecutionContext,
+  type CanActivate,
+  type ExecutionContext,
   ForbiddenException,
-  UnauthorizedException,
   HttpException,
   HttpStatus,
+  Injectable,
   Logger,
+  UnauthorizedException,
 } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
-import { v4 as uuidv4 } from 'uuid';
+import type { Reflector } from '@nestjs/core';
 import Redis from 'ioredis';
-import { FeatureFlagService } from '../../feature-flag/feature-flag.service';
-import { PrismaService } from '../../database/prisma.service';
+import { v4 as uuidv4 } from 'uuid';
+import type { PrismaService } from '../../database/prisma.service';
+import type { FeatureFlagService } from '../../feature-flag/feature-flag.service';
 
 /**
  * Tenant Isolation Guard
@@ -29,7 +29,7 @@ export class TenantGuard implements CanActivate {
 
     if (!tenantId) {
       throw new ForbiddenException(
-        'Missing tenant context. Provide tenant ID in JWT or X-Tenant-ID header',
+        'Missing tenant context. Provide tenant ID in JWT or X-Tenant-ID header'
       );
     }
 
@@ -49,15 +49,12 @@ export class TenantGuard implements CanActivate {
 export class FeatureFlagGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
-    private featureFlagService: FeatureFlagService,
+    private featureFlagService: FeatureFlagService
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     // Get required feature from decorator
-    const requiredFeature = this.reflector.get<string>(
-      'requiredFeature',
-      context.getHandler(),
-    );
+    const requiredFeature = this.reflector.get<string>('requiredFeature', context.getHandler());
 
     if (!requiredFeature) {
       return true; // No feature requirement
@@ -70,15 +67,10 @@ export class FeatureFlagGuard implements CanActivate {
       throw new ForbiddenException('Missing tenant context');
     }
 
-    const isEnabled = await this.featureFlagService.isFeatureEnabled(
-      tenantId,
-      requiredFeature,
-    );
+    const isEnabled = await this.featureFlagService.isFeatureEnabled(tenantId, requiredFeature);
 
     if (!isEnabled) {
-      throw new ForbiddenException(
-        `Feature "${requiredFeature}" is not enabled for this tenant`,
-      );
+      throw new ForbiddenException(`Feature "${requiredFeature}" is not enabled for this tenant`);
     }
 
     return true;
@@ -94,10 +86,7 @@ export class RoleGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const requiredRoles = this.reflector.get<string[]>(
-      'roles',
-      context.getHandler(),
-    );
+    const requiredRoles = this.reflector.get<string[]>('roles', context.getHandler());
 
     if (!requiredRoles || requiredRoles.length === 0) {
       return true; // No role requirement
@@ -110,7 +99,7 @@ export class RoleGuard implements CanActivate {
 
     if (!hasRole) {
       throw new ForbiddenException(
-        `Insufficient permissions. Required roles: ${requiredRoles.join(', ')}`,
+        `Insufficient permissions. Required roles: ${requiredRoles.join(', ')}`
       );
     }
 
@@ -127,10 +116,7 @@ export class PermissionGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const requiredPermissions = this.reflector.get<string[]>(
-      'permissions',
-      context.getHandler(),
-    );
+    const requiredPermissions = this.reflector.get<string[]>('permissions', context.getHandler());
 
     if (!requiredPermissions || requiredPermissions.length === 0) {
       return true;
@@ -139,13 +125,11 @@ export class PermissionGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const userPermissions = request.user?.permissions || [];
 
-    const hasPermission = requiredPermissions.some((perm) =>
-      userPermissions.includes(perm),
-    );
+    const hasPermission = requiredPermissions.some((perm) => userPermissions.includes(perm));
 
     if (!hasPermission) {
       throw new ForbiddenException(
-        `Insufficient permissions. Required: ${requiredPermissions.join(', ')}`,
+        `Insufficient permissions. Required: ${requiredPermissions.join(', ')}`
       );
     }
 
@@ -205,13 +189,13 @@ export class ApiKeyGuard implements CanActivate {
 /**
  * Rate Limit Guard
  * Enforces rate limiting per tenant/user using Redis-based sliding window algorithm.
- * 
+ *
  * Features:
  * - Sliding window rate limiting for accurate request counting
  * - Per-tenant and per-endpoint limits
  * - Returns 429 with Retry-After header when limit exceeded
  * - Persian error messages for Iranian market
- * 
+ *
  * Requirements: 1.5
  */
 @Injectable()
@@ -235,17 +219,17 @@ export class RateLimitGuard implements CanActivate {
    * Initialize Redis connection
    */
   private initializeRedis(): void {
-    const redisUrl = process.env['REDIS_URL'];
-    const redisHost = process.env['REDIS_HOST'];
+    const redisUrl = process.env.REDIS_URL;
+    const redisHost = process.env.REDIS_HOST;
 
     if (redisUrl) {
       this.redis = new Redis(redisUrl);
     } else if (redisHost) {
       this.redis = new Redis({
         host: redisHost,
-        port: parseInt(process.env['REDIS_PORT'] || '6379', 10),
-        password: process.env['REDIS_PASSWORD'] || undefined,
-        db: parseInt(process.env['REDIS_DB'] || '0', 10),
+        port: Number.parseInt(process.env.REDIS_PORT || '6379', 10),
+        password: process.env.REDIS_PASSWORD || undefined,
+        db: Number.parseInt(process.env.REDIS_DB || '0', 10),
       });
     }
 
@@ -271,7 +255,7 @@ export class RateLimitGuard implements CanActivate {
     const result = await this.checkSlidingWindowLimit(
       identifier,
       limits.maxRequests,
-      limits.windowSeconds,
+      limits.windowSeconds
     );
 
     // Set rate limit headers
@@ -287,10 +271,10 @@ export class RateLimitGuard implements CanActivate {
         {
           statusCode: HttpStatus.TOO_MANY_REQUESTS,
           error: 'Too Many Requests',
-          message: ` ⁄œ«œ œ—ŒÊ«” ùÂ«Ì ‘„« »Ì‘ «“ Õœ „Ã«“ «” . ·ÿ›« ${result.retryAfter} À«‰ÌÂ œÌê—  ·«‘ ò‰Ìœ.`,
+          message: `ÔøΩÔøΩÔøΩÔøΩÔøΩ ÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩ ùÔøΩÔøΩÔøΩ ÔøΩÔøΩÔøΩ ÔøΩÔøΩÔøΩ ÔøΩÔøΩ ÔøΩÔøΩ ÔøΩÔøΩÔøΩÔøΩ ÔøΩÔøΩÔøΩ. ÔøΩÔøΩÔøΩÔøΩÔøΩ ${result.retryAfter} ÔøΩÔøΩÔøΩÔøΩÔøΩ ÔøΩÔøΩÔøΩ ÔøΩÔøΩÔøΩÔøΩ ÔøΩÔøΩÔøΩÔøΩ.`,
           retryAfter: result.retryAfter,
         },
-        HttpStatus.TOO_MANY_REQUESTS,
+        HttpStatus.TOO_MANY_REQUESTS
       );
     }
 
@@ -304,7 +288,7 @@ export class RateLimitGuard implements CanActivate {
   private buildIdentifier(
     tenantId: string | undefined,
     userId: string | undefined,
-    request: any,
+    request: any
   ): string {
     const parts: string[] = [];
 
@@ -333,9 +317,7 @@ export class RateLimitGuard implements CanActivate {
   private extractClientIP(request: any): string {
     const forwardedFor = request.headers['x-forwarded-for'];
     if (forwardedFor) {
-      const ips = Array.isArray(forwardedFor)
-        ? forwardedFor[0]
-        : forwardedFor.split(',')[0];
+      const ips = Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor.split(',')[0];
       return ips.trim();
     }
 
@@ -392,7 +374,7 @@ export class RateLimitGuard implements CanActivate {
   private async checkSlidingWindowLimit(
     identifier: string,
     maxRequests: number,
-    windowSeconds: number,
+    windowSeconds: number
   ): Promise<{
     allowed: boolean;
     remaining: number;
@@ -454,7 +436,7 @@ export class RateLimitGuard implements CanActivate {
 
       // Calculate reset time
       const oldestEntry = await this.redis.zrange(key, 0, 0, 'WITHSCORES');
-      const oldestTimestamp = oldestEntry.length >= 2 ? parseInt(oldestEntry[1], 10) : now;
+      const oldestTimestamp = oldestEntry.length >= 2 ? Number.parseInt(oldestEntry[1], 10) : now;
       const resetIn = Math.ceil((oldestTimestamp + windowMs - now) / 1000);
 
       if (currentCount >= maxRequests) {
@@ -494,7 +476,7 @@ export class RateLimitGuard implements CanActivate {
     response: any,
     limit: number,
     remaining: number,
-    resetIn: number,
+    resetIn: number
   ): void {
     if (response.setHeader) {
       response.setHeader('X-RateLimit-Limit', limit);
@@ -553,8 +535,8 @@ export class VendorAccessGuard implements CanActivate {
  * Audit Logging Interceptor
  * Logs all create/update/delete operations
  */
-import { NestInterceptor, CallHandler, Logger } from '@nestjs/common';
-import { Observable } from 'rxjs';
+import { type CallHandler, Logger, type NestInterceptor } from '@nestjs/common';
+import type { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 
 @Injectable()
@@ -579,7 +561,7 @@ export class AuditLoggingInterceptor implements NestInterceptor {
             'AuditInterceptor'
           );
         }
-      }),
+      })
     );
   }
 }
@@ -588,7 +570,7 @@ export class AuditLoggingInterceptor implements NestInterceptor {
  * Request Context Middleware
  * Attaches correlation ID and tenant context to all requests
  */
-import { NestMiddleware } from '@nestjs/common';
+import type { NestMiddleware } from '@nestjs/common';
 
 interface MiddlewareRequest {
   headers: Record<string, string | string[] | undefined>;
@@ -606,12 +588,12 @@ export class RequestContextMiddleware implements NestMiddleware {
   use(req: MiddlewareRequest, res: MiddlewareResponse, next: NextFunction) {
     // Add correlation ID for tracing
     const correlationId = (req.headers['x-correlation-id'] as string) || uuidv4();
-    req['correlationId'] = correlationId;
+    req.correlationId = correlationId;
 
     // Add tenant context
     const tenantId = req.headers['x-tenant-id'];
     if (tenantId) {
-      req['tenantId'] = tenantId;
+      req.tenantId = tenantId;
     }
 
     // Pass correlation ID in response

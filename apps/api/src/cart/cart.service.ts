@@ -2,7 +2,7 @@
  * Cart Service - Redis-Backed Stateless Implementation
  * Enterprise Scalability Architecture - Stateless Backend
  * Requirements: 2.1, 2.5
- * 
+ *
  * Features:
  * - Cart state stored in Redis (stateless API)
  * - Distributed locking for concurrent updates
@@ -10,16 +10,19 @@
  * - Atomic operations
  */
 
-import { Injectable, BadRequestException, NotFoundException, Inject } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
-import type { Cart, CartItem, AddToCartDto, UpdateCartItemDto, CartConfig } from './cart.types';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import type { PrismaService } from '../database/prisma.service';
+import type { AddToCartDto, Cart, CartConfig, CartItem, UpdateCartItemDto } from './cart.types';
 
 /** Redis State Service Interface */
 interface IStateService {
   setState<T>(key: string, value: T, options?: { ttlSeconds?: number }): Promise<boolean>;
   getState<T>(key: string): Promise<T | null>;
   deleteState(key: string): Promise<boolean>;
-  acquireLock(key: string, options?: { ttlMs?: number; retryAttempts?: number }): Promise<{ key: string; token: string } | null>;
+  acquireLock(
+    key: string,
+    options?: { ttlMs?: number; retryAttempts?: number }
+  ): Promise<{ key: string; token: string } | null>;
   releaseLock(lock: { key: string; token: string }): Promise<boolean>;
 }
 
@@ -36,7 +39,7 @@ export class CartService {
   constructor(
     private readonly prisma: PrismaService,
     @Inject('STATE_SERVICE') private readonly stateService: IStateService,
-    config?: Partial<CartConfig>,
+    config?: Partial<CartConfig>
   ) {
     this.config = { ...DEFAULT_CONFIG, ...config };
   }
@@ -58,7 +61,11 @@ export class CartService {
   /**
    * Calculate cart totals
    */
-  private calculateTotals(items: CartItem[], discount: number, shippingCost: number): Pick<Cart, 'subtotal' | 'taxAmount' | 'total'> {
+  private calculateTotals(
+    items: CartItem[],
+    discount: number,
+    shippingCost: number
+  ): Pick<Cart, 'subtotal' | 'taxAmount' | 'total'> {
     const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const discountedSubtotal = Math.max(0, subtotal - discount);
     const taxAmount = discountedSubtotal * this.config.taxRate;
@@ -120,7 +127,7 @@ export class CartService {
     const lock = await this.stateService.acquireLock(lockKey, { ttlMs: 5000, retryAttempts: 3 });
 
     if (!lock) {
-      throw new BadRequestException('ÓÈÏ ÎÑíÏ ÏÑ ÍÇá ÑÏÇÒÔ ÇÓÊ¡ áØİÇğ ÏæÈÇÑå ÊáÇÔ ˜äíÏ');
+      throw new BadRequestException('ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ê¡ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½');
     }
 
     try {
@@ -131,11 +138,11 @@ export class CartService {
       });
 
       if (!product) {
-        throw new NotFoundException('ãÍÕæá íÇİÊ äÔÏ');
+        throw new NotFoundException('ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½');
       }
 
       if (product.stock < dto.quantity) {
-        throw new BadRequestException(`ãæÌæÏí ˜Çİí äíÓÊ. ãæÌæÏí İÚáí: ${product.stock}`);
+        throw new BadRequestException(`ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½. ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: ${product.stock}`);
       }
 
       // Get current cart
@@ -143,19 +150,19 @@ export class CartService {
 
       // Check max items
       if (cart.items.length >= this.config.maxItems) {
-        throw new BadRequestException(`ÍÏÇ˜ËÑ ${this.config.maxItems} ÂíÊã ÏÑ ÓÈÏ ÎÑíÏ ãÌÇÒ ÇÓÊ`);
+        throw new BadRequestException(`ï¿½ï¿½Ç˜ï¿½ï¿½ ${this.config.maxItems} ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½`);
       }
 
       // Find existing item
       const existingIndex = cart.items.findIndex(
-        item => item.productId === dto.productId && item.variantId === dto.variantId
+        (item) => item.productId === dto.productId && item.variantId === dto.variantId
       );
 
       if (existingIndex >= 0) {
         // Update quantity
         const newQuantity = cart.items[existingIndex].quantity + dto.quantity;
         if (newQuantity > product.stock) {
-          throw new BadRequestException(`ãæÌæÏí ˜Çİí äíÓÊ. ãæÌæÏí İÚáí: ${product.stock}`);
+          throw new BadRequestException(`ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½. ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: ${product.stock}`);
         }
         cart.items[existingIndex].quantity = newQuantity;
       } else {
@@ -194,18 +201,18 @@ export class CartService {
     const lock = await this.stateService.acquireLock(lockKey, { ttlMs: 5000, retryAttempts: 3 });
 
     if (!lock) {
-      throw new BadRequestException('ÓÈÏ ÎÑíÏ ÏÑ ÍÇá ÑÏÇÒÔ ÇÓÊ¡ áØİÇğ ÏæÈÇÑå ÊáÇÔ ˜äíÏ');
+      throw new BadRequestException('ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ê¡ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½');
     }
 
     try {
       const cart = await this.getCart(userId);
 
       const itemIndex = cart.items.findIndex(
-        item => item.productId === dto.productId && item.variantId === dto.variantId
+        (item) => item.productId === dto.productId && item.variantId === dto.variantId
       );
 
       if (itemIndex < 0) {
-        throw new NotFoundException('ÂíÊã ÏÑ ÓÈÏ ÎÑíÏ íÇİÊ äÔÏ');
+        throw new NotFoundException('ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½');
       }
 
       if (dto.quantity <= 0) {
@@ -219,7 +226,7 @@ export class CartService {
         });
 
         if (!product || product.stock < dto.quantity) {
-          throw new BadRequestException(`ãæÌæÏí ˜Çİí äíÓÊ. ãæÌæÏí İÚáí: ${product?.stock || 0}`);
+          throw new BadRequestException(`ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½. ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: ${product?.stock || 0}`);
         }
 
         cart.items[itemIndex].quantity = dto.quantity;
@@ -261,7 +268,7 @@ export class CartService {
     const lock = await this.stateService.acquireLock(lockKey, { ttlMs: 5000, retryAttempts: 3 });
 
     if (!lock) {
-      throw new BadRequestException('ÓÈÏ ÎÑíÏ ÏÑ ÍÇá ÑÏÇÒÔ ÇÓÊ¡ áØİÇğ ÏæÈÇÑå ÊáÇÔ ˜äíÏ');
+      throw new BadRequestException('ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ê¡ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½');
     }
 
     try {
@@ -276,7 +283,7 @@ export class CartService {
       });
 
       if (!discount) {
-        throw new BadRequestException('˜Ï ÊÎİíİ äÇãÚÊÈÑ ÇÓÊ');
+        throw new BadRequestException('ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½');
       }
 
       const cart = await this.getCart(userId);
@@ -316,7 +323,7 @@ export class CartService {
     const lock = await this.stateService.acquireLock(lockKey, { ttlMs: 5000, retryAttempts: 3 });
 
     if (!lock) {
-      throw new BadRequestException('ÓÈÏ ÎÑíÏ ÏÑ ÍÇá ÑÏÇÒÔ ÇÓÊ¡ áØİÇğ ÏæÈÇÑå ÊáÇÔ ˜äíÏ');
+      throw new BadRequestException('ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ê¡ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½');
     }
 
     try {
@@ -346,7 +353,7 @@ export class CartService {
     const lock = await this.stateService.acquireLock(lockKey, { ttlMs: 5000, retryAttempts: 3 });
 
     if (!lock) {
-      throw new BadRequestException('ÓÈÏ ÎÑíÏ ÏÑ ÍÇá ÑÏÇÒÔ ÇÓÊ¡ áØİÇğ ÏæÈÇÑå ÊáÇÔ ˜äíÏ');
+      throw new BadRequestException('ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ê¡ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½');
     }
 
     try {
@@ -383,7 +390,7 @@ export class CartService {
     const errors: string[] = [];
 
     if (cart.items.length === 0) {
-      errors.push('ÓÈÏ ÎÑíÏ ÎÇáí ÇÓÊ');
+      errors.push('ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½');
       return { valid: false, errors };
     }
 
@@ -395,11 +402,11 @@ export class CartService {
       });
 
       if (!product) {
-        errors.push(`ãÍÕæá "${item.productName}" ÏíÑ ãæÌæÏ äíÓÊ`);
+        errors.push(`ï¿½ï¿½ï¿½ï¿½ï¿½ "${item.productName}" ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½`);
       } else if (!product.isActive) {
-        errors.push(`ãÍÕæá "${item.productName}" ÛíÑİÚÇá ÔÏå ÇÓÊ`);
+        errors.push(`ï¿½ï¿½ï¿½ï¿½ï¿½ "${item.productName}" ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½`);
       } else if (product.stock < item.quantity) {
-        errors.push(`ãæÌæÏí "${item.productName}" ˜Çİí äíÓÊ (ãæÌæÏí: ${product.stock})`);
+        errors.push(`ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ "${item.productName}" ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½: ${product.stock})`);
       }
     }
 

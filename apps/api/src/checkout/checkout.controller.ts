@@ -5,19 +5,19 @@
  */
 
 import {
+  Body,
   Controller,
+  Delete,
   Get,
+  Param,
   Post,
   Put,
-  Delete,
-  Body,
-  Param,
-  UseGuards,
   Request,
+  UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { CheckoutService } from './checkout.service';
-import type { ShippingAddress, PaymentMethod } from './checkout.types';
+import type { CheckoutService } from './checkout.service';
+import type { PaymentMethod, ShippingAddress } from './checkout.types';
 
 @Controller('checkout')
 @UseGuards(JwtAuthGuard)
@@ -44,7 +44,7 @@ export class CheckoutController {
   async setShippingAddress(
     @Request() req: any,
     @Param('sessionId') sessionId: string,
-    @Body() address: ShippingAddress,
+    @Body() address: ShippingAddress
   ) {
     return this.checkoutService.setShippingAddress(sessionId, req.user.id, address);
   }
@@ -53,7 +53,7 @@ export class CheckoutController {
   async setBillingAddress(
     @Request() req: any,
     @Param('sessionId') sessionId: string,
-    @Body() address: ShippingAddress,
+    @Body() address: ShippingAddress
   ) {
     return this.checkoutService.setBillingAddress(sessionId, req.user.id, address);
   }
@@ -62,24 +62,18 @@ export class CheckoutController {
   async setPaymentMethod(
     @Request() req: any,
     @Param('sessionId') sessionId: string,
-    @Body() body: { method: PaymentMethod },
+    @Body() body: { method: PaymentMethod }
   ) {
     return this.checkoutService.setPaymentMethod(sessionId, req.user.id, body.method);
   }
 
   @Post(':sessionId/complete')
-  async completeCheckout(
-    @Request() req: any,
-    @Param('sessionId') sessionId: string,
-  ) {
+  async completeCheckout(@Request() req: any, @Param('sessionId') sessionId: string) {
     return this.checkoutService.completeCheckout(sessionId, req.user.id);
   }
 
   @Delete(':sessionId')
-  async cancelCheckout(
-    @Request() req: any,
-    @Param('sessionId') sessionId: string,
-  ) {
+  async cancelCheckout(@Request() req: any, @Param('sessionId') sessionId: string) {
     await this.checkoutService.cancelCheckout(sessionId, req.user.id);
     return { success: true };
   }

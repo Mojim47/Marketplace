@@ -1,7 +1,7 @@
-import { Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common'
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger'
-import { PriceListService } from './price-list.service'
-import { JwtAuthGuard } from '../auth/jwt-auth.guard'
+import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import type { PriceListService } from './price-list.service';
 
 @ApiTags('b2b')
 @Controller('b2b/price-lists')
@@ -11,30 +11,30 @@ export class PriceListController {
   constructor(private readonly priceListService: PriceListService) {}
 
   @Post()
-  @ApiOperation({ summary: 'ÇíÌÇÏ áíÓÊ ÞíãÊ' })
+  @ApiOperation({ summary: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½' })
   async create(@Body() dto: any) {
-    return this.priceListService.createPriceList(dto)
+    return this.priceListService.createPriceList(dto);
   }
 
   @Get()
-  @ApiOperation({ summary: 'áíÓÊ ÞíãÊåÇ' })
+  @ApiOperation({ summary: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   async list(@Query('organizationId') orgId?: string) {
-    return this.priceListService.listPriceLists(orgId)
+    return this.priceListService.listPriceLists(orgId);
   }
 
   @Post('products')
-  @ApiOperation({ summary: 'ÇÝÒæÏä ÞíãÊ ãÍÕæá' })
+  @ApiOperation({ summary: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
   async addProduct(@Body() dto: any) {
-    return this.priceListService.addProductPrice(dto)
+    return this.priceListService.addProductPrice(dto);
   }
 
   @Get('products/:productId/price')
-  @ApiOperation({ summary: 'ÏÑíÇÝÊ ÞíãÊ ãÍÕæá' })
+  @ApiOperation({ summary: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
   async getPrice(
     @Param('productId') productId: string,
     @Query('organizationId') orgId: string,
     @Query('quantity') quantity?: number
   ) {
-    return this.priceListService.getProductPrice(productId, orgId, quantity || 1)
+    return this.priceListService.getProductPrice(productId, orgId, quantity || 1);
   }
 }

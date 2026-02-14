@@ -1,5 +1,5 @@
-import { jsx as _jsx } from 'react/jsx-runtime';
 import { render } from '@testing-library/react';
+import { jsx as _jsx } from 'react/jsx-runtime';
 import { describe, expect, it, vi } from 'vitest';
 import { OfflineClient } from './offline-client';
 describe('OfflineClient', () => {

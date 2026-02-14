@@ -2,11 +2,11 @@
 // File Scanner - Code Data Lake Collection Layer
 // ═══════════════════════════════════════════════════════════════════════════
 
-import * as fs from 'fs/promises';
-import * as path from 'path';
+import * as crypto from 'node:crypto';
+import * as fs from 'node:fs/promises';
+import * as path from 'node:path';
 import { glob } from 'glob';
-import * as crypto from 'crypto';
-import { CodeFile } from '../types';
+import type { CodeFile } from '../types';
 
 export class FileScanner {
   private readonly includePatterns: string[];
@@ -24,7 +24,7 @@ export class FileScanner {
       '**/*.min.js',
       '**/*.bundle.js',
       '**/vendor/**',
-      '**/third_party/**'
+      '**/third_party/**',
     ],
     maxFileSize: number = 1024 * 1024 // 1MB
   ) {
@@ -34,15 +34,12 @@ export class FileScanner {
   }
 
   async scanProject(projectPath: string): Promise<CodeFile[]> {
-    console.log(`🔍 Scanning project: ${projectPath}`);
-    
     const files: CodeFile[] = [];
-    const startTime = Date.now();
+    const _startTime = Date.now();
 
     try {
       // Find all matching files
       const filePaths = await this.findFiles(projectPath);
-      console.log(`📁 Found ${filePaths.length} files to analyze`);
 
       // Process files in parallel with concurrency limit
       const concurrency = 10;
@@ -50,7 +47,7 @@ export class FileScanner {
 
       for (const chunk of chunks) {
         const chunkResults = await Promise.allSettled(
-          chunk.map(filePath => this.processFile(projectPath, filePath))
+          chunk.map((filePath) => this.processFile(projectPath, filePath))
         );
 
         for (const result of chunkResults) {
@@ -62,8 +59,7 @@ export class FileScanner {
         }
       }
 
-      const endTime = Date.now();
-      console.log(`✅ Scanned ${files.length} files in ${endTime - startTime}ms`);
+      const _endTime = Date.now();
 
       return files;
     } catch (error) {
@@ -80,7 +76,7 @@ export class FileScanner {
         cwd: projectPath,
         ignore: this.excludePatterns,
         nodir: true,
-        absolute: false
+        absolute: false,
       });
       allFiles.push(...matchedFiles);
     }
@@ -91,10 +87,10 @@ export class FileScanner {
 
   private async processFile(projectPath: string, relativePath: string): Promise<CodeFile | null> {
     const fullPath = path.join(projectPath, relativePath);
-    
+
     try {
       const stats = await fs.stat(fullPath);
-      
+
       // Skip files that are too large
       if (stats.size > this.maxFileSize) {
         console.warn(`⚠️ Skipping large file: ${relativePath} (${stats.size} bytes)`);
@@ -119,7 +115,7 @@ export class FileScanner {
         functions: [],
         classes: [],
         variables: [],
-        securityPatterns: []
+        securityPatterns: [],
       };
 
       return codeFile;
@@ -131,7 +127,7 @@ export class FileScanner {
 
   private detectLanguage(filePath: string): string {
     const ext = path.extname(filePath).toLowerCase();
-    
+
     const languageMap: Record<string, string> = {
       '.ts': 'typescript',
       '.tsx': 'typescript',
@@ -163,7 +159,7 @@ export class FileScanner {
       '.sh': 'shell',
       '.bash': 'shell',
       '.zsh': 'shell',
-      '.dockerfile': 'dockerfile'
+      '.dockerfile': 'dockerfile',
     };
 
     return languageMap[ext] || 'unknown';
@@ -184,7 +180,7 @@ export class FileScanner {
     largestFiles: Array<{ path: string; size: number }>;
   }> {
     const files = await this.scanProject(projectPath);
-    
+
     const stats = {
       totalFiles: files.length,
       totalSize: files.reduce((sum, file) => sum + file.size, 0),
@@ -192,12 +188,12 @@ export class FileScanner {
       largestFiles: files
         .sort((a, b) => b.size - a.size)
         .slice(0, 10)
-        .map(file => ({ path: file.path, size: file.size }))
+        .map((file) => ({ path: file.path, size: file.size })),
     };
 
     // Calculate language distribution
     for (const file of files) {
-      stats.languageDistribution[file.language] = 
+      stats.languageDistribution[file.language] =
         (stats.languageDistribution[file.language] || 0) + 1;
     }
 

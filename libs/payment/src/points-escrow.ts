@@ -1,5 +1,5 @@
 // iso27001:A.12.4.1 | fata:1404-07.art8 | data-residency:IR
-import { randomUUID } from 'crypto';
+import { randomUUID } from 'node:crypto';
 
 export type EscrowIntent = {
   id: string;
@@ -28,7 +28,9 @@ export class PointsEscrow {
   }
 
   open(from: string, to: string, points: number): EscrowRecord {
-    if (points <= 0) throw new Error('مقدار امتیاز معتبر نیست');
+    if (points <= 0) {
+      throw new Error('مقدار امتیاز معتبر نیست');
+    }
     const now = Date.now();
     const intent: EscrowRecord = {
       id: randomUUID(),
@@ -46,14 +48,20 @@ export class PointsEscrow {
 
   release(id: string, verifier: (record: EscrowRecord) => boolean): EscrowRecord {
     const record = this.storage.get(id);
-    if (!record) throw new Error('درخواست یافت نشد');
-    if (record.status !== 'open') return record;
+    if (!record) {
+      throw new Error('درخواست یافت نشد');
+    }
+    if (record.status !== 'open') {
+      return record;
+    }
     if (record.expiresAt < Date.now()) {
       record.status = 'canceled';
       record.canceledAt = Date.now();
       return record;
     }
-    if (!verifier(record)) throw new Error('تأیید انتقال انجام نشد');
+    if (!verifier(record)) {
+      throw new Error('تأیید انتقال انجام نشد');
+    }
     record.status = 'released';
     record.releasedAt = Date.now();
     return record;
@@ -61,8 +69,12 @@ export class PointsEscrow {
 
   cancel(id: string): EscrowRecord {
     const record = this.storage.get(id);
-    if (!record) throw new Error('درخواست یافت نشد');
-    if (record.status !== 'open') return record;
+    if (!record) {
+      throw new Error('درخواست یافت نشد');
+    }
+    if (record.status !== 'open') {
+      return record;
+    }
     record.status = 'canceled';
     record.canceledAt = Date.now();
     return record;

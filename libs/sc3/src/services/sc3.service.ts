@@ -15,24 +15,24 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { Injectable, Logger } from '@nestjs/common';
-import { BuildVerifierService, BuildVerificationOptions } from './build-verifier.service';
-import { DependencyScannerService, DependencyScanOptions } from './dependency-scanner.service';
-import { AttestationService, AttestationVerificationOptions } from './attestation.service';
-import { ProvenanceService, ProvenanceVerificationOptions } from './provenance.service';
-import { ImmutableLogService, LogVerificationOptions } from './immutable-log.service';
 import type {
+  Artifact,
+  AttestationType,
   Build,
+  CVESeverity,
   Dependency,
   ExecutionAttestation,
-  Artifact,
   ImmutableLog,
-  SC3VerificationResult,
   SC3Config,
   SC3Failure,
-  CVESeverity,
+  SC3VerificationResult,
   SLSALevel,
-  AttestationType,
 } from '../types';
+import type { AttestationService, AttestationVerificationOptions } from './attestation.service';
+import type { BuildVerificationOptions, BuildVerifierService } from './build-verifier.service';
+import type { DependencyScanOptions, DependencyScannerService } from './dependency-scanner.service';
+import type { ImmutableLogService, LogVerificationOptions } from './immutable-log.service';
+import type { ProvenanceService, ProvenanceVerificationOptions } from './provenance.service';
 
 /**
  * SC³ verification input
@@ -79,7 +79,7 @@ export class SC3Service {
     private readonly dependencyScanner: DependencyScannerService,
     private readonly attestationService: AttestationService,
     private readonly provenanceService: ProvenanceService,
-    private readonly immutableLogService: ImmutableLogService,
+    private readonly immutableLogService: ImmutableLogService
   ) {}
 
   /**
@@ -103,7 +103,7 @@ export class SC3Service {
   async verify(
     input: SC3VerificationInput,
     timeBound: Date = new Date(),
-    severityThreshold?: CVESeverity,
+    severityThreshold?: CVESeverity
   ): Promise<SC3VerificationResult> {
     const startTime = Date.now();
     const theta = severityThreshold ?? this.config.severity_threshold;
@@ -138,7 +138,10 @@ export class SC3Service {
       cve_database_url: this.config.cve_database_url,
       include_transitive: true,
     };
-    const depResult = await this.dependencyScanner.verifyDependencies(input.dependencies, depOptions);
+    const depResult = await this.dependencyScanner.verifyDependencies(
+      input.dependencies,
+      depOptions
+    );
     allFailures.push(...depResult.failures);
 
     // 3. Verify executions: enclave_attested(e) ∧ memory_safe(e)
@@ -148,7 +151,10 @@ export class SC3Service {
       allowed_types: ['SGX', 'SEV', 'NITRO', 'TRUSTZONE', 'SOFTWARE'] as AttestationType[],
       min_svn: 1,
     };
-    const execResult = await this.attestationService.verifyExecutions(input.executions, attestOptions);
+    const execResult = await this.attestationService.verifyExecutions(
+      input.executions,
+      attestOptions
+    );
     allFailures.push(...execResult.failures);
 
     // 4. Verify artifacts: provenance_verified(a)
@@ -159,11 +165,14 @@ export class SC3Service {
       require_reproducible: false,
       verify_materials: true,
     };
-    const artifactResult = await this.provenanceService.verifyArtifacts(input.artifacts, provOptions);
+    const artifactResult = await this.provenanceService.verifyArtifacts(
+      input.artifacts,
+      provOptions
+    );
     allFailures.push(...artifactResult.failures);
 
     // 5. Verify logs: ∃log∈L: immutable(log) ∧ contains(log, hash(a)) ∧ timestamp(log) ≤ T
-    const artifactHashes = input.artifacts.map(a => a.hash);
+    const artifactHashes = input.artifacts.map((a) => a.hash);
     let logResult = {
       result: {
         passed: true,
@@ -179,7 +188,7 @@ export class SC3Service {
     if (input.logs.length > 0) {
       // Find a log that contains all artifact hashes
       let foundValidLog = false;
-      
+
       for (const log of input.logs) {
         const logOptions: LogVerificationOptions = {
           time_bound: timeBound,
@@ -187,15 +196,15 @@ export class SC3Service {
           verify_chain: true,
           verify_signatures: true,
         };
-        
+
         const result = await this.immutableLogService.verifyLog(log, logOptions);
-        
+
         if (result.result.passed) {
           foundValidLog = true;
           logResult = result;
           break;
         }
-        
+
         // Keep track of best result
         if (result.result.chain_integrity && !logResult.result.chain_integrity) {
           logResult = result;
@@ -243,7 +252,7 @@ export class SC3Service {
    */
   async quickVerify(
     input: SC3VerificationInput,
-    timeBound: Date = new Date(),
+    _timeBound: Date = new Date()
   ): Promise<{ passed: boolean; critical_failures: SC3Failure[] }> {
     const criticalFailures: SC3Failure[] = [];
 
@@ -262,7 +271,7 @@ export class SC3Service {
 
     // Check critical CVEs
     for (const dep of input.dependencies) {
-      const criticalCVEs = dep.cves?.filter(c => c.severity >= 4) || [];
+      const criticalCVEs = dep.cves?.filter((c) => c.severity >= 4) || [];
       if (criticalCVEs.length > 0) {
         criticalFailures.push({
           category: 'DEPENDENCY' as any,
@@ -270,7 +279,7 @@ export class SC3Service {
           message: `Dependency ${dep.name} has critical CVEs`,
           message_fa: `وابستگی ${dep.name} دارای آسیب‌پذیری بحرانی است`,
           entity_id: `${dep.name}@${dep.version}`,
-          details: { cves: criticalCVEs.map(c => c.id) },
+          details: { cves: criticalCVEs.map((c) => c.id) },
         });
       }
     }
@@ -354,7 +363,7 @@ export class SC3Service {
       lines.push('───────────────────────────────────────────────────────────────────────────');
       lines.push('                              Failures');
       lines.push('───────────────────────────────────────────────────────────────────────────');
-      
+
       for (const failure of result.failures) {
         lines.push(`[${failure.category}] ${failure.code}: ${failure.message}`);
         if (failure.entity_id) {
@@ -388,7 +397,7 @@ export class SC3Service {
       require_hermetic: true,
       verify_provenance: true,
     };
-    
+
     const failures = await this.buildVerifier.verifyBuild(build, options);
     return failures.length === 0;
   }
@@ -404,7 +413,7 @@ export class SC3Service {
       cve_database_url: this.config.cve_database_url,
       include_transitive: false,
     };
-    
+
     const result = await this.dependencyScanner.verifyDependencies([dep], options);
     return result.result.passed;
   }
@@ -420,7 +429,7 @@ export class SC3Service {
       require_reproducible: false,
       verify_materials: true,
     };
-    
+
     const failures = await this.provenanceService.verifyArtifact(artifact, options);
     return failures.length === 0;
   }

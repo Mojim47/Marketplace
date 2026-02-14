@@ -2,9 +2,9 @@
 // Memory Cache Adapter Tests
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { MemoryCacheAdapter } from './memory.adapter';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { CacheProviderType } from '../interfaces/cache.interface';
+import { MemoryCacheAdapter } from './memory.adapter';
 
 describe('MemoryCacheAdapter', () => {
   let cache: MemoryCacheAdapter;
@@ -78,8 +78,8 @@ describe('MemoryCacheAdapter', () => {
     it('should expire key after TTL', async () => {
       await cache.set('ttl-key', 'value', { ttl: 1 });
       expect(await cache.get('ttl-key')).toBe('value');
-      
-      await new Promise(resolve => setTimeout(resolve, 1100));
+
+      await new Promise((resolve) => setTimeout(resolve, 1100));
       expect(await cache.get('ttl-key')).toBeNull();
     });
 
@@ -107,7 +107,7 @@ describe('MemoryCacheAdapter', () => {
     it('should get multiple values', async () => {
       await cache.set('k1', 'v1');
       await cache.set('k2', 'v2');
-      
+
       const result = await cache.mget<string>(['k1', 'k2', 'k3']);
       expect(result.get('k1')).toBe('v1');
       expect(result.get('k2')).toBe('v2');
@@ -115,9 +115,12 @@ describe('MemoryCacheAdapter', () => {
     });
 
     it('should set multiple values', async () => {
-      const entries = new Map([['m1', 'v1'], ['m2', 'v2']]);
+      const entries = new Map([
+        ['m1', 'v1'],
+        ['m2', 'v2'],
+      ]);
       await cache.mset(entries);
-      
+
       expect(await cache.get('m1')).toBe('v1');
       expect(await cache.get('m2')).toBe('v2');
     });
@@ -125,7 +128,7 @@ describe('MemoryCacheAdapter', () => {
     it('should delete multiple keys', async () => {
       await cache.set('d1', 'v1');
       await cache.set('d2', 'v2');
-      
+
       const count = await cache.mdelete(['d1', 'd2', 'd3']);
       expect(count).toBe(2);
     });
@@ -185,7 +188,7 @@ describe('MemoryCacheAdapter', () => {
     it('should increment value', async () => {
       const result1 = await cache.increment('counter');
       expect(result1).toBe(1);
-      
+
       const result2 = await cache.increment('counter', 5);
       expect(result2).toBe(6);
     });
@@ -221,7 +224,7 @@ describe('MemoryCacheAdapter', () => {
     it('should get all hash fields', async () => {
       await cache.hset('hash2', 'f1', 'v1');
       await cache.hset('hash2', 'f2', 'v2');
-      
+
       const result = await cache.hgetall<string>('hash2');
       expect(result.get('f1')).toBe('v1');
       expect(result.get('f2')).toBe('v2');
@@ -245,7 +248,7 @@ describe('MemoryCacheAdapter', () => {
     it('should push and pop from right', async () => {
       await cache.rpush('list1', 'a');
       await cache.rpush('list1', 'b');
-      
+
       const result = await cache.rpop<string>('list1');
       expect(result).toBe('b');
     });
@@ -253,7 +256,7 @@ describe('MemoryCacheAdapter', () => {
     it('should push and pop from left', async () => {
       await cache.lpush('list2', 'a');
       await cache.lpush('list2', 'b');
-      
+
       const result = await cache.lpop<string>('list2');
       expect(result).toBe('b');
     });
@@ -262,7 +265,7 @@ describe('MemoryCacheAdapter', () => {
       await cache.rpush('list3', 'a');
       await cache.rpush('list3', 'b');
       await cache.rpush('list3', 'c');
-      
+
       const len = await cache.llen('list3');
       expect(len).toBe(3);
     });
@@ -271,7 +274,7 @@ describe('MemoryCacheAdapter', () => {
       await cache.rpush('list4', 'a');
       await cache.rpush('list4', 'b');
       await cache.rpush('list4', 'c');
-      
+
       const range = await cache.lrange<string>('list4', 0, 1);
       expect(range).toEqual(['a', 'b']);
     });
@@ -281,7 +284,7 @@ describe('MemoryCacheAdapter', () => {
     it('should add and check member', async () => {
       const added = await cache.sadd('set1', 'member1');
       expect(added).toBe(true);
-      
+
       const exists = await cache.sismember('set1', 'member1');
       expect(exists).toBe(true);
     });
@@ -302,7 +305,7 @@ describe('MemoryCacheAdapter', () => {
     it('should get all members', async () => {
       await cache.sadd('set4', 'a');
       await cache.sadd('set4', 'b');
-      
+
       const members = await cache.smembers<string>('set4');
       expect(members).toContain('a');
       expect(members).toContain('b');
@@ -312,7 +315,7 @@ describe('MemoryCacheAdapter', () => {
       await cache.sadd('set5', 'a');
       await cache.sadd('set5', 'b');
       await cache.sadd('set5', 'c');
-      
+
       const card = await cache.scard('set5');
       expect(card).toBe(3);
     });
@@ -322,9 +325,9 @@ describe('MemoryCacheAdapter', () => {
     it('should clear all keys', async () => {
       await cache.set('c1', 'v1');
       await cache.set('c2', 'v2');
-      
+
       await cache.clear();
-      
+
       expect(await cache.exists('c1')).toBe(false);
       expect(await cache.exists('c2')).toBe(false);
     });
@@ -333,7 +336,7 @@ describe('MemoryCacheAdapter', () => {
       await cache.set('s1', 'v1');
       await cache.get('s1');
       await cache.get('non-existent');
-      
+
       const stats = await cache.stats();
       expect(stats.hits).toBeGreaterThan(0);
       expect(stats.misses).toBeGreaterThan(0);

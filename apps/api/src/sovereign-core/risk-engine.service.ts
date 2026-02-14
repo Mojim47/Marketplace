@@ -3,16 +3,16 @@
  * RISK & CREDIT SCORING ENGINE - TIME-WEIGHTED REPUTATION SYSTEM
  * ???????????????????????????????????????????????????????????????????????????
  * Purpose: Dynamic credit scoring with exponential decay and risk-sharing vouching
- * 
- * Formula: Score_New = Score_Old + (Impact_Event × e^(-? × t))
+ *
+ * Formula: Score_New = Score_Old + (Impact_Event ï¿½ e^(-? ï¿½ t))
  * - ? (Lambda): Decay factor (e.g., 0.1 = 10% monthly decay)
  * - t: Time elapsed since event (in months)
- * 
- * Credit Limit: currentCreditLimit = baseCreditLimit × creditMultiplier
+ *
+ * Credit Limit: currentCreditLimit = baseCreditLimit ï¿½ creditMultiplier
  * ???????????????????????????????????????????????????????????????????????????
  */
 
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
 import { PrismaService } from '../database/prisma.service';
 
@@ -45,7 +45,7 @@ export class RiskEngine {
 
   /**
    * Process financial event and update risk score with time-weighted decay
-   * Formula: Score_New = Score_Old + (Impact_Event × e^(-? × t))
+   * Formula: Score_New = Score_Old + (Impact_Event ï¿½ e^(-? ï¿½ t))
    */
   async processFinancialEvent(input: FinancialEventInput): Promise<any> {
     try {
@@ -104,14 +104,13 @@ export class RiskEngine {
         for (const event of eventsToProcess) {
           const impact = parseFloat(event.impactValue.toString());
           const eventDate = new Date(event.occurredAt);
-          
-          // Calculate time difference in months
-          const monthsElapsed =
-            (now.getTime() - eventDate.getTime()) / (1000 * 60 * 60 * 24 * 30);
 
-          // Apply exponential decay: Impact × e^(-? × t)
+          // Calculate time difference in months
+          const monthsElapsed = (now.getTime() - eventDate.getTime()) / (1000 * 60 * 60 * 24 * 30);
+
+          // Apply exponential decay: Impact ï¿½ e^(-? ï¿½ t)
           const decayedImpact = impact * Math.exp(-lambda * monthsElapsed);
-          
+
           newScore += decayedImpact;
 
           // Mark as processed
@@ -256,10 +255,7 @@ export class RiskEngine {
    * Handle vouchee default (Risk-Sharing Vouching)
    * If vouchee defaults, voucher's credit and score are penalized
    */
-  async processVoucheeDefault(
-    voucheeOrganizationId: string,
-    defaultAmount: number
-  ): Promise<any> {
+  async processVoucheeDefault(voucheeOrganizationId: string, defaultAmount: number): Promise<any> {
     try {
       return await this.prisma.$transaction(async (tx) => {
         // Get all active vouches for this vouchee
@@ -286,10 +282,7 @@ export class RiskEngine {
           const riskShare = parseFloat(vouch.riskSharePercentage.toString());
 
           // Calculate voucher's share of loss
-          const voucherLoss = Math.min(
-            defaultAmount * (riskShare / 100),
-            vouchAmount
-          );
+          const voucherLoss = Math.min(defaultAmount * (riskShare / 100), vouchAmount);
 
           // Mark vouch as defaulted
           await tx.reputationVouch.update({
@@ -310,9 +303,7 @@ export class RiskEngine {
             where: { id: vouch.voucherProfile.id },
             data: {
               score: new Decimal(newScore.toFixed(4)),
-              currentCreditLimit: vouch.voucherProfile.currentCreditLimit.sub(
-                voucherLoss
-              ),
+              currentCreditLimit: vouch.voucherProfile.currentCreditLimit.sub(voucherLoss),
             },
           });
 

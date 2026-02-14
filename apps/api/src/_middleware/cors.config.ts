@@ -1,5 +1,5 @@
-import { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
 import { Logger } from '@nestjs/common';
+import type { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
 
 const logger = new Logger('CORS');
 
@@ -53,7 +53,7 @@ export const DEFAULT_CORS_CONFIG: CorsConfig = {
 
 /**
  * Validate origin against allowed origins list
- * 
+ *
  * Security features:
  * - Exact match validation
  * - Regex pattern support for subdomains
@@ -63,7 +63,7 @@ export const DEFAULT_CORS_CONFIG: CorsConfig = {
 export function validateOrigin(
   origin: string | undefined,
   allowedOrigins: string[],
-  strictValidation: boolean = true,
+  strictValidation = true
 ): boolean {
   // Reject null/undefined origins in strict mode
   if (!origin) {
@@ -85,7 +85,7 @@ export function validateOrigin(
     if (allowed.startsWith('*.')) {
       const domain = allowed.slice(2);
       const originUrl = parseOrigin(origin);
-      if (originUrl && originUrl.hostname.endsWith(domain)) {
+      if (originUrl?.hostname.endsWith(domain)) {
         // Ensure it's actually a subdomain, not just ending with the domain
         const subdomain = originUrl.hostname.slice(0, -domain.length);
         if (subdomain.length > 0 && subdomain.endsWith('.')) {
@@ -101,7 +101,7 @@ export function validateOrigin(
         if (regex.test(origin)) {
           return true;
         }
-      } catch (e) {
+      } catch (_e) {
         logger.error(`CORS: Invalid regex pattern: ${allowed}`);
       }
     }
@@ -128,15 +128,15 @@ function parseOrigin(origin: string): URL | null {
  */
 export function createOriginValidator(
   allowedOrigins: string[],
-  strictValidation: boolean = true,
+  strictValidation = true
 ): (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => void {
   return (origin, callback) => {
     const isAllowed = validateOrigin(origin, allowedOrigins, strictValidation);
-    
+
     if (isAllowed) {
       callback(null, true);
     } else {
-      callback(new Error('ÏÓÊÑÓí ÇÒ Çíä ãäÈÚ ãÌÇÒ äíÓÊ'), false);
+      callback(new Error('ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½'), false);
     }
   };
 }
@@ -148,10 +148,7 @@ export function createCorsOptions(config: Partial<CorsConfig> = {}): CorsOptions
   const mergedConfig = { ...DEFAULT_CORS_CONFIG, ...config };
 
   return {
-    origin: createOriginValidator(
-      mergedConfig.allowedOrigins,
-      mergedConfig.strictOriginValidation,
-    ),
+    origin: createOriginValidator(mergedConfig.allowedOrigins, mergedConfig.strictOriginValidation),
     credentials: mergedConfig.credentials,
     methods: mergedConfig.methods,
     allowedHeaders: mergedConfig.allowedHeaders,
@@ -173,8 +170,8 @@ export function parseCorsOrigins(envValue: string | undefined): string[] {
 
   return envValue
     .split(',')
-    .map(origin => origin.trim())
-    .filter(origin => origin.length > 0);
+    .map((origin) => origin.trim())
+    .filter((origin) => origin.length > 0);
 }
 
 /**
@@ -196,9 +193,15 @@ export function validateCorsConfig(config: CorsConfig): string[] {
 
   // Validate origin formats
   for (const origin of config.allowedOrigins) {
-    if (origin === '*') continue;
-    if (origin.startsWith('*.')) continue;
-    if (origin.startsWith('/') && origin.endsWith('/')) continue;
+    if (origin === '*') {
+      continue;
+    }
+    if (origin.startsWith('*.')) {
+      continue;
+    }
+    if (origin.startsWith('/') && origin.endsWith('/')) {
+      continue;
+    }
 
     try {
       new URL(origin);

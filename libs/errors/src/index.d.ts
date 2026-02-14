@@ -58,9 +58,34 @@
  *   throw UnavailableError.maintenanceMode('2024-01-15T10:00:00Z');
  */
 export { AppError, ErrorCode, type ErrorResponse } from './app-error';
-export { ValidationError, AuthenticationError, AuthorizationError, NotFoundError, ConflictError, BusinessRuleError, DomainError, // Legacy - deprecated
-RateLimitError, InternalError, UnavailableError, BadGatewayError, GatewayTimeoutError, } from './errors';
+export {
+  ValidationError,
+  AuthenticationError,
+  AuthorizationError,
+  NotFoundError,
+  ConflictError,
+  BusinessRuleError,
+  DomainError, // Legacy - deprecated
+  RateLimitError,
+  InternalError,
+  UnavailableError,
+  BadGatewayError,
+  GatewayTimeoutError,
+} from './errors';
 export { GlobalExceptionFilter } from './exception-filter';
-export { AUTH_INVARIANTS, PAYMENT_INVARIANTS, ERROR_INVARIANTS, ERROR_CODE_STATUS_MAP, KILL_SWITCH_CONDITIONS, DETECTION_POINTS, SYSTEM_SAFETY_STATUS, } from './invariants';
-export { InvariantEnforcer, AuthInvariantEnforcer, PaymentInvariantEnforcer, ErrorInvariantEnforcer, } from './invariant-enforcer';
+export {
+  AUTH_INVARIANTS,
+  PAYMENT_INVARIANTS,
+  ERROR_INVARIANTS,
+  ERROR_CODE_STATUS_MAP,
+  KILL_SWITCH_CONDITIONS,
+  DETECTION_POINTS,
+  SYSTEM_SAFETY_STATUS,
+} from './invariants';
+export {
+  InvariantEnforcer,
+  AuthInvariantEnforcer,
+  PaymentInvariantEnforcer,
+  ErrorInvariantEnforcer,
+} from './invariant-enforcer';
 //# sourceMappingURL=index.d.ts.map

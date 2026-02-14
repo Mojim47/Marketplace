@@ -4,17 +4,17 @@
 // Implements: ∀e∈Executions_attested: enclave_attested(e) ∧ memory_safe(e)
 // ═══════════════════════════════════════════════════════════════════════════
 
+import * as crypto from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
-import * as crypto from 'crypto';
 import {
-  SC3FailureCategory,
-  MemorySafetyStatus,
-  type ExecutionAttestation,
-  type AttestationType,
   type AttestationCollateral,
-  type MemorySafetyResult,
+  type AttestationType,
+  type ExecutionAttestation,
   type ExecutionVerificationResult,
+  type MemorySafetyResult,
+  type MemorySafetyStatus,
   type SC3Failure,
+  SC3FailureCategory,
 } from '../types';
 
 /**
@@ -45,7 +45,7 @@ export class AttestationService {
    */
   async verifyExecutions(
     executions: ExecutionAttestation[],
-    options: AttestationVerificationOptions,
+    options: AttestationVerificationOptions
   ): Promise<{ result: ExecutionVerificationResult; failures: SC3Failure[] }> {
     const failures: SC3Failure[] = [];
     const failedAttestations: string[] = [];
@@ -151,7 +151,7 @@ export class AttestationService {
    */
   async verifyEnclaveAttestation(
     attestation: ExecutionAttestation,
-    options: AttestationVerificationOptions,
+    options: AttestationVerificationOptions
   ): Promise<boolean> {
     try {
       // 1. Verify quote signature
@@ -171,7 +171,10 @@ export class AttestationService {
 
       // 3. Verify collateral (if present)
       if (attestation.collateral) {
-        const collateralValid = await this.verifyCollateral(attestation.collateral, attestation.type);
+        const collateralValid = await this.verifyCollateral(
+          attestation.collateral,
+          attestation.type
+        );
         if (!collateralValid) {
           this.logger.warn(`Collateral verification failed for ${attestation.id}`);
           return false;
@@ -211,7 +214,7 @@ export class AttestationService {
     }
 
     // At least one safety mechanism must be present
-    const hasSafetyMechanism = 
+    const hasSafetyMechanism =
       result.language_safe ||
       result.static_analysis_passed ||
       result.bounds_checking ||
@@ -227,14 +230,14 @@ export class AttestationService {
   private verifyQuoteSignature(attestation: ExecutionAttestation): boolean {
     try {
       const { quote, quote_signature } = attestation;
-      
+
       if (!quote || !quote_signature) {
         return false;
       }
 
       // Decode quote and verify structure
       const quoteBuffer = Buffer.from(quote, 'base64');
-      
+
       // Verify minimum quote size (varies by attestation type)
       const minQuoteSize = this.getMinQuoteSize(attestation.type);
       if (quoteBuffer.length < minQuoteSize) {
@@ -254,7 +257,7 @@ export class AttestationService {
    */
   private async verifyCollateral(
     collateral: AttestationCollateral,
-    type: AttestationType,
+    type: AttestationType
   ): Promise<boolean> {
     try {
       // Verify root CA certificate
@@ -297,7 +300,7 @@ export class AttestationService {
     // 2. Verify MRSIGNER (signer identity)
     // 3. Verify ISV_PROD_ID and ISV_SVN
     // 4. Verify quote structure (EPID or DCAP)
-    
+
     if (!attestation.measurement || attestation.measurement.length !== 64) {
       return false; // MRENCLAVE should be 32 bytes (64 hex chars)
     }
@@ -317,7 +320,7 @@ export class AttestationService {
     // 1. Verify launch measurement
     // 2. Verify platform certificate chain
     // 3. Verify guest policy
-    
+
     if (!attestation.measurement) {
       return false;
     }
@@ -333,7 +336,7 @@ export class AttestationService {
     // 1. Verify attestation document structure (CBOR/COSE)
     // 2. Verify PCRs (Platform Configuration Registers)
     // 3. Verify certificate chain to AWS root
-    
+
     if (!attestation.measurement) {
       return false;
     }
@@ -342,7 +345,7 @@ export class AttestationService {
     // PCR0: Enclave image file
     // PCR1: Linux kernel and bootstrap
     // PCR2: Application
-    
+
     return true;
   }
 
@@ -353,7 +356,7 @@ export class AttestationService {
     // TrustZone-specific verification:
     // 1. Verify TA (Trusted Application) measurement
     // 2. Verify secure world attestation
-    
+
     if (!attestation.measurement) {
       return false;
     }
@@ -369,7 +372,7 @@ export class AttestationService {
     // Verify:
     // 1. Code hash matches expected
     // 2. Runtime integrity checks passed
-    
+
     if (!attestation.measurement) {
       return false;
     }
@@ -387,12 +390,18 @@ export class AttestationService {
    */
   private getMinQuoteSize(type: AttestationType): number {
     switch (type) {
-      case 'SGX': return 432; // EPID quote minimum
-      case 'SEV': return 256;
-      case 'NITRO': return 512;
-      case 'TRUSTZONE': return 128;
-      case 'SOFTWARE': return 64;
-      default: return 64;
+      case 'SGX':
+        return 432; // EPID quote minimum
+      case 'SEV':
+        return 256;
+      case 'NITRO':
+        return 512;
+      case 'TRUSTZONE':
+        return 128;
+      case 'SOFTWARE':
+        return 64;
+      default:
+        return 64;
     }
   }
 
@@ -400,8 +409,9 @@ export class AttestationService {
    * Validate certificate format
    */
   private isValidCertificate(cert: string): boolean {
-    return cert.includes('-----BEGIN CERTIFICATE-----') &&
-           cert.includes('-----END CERTIFICATE-----');
+    return (
+      cert.includes('-----BEGIN CERTIFICATE-----') && cert.includes('-----END CERTIFICATE-----')
+    );
   }
 
   /**
@@ -428,18 +438,31 @@ export class AttestationService {
     ubsan_clean?: boolean;
   }): MemorySafetyResult {
     const details: string[] = [];
-    
-    if (params.language_safe) details.push('Memory-safe language used');
-    if (params.static_analysis_passed) details.push('Static analysis passed');
-    if (params.bounds_checking) details.push('Runtime bounds checking enabled');
-    if (params.asan_clean) details.push('AddressSanitizer clean');
-    if (params.msan_clean) details.push('MemorySanitizer clean');
-    if (params.ubsan_clean) details.push('UndefinedBehaviorSanitizer clean');
 
-    const isSafe = params.language_safe || 
-                   params.static_analysis_passed || 
-                   params.bounds_checking ||
-                   (params.asan_clean && params.msan_clean);
+    if (params.language_safe) {
+      details.push('Memory-safe language used');
+    }
+    if (params.static_analysis_passed) {
+      details.push('Static analysis passed');
+    }
+    if (params.bounds_checking) {
+      details.push('Runtime bounds checking enabled');
+    }
+    if (params.asan_clean) {
+      details.push('AddressSanitizer clean');
+    }
+    if (params.msan_clean) {
+      details.push('MemorySanitizer clean');
+    }
+    if (params.ubsan_clean) {
+      details.push('UndefinedBehaviorSanitizer clean');
+    }
+
+    const isSafe =
+      params.language_safe ||
+      params.static_analysis_passed ||
+      params.bounds_checking ||
+      (params.asan_clean && params.msan_clean);
 
     return {
       status: (isSafe ? 'SAFE' : 'UNSAFE') as MemorySafetyStatus,

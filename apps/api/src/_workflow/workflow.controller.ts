@@ -1,7 +1,7 @@
-﻿import { Controller, Post, Patch, Body, Param, UseGuards } from '@nestjs/common';
-import { WorkflowService } from '@libs/workflow';
-import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+﻿import type { WorkflowService } from '@libs/workflow';
+import { Body, Controller, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import type { AuthenticatedUser } from '../common/types/authenticated-user.type';
 
 @Controller('workflows')
@@ -14,11 +14,7 @@ export class WorkflowController {
     @Body() dto: { entityType: string; entityId: string },
     @CurrentUser() user: AuthenticatedUser
   ) {
-    const workflowId = await this.workflow.submitForApproval(
-      dto.entityType,
-      dto.entityId,
-      user.id
-    );
+    const workflowId = await this.workflow.submitForApproval(dto.entityType, dto.entityId, user.id);
     return { workflowId };
   }
 
@@ -42,4 +38,3 @@ export class WorkflowController {
     return { success: true };
   }
 }
-

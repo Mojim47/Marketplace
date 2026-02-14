@@ -112,4 +112,3 @@ export default defineConfig({
     'import.meta.env.FAST_CHECK_SEED': JSON.stringify(Date.now()),
   },
 });
-

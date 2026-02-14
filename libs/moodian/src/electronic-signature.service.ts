@@ -12,10 +12,10 @@
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
+import * as crypto from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import * as crypto from 'crypto';
-import { SignatureResult, SignatureVerificationResult } from './interfaces';
+import type { ConfigService } from '@nestjs/config';
+import type { SignatureResult, SignatureVerificationResult } from './interfaces';
 
 @Injectable()
 export class ElectronicSignatureService {
@@ -130,7 +130,7 @@ export class ElectronicSignatureService {
    * @param modulusLength طول کلید (پیش‌فرض 2048)
    * @returns جفت کلید
    */
-  generateKeyPair(modulusLength: number = 2048): { privateKey: string; publicKey: string } {
+  generateKeyPair(modulusLength = 2048): { privateKey: string; publicKey: string } {
     const { privateKey, publicKey } = crypto.generateKeyPairSync('rsa', {
       modulusLength,
       publicKeyEncoding: {

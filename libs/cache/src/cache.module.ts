@@ -2,9 +2,9 @@
 // Cache Module - NestJS Module for Cache Abstraction
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { Module, DynamicModule, Provider } from '@nestjs/common';
-import type { CacheConfig } from './interfaces/cache.interface';
+import { type DynamicModule, Module, type Provider } from '@nestjs/common';
 import { CacheFactory } from './factory/cache.factory';
+import type { CacheConfig } from './interfaces/cache.interface';
 import { CacheService } from './services/cache.service';
 
 /**
@@ -50,12 +50,12 @@ export class CacheModule {
         provide: CacheService,
         useFactory: (factory: CacheFactory) => {
           const service = new CacheService(factory);
-          
+
           if (options.config) {
             const provider = factory.create(options.config, 'default');
             service.setProvider(provider);
           }
-          
+
           return service;
         },
         inject: [CacheFactory],
@@ -85,12 +85,12 @@ export class CacheModule {
         provide: CacheService,
         useFactory: async (factory: CacheFactory, moduleOptions: CacheModuleOptions) => {
           const service = new CacheService(factory);
-          
+
           if (moduleOptions.config) {
             const provider = factory.create(moduleOptions.config, 'default');
             service.setProvider(provider);
           }
-          
+
           return service;
         },
         inject: [CacheFactory, 'CACHE_MODULE_OPTIONS'],

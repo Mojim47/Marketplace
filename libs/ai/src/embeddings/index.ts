@@ -1,1 +1,1 @@
-export * from "./onnx-embedder";
+export * from './onnx-embedder';

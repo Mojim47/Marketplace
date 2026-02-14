@@ -1,4 +1,4 @@
-import { Injectable, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import { type ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import type { AuthenticatedUser } from '../types/authenticated-user.type';
 
@@ -10,7 +10,9 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
 
   override handleRequest(err: unknown, user: AuthenticatedUser | undefined) {
     if (err || !user) {
-      throw (err instanceof Error ? err : null) || new UnauthorizedException('لطفاً وارد سيستم شويد');
+      throw (
+        (err instanceof Error ? err : null) || new UnauthorizedException('لطفاً وارد سيستم شويد')
+      );
     }
     return user;
   }

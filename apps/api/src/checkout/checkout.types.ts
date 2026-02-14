@@ -56,9 +56,7 @@ export type PaymentMethod = 'ONLINE' | 'CARD_TO_CARD' | 'CREDIT' | 'CHEQUE';
 
 export type CheckoutStep = 'CART' | 'SHIPPING' | 'PAYMENT' | 'REVIEW' | 'COMPLETE';
 
-export interface InitCheckoutDto {
-  // Cart is automatically loaded from Redis
-}
+export type InitCheckoutDto = {};
 
 export interface SetShippingAddressDto {
   sessionId: string;

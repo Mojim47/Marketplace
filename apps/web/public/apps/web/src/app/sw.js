@@ -2,8 +2,8 @@
 // Built for full offline (HTML shell + static assets + dynamic JSON stubs)
 /// <reference lib="webworker" />
 const VERSION = 'v1-performance';
-const ASSET_CACHE = 'assets-' + VERSION;
-const DATA_CACHE = 'data-' + VERSION;
+const ASSET_CACHE = `assets-${VERSION}`;
+const DATA_CACHE = `data-${VERSION}`;
 // List of core assets to precache (shell)
 const CORE = ['/', '/favicon.ico', '/fonts/vazirmatn.woff2', '/fonts/inter.woff2'];
 self.addEventListener('install', (event) => {
@@ -33,7 +33,9 @@ function openDB() {
     const req = indexedDB.open('nextgen-sw', 1);
     req.onupgradeneeded = () => {
       const db = req.result;
-      if (!db.objectStoreNames.contains('json')) db.createObjectStore('json');
+      if (!db.objectStoreNames.contains('json')) {
+        db.createObjectStore('json');
+      }
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
@@ -70,7 +72,9 @@ async function idbPut(key, value) {
 self.addEventListener('fetch', (event) => {
   const fe = event;
   const url = new URL(fe.request.url);
-  if (fe.request.method !== 'GET') return;
+  if (fe.request.method !== 'GET') {
+    return;
+  }
   // API JSON caching via IndexedDB (same-origin only)
   if (url.origin === location.origin && url.pathname.startsWith('/api/')) {
     fe.respondWith(
@@ -85,17 +89,19 @@ self.addEventListener('fetch', (event) => {
           }
           // fallback to db
           const cached = await idbGet(url.pathname + url.search);
-          if (cached)
+          if (cached) {
             return new Response(JSON.stringify(cached), {
               headers: { 'Content-Type': 'application/json' },
             });
+          }
           return networkResp;
         } catch {
           const cached = await idbGet(url.pathname + url.search);
-          if (cached)
+          if (cached) {
             return new Response(JSON.stringify(cached), {
               headers: { 'Content-Type': 'application/json' },
             });
+          }
           return new Response(JSON.stringify({ offline: true }), {
             headers: { 'Content-Type': 'application/json' },
             status: 200,
@@ -111,10 +117,14 @@ self.addEventListener('fetch', (event) => {
       (async () => {
         const cache = await caches.open(ASSET_CACHE);
         const match = await cache.match(fe.request);
-        if (match) return match;
+        if (match) {
+          return match;
+        }
         try {
           const fetched = await fetch(fe.request);
-          if (fetched.ok && fetched.type === 'basic') cache.put(fe.request, fetched.clone());
+          if (fetched.ok && fetched.type === 'basic') {
+            cache.put(fe.request, fetched.clone());
+          }
           return fetched;
         } catch {
           // offline fallback: root shell

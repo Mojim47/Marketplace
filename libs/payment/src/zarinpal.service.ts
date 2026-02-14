@@ -3,9 +3,9 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import axios, { AxiosInstance } from 'axios';
-import { ValidationError, BusinessRuleError, InternalError } from '@nextgen/errors';
+import type { ConfigService } from '@nestjs/config';
+import { BusinessRuleError, ValidationError } from '@nextgen/errors';
+import axios, { type AxiosInstance } from 'axios';
 
 interface ZarinpalPaymentRequest {
   amount: number;
@@ -56,9 +56,7 @@ export class ZarinpalService {
     this.merchantId = this.configService.get<string>('ZARINPAL_MERCHANT_ID')!;
     this.isSandbox = this.configService.get<string>('ZARINPAL_SANDBOX') === 'true';
 
-    this.baseUrl = this.isSandbox
-      ? 'https://sandbox.zarinpal.com'
-      : 'https://api.zarinpal.com';
+    this.baseUrl = this.isSandbox ? 'https://sandbox.zarinpal.com' : 'https://api.zarinpal.com';
 
     this.httpClient = axios.create({
       baseURL: this.baseUrl,
@@ -153,23 +151,22 @@ export class ZarinpalService {
           authority,
           payment_url: paymentUrl,
         };
-      } else {
-        const errorCode = response.data.errors?.code || response.data.data?.code;
-        const errorMessage = this.getErrorMessage(errorCode);
-
-        this.logger.warn('ZarinPal payment request failed', {
-          code: errorCode,
-          message: errorMessage,
-          merchantId: this.merchantId,
-          amount: request.amount,
-        });
-
-        return {
-          success: false,
-          error: errorMessage,
-          code: errorCode,
-        };
       }
+      const errorCode = response.data.errors?.code || response.data.data?.code;
+      const errorMessage = this.getErrorMessage(errorCode);
+
+      this.logger.warn('ZarinPal payment request failed', {
+        code: errorCode,
+        message: errorMessage,
+        merchantId: this.merchantId,
+        amount: request.amount,
+      });
+
+      return {
+        success: false,
+        error: errorMessage,
+        code: errorCode,
+      };
     } catch (error) {
       this.logger.error('ZarinPal payment request error', error);
 
@@ -224,23 +221,22 @@ export class ZarinpalService {
           fee_type: response.data.data.fee_type,
           fee: response.data.data.fee,
         };
-      } else {
-        const errorCode = response.data.errors?.code || response.data.data?.code;
-        const errorMessage = this.getErrorMessage(errorCode);
-
-        this.logger.warn('ZarinPal payment verification failed', {
-          code: errorCode,
-          message: errorMessage,
-          authority: request.authority,
-          amount: request.amount,
-        });
-
-        return {
-          success: false,
-          error: errorMessage,
-          code: errorCode,
-        };
       }
+      const errorCode = response.data.errors?.code || response.data.data?.code;
+      const errorMessage = this.getErrorMessage(errorCode);
+
+      this.logger.warn('ZarinPal payment verification failed', {
+        code: errorCode,
+        message: errorMessage,
+        authority: request.authority,
+        amount: request.amount,
+      });
+
+      return {
+        success: false,
+        error: errorMessage,
+        code: errorCode,
+      };
     } catch (error) {
       this.logger.error('ZarinPal payment verification error', error);
 

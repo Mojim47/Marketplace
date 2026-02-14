@@ -7,12 +7,18 @@ import traverse from '@babel/traverse';
 import * as t from '@babel/types';
 import { parse as acornParse } from 'acorn';
 import { simple as acornWalk } from 'acorn-walk';
-import { CodeFile, FunctionInfo, ClassInfo, VariableInfo, SecurityPattern, SecurityPatternType, SecuritySeverity } from '../types';
+import {
+  type ClassInfo,
+  type CodeFile,
+  type FunctionInfo,
+  type SecurityPattern,
+  SecurityPatternType,
+  SecuritySeverity,
+  type VariableInfo,
+} from '../types';
 
 export class ASTParser {
   async parseFile(codeFile: CodeFile): Promise<CodeFile> {
-    console.log(`🔍 Parsing AST for: ${codeFile.path}`);
-
     try {
       switch (codeFile.language) {
         case 'typescript':
@@ -48,8 +54,8 @@ export class ASTParser {
           'exportNamespaceFrom',
           'dynamicImport',
           'nullishCoalescingOperator',
-          'optionalChaining'
-        ]
+          'optionalChaining',
+        ],
       });
 
       const functions: FunctionInfo[] = [];
@@ -70,7 +76,7 @@ export class ASTParser {
         // Export declarations
         ExportNamedDeclaration(path) {
           if (path.node.specifiers) {
-            path.node.specifiers.forEach(spec => {
+            path.node.specifiers.forEach((spec) => {
               if (t.isExportSpecifier(spec) && t.isIdentifier(spec.exported)) {
                 exports.push(spec.exported.name);
               }
@@ -78,47 +84,61 @@ export class ASTParser {
           }
         },
 
-        ExportDefaultDeclaration(path) {
+        ExportDefaultDeclaration(_path) {
           exports.push('default');
         },
 
         // Function declarations and expressions
         FunctionDeclaration(path) {
           const func = this.extractFunctionInfo(path.node, path);
-          if (func) functions.push(func);
+          if (func) {
+            functions.push(func);
+          }
         },
 
         FunctionExpression(path) {
           const func = this.extractFunctionInfo(path.node, path);
-          if (func) functions.push(func);
+          if (func) {
+            functions.push(func);
+          }
         },
 
         ArrowFunctionExpression(path) {
           const func = this.extractFunctionInfo(path.node, path);
-          if (func) functions.push(func);
+          if (func) {
+            functions.push(func);
+          }
         },
 
         // Method definitions
         ClassMethod(path) {
           const func = this.extractFunctionInfo(path.node, path);
-          if (func) functions.push(func);
+          if (func) {
+            functions.push(func);
+          }
         },
 
         ObjectMethod(path) {
           const func = this.extractFunctionInfo(path.node, path);
-          if (func) functions.push(func);
+          if (func) {
+            functions.push(func);
+          }
         },
 
         // Class declarations
         ClassDeclaration(path) {
           const classInfo = this.extractClassInfo(path.node, path);
-          if (classInfo) classes.push(classInfo);
+          if (classInfo) {
+            classes.push(classInfo);
+          }
         },
 
         // Variable declarations
         VariableDeclarator(path) {
           const variable = this.extractVariableInfo(path.node, path);
-          if (variable) variables.push(variable);
+          if (variable) {
+            variables.push(variable);
+          }
         },
 
         // Security pattern detection
@@ -140,7 +160,7 @@ export class ASTParser {
         TemplateLiteral(path) {
           const patterns = this.detectTemplateLiteralPatterns(path.node, path);
           securityPatterns.push(...patterns);
-        }
+        },
       });
 
       return {
@@ -150,7 +170,7 @@ export class ASTParser {
         variables,
         imports,
         exports,
-        securityPatterns
+        securityPatterns,
       };
     } catch (error) {
       console.warn(`⚠️ Babel parsing failed for ${codeFile.path}, trying Acorn:`, error);
@@ -164,7 +184,7 @@ export class ASTParser {
         ecmaVersion: 2022,
         sourceType: 'module',
         allowHashBang: true,
-        allowReturnOutsideFunction: true
+        allowReturnOutsideFunction: true,
       });
 
       const functions: FunctionInfo[] = [];
@@ -180,7 +200,7 @@ export class ASTParser {
             parameters: node.params.map((param: any) => ({
               name: param.name || 'unknown',
               type: undefined,
-              optional: false
+              optional: false,
             })),
             isAsync: node.async || false,
             isExported: false,
@@ -194,9 +214,9 @@ export class ASTParser {
                 outputSinks: [],
                 sanitization: false,
                 validation: false,
-                encryption: false
-              }
-            }
+                encryption: false,
+              },
+            },
           });
         },
 
@@ -209,18 +229,18 @@ export class ASTParser {
                 isConst: node.kind === 'const',
                 isExported: false,
                 line: node.loc?.start.line || 0,
-                securitySensitive: false
+                securitySensitive: false,
               });
             }
           });
-        }
+        },
       });
 
       return {
         ...codeFile,
         functions,
         variables,
-        securityPatterns
+        securityPatterns,
       };
     } catch (error) {
       console.warn(`⚠️ Acorn parsing also failed for ${codeFile.path}:`, error);
@@ -232,14 +252,17 @@ export class ASTParser {
     const name = this.getFunctionName(node);
     const location = path.node.loc;
 
-    if (!name || !location) return null;
+    if (!name || !location) {
+      return null;
+    }
 
-    const parameters = node.params?.map((param: any) => ({
-      name: this.getParameterName(param),
-      type: this.getParameterType(param),
-      optional: param.optional || false,
-      defaultValue: param.default ? 'has_default' : undefined
-    })) || [];
+    const parameters =
+      node.params?.map((param: any) => ({
+        name: this.getParameterName(param),
+        type: this.getParameterType(param),
+        optional: param.optional || false,
+        defaultValue: param.default ? 'has_default' : undefined,
+      })) || [];
 
     const complexity = this.calculateComplexity(node);
     const securityRisk = this.analyzeSecurityRisk(node, path);
@@ -253,7 +276,7 @@ export class ASTParser {
       isAsync: node.async || false,
       isExported: this.isExported(path),
       complexity,
-      securityRisk
+      securityRisk,
     };
   }
 
@@ -261,7 +284,9 @@ export class ASTParser {
     const name = node.id?.name;
     const location = path.node.loc;
 
-    if (!name || !location) return null;
+    if (!name || !location) {
+      return null;
+    }
 
     return {
       name,
@@ -271,7 +296,7 @@ export class ASTParser {
       properties: [],
       extends: node.superClass?.name,
       implements: node.implements?.map((impl: any) => impl.id?.name).filter(Boolean) || [],
-      isExported: this.isExported(path)
+      isExported: this.isExported(path),
     };
   }
 
@@ -279,7 +304,9 @@ export class ASTParser {
     const name = node.id?.name;
     const location = path.node.loc;
 
-    if (!name || !location) return null;
+    if (!name || !location) {
+      return null;
+    }
 
     const parent = path.parent;
     const isConst = parent?.kind === 'const';
@@ -291,7 +318,7 @@ export class ASTParser {
       isConst,
       isExported: this.isExported(path),
       line: location.start.line,
-      securitySensitive
+      securitySensitive,
     };
   }
 
@@ -299,7 +326,9 @@ export class ASTParser {
     const patterns: SecurityPattern[] = [];
     const location = path.node.loc;
 
-    if (!location) return patterns;
+    if (!location) {
+      return patterns;
+    }
 
     // SQL Injection patterns
     if (this.isSQLInjectionRisk(node)) {
@@ -309,7 +338,7 @@ export class ASTParser {
         line: location.start.line,
         description: 'Potential SQL injection vulnerability detected',
         recommendation: 'Use parameterized queries or ORM methods',
-        cweId: 'CWE-89'
+        cweId: 'CWE-89',
       });
     }
 
@@ -321,7 +350,7 @@ export class ASTParser {
         line: location.start.line,
         description: 'Potential authentication bypass detected',
         recommendation: 'Implement proper authentication checks',
-        cweId: 'CWE-287'
+        cweId: 'CWE-287',
       });
     }
 
@@ -333,7 +362,7 @@ export class ASTParser {
         line: location.start.line,
         description: 'Endpoint missing authentication guard',
         recommendation: 'Add @UseGuards(JwtAuthGuard) decorator',
-        cweId: 'CWE-306'
+        cweId: 'CWE-306',
       });
     }
 
@@ -345,7 +374,7 @@ export class ASTParser {
         line: location.start.line,
         description: 'Query missing tenant isolation',
         recommendation: 'Add tenant_id filter to all queries',
-        cweId: 'CWE-639'
+        cweId: 'CWE-639',
       });
     }
 
@@ -356,18 +385,22 @@ export class ASTParser {
     const patterns: SecurityPattern[] = [];
     const location = path.node.loc;
 
-    if (!location) return patterns;
+    if (!location) {
+      return patterns;
+    }
 
     // Detect dangerous method calls
-    if (node.property?.name === 'eval' || 
-        (node.object?.name === 'JSON' && node.property?.name === 'parse')) {
+    if (
+      node.property?.name === 'eval' ||
+      (node.object?.name === 'JSON' && node.property?.name === 'parse')
+    ) {
       patterns.push({
         type: SecurityPatternType.UNSAFE_DESERIALIZATION,
         severity: SecuritySeverity.HIGH,
         line: location.start.line,
         description: 'Unsafe deserialization or code execution',
         recommendation: 'Validate input before parsing or avoid eval()',
-        cweId: 'CWE-502'
+        cweId: 'CWE-502',
       });
     }
 
@@ -379,7 +412,9 @@ export class ASTParser {
     const location = path.node.loc;
     const value = node.value;
 
-    if (!location || typeof value !== 'string') return patterns;
+    if (!location || typeof value !== 'string') {
+      return patterns;
+    }
 
     // Detect hardcoded secrets
     if (this.isHardcodedSecret(value)) {
@@ -389,7 +424,7 @@ export class ASTParser {
         line: location.start.line,
         description: 'Hardcoded secret or credential detected',
         recommendation: 'Move secrets to environment variables or secure vault',
-        cweId: 'CWE-798'
+        cweId: 'CWE-798',
       });
     }
 
@@ -400,10 +435,12 @@ export class ASTParser {
     const patterns: SecurityPattern[] = [];
     const location = path.node.loc;
 
-    if (!location) return patterns;
+    if (!location) {
+      return patterns;
+    }
 
     // Check for SQL-like template literals
-    const hasSQL = node.quasis?.some((quasi: any) => 
+    const hasSQL = node.quasis?.some((quasi: any) =>
       /\b(SELECT|INSERT|UPDATE|DELETE|FROM|WHERE)\b/i.test(quasi.value?.raw || '')
     );
 
@@ -414,7 +451,7 @@ export class ASTParser {
         line: location.start.line,
         description: 'Template literal with SQL and dynamic content',
         recommendation: 'Use parameterized queries instead of string interpolation',
-        cweId: 'CWE-89'
+        cweId: 'CWE-89',
       });
     }
 
@@ -423,11 +460,9 @@ export class ASTParser {
 
   // Helper methods for security pattern detection
   private isSQLInjectionRisk(node: any): boolean {
-    if (node.callee?.property?.name === 'query' || 
-        node.callee?.property?.name === 'raw') {
-      return node.arguments?.some((arg: any) => 
-        arg.type === 'TemplateLiteral' || 
-        arg.type === 'BinaryExpression'
+    if (node.callee?.property?.name === 'query' || node.callee?.property?.name === 'raw') {
+      return node.arguments?.some(
+        (arg: any) => arg.type === 'TemplateLiteral' || arg.type === 'BinaryExpression'
       );
     }
     return false;
@@ -435,32 +470,36 @@ export class ASTParser {
 
   private isAuthBypassRisk(node: any): boolean {
     // Look for patterns like: if (user.role === 'admin' || true)
-    return node.callee?.name === 'bypass' || 
-           (node.arguments?.some((arg: any) => 
-             arg.type === 'BooleanLiteral' && arg.value === true
-           ));
+    return (
+      node.callee?.name === 'bypass' ||
+      node.arguments?.some((arg: any) => arg.type === 'BooleanLiteral' && arg.value === true)
+    );
   }
 
   private isMissingAuthRisk(node: any): boolean {
     // Check for controller methods without guards
-    return node.callee?.name === 'Post' || 
-           node.callee?.name === 'Get' || 
-           node.callee?.name === 'Put' || 
-           node.callee?.name === 'Delete';
+    return (
+      node.callee?.name === 'Post' ||
+      node.callee?.name === 'Get' ||
+      node.callee?.name === 'Put' ||
+      node.callee?.name === 'Delete'
+    );
   }
 
   private isTenantIsolationBypass(node: any): boolean {
     // Check for Prisma queries without tenant_id
-    if (node.callee?.property?.name === 'findMany' || 
-        node.callee?.property?.name === 'findFirst' ||
-        node.callee?.property?.name === 'findUnique') {
-      const whereArg = node.arguments?.[0]?.properties?.find((prop: any) => 
-        prop.key?.name === 'where'
+    if (
+      node.callee?.property?.name === 'findMany' ||
+      node.callee?.property?.name === 'findFirst' ||
+      node.callee?.property?.name === 'findUnique'
+    ) {
+      const whereArg = node.arguments?.[0]?.properties?.find(
+        (prop: any) => prop.key?.name === 'where'
       );
-      
+
       if (whereArg) {
-        const hasTenantId = whereArg.value?.properties?.some((prop: any) => 
-          prop.key?.name === 'tenant_id'
+        const hasTenantId = whereArg.value?.properties?.some(
+          (prop: any) => prop.key?.name === 'tenant_id'
         );
         return !hasTenantId;
       }
@@ -481,21 +520,33 @@ export class ASTParser {
       /pk_[a-zA-Z0-9]{20,}/, // Stripe-like public keys
     ];
 
-    return secretPatterns.some(pattern => pattern.test(value));
+    return secretPatterns.some((pattern) => pattern.test(value));
   }
 
   // Helper methods for extracting information
   private getFunctionName(node: any): string {
-    if (node.id?.name) return node.id.name;
-    if (node.key?.name) return node.key.name;
-    if (node.key?.value) return node.key.value;
+    if (node.id?.name) {
+      return node.id.name;
+    }
+    if (node.key?.name) {
+      return node.key.name;
+    }
+    if (node.key?.value) {
+      return node.key.value;
+    }
     return 'anonymous';
   }
 
   private getParameterName(param: any): string {
-    if (param.name) return param.name;
-    if (param.left?.name) return param.left.name; // Destructuring
-    if (param.argument?.name) return param.argument.name; // Rest parameters
+    if (param.name) {
+      return param.name;
+    }
+    if (param.left?.name) {
+      return param.left.name; // Destructuring
+    }
+    if (param.argument?.name) {
+      return param.argument.name; // Rest parameters
+    }
     return 'unknown';
   }
 
@@ -523,8 +574,7 @@ export class ASTParser {
   private isExported(path: any): boolean {
     let current = path;
     while (current) {
-      if (current.isExportNamedDeclaration() || 
-          current.isExportDefaultDeclaration()) {
+      if (current.isExportNamedDeclaration() || current.isExportDefaultDeclaration()) {
         return true;
       }
       current = current.parentPath;
@@ -534,13 +584,21 @@ export class ASTParser {
 
   private isSecuritySensitive(name: string, init: any): boolean {
     const sensitiveNames = [
-      'password', 'secret', 'token', 'key', 'auth', 'credential',
-      'private', 'confidential', 'sensitive'
+      'password',
+      'secret',
+      'token',
+      'key',
+      'auth',
+      'credential',
+      'private',
+      'confidential',
+      'sensitive',
     ];
-    
-    return sensitiveNames.some(sensitive => 
-      name.toLowerCase().includes(sensitive)
-    ) || (init && this.containsSensitiveValue(init));
+
+    return (
+      sensitiveNames.some((sensitive) => name.toLowerCase().includes(sensitive)) ||
+      (init && this.containsSensitiveValue(init))
+    );
   }
 
   private containsSensitiveValue(node: any): boolean {
@@ -550,15 +608,21 @@ export class ASTParser {
     return false;
   }
 
-  private calculateComplexity(node: any): number {
+  private calculateComplexity(_node: any): number {
     // Simple cyclomatic complexity calculation
-    let complexity = 1;
-    
-    const complexityNodes = [
-      'IfStatement', 'ConditionalExpression', 'SwitchCase',
-      'WhileStatement', 'DoWhileStatement', 'ForStatement',
-      'ForInStatement', 'ForOfStatement', 'CatchClause',
-      'LogicalExpression'
+    const complexity = 1;
+
+    const _complexityNodes = [
+      'IfStatement',
+      'ConditionalExpression',
+      'SwitchCase',
+      'WhileStatement',
+      'DoWhileStatement',
+      'ForStatement',
+      'ForInStatement',
+      'ForOfStatement',
+      'CatchClause',
+      'LogicalExpression',
     ];
 
     // This is a simplified version - in a real implementation,
@@ -566,7 +630,7 @@ export class ASTParser {
     return complexity;
   }
 
-  private analyzeSecurityRisk(node: any, path: any): any {
+  private analyzeSecurityRisk(_node: any, _path: any): any {
     // Simplified security risk analysis
     return {
       level: SecuritySeverity.LOW,
@@ -577,8 +641,8 @@ export class ASTParser {
         outputSinks: [],
         sanitization: false,
         validation: false,
-        encryption: false
-      }
+        encryption: false,
+      },
     };
   }
 

@@ -5,11 +5,10 @@
 // Validates all critical components before production deployment
 // ═══════════════════════════════════════════════════════════════════════════
 
+import { existsSync } from 'node:fs';
 import { PrismaClient } from '@prisma/client';
-import Redis from 'ioredis';
 import axios from 'axios';
-import { readFileSync, existsSync } from 'fs';
-import { join } from 'path';
+import Redis from 'ioredis';
 
 interface ValidationResult {
   component: string;
@@ -29,8 +28,6 @@ class ProductionReadinessValidator {
   }
 
   async validate(): Promise<void> {
-    console.log('🔍 Starting Production Readiness Validation...\n');
-
     // Phase 1: Environment & Configuration
     await this.validateEnvironment();
     await this.validateSecrets();
@@ -57,8 +54,6 @@ class ProductionReadinessValidator {
   }
 
   private async validateEnvironment(): Promise<void> {
-    console.log('📋 Validating Environment Variables...');
-
     const requiredVars = [
       'NODE_ENV',
       'PORT',
@@ -81,10 +76,11 @@ class ProductionReadinessValidator {
       'SMS_API_KEY',
     ];
 
-    const missing = requiredVars.filter(envVar => !process.env[envVar]);
-    const defaults = requiredVars.filter(envVar => 
-      process.env[envVar] === 'CHANGE_IN_PRODUCTION' || 
-      process.env[envVar] === 'CHANGE_THIS_TO_SECURE_256_BIT_KEY_IN_PRODUCTION'
+    const missing = requiredVars.filter((envVar) => !process.env[envVar]);
+    const defaults = requiredVars.filter(
+      (envVar) =>
+        process.env[envVar] === 'CHANGE_IN_PRODUCTION' ||
+        process.env[envVar] === 'CHANGE_THIS_TO_SECURE_256_BIT_KEY_IN_PRODUCTION'
     );
 
     if (missing.length > 0) {
@@ -109,8 +105,6 @@ class ProductionReadinessValidator {
   }
 
   private async validateSecrets(): Promise<void> {
-    console.log('🔐 Validating Secrets Security...');
-
     const jwtSecret = process.env.JWT_SECRET;
     const userSalt = process.env.USER_HASH_SALT;
 
@@ -150,8 +144,6 @@ class ProductionReadinessValidator {
   }
 
   private async validateConfiguration(): Promise<void> {
-    console.log('⚙️  Validating Configuration Files...');
-
     const configFiles = [
       'package.json',
       'tsconfig.json',
@@ -178,17 +170,15 @@ class ProductionReadinessValidator {
   }
 
   private async validateDatabase(): Promise<void> {
-    console.log('🗄️  Validating Database Connection...');
-
     try {
       // Test connection
       await this.prisma.$queryRaw`SELECT 1`;
-      
+
       // Check if migrations are applied
-      const migrations = await this.prisma.$queryRaw`
+      const migrations = (await this.prisma.$queryRaw`
         SELECT * FROM "_prisma_migrations" 
         WHERE finished_at IS NULL OR rolled_back_at IS NOT NULL
-      ` as any[];
+      `) as any[];
 
       if (migrations.length > 0) {
         this.results.push({
@@ -206,11 +196,11 @@ class ProductionReadinessValidator {
       }
 
       // Check critical indexes
-      const indexes = await this.prisma.$queryRaw`
+      const indexes = (await this.prisma.$queryRaw`
         SELECT schemaname, tablename, indexname 
         FROM pg_indexes 
         WHERE indexname LIKE 'idx_%'
-      ` as any[];
+      `) as any[];
 
       if (indexes.length < 10) {
         this.results.push({
@@ -231,7 +221,6 @@ class ProductionReadinessValidator {
         status: 'PASS',
         message: 'Database connection successful',
       });
-
     } catch (error) {
       this.results.push({
         component: 'Database Connection',
@@ -242,15 +231,13 @@ class ProductionReadinessValidator {
   }
 
   private async validateRedis(): Promise<void> {
-    console.log('🔴 Validating Redis Connection...');
-
     try {
       await this.redis.ping();
-      
+
       // Test set/get operations
       await this.redis.set('health-check', 'ok', 'EX', 10);
       const result = await this.redis.get('health-check');
-      
+
       if (result === 'ok') {
         this.results.push({
           component: 'Redis Connection',
@@ -266,7 +253,6 @@ class ProductionReadinessValidator {
       }
 
       await this.redis.del('health-check');
-
     } catch (error) {
       this.results.push({
         component: 'Redis Connection',
@@ -277,8 +263,6 @@ class ProductionReadinessValidator {
   }
 
   private async validateClickHouse(): Promise<void> {
-    console.log('📊 Validating ClickHouse Connection...');
-
     try {
       const clickhouseUrl = process.env.CLICKHOUSE_URL;
       if (!clickhouseUrl) {
@@ -291,7 +275,7 @@ class ProductionReadinessValidator {
       }
 
       const response = await axios.get(`${clickhouseUrl}/ping`, { timeout: 5000 });
-      
+
       if (response.status === 200) {
         this.results.push({
           component: 'ClickHouse Connection',
@@ -305,7 +289,6 @@ class ProductionReadinessValidator {
           message: `ClickHouse ping failed with status ${response.status}`,
         });
       }
-
     } catch (error) {
       this.results.push({
         component: 'ClickHouse Connection',
@@ -316,8 +299,6 @@ class ProductionReadinessValidator {
   }
 
   private async validateZarinPal(): Promise<void> {
-    console.log('💳 Validating ZarinPal Integration...');
-
     const merchantId = process.env.ZARINPAL_MERCHANT_ID;
     const isSandbox = process.env.ZARINPAL_SANDBOX === 'true';
 
@@ -340,16 +321,18 @@ class ProductionReadinessValidator {
 
     try {
       // Test ZarinPal API connectivity (without making actual payment)
-      const baseUrl = isSandbox 
-        ? 'https://sandbox.zarinpal.com' 
-        : 'https://api.zarinpal.com';
-      
-      const response = await axios.post(`${baseUrl}/pg/v4/payment/request.json`, {
-        merchant_id: merchantId,
-        amount: 1000, // Test amount
-        callback_url: 'https://example.com/callback',
-        description: 'Test connection',
-      }, { timeout: 10000 });
+      const baseUrl = isSandbox ? 'https://sandbox.zarinpal.com' : 'https://api.zarinpal.com';
+
+      const _response = await axios.post(
+        `${baseUrl}/pg/v4/payment/request.json`,
+        {
+          merchant_id: merchantId,
+          amount: 1000, // Test amount
+          callback_url: 'https://example.com/callback',
+          description: 'Test connection',
+        },
+        { timeout: 10000 }
+      );
 
       // Even if payment fails, API connectivity is confirmed
       this.results.push({
@@ -357,7 +340,6 @@ class ProductionReadinessValidator {
         status: 'PASS',
         message: `ZarinPal API accessible (${isSandbox ? 'sandbox' : 'production'})`,
       });
-
     } catch (error) {
       this.results.push({
         component: 'ZarinPal API',
@@ -368,14 +350,15 @@ class ProductionReadinessValidator {
   }
 
   private async validateMoodian(): Promise<void> {
-    console.log('🏛️  Validating Moodian Integration...');
-
     const clientId = process.env.MOODIAN_CLIENT_ID;
     const clientSecret = process.env.MOODIAN_CLIENT_SECRET;
 
-    if (!clientId || !clientSecret || 
-        clientId === 'CHANGE_IN_PRODUCTION' || 
-        clientSecret === 'CHANGE_IN_PRODUCTION') {
+    if (
+      !clientId ||
+      !clientSecret ||
+      clientId === 'CHANGE_IN_PRODUCTION' ||
+      clientSecret === 'CHANGE_IN_PRODUCTION'
+    ) {
       this.results.push({
         component: 'Moodian Configuration',
         status: 'FAIL',
@@ -386,8 +369,8 @@ class ProductionReadinessValidator {
 
     try {
       // Test Moodian API connectivity
-      const response = await axios.get('https://api.moodian.ir/health', { 
-        timeout: 10000 
+      const _response = await axios.get('https://api.moodian.ir/health', {
+        timeout: 10000,
       });
 
       this.results.push({
@@ -395,7 +378,6 @@ class ProductionReadinessValidator {
         status: 'PASS',
         message: 'Moodian API accessible',
       });
-
     } catch (error) {
       this.results.push({
         component: 'Moodian API',
@@ -406,8 +388,6 @@ class ProductionReadinessValidator {
   }
 
   private async validateSecurity(): Promise<void> {
-    console.log('🛡️  Validating Security Configuration...');
-
     // Check CORS configuration
     const corsOrigins = process.env.CORS_ORIGINS;
     if (!corsOrigins || corsOrigins.includes('*')) {
@@ -427,7 +407,7 @@ class ProductionReadinessValidator {
     // Check rate limiting configuration
     const rateLimitTtl = process.env.RATE_LIMIT_TTL;
     const rateLimitMax = process.env.RATE_LIMIT_MAX;
-    
+
     if (!rateLimitTtl || !rateLimitMax) {
       this.results.push({
         component: 'Rate Limiting',
@@ -444,8 +424,6 @@ class ProductionReadinessValidator {
   }
 
   private async validatePerformance(): Promise<void> {
-    console.log('⚡ Validating Performance Configuration...');
-
     // Check cache configuration
     const cacheTtl = process.env.CACHE_TTL_DEFAULT;
     if (!cacheTtl) {
@@ -480,8 +458,6 @@ class ProductionReadinessValidator {
   }
 
   private async validateApplication(): Promise<void> {
-    console.log('🚀 Validating Application Health...');
-
     try {
       // If the application is running, test health endpoint
       const port = process.env.PORT || 3001;
@@ -502,8 +478,7 @@ class ProductionReadinessValidator {
           message: `Health endpoint returned status ${response.status}`,
         });
       }
-
-    } catch (error) {
+    } catch (_error) {
       this.results.push({
         component: 'Application Health',
         status: 'WARN',
@@ -513,54 +488,33 @@ class ProductionReadinessValidator {
   }
 
   private generateReport(): void {
-    console.log('\n' + '='.repeat(80));
-    console.log('📋 PRODUCTION READINESS VALIDATION REPORT');
-    console.log('='.repeat(80));
-
-    const passed = this.results.filter(r => r.status === 'PASS').length;
-    const failed = this.results.filter(r => r.status === 'FAIL').length;
-    const warnings = this.results.filter(r => r.status === 'WARN').length;
-
-    console.log(`\n📊 Summary: ${passed} PASS | ${failed} FAIL | ${warnings} WARN\n`);
+    const _passed = this.results.filter((r) => r.status === 'PASS').length;
+    const failed = this.results.filter((r) => r.status === 'FAIL').length;
+    const warnings = this.results.filter((r) => r.status === 'WARN').length;
 
     // Group results by status
-    const failedResults = this.results.filter(r => r.status === 'FAIL');
-    const warnResults = this.results.filter(r => r.status === 'WARN');
-    const passedResults = this.results.filter(r => r.status === 'PASS');
+    const failedResults = this.results.filter((r) => r.status === 'FAIL');
+    const warnResults = this.results.filter((r) => r.status === 'WARN');
+    const passedResults = this.results.filter((r) => r.status === 'PASS');
 
     if (failedResults.length > 0) {
-      console.log('❌ CRITICAL ISSUES (Must fix before production):');
-      failedResults.forEach(result => {
-        console.log(`   • ${result.component}: ${result.message}`);
-      });
-      console.log('');
+      failedResults.forEach((_result) => {});
     }
 
     if (warnResults.length > 0) {
-      console.log('⚠️  WARNINGS (Recommended to fix):');
-      warnResults.forEach(result => {
-        console.log(`   • ${result.component}: ${result.message}`);
-      });
-      console.log('');
+      warnResults.forEach((_result) => {});
     }
 
     if (passedResults.length > 0) {
-      console.log('✅ PASSED VALIDATIONS:');
-      passedResults.forEach(result => {
-        console.log(`   • ${result.component}: ${result.message}`);
-      });
-      console.log('');
+      passedResults.forEach((_result) => {});
     }
 
     // Final verdict
     if (failed === 0) {
-      console.log('🎉 PRODUCTION READY! All critical validations passed.');
       if (warnings > 0) {
-        console.log('💡 Consider addressing warnings for optimal performance.');
       }
       process.exit(0);
     } else {
-      console.log('🚨 NOT PRODUCTION READY! Please fix critical issues before deployment.');
       process.exit(1);
     }
   }
@@ -574,7 +528,7 @@ class ProductionReadinessValidator {
 // Run validation
 async function main() {
   const validator = new ProductionReadinessValidator();
-  
+
   try {
     await validator.validate();
   } catch (error) {

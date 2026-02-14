@@ -7,11 +7,11 @@
  */
 
 import {
-  PrismaClient,
-  UserRole,
-  OrganizationType,
   ExecutorSkill,
+  OrganizationType,
+  PrismaClient,
   ProjectStatus,
+  UserRole,
 } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 
@@ -22,13 +22,6 @@ async function hashPassword(password: string): Promise<string> {
 }
 
 async function main() {
-  console.log('🌱 Starting B2B & Executor seeding...\n');
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // 1. CREATE SAMPLE ORGANIZATIONS
-  // ═══════════════════════════════════════════════════════════════════════════
-  console.log('🏭 Creating sample organizations...');
-
   const org1 = await prisma.organization.create({
     data: {
       name: 'کارخانه لوله پارس',
@@ -67,16 +60,7 @@ async function main() {
     },
   });
 
-  console.log(`✅ Created organizations:`);
-  console.log(`   - ${org1.name} (${org1.code})`);
-  console.log(`   - ${org2.name} (${org2.code})\n`);
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // 2. CREATE B2B USERS
-  // ═══════════════════════════════════════════════════════════════════════════
-  console.log('👥 Creating B2B users...');
-
-  const b2bUser1 = await prisma.user.create({
+  const _b2bUser1 = await prisma.user.create({
     data: {
       email: 'factory@demo.com',
       mobile: '09121234567',
@@ -89,7 +73,7 @@ async function main() {
     },
   });
 
-  const b2bUser2 = await prisma.user.create({
+  const _b2bUser2 = await prisma.user.create({
     data: {
       email: 'agent2@mobarakeh.com',
       mobile: '09131234567',
@@ -102,16 +86,7 @@ async function main() {
     },
   });
 
-  console.log(`✅ Created B2B users:`);
-  console.log(`   - ${b2bUser1.firstName} ${b2bUser1.lastName} (${b2bUser1.email})`);
-  console.log(`   - ${b2bUser2.firstName} ${b2bUser2.lastName} (${b2bUser2.email})\n`);
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // 3. CREATE B2B RELATIONS
-  // ═══════════════════════════════════════════════════════════════════════════
-  console.log('🤝 Creating B2B relations...');
-
-  const relation = await prisma.b2BRelation.create({
+  const _relation = await prisma.b2BRelation.create({
     data: {
       organizationId: org1.id,
       partnerOrganizationId: org2.id,
@@ -122,13 +97,6 @@ async function main() {
       isActive: true,
     },
   });
-
-  console.log(`✅ Created B2B relation: ${org1.name} → ${org2.name}\n`);
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // 4. CREATE EXECUTOR USERS
-  // ═══════════════════════════════════════════════════════════════════════════
-  console.log('👷 Creating executor users...');
 
   const executorUser1 = await prisma.user.create({
     data: {
@@ -153,17 +121,6 @@ async function main() {
       isActive: true,
     },
   });
-
-  console.log(`✅ Created executor users:`);
-  console.log(`   - ${executorUser1.firstName} ${executorUser1.lastName} (${executorUser1.email})`);
-  console.log(
-    `   - ${executorUser2.firstName} ${executorUser2.lastName} (${executorUser2.email})\n`
-  );
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // 5. CREATE EXECUTOR PROFILES
-  // ═══════════════════════════════════════════════════════════════════════════
-  console.log('⚡ Creating executor profiles...');
 
   const profile1 = await prisma.executorProfile.create({
     data: {
@@ -197,16 +154,7 @@ async function main() {
     },
   });
 
-  console.log(`✅ Created executor profiles:`);
-  console.log(`   - ${executorUser1.firstName}: ${profile1.skills.join(', ')}`);
-  console.log(`   - ${executorUser2.firstName}: ${profile2.skills.join(', ')}\n`);
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // 6. CREATE SAMPLE PROJECTS
-  // ═══════════════════════════════════════════════════════════════════════════
-  console.log('📁 Creating sample projects...');
-
-  const project1 = await prisma.project.create({
+  const _project1 = await prisma.project.create({
     data: {
       executorId: profile1.id,
       name: 'ویلای آقای رضایی',
@@ -227,7 +175,7 @@ async function main() {
     },
   });
 
-  const project2 = await prisma.project.create({
+  const _project2 = await prisma.project.create({
     data: {
       executorId: profile2.id,
       name: 'ساختمان تجاری پارس',
@@ -247,31 +195,6 @@ async function main() {
       expectedEndDate: new Date('2025-06-01'),
     },
   });
-
-  console.log(`✅ Created projects:`);
-  console.log(`   - ${project1.name} (${project1.projectCode})`);
-  console.log(`   - ${project2.name} (${project2.projectCode})\n`);
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // 7. SUMMARY
-  // ═══════════════════════════════════════════════════════════════════════════
-  console.log('═══════════════════════════════════════════════════════════════');
-  console.log('✅ Seeding completed successfully!');
-  console.log('═══════════════════════════════════════════════════════════════');
-  console.log('\n📊 Summary:');
-  console.log(`   🏭 Organizations: 2`);
-  console.log(`   👥 B2B Users: 2`);
-  console.log(`   🤝 B2B Relations: 1`);
-  console.log(`   👷 Executors: 2`);
-  console.log(`   📁 Projects: 2`);
-  console.log('\n🔐 Test Credentials:');
-  console.log('   B2B Factory Agent:');
-  console.log(`     Email: factory@demo.com`);
-  console.log(`     Password: Factory@123`);
-  console.log('   Executor:');
-  console.log(`     Email: executor@demo.com`);
-  console.log(`     Password: Executor@123`);
-  console.log('\n');
 }
 
 main()

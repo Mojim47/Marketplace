@@ -4,13 +4,8 @@
  * ???????????????????????????????????????????????????????????????????????????
  */
 
-import {
-  Injectable,
-  BadRequestException,
-  ForbiddenException,
-  Logger,
-} from '@nestjs/common';
-import { PrismaClient, DealerTier, UserRole, ExecutorSkill } from '@prisma/client';
+import { BadRequestException, ForbiddenException, Injectable, Logger } from '@nestjs/common';
+import { type DealerTier, ExecutorSkill, PrismaClient, UserRole } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
@@ -20,10 +15,10 @@ export class HierarchyService {
   private readonly logger = new Logger('HierarchyService');
 
   /**
-   * АМсй ДЦгМДо░гД рМяЦлЦФзЕ ≤гянгДЕ
+   * О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫о░О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫
    */
   async getAgentsByFactory(userId: string) {
-    // │Мог ≤яоД Organization ≤гянгДЕ
+    // О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ Organization О©╫О©╫О©╫О©╫О©╫О©╫О©╫
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: {
@@ -55,11 +50,11 @@ export class HierarchyService {
     });
 
     if (!user?.organization) {
-      throw new ForbiddenException('тЦг зжФ ЕМ█ сгрЦгДМ ДМсйМо');
+      throw new ForbiddenException('О©╫О©╫О©╫ О©╫О©╫О©╫ О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫');
     }
 
     if (user.organization.type !== 'FACTORY') {
-      throw new ForbiddenException('щчь ≤гянгДЕ ЦМ²йФгДо ДЦгМДо░гД яг ЦоМяМй ≤До');
+      throw new ForbiddenException('О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫о░О©╫О©╫ О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫');
     }
 
     const agents = user.organization.supplierRelations.map((relation) => ({
@@ -81,7 +76,7 @@ export class HierarchyService {
   }
 
   /**
-   * гМлго ДЦгМДоЕ лоМо йФсь ≤гянгДЕ
+   * О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫
    */
   async createAgent(
     userId: string,
@@ -94,17 +89,17 @@ export class HierarchyService {
       discountPercentage: number;
     }
   ) {
-    // хяясМ ≤гянгДЕ
+    // О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: { organization: true },
     });
 
     if (!user?.organization || user.organization.type !== 'FACTORY') {
-      throw new ForbiddenException('щчь ≤гянгДЕ ЦМ²йФгДо ДЦгМДоЕ гМлго ≤До');
+      throw new ForbiddenException('О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫');
     }
 
-    // хяясМ й≤ягяМ ДхФоД ЦФхгМА
+    // О©╫О©╫О©╫О©╫О©╫ й≤О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫
     const existingUser = await prisma.user.findUnique({
       where: { mobile: data.mobile },
     });
@@ -112,10 +107,10 @@ export class HierarchyService {
     let agentUser: any;
 
     if (existingUser) {
-      // г░я ≤гяхя ФлФо огяо║ сгрЦгД лоМо хЕ гФ гнйугу ЦМ²оЕМЦ
+      // г░О©╫ О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫о║ О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫ О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫
       agentUser = existingUser;
     } else {
-      // гМлго ≤гяхя лоМо
+      // О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫
       const tempPassword = Math.random().toString(36).slice(-8);
       const hashedPassword = await bcrypt.hash(tempPassword, 10);
 
@@ -131,34 +126,36 @@ export class HierarchyService {
         },
       });
 
-      this.logger.log(`Created new agent user: ${agentUser.id} with temp password: ${tempPassword}`);
+      this.logger.log(
+        `Created new agent user: ${agentUser.id} with temp password: ${tempPassword}`
+      );
     }
 
-    // гМлго Organization хягМ ДЦгМДоЕ
+    // О©╫О©╫О©╫О©╫О©╫ Organization О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫
     const agentOrg = await prisma.organization.create({
       data: {
         name: data.name,
         slug: `agent-${Date.now()}`,
         type: 'AGENT',
-        nationalId: `TEMP-${Date.now()}`, // ЦФчй - хгМо хзогП й≤ЦМА тФо
+        nationalId: `TEMP-${Date.now()}`, // О©╫О©╫О©╫О©╫ - О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫ й≤О©╫О©╫О©╫ О©╫О©╫О©╫
         email: data.email || `${data.mobile}@temp.local`,
         phone: data.mobile,
-        address: 'оя гДйыгя й≤ЦМА гьАгзгй',
-        city: 'йЕягД',
-        province: 'йЕягД',
+        address: 'О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫ й≤О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫',
+        city: 'О©╫О©╫О©╫О©╫О©╫',
+        province: 'О©╫О©╫О©╫О©╫О©╫',
         postalCode: '0000000000',
         isActive: true,
         isVerified: false,
       },
     });
 
-    // гйугА ≤гяхя хЕ Organization
+    // О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫ О©╫О©╫ Organization
     await prisma.user.update({
       where: { id: agentUser.id },
       data: { organizationId: agentOrg.id },
     });
 
-    // гМлго ягхьЕ B2B
+    // О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫ B2B
     const relation = await prisma.b2BRelation.create({
       data: {
         supplierId: user.organization.id,
@@ -172,7 +169,7 @@ export class HierarchyService {
 
     return {
       success: true,
-      message: 'ДЦгМДоЕ хг ЦФщчМй гМлго то',
+      message: 'О©╫О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫ О©╫О©╫',
       data: {
         userId: agentUser.id,
         organizationId: agentOrg.id,
@@ -183,7 +180,7 @@ export class HierarchyService {
   }
 
   /**
-   * АМсй ЦляМгД рМяЦлЦФзЕ ДЦгМДоЕ
+   * О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫
    */
   async getExecutorsByAgent(userId: string) {
     const user = await prisma.user.findUnique({
@@ -218,7 +215,7 @@ export class HierarchyService {
     });
 
     if (!user?.organization) {
-      throw new ForbiddenException('тЦг зжФ ЕМ█ сгрЦгДМ ДМсйМо');
+      throw new ForbiddenException('О©╫О©╫О©╫ О©╫О©╫О©╫ О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫');
     }
 
     const executors = user.organization.supplierRelations.flatMap((relation) =>
@@ -240,7 +237,7 @@ export class HierarchyService {
   }
 
   /**
-   * гМлго ЦляМ лоМо йФсь ДЦгМДоЕ
+   * О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫
    */
   async createExecutor(
     userId: string,
@@ -257,19 +254,19 @@ export class HierarchyService {
     });
 
     if (!user?.organization) {
-      throw new ForbiddenException('тЦг зжФ ЕМ█ сгрЦгДМ ДМсйМо');
+      throw new ForbiddenException('О©╫О©╫О©╫ О©╫О©╫О©╫ О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫');
     }
 
-    // хяясМ й≤ягяМ ДхФоД ЦФхгМА
+    // О©╫О©╫О©╫О©╫О©╫ й≤О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫
     const existingUser = await prisma.user.findUnique({
       where: { mobile: data.mobile },
     });
 
     if (existingUser) {
-      throw new BadRequestException('гМД тЦгяЕ ЦФхгМА чхАгП кхй тоЕ гсй');
+      throw new BadRequestException('О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫ О©╫О©╫О©╫ О©╫О©╫О©╫');
     }
 
-    // гМлго ≤гяхя ЦляМ
+    // О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫
     const tempPassword = Math.random().toString(36).slice(-8);
     const hashedPassword = await bcrypt.hash(tempPassword, 10);
 
@@ -297,11 +294,11 @@ export class HierarchyService {
 
     return {
       success: true,
-      message: 'ЦляМ хг ЦФщчМй гМлго то',
+      message: 'О©╫О©╫О©╫О©╫ О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫ О©╫О©╫',
       data: {
         userId: executor.id,
         mobile: data.mobile,
-        tempPassword, // оя production хгМо гр ьяМч SMS гясгА тФо
+        tempPassword, // О©╫О©╫ production О©╫О©╫О©╫О©╫ О©╫О©╫ О©╫О©╫О©╫О©╫ SMS О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫
       },
     };
   }

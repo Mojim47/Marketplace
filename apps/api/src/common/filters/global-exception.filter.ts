@@ -2,10 +2,10 @@
  * ???????????????????????????????????????????????????????????????????????????
  * NextGen Marketplace - Global Exception Filter
  * ???????????????????????????????????????????????????????????????????????????
- * 
+ *
  * Production-ready exception filter with Persian error messages.
  * Handles all exceptions and returns consistent, localized error responses.
- * 
+ *
  * Features:
  * - Persian error messages for all HTTP status codes
  * - Sanitized error messages in production (no stack traces, no DB info)
@@ -13,21 +13,21 @@
  * - Structured logging with full details (server-side only)
  * - Prisma/Database error handling
  * - Validation error formatting
- * 
+ *
  * @module @nextgen/api/filters
  * Requirements: 4.4
  */
 
+import { randomUUID } from 'node:crypto';
 import {
-  ExceptionFilter,
+  type ArgumentsHost,
   Catch,
-  ArgumentsHost,
+  type ExceptionFilter,
   HttpException,
   HttpStatus,
-  Logger,
   Injectable,
+  Logger,
 } from '@nestjs/common';
-import { randomUUID } from 'crypto';
 
 interface Request {
   method: string;
@@ -66,38 +66,38 @@ export interface PersianErrorResponse {
  */
 export const PERSIAN_ERROR_MESSAGES: Record<number, string> = {
   // 4xx Client Errors
-  [HttpStatus.BAD_REQUEST]: 'оянФгсй ДгЦзйхя гсй',
-  [HttpStatus.UNAUTHORIZED]: 'гмягр ЕФМй ДгЦФщч хФо',
-  [HttpStatus.PAYMENT_REQUIRED]: '│яогнй ЦФяо ДМгр гсй',
-  [HttpStatus.FORBIDDEN]: 'осйясМ шМяЦлгр',
-  [HttpStatus.NOT_FOUND]: 'ЦДхз оянФгсйМ Мгщй Дто',
-  [HttpStatus.METHOD_NOT_ALLOWED]: 'Цйо оянФгсйМ Цлгр ДМсй',
-  [HttpStatus.NOT_ACCEPTABLE]: 'щяЦй оянФгсйМ чгхА чхФА ДМсй',
-  [HttpStatus.PROXY_AUTHENTICATION_REQUIRED]: 'гмягр ЕФМй │яФ≤сМ ЦФяо ДМгр гсй',
-  [HttpStatus.REQUEST_TIMEOUT]: 'рЦгД оянФгсй хЕ │гМгД ясМо',
-  [HttpStatus.CONFLICT]: 'йогнА оя оянФгсй',
-  [HttpStatus.GONE]: 'ЦДхз оянФгсйМ оМ░я оя осйяс ДМсй',
-  [HttpStatus.LENGTH_REQUIRED]: 'ьФА ЦмйФг ЦФяо ДМгр гсй',
-  [HttpStatus.PRECONDITION_FAILED]: '│Мт²тяь²Ег хябФяоЕ ДтоЕ гсй',
-  [HttpStatus.PAYLOAD_TOO_LARGE]: 'млЦ оянФгсй хМт гр мо Цлгр гсй',
-  [HttpStatus.URI_TOO_LONG]: 'бояс оянФгсй хМт гр мо ьФАгДМ гсй',
-  [HttpStatus.UNSUPPORTED_MEDIA_TYPE]: 'ДФз ЦмйФг │тйМхгДМ ДЦМ²тФо',
-  [HttpStatus.REQUESTED_RANGE_NOT_SATISFIABLE]: 'ЦмоФоЕ оянФгсйМ чгхА гягфЕ ДМсй',
-  [HttpStatus.EXPECTATION_FAILED]: 'гДйыгягй хябФяоЕ Дто',
-  [HttpStatus.I_AM_A_TEAPOT]: 'ЦД М≤ чФяМ ЕсйЦ!',
-  [HttpStatus.MISDIRECTED]: 'оянФгсй хЕ сяФя гтйхгЕ гясгА тоЕ',
-  [HttpStatus.UNPROCESSABLE_ENTITY]: 'огоЕ²ЕгМ гясгАМ чгхА │яогрт ДМсйДо',
-  [HttpStatus.FAILED_DEPENDENCY]: 'Фгхсй░М ДгЦФщч',
-  [HttpStatus.PRECONDITION_REQUIRED]: '│Мт²тяь ЦФяо ДМгр гсй',
-  [HttpStatus.TOO_MANY_REQUESTS]: 'йзого оянФгсй²Ег хМт гр мо Цлгр гсй',
-  
+  [HttpStatus.BAD_REQUEST]: 'О©╫О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫',
+  [HttpStatus.UNAUTHORIZED]: 'О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫',
+  [HttpStatus.PAYMENT_REQUIRED]: 'О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫',
+  [HttpStatus.FORBIDDEN]: 'О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫',
+  [HttpStatus.NOT_FOUND]: 'О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫',
+  [HttpStatus.METHOD_NOT_ALLOWED]: 'О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫',
+  [HttpStatus.NOT_ACCEPTABLE]: 'О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫',
+  [HttpStatus.PROXY_AUTHENTICATION_REQUIRED]: 'О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫',
+  [HttpStatus.REQUEST_TIMEOUT]: 'О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫ О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫',
+  [HttpStatus.CONFLICT]: 'О©╫О©╫О©╫О©╫О©╫ О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫',
+  [HttpStatus.GONE]: 'О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫ О©╫О©╫ О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫',
+  [HttpStatus.LENGTH_REQUIRED]: 'О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫',
+  [HttpStatus.PRECONDITION_FAILED]: 'О©╫О©╫т²О©╫О©╫ь²О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫',
+  [HttpStatus.PAYLOAD_TOO_LARGE]: 'О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫ О©╫О©╫ О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫',
+  [HttpStatus.URI_TOO_LONG]: 'О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫ О©╫О©╫ О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫',
+  [HttpStatus.UNSUPPORTED_MEDIA_TYPE]: 'О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫',
+  [HttpStatus.REQUESTED_RANGE_NOT_SATISFIABLE]: 'О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫',
+  [HttpStatus.EXPECTATION_FAILED]: 'О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫',
+  [HttpStatus.I_AM_A_TEAPOT]: 'О©╫О©╫ О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫!',
+  [HttpStatus.MISDIRECTED]: 'О©╫О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫',
+  [HttpStatus.UNPROCESSABLE_ENTITY]: 'О©╫О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫',
+  [HttpStatus.FAILED_DEPENDENCY]: 'О©╫О©╫О©╫О©╫й░О©╫ О©╫О©╫О©╫О©╫О©╫О©╫',
+  [HttpStatus.PRECONDITION_REQUIRED]: 'О©╫О©╫т²О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫',
+  [HttpStatus.TOO_MANY_REQUESTS]: 'О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫й²О©╫О©╫ О©╫О©╫О©╫ О©╫О©╫ О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫',
+
   // 5xx Server Errors
-  [HttpStatus.INTERNAL_SERVER_ERROR]: 'ньгМ огнАМ сяФя',
-  [HttpStatus.NOT_IMPLEMENTED]: 'гМД чгхАМй │МгоЕ²сгрМ ДтоЕ гсй',
-  [HttpStatus.BAD_GATEWAY]: 'ньг оя гяйхгь хг сяФМс',
-  [HttpStatus.SERVICE_UNAVAILABLE]: 'сяФМс ЦФчйгП оя осйяс ДМсй',
-  [HttpStatus.GATEWAY_TIMEOUT]: 'рЦгД │гсн²оЕМ сяФМс хЕ │гМгД ясМо',
-  [HttpStatus.HTTP_VERSION_NOT_SUPPORTED]: 'ДснЕ HTTP │тйМхгДМ ДЦМ²тФо',
+  [HttpStatus.INTERNAL_SERVER_ERROR]: 'О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫',
+  [HttpStatus.NOT_IMPLEMENTED]: 'О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫',
+  [HttpStatus.BAD_GATEWAY]: 'О©╫О©╫О©╫ О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫ О©╫О©╫О©╫О©╫О©╫',
+  [HttpStatus.SERVICE_UNAVAILABLE]: 'О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫ О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫',
+  [HttpStatus.GATEWAY_TIMEOUT]: 'О©╫О©╫О©╫О©╫ О©╫О©╫О©╫н²О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫ О©╫О©╫ О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫',
+  [HttpStatus.HTTP_VERSION_NOT_SUPPORTED]: 'О©╫О©╫О©╫О©╫ HTTP О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫',
 };
 
 /**
@@ -105,42 +105,42 @@ export const PERSIAN_ERROR_MESSAGES: Record<number, string> = {
  */
 export const SPECIFIC_ERROR_MESSAGES: Record<string, string> = {
   // Authentication
-  INVALID_CREDENTIALS: 'гМЦМА Мг яЦр зхФя гтйхгЕ гсй',
-  ACCOUNT_LOCKED: 'мсгх ≤гяхяМ чщА тоЕ гсй',
-  INVALID_TOKEN: 'йФ≤Д ДгЦзйхя гсй',
-  TOKEN_EXPIRED: 'йФ≤Д ЦДчжМ тоЕ гсй',
-  INVALID_TOTP: '≤о йгММо ДгЦзйхя гсй',
-  SESSION_EXPIRED: 'Дтсй тЦг ЦДчжМ тоЕ гсй. АьщгП оФхгяЕ Фгяо тФМо',
-  
+  INVALID_CREDENTIALS: 'О©╫О©╫О©╫О©╫О©╫ О©╫О©╫ О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫',
+  ACCOUNT_LOCKED: 'О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫ О©╫О©╫О©╫ О©╫О©╫О©╫',
+  INVALID_TOKEN: 'О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫',
+  TOKEN_EXPIRED: 'О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫ О©╫О©╫О©╫',
+  INVALID_TOTP: 'О©╫О©╫ О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫',
+  SESSION_EXPIRED: 'О©╫О©╫О©╫О©╫ О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫ О©╫О©╫О©╫. О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫',
+
   // Validation
-  INVALID_MOBILE: 'тЦгяЕ ЦФхгМА ДгЦзйхя гсй',
-  INVALID_NATIONAL_ID: '≤о ЦАМ ДгЦзйхя гсй',
-  INVALID_BANK_CARD: 'тЦгяЕ ≤гяй ДгЦзйхя гсй',
-  INVALID_IBAN: 'тЦгяЕ тхг ДгЦзйхя гсй',
-  INVALID_POSTAL_CODE: '≤о │сйМ ДгЦзйхя гсй',
-  INVALID_EMAIL: 'бояс гМЦМА ДгЦзйхя гсй',
-  
+  INVALID_MOBILE: 'О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫',
+  INVALID_NATIONAL_ID: 'О©╫О©╫ О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫',
+  INVALID_BANK_CARD: 'О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫',
+  INVALID_IBAN: 'О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫',
+  INVALID_POSTAL_CODE: 'О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫',
+  INVALID_EMAIL: 'О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫',
+
   // Payment
-  PAYMENT_FAILED: '│яогнй ДгЦФщч хФо',
-  INSUFFICIENT_BALANCE: 'ЦФлФоМ ≤гщМ ДМсй',
-  PAYMENT_CANCELLED: '│яогнй АшФ то',
-  PAYMENT_TIMEOUT: 'рЦгД │яогнй хЕ │гМгД ясМо',
-  
+  PAYMENT_FAILED: 'О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫',
+  INSUFFICIENT_BALANCE: 'О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫',
+  PAYMENT_CANCELLED: 'О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫ О©╫О©╫',
+  PAYMENT_TIMEOUT: 'О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫ О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫',
+
   // Security
-  CSRF_INVALID: 'йФ≤Д CSRF ДгЦзйхя гсй',
-  ACCESS_DENIED: 'осйясМ шМяЦлгр',
-  BLOCKED_IP: 'бояс IP тЦг ЦсоФо тоЕ гсй',
-  RATE_LIMIT_EXCEEDED: 'йзого оянФгсй²ЕгМ тЦг хМт гр мо Цлгр гсй',
-  
+  CSRF_INVALID: 'О©╫О©╫О©╫ CSRF О©╫О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫',
+  ACCESS_DENIED: 'О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫',
+  BLOCKED_IP: 'О©╫О©╫О©╫О©╫ IP О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫ О©╫О©╫О©╫',
+  RATE_LIMIT_EXCEEDED: 'О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫й²О©╫О©╫О©╫ О©╫О©╫О©╫ О©╫О©╫О©╫ О©╫О©╫ О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫',
+
   // Resources
-  USER_NOT_FOUND: '≤гяхя Мгщй Дто',
-  PRODUCT_NOT_FOUND: 'ЦмуФА Мгщй Дто',
-  ORDER_NOT_FOUND: 'сщгят Мгщй Дто',
-  RESOURCE_NOT_FOUND: 'ЦДхз оянФгсйМ Мгщй Дто',
-  
+  USER_NOT_FOUND: 'О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫',
+  PRODUCT_NOT_FOUND: 'О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫',
+  ORDER_NOT_FOUND: 'О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫',
+  RESOURCE_NOT_FOUND: 'О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫',
+
   // Database
-  DUPLICATE_ENTRY: 'гМД ЦФяо чхАгП кхй тоЕ гсй',
-  FOREIGN_KEY_VIOLATION: 'гЦ≤гД мпщ гМД ЦФяо ФлФо Догяо',
+  DUPLICATE_ENTRY: 'О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫ О©╫О©╫О©╫ О©╫О©╫О©╫',
+  FOREIGN_KEY_VIOLATION: 'О©╫О©╫О©╫О©╫ О©╫О©╫О©╫ О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫',
 };
 
 /**
@@ -170,10 +170,7 @@ const SENSITIVE_DB_PATTERNS = [
 /**
  * Auth-related status codes that should use generic messages
  */
-const AUTH_STATUS_CODES = [
-  HttpStatus.UNAUTHORIZED,
-  HttpStatus.FORBIDDEN,
-];
+const AUTH_STATUS_CODES = [HttpStatus.UNAUTHORIZED, HttpStatus.FORBIDDEN];
 
 /**
  * Check if running in production environment
@@ -186,7 +183,7 @@ function isProduction(): boolean {
  * Check if message contains sensitive database information
  */
 function containsSensitiveDbInfo(message: string): boolean {
-  return SENSITIVE_DB_PATTERNS.some(pattern => pattern.test(message));
+  return SENSITIVE_DB_PATTERNS.some((pattern) => pattern.test(message));
 }
 
 /**
@@ -200,7 +197,7 @@ function getPersianMessage(status: number, originalMessage: string, errorCode?: 
 
   // Check for specific message patterns
   const lowerMessage = originalMessage.toLowerCase();
-  
+
   if (lowerMessage.includes('invalid credentials') || lowerMessage.includes('wrong password')) {
     return SPECIFIC_ERROR_MESSAGES.INVALID_CREDENTIALS;
   }
@@ -225,44 +222,49 @@ function getPersianMessage(status: number, originalMessage: string, errorCode?: 
 
   // Always use generic message for auth errors
   if (AUTH_STATUS_CODES.includes(status)) {
-    return PERSIAN_ERROR_MESSAGES[status] || 'гмягр ЕФМй ДгЦФщч хФо';
+    return PERSIAN_ERROR_MESSAGES[status] || 'О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫';
   }
 
   // In production, sanitize all messages
   if (isProduction()) {
     if (containsSensitiveDbInfo(originalMessage)) {
-      return PERSIAN_ERROR_MESSAGES[status] || PERSIAN_ERROR_MESSAGES[HttpStatus.INTERNAL_SERVER_ERROR];
+      return (
+        PERSIAN_ERROR_MESSAGES[status] || PERSIAN_ERROR_MESSAGES[HttpStatus.INTERNAL_SERVER_ERROR]
+      );
     }
 
     if (status >= 500) {
-      return PERSIAN_ERROR_MESSAGES[status] || PERSIAN_ERROR_MESSAGES[HttpStatus.INTERNAL_SERVER_ERROR];
+      return (
+        PERSIAN_ERROR_MESSAGES[status] || PERSIAN_ERROR_MESSAGES[HttpStatus.INTERNAL_SERVER_ERROR]
+      );
     }
   }
 
   // Return generic Persian message for status code
-  return PERSIAN_ERROR_MESSAGES[status] || 'ньг оя │яогрт оянФгсй';
+  return PERSIAN_ERROR_MESSAGES[status] || 'О©╫О©╫О©╫ О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫';
 }
 
 /**
  * Extract correlation ID from request or generate new one
  */
 function getCorrelationId(request: Request): string {
-  const existingId = request.headers['x-correlation-id'] ||
-                     request.headers['x-request-id'] ||
-                     (request as any).correlationId;
-  
+  const existingId =
+    request.headers['x-correlation-id'] ||
+    request.headers['x-request-id'] ||
+    (request as any).correlationId;
+
   if (typeof existingId === 'string' && existingId.length > 0) {
     return existingId;
   }
-  
+
   return randomUUID();
 }
 
 /**
  * Global Exception Filter with Persian Messages
- * 
+ *
  * Handles all exceptions and returns consistent, localized error responses.
- * 
+ *
  * @example
  * // Global registration in AppModule
  * providers: [
@@ -355,14 +357,14 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       }
       if (typeof response === 'object' && response !== null) {
         const resp = response as Record<string, unknown>;
-        let message = 'ньгМ ДгтДгнйЕ';
-        
+        let message = 'О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫';
+
         if (typeof resp.message === 'string') {
           message = resp.message;
         } else if (Array.isArray(resp.message)) {
           message = resp.message.join(', ');
         }
-        
+
         return {
           message,
           errorCode: typeof resp.errorCode === 'string' ? resp.errorCode : undefined,
@@ -374,7 +376,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       return { message: exception.message };
     }
 
-    return { message: 'ньгМ ДгтДгнйЕ' };
+    return { message: 'О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫' };
   }
 
   /**
@@ -432,9 +434,11 @@ export class GlobalExceptionFilter implements ExceptionFilter {
    */
   private isPrismaError(exception: unknown): boolean {
     if (exception instanceof Error) {
-      return exception.constructor.name.includes('Prisma') ||
-             exception.name.includes('Prisma') ||
-             (exception as any).code?.startsWith?.('P');
+      return (
+        exception.constructor.name.includes('Prisma') ||
+        exception.name.includes('Prisma') ||
+        (exception as any).code?.startsWith?.('P')
+      );
     }
     return false;
   }
@@ -444,7 +448,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
    */
   private getPrismaErrorStatus(exception: unknown): number {
     const code = (exception as any).code;
-    
+
     switch (code) {
       case 'P2002': // Unique constraint violation
         return HttpStatus.CONFLICT;
@@ -466,7 +470,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     request: Request,
     exception: unknown,
     correlationId: string,
-    status: number,
+    status: number
   ): void {
     const logContext = {
       correlationId,
@@ -485,16 +489,15 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       this.logger.error(
         `[${correlationId}] ${request.method} ${request.url} - ${status}`,
         exception instanceof Error ? exception.stack : String(exception),
-        JSON.stringify(logContext),
+        JSON.stringify(logContext)
       );
     } else if (status >= 400) {
       this.logger.warn(
         `[${correlationId}] ${request.method} ${request.url} - ${status}`,
-        JSON.stringify(logContext),
+        JSON.stringify(logContext)
       );
     }
   }
 }
 
 export default GlobalExceptionFilter;
-

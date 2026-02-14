@@ -1,7 +1,6 @@
-import http from 'k6/http';
 import { check, group, sleep } from 'k6';
-import { Rate, Trend, Counter } from 'k6/metrics';
-import { randomString } from 'https://jslib.k6.io/k6-utils/1.2.0/index.js';
+import http from 'k6/http';
+import { Counter, Rate, Trend } from 'k6/metrics';
 
 /**
  * NextGen Marketplace - Stress Test Script (Ruthless Mode)
@@ -63,7 +62,7 @@ export const options = {
 
 // Environment Variables
 const API_BASE_URL = __ENV.API_URL || 'http://localhost:3000';
-const WEB_BASE_URL = __ENV.WEB_URL || 'http://localhost:3001';
+const _WEB_BASE_URL = __ENV.WEB_URL || 'http://localhost:3001';
 
 // Test Data
 const TEST_USERS = generateTestUsers(100);
@@ -78,23 +77,19 @@ function generateTestUsers(count) {
 }
 
 export function setup() {
-  console.log('🚀 Starting Stress Test...');
-  console.log(`Target: ${API_BASE_URL}`);
-  console.log('Peak Load: 500 concurrent users');
-
   // Verify API is up
   const healthCheck = http.get(`${API_BASE_URL}/health`);
   if (healthCheck.status !== 200) {
     console.error('❌ API is not healthy. Aborting test.');
     return { skipTest: true };
   }
-
-  console.log('✅ API is healthy. Proceeding...\n');
   return { skipTest: false };
 }
 
 export default function (data) {
-  if (data.skipTest) return;
+  if (data.skipTest) {
+    return;
+  }
 
   reqCounter.add(1);
 
@@ -114,7 +109,9 @@ export default function (data) {
       'health response time < 100ms': (r) => r.timings.duration < 100,
     });
 
-    if (!success) errorRate.add(1);
+    if (!success) {
+      errorRate.add(1);
+    }
   });
 
   sleep(0.5);
@@ -248,20 +245,7 @@ export default function (data) {
   sleep(2);
 }
 
-export function teardown(data) {
-  console.log('\n📊 ===== STRESS TEST RESULTS =====');
-  console.log('Total Duration: 9+ minutes');
-  console.log('Peak Concurrent Users: 500');
-  console.log('\n🎯 Breaking Point Analysis:');
-  console.log('- Check "http_req_failed" rate to identify error threshold');
-  console.log('- Check "http_req_duration" p(95) and p(99) for latency degradation');
-  console.log('- Check "http_reqs" rate to determine max RPS');
-  console.log('\n📈 Recommended Actions:');
-  console.log('- If error rate > 5%: Scale up API instances or optimize database queries');
-  console.log('- If p(95) > 2s: Enable caching (Redis) or use CDN');
-  console.log('- If RPS < 50: Check database connection pool, network latency');
-  console.log('\n💾 Export results: stress-test-results.json');
-}
+export function teardown(_data) {}
 
 export function handleSummary(data) {
   const totalRequests = data.metrics.total_requests?.values?.count || 0;
@@ -289,7 +273,7 @@ export function handleSummary(data) {
    HTTP Failures: ${(data.metrics.http_req_failed?.values?.rate * 100 || 0).toFixed(2)}%
 
 🎯 BREAKING POINT:
-   ${avgRPS > 100 ? '✅ System handles 100+ RPS' : '⚠ System max RPS: ' + avgRPS.toFixed(2)}
+   ${avgRPS > 100 ? '✅ System handles 100+ RPS' : `⚠ System max RPS: ${avgRPS.toFixed(2)}`}
    ${errorRateValue < 0.05 ? '✅ Error rate below 5%' : '❌ Error rate above threshold'}
    ${p95Latency < 2000 ? '✅ p(95) latency acceptable' : '❌ p(95) latency above 2s'}
 

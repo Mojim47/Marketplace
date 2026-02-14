@@ -1,11 +1,11 @@
-﻿import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
+﻿import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { ExtractJwt, Strategy, StrategyOptionsWithoutRequest } from 'passport-jwt';
-import { AuthService } from './auth.service';
+import { ExtractJwt, Strategy, type StrategyOptionsWithoutRequest } from 'passport-jwt';
+import type { AuthService } from './auth.service';
 
 /**
  * JWT Payload Interface
- * 
+ *
  * Standard JWT claims:
  * - sub: Subject (user ID)
  * - iss: Issuer
@@ -14,7 +14,7 @@ import { AuthService } from './auth.service';
  * - exp: Expiration
  * - nbf: Not before
  * - jti: JWT ID (unique identifier)
- * 
+ *
  * Custom claims:
  * - email: User email
  * - role: User role
@@ -37,17 +37,22 @@ export interface JwtPayload {
 export class JwtStrategy extends PassportStrategy(Strategy) {
   private readonly logger = new Logger(JwtStrategy.name);
 
-  constructor(
-    private readonly authService: AuthService,
-  ) {
+  constructor(private readonly authService: AuthService) {
     // Get config from environment directly since we can't inject before super()
-    const publicKey = process.env['JWT_PUBLIC_KEY'];
-    const nodeEnv = process.env['NODE_ENV'] || 'development';
+    const rawPublicKey = process.env.JWT_PUBLIC_KEY;
+    const publicKey =
+      rawPublicKey && rawPublicKey !== 'undefined' && rawPublicKey.trim().length > 0
+        ? rawPublicKey
+        : '';
+    const nodeEnv = process.env.NODE_ENV || 'development';
     const secret =
-      process.env['JWT_SECRET'] ||
-      (nodeEnv !== 'production' ? process.env['JWT_SECRET_DEV'] : undefined);
-    const issuer = process.env['JWT_ISSUER'] || 'nextgen-marketplace';
-    const audience = process.env['JWT_AUDIENCE'] || 'nextgen-api';
+      process.env.JWT_SECRET || (nodeEnv !== 'production' ? process.env.JWT_SECRET_DEV : undefined);
+    const issuer = process.env.JWT_ISSUER || 'nextgen-marketplace';
+    const audience = process.env.JWT_AUDIENCE || 'nextgen-api';
+
+    if (nodeEnv === 'production' && !publicKey) {
+      throw new Error('FATAL: JWT_PUBLIC_KEY must be defined in production environment');
+    }
 
     // Build strategy options based on available keys
     let strategyOptions: StrategyOptionsWithoutRequest;
@@ -75,7 +80,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     } else {
       throw new Error(
         'JWT configuration error: JWT_PUBLIC_KEY (RS256) is required in production. ' +
-        'For non-production, provide JWT_SECRET (min 32 chars) for HS256.'
+          'For non-production, provide JWT_SECRET (min 32 chars) for HS256.'
       );
     }
 
@@ -84,7 +89,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   /**
    * Validate JWT payload and return user
-   * 
+   *
    * This method is called after passport-jwt verifies:
    * - Token signature (RS256 or HS256)
    * - Token expiration (exp claim)
@@ -117,7 +122,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     // Fetch user from database
     const user = await this.authService.validateUser(payload.sub);
-    
+
     if (!user) {
       this.logger.warn(`JWT validation failed: user not found (sub: ${payload.sub})`);
       throw new UnauthorizedException('کاربر يافت نشد');
@@ -141,4 +146,3 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     };
   }
 }
-

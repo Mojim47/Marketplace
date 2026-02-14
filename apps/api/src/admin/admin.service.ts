@@ -1,37 +1,37 @@
-import { Injectable, Logger, NotFoundException, Inject, OnModuleInit } from '@nestjs/common'
-import { PrismaService } from '../database/prisma.service'
-import { CACHE_MANAGER } from '@nestjs/cache-manager'
-import type { Cache } from 'cache-manager'
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Inject, Injectable, Logger, NotFoundException, type OnModuleInit } from '@nestjs/common';
+import type { Cache } from 'cache-manager';
+import type { PrismaService } from '../database/prisma.service';
 
 interface PlatformStats {
-  totalUsers: number
-  totalVendors: number
-  totalProducts: number
-  totalRevenue: number
-  activeArSessions: number
-  todaySignups: number
-  pendingOrders: number
-  activeExecutors: number
+  totalUsers: number;
+  totalVendors: number;
+  totalProducts: number;
+  totalRevenue: number;
+  activeArSessions: number;
+  todaySignups: number;
+  pendingOrders: number;
+  activeExecutors: number;
 }
 
 interface PlatformSettings {
-  maintenanceMode?: boolean
-  enableAR?: boolean
-  enableAI?: boolean
-  commissionRate?: number
-  minOrderAmount?: number
-  maxOrderAmount?: number
-  supportEmail?: string
-  supportPhone?: string
+  maintenanceMode?: boolean;
+  enableAR?: boolean;
+  enableAI?: boolean;
+  commissionRate?: number;
+  minOrderAmount?: number;
+  maxOrderAmount?: number;
+  supportEmail?: string;
+  supportPhone?: string;
 }
 
-const SETTINGS_CACHE_KEY = 'platform:settings'
-const STATS_CACHE_KEY = 'platform:stats'
-const AR_SESSIONS_KEY = 'ar:active_sessions'
+const SETTINGS_CACHE_KEY = 'platform:settings';
+const STATS_CACHE_KEY = 'platform:stats';
+const AR_SESSIONS_KEY = 'ar:active_sessions';
 
 @Injectable()
 export class AdminService implements OnModuleInit {
-  private readonly logger = new Logger(AdminService.name)
+  private readonly logger = new Logger(AdminService.name);
 
   constructor(
     private readonly prisma: PrismaService,
@@ -40,7 +40,7 @@ export class AdminService implements OnModuleInit {
 
   async onModuleInit() {
     // Load settings from database on startup
-    await this.loadSettingsFromDatabase()
+    await this.loadSettingsFromDatabase();
   }
 
   /**
@@ -49,15 +49,15 @@ export class AdminService implements OnModuleInit {
   private async loadSettingsFromDatabase(): Promise<void> {
     try {
       const settings = await this.prisma.platformSettings.findFirst({
-        where: { isActive: true }
-      })
-      
+        where: { isActive: true },
+      });
+
       if (settings) {
-        await this.cacheManager.set(SETTINGS_CACHE_KEY, settings.config, 3600000) // 1 hour
-        this.logger.log('Platform settings loaded from database')
+        await this.cacheManager.set(SETTINGS_CACHE_KEY, settings.config, 3600000); // 1 hour
+        this.logger.log('Platform settings loaded from database');
       }
-    } catch (error) {
-      this.logger.warn('Could not load platform settings from database, using defaults')
+    } catch (_error) {
+      this.logger.warn('Could not load platform settings from database, using defaults');
     }
   }
 
@@ -67,51 +67,52 @@ export class AdminService implements OnModuleInit {
   async getPlatformStats(): Promise<PlatformStats> {
     try {
       // Try to get from cache first
-      const cachedStats = await this.cacheManager.get<PlatformStats>(STATS_CACHE_KEY)
+      const cachedStats = await this.cacheManager.get<PlatformStats>(STATS_CACHE_KEY);
       if (cachedStats) {
-        return cachedStats
+        return cachedStats;
       }
 
-      const [totalUsers, totalVendors, totalProducts, pendingOrders, activeExecutors] = await Promise.all([
-        this.prisma.user.count(),
-        this.prisma.vendor.count(),
-        this.prisma.product.count(),
-        this.prisma.order.count({ where: { status: 'PENDING' } }),
-        this.prisma.executor.count({ where: { isActive: true } })
-      ])
+      const [totalUsers, totalVendors, totalProducts, pendingOrders, activeExecutors] =
+        await Promise.all([
+          this.prisma.user.count(),
+          this.prisma.vendor.count(),
+          this.prisma.product.count(),
+          this.prisma.order.count({ where: { status: 'PENDING' } }),
+          this.prisma.executor.count({ where: { isActive: true } }),
+        ]);
 
       // Get today's signups
-      const todayStart = new Date()
-      todayStart.setHours(0, 0, 0, 0)
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
 
       const todaySignups = await this.prisma.user.count({
         where: {
           createdAt: {
-            gte: todayStart
-          }
-        }
-      })
+            gte: todayStart,
+          },
+        },
+      });
 
       // Calculate total revenue from orders
       const revenueData = await this.prisma.order.aggregate({
         _sum: {
-          totalAmount: true
+          totalAmount: true,
         },
         where: {
           status: 'DELIVERED',
-          paymentStatus: 'COMPLETED'
-        }
-      })
-      const totalRevenueRaw = revenueData._sum.totalAmount
-      const totalRevenue = totalRevenueRaw ? totalRevenueRaw.toNumber() : 0
+          paymentStatus: 'COMPLETED',
+        },
+      });
+      const totalRevenueRaw = revenueData._sum.totalAmount;
+      const totalRevenue = totalRevenueRaw ? totalRevenueRaw.toNumber() : 0;
 
       // Get active AR sessions from Redis cache
-      let activeArSessions = 0
+      let activeArSessions = 0;
       try {
-        const arSessionsCount = await this.cacheManager.get<number>(AR_SESSIONS_KEY)
-        activeArSessions = arSessionsCount || 0
+        const arSessionsCount = await this.cacheManager.get<number>(AR_SESSIONS_KEY);
+        activeArSessions = arSessionsCount || 0;
       } catch {
-        this.logger.debug('Could not fetch AR sessions count from cache')
+        this.logger.debug('Could not fetch AR sessions count from cache');
       }
 
       const stats: PlatformStats = {
@@ -122,16 +123,16 @@ export class AdminService implements OnModuleInit {
         activeArSessions,
         todaySignups,
         pendingOrders,
-        activeExecutors
-      }
+        activeExecutors,
+      };
 
       // Cache stats for 5 minutes
-      await this.cacheManager.set(STATS_CACHE_KEY, stats, 300000)
+      await this.cacheManager.set(STATS_CACHE_KEY, stats, 300000);
 
-      return stats
+      return stats;
     } catch (error) {
-      this.logger.error('Failed to fetch platform stats', error)
-      throw error
+      this.logger.error('Failed to fetch platform stats', error);
+      throw error;
     }
   }
 
@@ -141,37 +142,37 @@ export class AdminService implements OnModuleInit {
   async updateSettings(settings: PlatformSettings): Promise<PlatformSettings> {
     try {
       // Get current settings
-      const currentSettings = await this.getSettings()
-      
+      const currentSettings = await this.getSettings();
+
       // Merge with new settings
       const updatedSettings = {
         ...currentSettings,
-        ...settings
-      }
+        ...settings,
+      };
 
       // Persist to database
       await this.prisma.platformSettings.upsert({
         where: { id: 'default' },
         update: {
           config: updatedSettings as any,
-          updatedAt: new Date()
+          updatedAt: new Date(),
         },
         create: {
           id: 'default',
           config: updatedSettings as any,
-          isActive: true
-        }
-      })
+          isActive: true,
+        },
+      });
 
       // Update cache
-      await this.cacheManager.set(SETTINGS_CACHE_KEY, updatedSettings, 3600000)
+      await this.cacheManager.set(SETTINGS_CACHE_KEY, updatedSettings, 3600000);
 
-      this.logger.log('Platform settings updated', { settings: updatedSettings })
+      this.logger.log('Platform settings updated', { settings: updatedSettings });
 
-      return updatedSettings
+      return updatedSettings;
     } catch (error) {
-      this.logger.error('Failed to update platform settings', error)
-      throw error
+      this.logger.error('Failed to update platform settings', error);
+      throw error;
     }
   }
 
@@ -180,24 +181,24 @@ export class AdminService implements OnModuleInit {
    */
   async getSettings(): Promise<PlatformSettings> {
     // Try cache first
-    const cachedSettings = await this.cacheManager.get<PlatformSettings>(SETTINGS_CACHE_KEY)
+    const cachedSettings = await this.cacheManager.get<PlatformSettings>(SETTINGS_CACHE_KEY);
     if (cachedSettings) {
-      return cachedSettings
+      return cachedSettings;
     }
 
     // Load from database
     try {
       const dbSettings = await this.prisma.platformSettings.findFirst({
-        where: { isActive: true }
-      })
-      
+        where: { isActive: true },
+      });
+
       if (dbSettings) {
-        const settings = dbSettings.config as PlatformSettings
-        await this.cacheManager.set(SETTINGS_CACHE_KEY, settings, 3600000)
-        return settings
+        const settings = dbSettings.config as PlatformSettings;
+        await this.cacheManager.set(SETTINGS_CACHE_KEY, settings, 3600000);
+        return settings;
       }
     } catch {
-      this.logger.debug('Could not load settings from database')
+      this.logger.debug('Could not load settings from database');
     }
 
     // Return defaults
@@ -209,8 +210,8 @@ export class AdminService implements OnModuleInit {
       minOrderAmount: 100000,
       maxOrderAmount: 100000000000,
       supportEmail: 'support@nextgen.ir',
-      supportPhone: '021-12345678'
-    }
+      supportPhone: '021-12345678',
+    };
   }
 
   /**
@@ -218,11 +219,11 @@ export class AdminService implements OnModuleInit {
    */
   async banUser(userId: string, reason: string, adminId: string): Promise<void> {
     const user = await this.prisma.user.findUnique({
-      where: { id: userId }
-    })
+      where: { id: userId },
+    });
 
     if (!user) {
-      throw new NotFoundException(`User with ID ${userId} not found`)
+      throw new NotFoundException(`User with ID ${userId} not found`);
     }
 
     await this.prisma.$transaction([
@@ -232,8 +233,8 @@ export class AdminService implements OnModuleInit {
         data: {
           isActive: false,
           bannedAt: new Date(),
-          banReason: reason
-        }
+          banReason: reason,
+        },
       }),
       // Create audit log
       this.prisma.auditLog.create({
@@ -244,12 +245,12 @@ export class AdminService implements OnModuleInit {
           performedBy: adminId,
           details: { reason },
           ipAddress: '',
-          userAgent: ''
-        }
-      })
-    ])
+          userAgent: '',
+        },
+      }),
+    ]);
 
-    this.logger.log(`User ${userId} banned by admin ${adminId}. Reason: ${reason}`)
+    this.logger.log(`User ${userId} banned by admin ${adminId}. Reason: ${reason}`);
   }
 
   /**
@@ -257,11 +258,11 @@ export class AdminService implements OnModuleInit {
    */
   async unbanUser(userId: string, adminId: string): Promise<void> {
     const user = await this.prisma.user.findUnique({
-      where: { id: userId }
-    })
+      where: { id: userId },
+    });
 
     if (!user) {
-      throw new NotFoundException(`User with ID ${userId} not found`)
+      throw new NotFoundException(`User with ID ${userId} not found`);
     }
 
     await this.prisma.$transaction([
@@ -270,8 +271,8 @@ export class AdminService implements OnModuleInit {
         data: {
           isActive: true,
           bannedAt: null,
-          banReason: null
-        }
+          banReason: null,
+        },
       }),
       this.prisma.auditLog.create({
         data: {
@@ -281,28 +282,30 @@ export class AdminService implements OnModuleInit {
           performedBy: adminId,
           details: {},
           ipAddress: '',
-          userAgent: ''
-        }
-      })
-    ])
+          userAgent: '',
+        },
+      }),
+    ]);
 
-    this.logger.log(`User ${userId} unbanned by admin ${adminId}`)
+    this.logger.log(`User ${userId} unbanned by admin ${adminId}`);
   }
 
   /**
    * Get all users with pagination
    */
   async getAllUsers(page = 1, limit = 50, search?: string) {
-    const skip = (page - 1) * limit
+    const skip = (page - 1) * limit;
 
-    const where = search ? {
-      OR: [
-        { email: { contains: search, mode: 'insensitive' as const } },
-        { firstName: { contains: search, mode: 'insensitive' as const } },
-        { lastName: { contains: search, mode: 'insensitive' as const } },
-        { mobile: { contains: search } }
-      ]
-    } : {}
+    const where = search
+      ? {
+          OR: [
+            { email: { contains: search, mode: 'insensitive' as const } },
+            { firstName: { contains: search, mode: 'insensitive' as const } },
+            { lastName: { contains: search, mode: 'insensitive' as const } },
+            { mobile: { contains: search } },
+          ],
+        }
+      : {};
 
     const [users, total] = await Promise.all([
       this.prisma.user.findMany({
@@ -320,15 +323,15 @@ export class AdminService implements OnModuleInit {
           createdAt: true,
           lastLoginAt: true,
           _count: {
-            select: { orders: true }
-          }
+            select: { orders: true },
+          },
         },
         orderBy: { createdAt: 'desc' },
         skip,
-        take: limit
+        take: limit,
       }),
-      this.prisma.user.count({ where })
-    ])
+      this.prisma.user.count({ where }),
+    ]);
 
     return {
       users,
@@ -336,16 +339,16 @@ export class AdminService implements OnModuleInit {
         page,
         limit,
         total,
-        totalPages: Math.ceil(total / limit)
-      }
-    }
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   /**
    * Get pending vendor applications
    */
   async getPendingVendors(page = 1, limit = 20) {
-    const skip = (page - 1) * limit
+    const skip = (page - 1) * limit;
 
     const [vendors, total] = await Promise.all([
       this.prisma.vendor.findMany({
@@ -356,16 +359,16 @@ export class AdminService implements OnModuleInit {
               email: true,
               firstName: true,
               lastName: true,
-              mobile: true
-            }
-          }
+              mobile: true,
+            },
+          },
         },
         orderBy: { createdAt: 'desc' },
         skip,
-        take: limit
+        take: limit,
       }),
-      this.prisma.vendor.count({ where: { status: 'pending' } })
-    ])
+      this.prisma.vendor.count({ where: { status: 'pending' } }),
+    ]);
 
     return {
       vendors,
@@ -373,9 +376,9 @@ export class AdminService implements OnModuleInit {
         page,
         limit,
         total,
-        totalPages: Math.ceil(total / limit)
-      }
-    }
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   /**
@@ -384,11 +387,11 @@ export class AdminService implements OnModuleInit {
   async approveVendor(vendorId: string, adminId: string): Promise<void> {
     const vendor = await this.prisma.vendor.findUnique({
       where: { id: vendorId },
-      include: { user: true }
-    })
+      include: { user: true },
+    });
 
     if (!vendor) {
-      throw new NotFoundException(`Vendor with ID ${vendorId} not found`)
+      throw new NotFoundException(`Vendor with ID ${vendorId} not found`);
     }
 
     await this.prisma.$transaction([
@@ -396,13 +399,13 @@ export class AdminService implements OnModuleInit {
         where: { id: vendorId },
         data: {
           status: 'active',
-          verifiedAt: new Date()
-        }
+          verifiedAt: new Date(),
+        },
       }),
       // Update user role to SELLER
       this.prisma.user.update({
         where: { id: vendor.userId },
-        data: { role: 'SELLER' }
+        data: { role: 'SELLER' },
       }),
       // Create audit log
       this.prisma.auditLog.create({
@@ -413,12 +416,12 @@ export class AdminService implements OnModuleInit {
           performedBy: adminId,
           details: { businessName: vendor.businessName },
           ipAddress: '',
-          userAgent: ''
-        }
-      })
-    ])
+          userAgent: '',
+        },
+      }),
+    ]);
 
-    this.logger.log(`Vendor ${vendorId} (${vendor.businessName}) approved by admin ${adminId}`)
+    this.logger.log(`Vendor ${vendorId} (${vendor.businessName}) approved by admin ${adminId}`);
   }
 
   /**
@@ -426,11 +429,11 @@ export class AdminService implements OnModuleInit {
    */
   async rejectVendor(vendorId: string, reason: string, adminId: string): Promise<void> {
     const vendor = await this.prisma.vendor.findUnique({
-      where: { id: vendorId }
-    })
+      where: { id: vendorId },
+    });
 
     if (!vendor) {
-      throw new NotFoundException(`Vendor with ID ${vendorId} not found`)
+      throw new NotFoundException(`Vendor with ID ${vendorId} not found`);
     }
 
     await this.prisma.$transaction([
@@ -439,8 +442,8 @@ export class AdminService implements OnModuleInit {
         data: {
           status: 'rejected',
           rejectionReason: reason,
-          rejectedAt: new Date()
-        }
+          rejectedAt: new Date(),
+        },
       }),
       this.prisma.auditLog.create({
         data: {
@@ -450,20 +453,20 @@ export class AdminService implements OnModuleInit {
           performedBy: adminId,
           details: { reason, businessName: vendor.businessName },
           ipAddress: '',
-          userAgent: ''
-        }
-      })
-    ])
+          userAgent: '',
+        },
+      }),
+    ]);
 
-    this.logger.log(`Vendor ${vendorId} rejected by admin ${adminId}. Reason: ${reason}`)
+    this.logger.log(`Vendor ${vendorId} rejected by admin ${adminId}. Reason: ${reason}`);
   }
 
   /**
    * Get dashboard summary for admin
    */
   async getDashboardSummary() {
-    const stats = await this.getPlatformStats()
-    
+    const stats = await this.getPlatformStats();
+
     // Get recent orders
     const recentOrders = await this.prisma.order.findMany({
       take: 10,
@@ -475,10 +478,10 @@ export class AdminService implements OnModuleInit {
         status: true,
         createdAt: true,
         user: {
-          select: { firstName: true, lastName: true }
-        }
-      }
-    })
+          select: { firstName: true, lastName: true },
+        },
+      },
+    });
 
     // Get recent signups
     const recentUsers = await this.prisma.user.findMany({
@@ -490,13 +493,13 @@ export class AdminService implements OnModuleInit {
         firstName: true,
         lastName: true,
         role: true,
-        createdAt: true
-      }
-    })
+        createdAt: true,
+      },
+    });
 
     // Get revenue by day (last 7 days)
-    const sevenDaysAgo = new Date()
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
     const revenueByDay = await this.prisma.$queryRaw`
       SELECT 
@@ -509,13 +512,13 @@ export class AdminService implements OnModuleInit {
         AND payment_status = 'COMPLETED'
       GROUP BY DATE(created_at)
       ORDER BY date DESC
-    `
+    `;
 
     return {
       stats,
       recentOrders,
       recentUsers,
-      revenueByDay
-    }
+      revenueByDay,
+    };
   }
 }

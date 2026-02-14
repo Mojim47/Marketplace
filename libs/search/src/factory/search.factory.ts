@@ -3,17 +3,17 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { Injectable, Logger } from '@nestjs/common';
-import type {
-  ISearchProvider,
-  SearchConfig,
-  ElasticsearchConfig,
-  MeilisearchConfig,
-  MemorySearchConfig,
-} from '../interfaces/search.interface';
-import { SearchProviderType } from '../interfaces/search.interface';
-import { MemorySearchAdapter } from '../adapters/memory.adapter';
 import { ElasticsearchAdapter } from '../adapters/elasticsearch.adapter';
 import { MeilisearchAdapter } from '../adapters/meilisearch.adapter';
+import { MemorySearchAdapter } from '../adapters/memory.adapter';
+import type {
+  ElasticsearchConfig,
+  ISearchProvider,
+  MeilisearchConfig,
+  MemorySearchConfig,
+  SearchConfig,
+} from '../interfaces/search.interface';
+import { SearchProviderType } from '../interfaces/search.interface';
 
 @Injectable()
 export class SearchFactory {
@@ -53,7 +53,7 @@ export class SearchFactory {
     return provider;
   }
 
-  createFromEnv(prefix: string = 'SEARCH', name?: string): ISearchProvider {
+  createFromEnv(prefix = 'SEARCH', name?: string): ISearchProvider {
     const provider = process.env[`${prefix}_PROVIDER`] as SearchProviderType;
 
     if (!provider) {
@@ -78,7 +78,10 @@ export class SearchFactory {
           auth: process.env[`${prefix}_API_KEY`]
             ? { apiKey: process.env[`${prefix}_API_KEY`] }
             : process.env[`${prefix}_USERNAME`]
-              ? { username: process.env[`${prefix}_USERNAME`], password: process.env[`${prefix}_PASSWORD`] || '' }
+              ? {
+                  username: process.env[`${prefix}_USERNAME`],
+                  password: process.env[`${prefix}_PASSWORD`] || '',
+                }
               : undefined,
         };
         break;

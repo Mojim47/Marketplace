@@ -4,14 +4,14 @@
 // Provides convenient methods for common caching patterns
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, Logger, type OnModuleDestroy, type OnModuleInit } from '@nestjs/common';
+import type { CacheFactory } from '../factory/cache.factory';
 import type {
-  ICacheProvider,
+  CacheHealthCheck,
   CacheSetOptions,
   CacheStats,
-  CacheHealthCheck,
+  ICacheProvider,
 } from '../interfaces/cache.interface';
-import { CacheFactory } from '../factory/cache.factory';
 
 /**
  * Options for cached function wrapper
@@ -124,11 +124,7 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
    * @param options - Cache options
    * @returns Cached or computed value
    */
-  async cached<T>(
-    key: string,
-    fn: () => Promise<T>,
-    options?: CachedOptions
-  ): Promise<T> {
+  async cached<T>(key: string, fn: () => Promise<T>, options?: CachedOptions): Promise<T> {
     // Check cache first (unless force refresh)
     if (!options?.forceRefresh) {
       const cached = await this.provider.get<T>(key);
@@ -141,7 +137,7 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
     const result = await fn();
 
     // Skip caching if condition met
-    if (options?.skipIf && options.skipIf(result)) {
+    if (options?.skipIf?.(result)) {
       return result;
     }
 
@@ -239,14 +235,14 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
   /**
    * Increment a numeric value
    */
-  async increment(key: string, delta: number = 1): Promise<number> {
+  async increment(key: string, delta = 1): Promise<number> {
     return this.provider.increment(key, delta);
   }
 
   /**
    * Decrement a numeric value
    */
-  async decrement(key: string, delta: number = 1): Promise<number> {
+  async decrement(key: string, delta = 1): Promise<number> {
     return this.provider.decrement(key, delta);
   }
 
@@ -260,10 +256,7 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
    * @param options - Lock options
    * @returns Lock release function or null if lock not acquired
    */
-  async acquireLock(
-    lockKey: string,
-    options?: LockOptions
-  ): Promise<(() => Promise<void>) | null> {
+  async acquireLock(lockKey: string, options?: LockOptions): Promise<(() => Promise<void>) | null> {
     const timeout = options?.timeout || 30;
     const retries = options?.retries || 3;
     const retryDelay = options?.retryDelay || 100;
@@ -289,7 +282,7 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
 
       // Wait before retry
       if (attempt < retries - 1) {
-        await new Promise(resolve => setTimeout(resolve, retryDelay));
+        await new Promise((resolve) => setTimeout(resolve, retryDelay));
       }
     }
 
@@ -309,7 +302,7 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
     options?: LockOptions
   ): Promise<T | null> {
     const release = await this.acquireLock(lockKey, options);
-    
+
     if (!release) {
       return null;
     }
@@ -344,7 +337,7 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
     const windowKey = `${fullKey}:${windowStart}`;
 
     const count = await this.provider.increment(windowKey);
-    
+
     // Set TTL on first increment
     if (count === 1) {
       await this.provider.expire(windowKey, windowSeconds + 1);

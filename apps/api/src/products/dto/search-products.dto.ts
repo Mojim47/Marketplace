@@ -3,51 +3,51 @@
  * Requirements: 8.1, 8.2, 8.3
  */
 
-import { IsString, IsOptional, IsNumber, IsBoolean, Min, Max, IsInt } from 'class-validator';
-import { Type, Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform, Type } from 'class-transformer';
+import { IsBoolean, IsInt, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
 
 export class SearchProductsDto {
-  @ApiProperty({ description: 'ÚÈÇÑÊ ÌÓÊÌæ', example: 'ÔíÑÂáÇÊ' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½', example: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsString()
   query: string;
 
-  @ApiPropertyOptional({ description: 'ÔäÇÓå ÏÓÊåÈäÏí' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsString()
   categoryId?: string;
 
-  @ApiPropertyOptional({ description: 'ÔäÇÓå İÑæÔäÏå' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsString()
   vendorId?: string;
 
-  @ApiPropertyOptional({ description: 'ÔäÇÓå ÈÑäÏ' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsString()
   brandId?: string;
 
-  @ApiPropertyOptional({ description: 'ÍÏÇŞá ŞíãÊ', example: 100000 })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½', example: 100000 })
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
   @Min(0)
   minPrice?: number;
 
-  @ApiPropertyOptional({ description: 'ÍÏÇ˜ËÑ ŞíãÊ', example: 10000000 })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½Ç˜ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½', example: 10000000 })
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
   @Min(0)
   maxPrice?: number;
 
-  @ApiPropertyOptional({ description: 'İŞØ ãÍÕæáÇÊ ãæÌæÏ', example: true })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½', example: true })
   @IsOptional()
   @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   inStockOnly?: boolean;
 
-  @ApiPropertyOptional({ description: 'ÊÚÏÇÏ äÊÇíÌ', example: 20, default: 20 })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½', example: 20, default: 20 })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
@@ -55,19 +55,19 @@ export class SearchProductsDto {
   @Max(100)
   limit?: number = 20;
 
-  @ApiPropertyOptional({ description: 'ÔÑæÚ ÇÒ', example: 0, default: 0 })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½', example: 0, default: 0 })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(0)
   offset?: number = 0;
 
-  @ApiPropertyOptional({ description: 'ãÑÊÈÓÇÒí', example: 'price:asc' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½Èï¿½ï¿½ï¿½ï¿½', example: 'price:asc' })
   @IsOptional()
   @IsString()
   sort?: string;
 
-  @ApiPropertyOptional({ description: 'İíáÏåÇí facet', example: ['categoryId', 'brandId'] })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ facet', example: ['categoryId', 'brandId'] })
   @IsOptional()
   @IsString({ each: true })
   facets?: string[];

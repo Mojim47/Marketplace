@@ -1,0 +1,33 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": ".",
+    "declaration": false,
+    "declarationMap": false,
+    "skipLibCheck": true,
+    "noEmit": false,
+    "composite": false,
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "target": "ES2019",
+    "resolveJsonModule": true,
+    "esModuleInterop": true
+  },
+  "include": [
+    "apps/api/src/main.ts",
+    "apps/api/src/app/**/*",
+    "apps/api/src/types/**/*",
+    "libs/prisma/src/**/*",
+    "libs/common/src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "apps/**/test",
+    "apps/**/__tests__",
+    "**/*.spec.ts",
+    "libs/prisma/src/log-sanitizer.spec.ts",
+    "libs/prisma/src/transaction.utils.spec.ts"
+  ]
+}

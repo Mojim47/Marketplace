@@ -4,17 +4,17 @@
 // Implements: ∀d∈Dependencies: signed(d) ∧ ∀c∈cve_set(d): severity(c) < θ
 // ═══════════════════════════════════════════════════════════════════════════
 
+import * as crypto from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
-import * as crypto from 'crypto';
 import {
-  SC3FailureCategory,
-  type Dependency,
-  type DependencySignature,
   type CVE,
   type CVESeverity,
-  type DependencyVerificationResult,
   type CVEViolation,
+  type Dependency,
+  type DependencySignature,
+  type DependencyVerificationResult,
   type SC3Failure,
+  SC3FailureCategory,
   type TrustedKey,
 } from '../types';
 
@@ -35,11 +35,13 @@ const semverUtils = {
    */
   parse(version: string): { major: number; minor: number; patch: number } | null {
     const match = version.match(/^(\d+)\.(\d+)\.(\d+)/);
-    if (!match) return null;
+    if (!match) {
+      return null;
+    }
     return {
-      major: parseInt(match[1], 10),
-      minor: parseInt(match[2], 10),
-      patch: parseInt(match[3], 10),
+      major: Number.parseInt(match[1], 10),
+      minor: Number.parseInt(match[2], 10),
+      patch: Number.parseInt(match[3], 10),
     };
   },
 
@@ -49,11 +51,19 @@ const semverUtils = {
   compare(a: string, b: string): number {
     const pa = this.parse(a);
     const pb = this.parse(b);
-    if (!pa || !pb) return 0;
+    if (!pa || !pb) {
+      return 0;
+    }
 
-    if (pa.major !== pb.major) return pa.major < pb.major ? -1 : 1;
-    if (pa.minor !== pb.minor) return pa.minor < pb.minor ? -1 : 1;
-    if (pa.patch !== pb.patch) return pa.patch < pb.patch ? -1 : 1;
+    if (pa.major !== pb.major) {
+      return pa.major < pb.major ? -1 : 1;
+    }
+    if (pa.minor !== pb.minor) {
+      return pa.minor < pb.minor ? -1 : 1;
+    }
+    if (pa.patch !== pb.patch) {
+      return pa.patch < pb.patch ? -1 : 1;
+    }
     return 0;
   },
 
@@ -70,24 +80,46 @@ const semverUtils = {
   satisfies(version: string, range: string): boolean {
     // Handle simple ranges like ">=4.0.0", "<5.0.0", ">=4.0.0 <5.0.0"
     const parts = range.split(/\s+/);
-    
+
     for (const part of parts) {
       const match = part.match(/^([<>=]+)?(.+)$/);
-      if (!match) continue;
-      
+      if (!match) {
+        continue;
+      }
+
       const [, op = '=', rangeVersion] = match;
       const cmp = this.compare(version, rangeVersion);
-      
+
       switch (op) {
-        case '>=': if (cmp < 0) return false; break;
-        case '>': if (cmp <= 0) return false; break;
-        case '<=': if (cmp > 0) return false; break;
-        case '<': if (cmp >= 0) return false; break;
+        case '>=':
+          if (cmp < 0) {
+            return false;
+          }
+          break;
+        case '>':
+          if (cmp <= 0) {
+            return false;
+          }
+          break;
+        case '<=':
+          if (cmp > 0) {
+            return false;
+          }
+          break;
+        case '<':
+          if (cmp >= 0) {
+            return false;
+          }
+          break;
         case '=':
-        case '==': if (cmp !== 0) return false; break;
+        case '==':
+          if (cmp !== 0) {
+            return false;
+          }
+          break;
       }
     }
-    
+
     return true;
   },
 };
@@ -130,7 +162,7 @@ export class DependencyScannerService {
    */
   async verifyDependencies(
     dependencies: Dependency[],
-    options: DependencyScanOptions,
+    options: DependencyScanOptions
   ): Promise<{ result: DependencyVerificationResult; failures: SC3Failure[] }> {
     const failures: SC3Failure[] = [];
     const cveViolations: CVEViolation[] = [];
@@ -229,7 +261,7 @@ export class DependencyScannerService {
     }
 
     // Find trusted key
-    const trustedKey = trustedKeys.find(k => k.id === key_id);
+    const trustedKey = trustedKeys.find((k) => k.id === key_id);
     if (!trustedKey) {
       this.logger.warn(`Untrusted key ${key_id} for dependency ${dep.name}`);
       return false;
@@ -246,7 +278,7 @@ export class DependencyScannerService {
       const verifier = crypto.createVerify(algorithm);
       const dataToVerify = this.computeDependencyDigest(dep);
       verifier.update(dataToVerify);
-      
+
       const isValid = verifier.verify(trustedKey.public_key, signature, 'base64');
       return isValid;
     } catch (error) {
@@ -295,7 +327,7 @@ export class DependencyScannerService {
     try {
       // Parse affected version range
       const affectedRange = cve.affected_versions;
-      
+
       // Check if current version is in affected range
       if (semverUtils.valid(dep.version)) {
         return semverUtils.satisfies(dep.version, affectedRange);
@@ -332,17 +364,28 @@ export class DependencyScannerService {
    * severity(c) - map CVSS to severity level
    */
   computeSeverity(cvssScore: number): CVESeverity {
-    if (cvssScore === 0) return 0; // NONE
-    if (cvssScore < 4.0) return 1; // LOW
-    if (cvssScore < 7.0) return 2; // MEDIUM
-    if (cvssScore < 9.0) return 3; // HIGH
+    if (cvssScore === 0) {
+      return 0; // NONE
+    }
+    if (cvssScore < 4.0) {
+      return 1; // LOW
+    }
+    if (cvssScore < 7.0) {
+      return 2; // MEDIUM
+    }
+    if (cvssScore < 9.0) {
+      return 3; // HIGH
+    }
     return 4; // CRITICAL
   }
 
   /**
    * Scan dependencies for vulnerabilities and generate report
    */
-  async scanDependencies(dependencies: Dependency[], cveDbUrl: string): Promise<{
+  async scanDependencies(
+    dependencies: Dependency[],
+    cveDbUrl: string
+  ): Promise<{
     total: number;
     vulnerable: number;
     critical: number;
@@ -360,17 +403,25 @@ export class DependencyScannerService {
 
     for (const dep of dependencies) {
       const cves = await this.getCVEsForDependency(dep, cveDbUrl);
-      
+
       if (cves.length > 0) {
         vulnerable++;
         details.push({ dependency: `${dep.name}@${dep.version}`, cves });
 
         for (const cve of cves) {
           switch (cve.severity) {
-            case 4: critical++; break;
-            case 3: high++; break;
-            case 2: medium++; break;
-            case 1: low++; break;
+            case 4:
+              critical++;
+              break;
+            case 3:
+              high++;
+              break;
+            case 2:
+              medium++;
+              break;
+            case 1:
+              low++;
+              break;
           }
         }
       }
@@ -420,17 +471,17 @@ export class DependencyScannerService {
     // - OSV (Open Source Vulnerabilities): https://osv.dev/
     // - GitHub Advisory Database
     // - Snyk Vulnerability Database
-    
+
     // For now, return embedded CVEs or empty array
     // Real implementation would use fetch/axios to query the database
-    
+
     this.logger.log(`Fetching CVEs for ${dep.name}@${dep.version} from ${cveDbUrl}`);
-    
+
     // Simulate database lookup - in production, replace with actual HTTP call
     // const response = await fetch(`${cveDbUrl}/query?package=${dep.name}&version=${dep.version}`);
     // const data = await response.json();
     // return data.vulnerabilities.map(this.mapToCVE);
-    
+
     return dep.cves || [];
   }
 

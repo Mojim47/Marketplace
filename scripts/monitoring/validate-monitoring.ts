@@ -4,7 +4,7 @@
 // Monitoring Validation Script - Complete Health Check
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { execSync } from 'child_process';
+import { execSync } from 'node:child_process';
 
 interface ValidationResult {
   service: string;
@@ -18,8 +18,6 @@ class MonitoringValidator {
   private results: ValidationResult[] = [];
 
   async validate(): Promise<void> {
-    console.log('🔍 Validating NextGen Monitoring Stack...\n');
-
     const validations = [
       { name: 'Docker Services', check: () => this.checkDockerServices() },
       { name: 'Prometheus', check: () => this.checkPrometheus() },
@@ -56,7 +54,7 @@ class MonitoringValidator {
 
   private async checkDockerServices(): Promise<ValidationResult> {
     const startTime = Date.now();
-    
+
     try {
       const output = execSync('docker-compose -f docker-compose.monitoring.yml ps --format json', {
         encoding: 'utf8',
@@ -68,8 +66,12 @@ class MonitoringValidator {
       const totalServices = services.length;
 
       const responseTime = Date.now() - startTime;
-      const status = runningServices.length === totalServices ? 'healthy' : 
-                   runningServices.length > 0 ? 'degraded' : 'unhealthy';
+      const status =
+        runningServices.length === totalServices
+          ? 'healthy'
+          : runningServices.length > 0
+            ? 'degraded'
+            : 'unhealthy';
 
       return {
         service: 'Docker Services',
@@ -85,7 +87,7 @@ class MonitoringValidator {
 
   private async checkPrometheus(): Promise<ValidationResult> {
     const startTime = Date.now();
-    
+
     try {
       // Check health
       const healthResponse = await fetch('http://localhost:9090/-/healthy');
@@ -96,13 +98,17 @@ class MonitoringValidator {
       // Check targets
       const targetsResponse = await fetch('http://localhost:9090/api/v1/targets');
       const targetsData = await targetsResponse.json();
-      
+
       const activeTargets = targetsData.data.activeTargets.filter((t: any) => t.health === 'up');
       const totalTargets = targetsData.data.activeTargets.length;
 
       const responseTime = Date.now() - startTime;
-      const status = activeTargets.length === totalTargets ? 'healthy' : 
-                   activeTargets.length > 0 ? 'degraded' : 'unhealthy';
+      const status =
+        activeTargets.length === totalTargets
+          ? 'healthy'
+          : activeTargets.length > 0
+            ? 'degraded'
+            : 'unhealthy';
 
       return {
         service: 'Prometheus',
@@ -118,7 +124,7 @@ class MonitoringValidator {
 
   private async checkGrafana(): Promise<ValidationResult> {
     const startTime = Date.now();
-    
+
     try {
       // Check health
       const healthResponse = await fetch('http://localhost:3000/api/health');
@@ -147,7 +153,7 @@ class MonitoringValidator {
 
   private async checkAlertManager(): Promise<ValidationResult> {
     const startTime = Date.now();
-    
+
     try {
       const response = await fetch('http://localhost:9093/-/healthy');
       if (!response.ok) {
@@ -190,7 +196,7 @@ class MonitoringValidator {
 
   private async checkExporter(name: string, url: string): Promise<ValidationResult> {
     const startTime = Date.now();
-    
+
     try {
       const response = await fetch(url);
       if (!response.ok) {
@@ -198,9 +204,9 @@ class MonitoringValidator {
       }
 
       const metrics = await response.text();
-      const metricCount = metrics.split('\n').filter(line => 
-        line.startsWith('#') === false && line.trim() !== ''
-      ).length;
+      const metricCount = metrics
+        .split('\n')
+        .filter((line) => line.startsWith('#') === false && line.trim() !== '').length;
 
       const responseTime = Date.now() - startTime;
       const status = metricCount > 0 ? 'healthy' : 'degraded';
@@ -219,7 +225,7 @@ class MonitoringValidator {
 
   private async checkAPIMetrics(): Promise<ValidationResult> {
     const startTime = Date.now();
-    
+
     try {
       // Check if API is running and exposing metrics
       const response = await fetch('http://localhost:3001/health/metrics');
@@ -228,9 +234,9 @@ class MonitoringValidator {
       }
 
       const metrics = await response.text();
-      const metricCount = metrics.split('\n').filter(line => 
-        line.startsWith('#') === false && line.trim() !== ''
-      ).length;
+      const metricCount = metrics
+        .split('\n')
+        .filter((line) => line.startsWith('#') === false && line.trim() !== '').length;
 
       const responseTime = Date.now() - startTime;
       const status = metricCount > 0 ? 'healthy' : 'degraded';
@@ -242,7 +248,7 @@ class MonitoringValidator {
         details: `${metricCount} application metrics exposed`,
         metrics: { metricCount },
       };
-    } catch (error) {
+    } catch (_error) {
       // API might not be running, which is OK for monitoring validation
       return {
         service: 'API Metrics',
@@ -255,13 +261,16 @@ class MonitoringValidator {
 
   private async checkAlertRules(): Promise<ValidationResult> {
     const startTime = Date.now();
-    
+
     try {
       const response = await fetch('http://localhost:9090/api/v1/rules');
       const data = await response.json();
-      
+
       const ruleGroups = data.data.groups || [];
-      const totalRules = ruleGroups.reduce((sum: number, group: any) => sum + group.rules.length, 0);
+      const totalRules = ruleGroups.reduce(
+        (sum: number, group: any) => sum + group.rules.length,
+        0
+      );
 
       const responseTime = Date.now() - startTime;
       const status = totalRules > 0 ? 'healthy' : 'degraded';
@@ -280,7 +289,7 @@ class MonitoringValidator {
 
   private async checkDashboards(): Promise<ValidationResult> {
     const startTime = Date.now();
-    
+
     try {
       const response = await fetch('http://admin:admin123@localhost:3000/api/search?type=dash-db');
       const dashboards = await response.json();
@@ -301,47 +310,28 @@ class MonitoringValidator {
   }
 
   private logResult(result: ValidationResult): void {
-    const statusIcon = {
+    const _statusIcon = {
       healthy: '✅',
       degraded: '⚠️',
       unhealthy: '❌',
     }[result.status];
 
-    const responseTime = result.responseTime < 1000 ? 
-      `${result.responseTime}ms` : 
-      `${(result.responseTime / 1000).toFixed(2)}s`;
-
-    console.log(`${statusIcon} ${result.service.padEnd(20)} ${result.status.padEnd(10)} ${responseTime.padStart(8)} - ${result.details}`);
+    const _responseTime =
+      result.responseTime < 1000
+        ? `${result.responseTime}ms`
+        : `${(result.responseTime / 1000).toFixed(2)}s`;
   }
 
   private printSummary(): void {
-    const healthy = this.results.filter(r => r.status === 'healthy').length;
-    const degraded = this.results.filter(r => r.status === 'degraded').length;
-    const unhealthy = this.results.filter(r => r.status === 'unhealthy').length;
-    const total = this.results.length;
+    const _healthy = this.results.filter((r) => r.status === 'healthy').length;
+    const degraded = this.results.filter((r) => r.status === 'degraded').length;
+    const unhealthy = this.results.filter((r) => r.status === 'unhealthy').length;
+    const _total = this.results.length;
 
-    console.log('\n📊 Monitoring Stack Summary:');
-    console.log(`   ✅ Healthy:   ${healthy}/${total}`);
-    console.log(`   ⚠️ Degraded:  ${degraded}/${total}`);
-    console.log(`   ❌ Unhealthy: ${unhealthy}/${total}`);
-
-    const overallStatus = unhealthy > 0 ? 'UNHEALTHY' : 
-                         degraded > 0 ? 'DEGRADED' : 'HEALTHY';
-
-    console.log(`\n🎯 Overall Status: ${overallStatus}`);
+    const overallStatus = unhealthy > 0 ? 'UNHEALTHY' : degraded > 0 ? 'DEGRADED' : 'HEALTHY';
 
     if (overallStatus === 'HEALTHY') {
-      console.log('\n🎉 Monitoring stack is fully operational!');
-      console.log('\n📈 Next steps:');
-      console.log('   1. Start generating traffic: pnpm dev:api');
-      console.log('   2. View dashboards: http://localhost:3000');
-      console.log('   3. Check metrics: http://localhost:9090');
-    } else {
-      console.log('\n🔧 Issues found. Check the details above and fix any unhealthy services.');
-      
-      if (degraded > 0) {
-        console.log('\n💡 Degraded services may still function but need attention.');
-      }
+    } else if (degraded > 0) {
     }
 
     // Exit with appropriate code

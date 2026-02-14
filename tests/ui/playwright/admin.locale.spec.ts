@@ -1,4 +1,4 @@
-﻿import { test, expect } from '@playwright/test';
+﻿import { expect, test } from '@playwright/test';
 
 test.describe('admin locale switch', () => {
   test('switches to LTR', async ({ page }) => {

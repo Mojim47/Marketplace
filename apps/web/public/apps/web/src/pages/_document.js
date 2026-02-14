@@ -1,5 +1,5 @@
-import { jsx as _jsx, jsxs as _jsxs } from 'react/jsx-runtime';
 import Document, { Head, Html, Main, NextScript } from 'next/document';
+import { jsx as _jsx, jsxs as _jsxs } from 'react/jsx-runtime';
 export default class MyDocument extends Document {
   static async getInitialProps(ctx) {
     const initialProps = await Document.getInitialProps(ctx);

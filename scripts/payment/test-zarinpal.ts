@@ -4,9 +4,9 @@
 // ZarinPal Integration Test Script
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { ConfigService } from '@nestjs/config';
+import type { ConfigService } from '@nestjs/config';
+import type { MetricsService } from '../../libs/monitoring/src/metrics.service';
 import { ZarinPalService } from '../../libs/payment/src/zarinpal.service';
-import { MetricsService } from '../../libs/monitoring/src/metrics.service';
 
 interface TestResult {
   test: string;
@@ -25,9 +25,12 @@ class ZarinPalTester {
     const configService = {
       get: (key: string) => {
         const config: Record<string, any> = {
-          ZARINPAL_MERCHANT_ID: process.env.ZARINPAL_MERCHANT_ID || 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
+          ZARINPAL_MERCHANT_ID:
+            process.env.ZARINPAL_MERCHANT_ID || 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
           ZARINPAL_SANDBOX: true,
-          ZARINPAL_CALLBACK_URL: process.env.ZARINPAL_CALLBACK_URL || 'http://localhost:3001/api/v3/payments/zarinpal/callback',
+          ZARINPAL_CALLBACK_URL:
+            process.env.ZARINPAL_CALLBACK_URL ||
+            'http://localhost:3001/api/v3/payments/zarinpal/callback',
         };
         return config[key];
       },
@@ -41,8 +44,6 @@ class ZarinPalTester {
   }
 
   async runTests(): Promise<void> {
-    console.log('🔍 Testing ZarinPal Integration...\n');
-
     const tests = [
       { name: 'Configuration Validation', test: () => this.testConfiguration() },
       { name: 'Payment Creation', test: () => this.testPaymentCreation() },
@@ -71,13 +72,16 @@ class ZarinPalTester {
     this.printSummary();
   }
 
-  private async executeTest(testName: string, testFunction: () => Promise<any>): Promise<TestResult> {
+  private async executeTest(
+    testName: string,
+    testFunction: () => Promise<any>
+  ): Promise<TestResult> {
     const startTime = Date.now();
-    
+
     try {
       const data = await testFunction();
       const duration = Date.now() - startTime;
-      
+
       return {
         test: testName,
         success: true,
@@ -86,7 +90,7 @@ class ZarinPalTester {
       };
     } catch (error) {
       const duration = Date.now() - startTime;
-      
+
       return {
         test: testName,
         success: false,
@@ -114,7 +118,7 @@ class ZarinPalTester {
     }
 
     return {
-      merchantId: merchantId.substring(0, 8) + '...',
+      merchantId: `${merchantId.substring(0, 8)}...`,
       callbackUrl,
       sandbox: true,
     };
@@ -143,7 +147,7 @@ class ZarinPalTester {
 
     return {
       success: result.success,
-      authority: result.authority?.substring(0, 10) + '...',
+      authority: `${result.authority?.substring(0, 10)}...`,
       paymentUrl: result.paymentUrl ? 'Generated' : 'Missing',
     };
   }
@@ -228,34 +232,20 @@ class ZarinPalTester {
   }
 
   private logResult(result: TestResult): void {
-    const statusIcon = result.success ? '✅' : '❌';
-    const duration = result.duration < 1000 ? 
-      `${result.duration}ms` : 
-      `${(result.duration / 1000).toFixed(2)}s`;
-
-    console.log(`${statusIcon} ${result.test.padEnd(30)} ${duration.padStart(8)} ${result.success ? '- PASSED' : `- FAILED: ${result.error}`}`);
+    const _statusIcon = result.success ? '✅' : '❌';
+    const _duration =
+      result.duration < 1000 ? `${result.duration}ms` : `${(result.duration / 1000).toFixed(2)}s`;
   }
 
   private printSummary(): void {
-    const passed = this.results.filter(r => r.success).length;
-    const failed = this.results.filter(r => r.success === false).length;
-    const total = this.results.length;
+    const _passed = this.results.filter((r) => r.success).length;
+    const failed = this.results.filter((r) => r.success === false).length;
+    const _total = this.results.length;
 
-    console.log('\n📊 ZarinPal Integration Test Summary:');
-    console.log(`   ✅ Passed: ${passed}/${total}`);
-    console.log(`   ❌ Failed: ${failed}/${total}`);
-
-    const overallStatus = failed === 0 ? 'ALL TESTS PASSED' : 'SOME TESTS FAILED';
-    console.log(`\n🎯 Overall Status: ${overallStatus}`);
+    const _overallStatus = failed === 0 ? 'ALL TESTS PASSED' : 'SOME TESTS FAILED';
 
     if (failed === 0) {
-      console.log('\n🎉 ZarinPal integration is working correctly!');
-      console.log('\n📝 Next steps:');
-      console.log('   1. Configure production merchant ID');
-      console.log('   2. Set up webhook endpoint');
-      console.log('   3. Test with real payments in sandbox');
     } else {
-      console.log('\n🔧 Issues found. Please check the failed tests above.');
     }
 
     // Exit with appropriate code

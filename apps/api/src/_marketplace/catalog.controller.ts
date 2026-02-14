@@ -1,35 +1,21 @@
-﻿import type { AuthenticatedUser } from '../common/types/authenticated-user.type';
-import {
+﻿import {
+  Body,
   Controller,
   Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
   Post,
   Put,
-  Patch,
-  Body,
-  Param,
-  Query,
   UseGuards,
-  HttpCode,
-  HttpStatus,
-  ParseUUIDPipe,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiBearerAuth,
-  ApiResponse,
-  ApiParam,
-  ApiQuery,
-} from '@nestjs/swagger';
-import { CatalogService } from '@nextgen/catalog';
-import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
-import { AdminRoleGuard } from '../common/guards/admin-role.guard';
+import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import type { CatalogService } from '@nextgen/catalog';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import {
-  CreateCategoryDto,
-  UpdateCategoryDto,
-  MoveCategoryDto,
-} from './dto';
+import { AdminRoleGuard } from '../common/guards/admin-role.guard';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import type { AuthenticatedUser } from '../common/types/authenticated-user.type';
+import type { CreateCategoryDto, MoveCategoryDto, UpdateCategoryDto } from './dto';
 
 @ApiTags('marketplace/catalog')
 @Controller('marketplace/catalog')
@@ -82,10 +68,7 @@ export class CatalogController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'ايجاد دسته‌بندي جديد' })
   @ApiResponse({ status: 201, description: 'دسته‌بندي ايجاد شد' })
-  async createCategory(
-    @CurrentUser() user: AuthenticatedUser,
-    @Body() dto: CreateCategoryDto,
-  ) {
+  async createCategory(@CurrentUser() _user: AuthenticatedUser, @Body() dto: CreateCategoryDto) {
     return this.catalogService.createCategory(dto);
   }
 
@@ -96,8 +79,8 @@ export class CatalogController {
   @ApiParam({ name: 'id', description: 'شناسه دسته‌بندي' })
   async updateCategory(
     @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() user: AuthenticatedUser,
-    @Body() dto: UpdateCategoryDto,
+    @CurrentUser() _user: AuthenticatedUser,
+    @Body() dto: UpdateCategoryDto
   ) {
     return this.catalogService.updateCategory(id, dto);
   }
@@ -109,10 +92,9 @@ export class CatalogController {
   @ApiParam({ name: 'id', description: 'شناسه دسته‌بندي' })
   async moveCategory(
     @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() user: AuthenticatedUser,
-    @Body() dto: MoveCategoryDto,
+    @CurrentUser() _user: AuthenticatedUser,
+    @Body() dto: MoveCategoryDto
   ) {
     return this.catalogService.moveCategory(id, dto);
   }
 }
-

@@ -1,11 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { Response } from 'express';
 import * as fc from 'fast-check';
-import { Response } from 'express';
+import { describe, expect, it, vi } from 'vitest';
 import {
+  type SecurityHeadersConfig,
   SecurityHeadersInterceptor,
-  applySecurityHeaders,
-  SecurityHeadersConfig,
   __testing,
+  applySecurityHeaders,
 } from './security-headers.interceptor';
 
 const {
@@ -45,7 +45,7 @@ describe('Security Headers', () => {
           (config) => {
             const response = createMockResponse();
             applySecurityHeaders(response, config as SecurityHeadersConfig);
-            
+
             expect(response.headers.get('X-Content-Type-Options')).toBe('nosniff');
           }
         ),
@@ -64,7 +64,7 @@ describe('Security Headers', () => {
           (config) => {
             const response = createMockResponse();
             applySecurityHeaders(response, config as SecurityHeadersConfig);
-            
+
             expect(response.headers.get('X-Frame-Options')).toBe('DENY');
           }
         ),
@@ -83,7 +83,7 @@ describe('Security Headers', () => {
           (config) => {
             const response = createMockResponse();
             applySecurityHeaders(response, config as SecurityHeadersConfig);
-            
+
             // X-XSS-Protection should be 0 (disabled) per modern security guidance
             expect(response.headers.get('X-XSS-Protection')).toBe('0');
           }
@@ -103,7 +103,7 @@ describe('Security Headers', () => {
           (config) => {
             const response = createMockResponse();
             applySecurityHeaders(response, config as SecurityHeadersConfig);
-            
+
             expect(response.headers.get('Referrer-Policy')).toBe('strict-origin-when-cross-origin');
           }
         ),
@@ -122,7 +122,7 @@ describe('Security Headers', () => {
           (config) => {
             const response = createMockResponse();
             applySecurityHeaders(response, config as SecurityHeadersConfig);
-            
+
             expect(response.headers.get('Cross-Origin-Opener-Policy')).toBe('same-origin');
           }
         ),
@@ -141,7 +141,7 @@ describe('Security Headers', () => {
           (config) => {
             const response = createMockResponse();
             applySecurityHeaders(response, config as SecurityHeadersConfig);
-            
+
             expect(response.headers.get('Cross-Origin-Resource-Policy')).toBe('same-origin');
           }
         ),
@@ -156,7 +156,7 @@ describe('Security Headers', () => {
           (config) => {
             const response = createMockResponse();
             applySecurityHeaders(response, config as SecurityHeadersConfig);
-            
+
             const csp = response.headers.get('Content-Security-Policy');
             expect(csp).toBeDefined();
             expect(csp).toContain("default-src 'self'");
@@ -168,12 +168,12 @@ describe('Security Headers', () => {
 
     it('should not include CSP header when disabled', () => {
       const response = createMockResponse();
-      applySecurityHeaders(response, { 
-        enableCSP: false, 
-        enableHSTS: false, 
-        enablePermissionsPolicy: false 
+      applySecurityHeaders(response, {
+        enableCSP: false,
+        enableHSTS: false,
+        enablePermissionsPolicy: false,
       });
-      
+
       expect(response.headers.get('Content-Security-Policy')).toBeUndefined();
     });
 
@@ -193,15 +193,15 @@ describe('Security Headers', () => {
               hstsPreload: preload,
               enablePermissionsPolicy: false,
             });
-            
+
             const hsts = response.headers.get('Strict-Transport-Security');
             expect(hsts).toBeDefined();
             expect(hsts).toContain(`max-age=${maxAge}`);
-            
+
             if (includeSubDomains) {
               expect(hsts).toContain('includeSubDomains');
             }
-            
+
             if (preload) {
               expect(hsts).toContain('preload');
             }
@@ -218,7 +218,7 @@ describe('Security Headers', () => {
         enableHSTS: false,
         enablePermissionsPolicy: true,
       });
-      
+
       const permissionsPolicy = response.headers.get('Permissions-Policy');
       expect(permissionsPolicy).toBeDefined();
       expect(permissionsPolicy).toContain('camera=()');
@@ -229,14 +229,14 @@ describe('Security Headers', () => {
     it('should call removeHeader for X-Powered-By', () => {
       const response = createMockResponse();
       applySecurityHeaders(response, DEFAULT_CONFIG);
-      
+
       expect(response.removeHeader).toHaveBeenCalledWith('X-Powered-By');
     });
 
     it('should set cache control headers for sensitive responses', () => {
       const response = createMockResponse();
       applySecurityHeaders(response, DEFAULT_CONFIG);
-      
+
       expect(response.headers.get('Cache-Control')).toContain('no-store');
       expect(response.headers.get('Pragma')).toBe('no-cache');
       expect(response.headers.get('Expires')).toBe('0');
@@ -247,21 +247,27 @@ describe('Security Headers', () => {
     it('should build valid CSP header from directives', () => {
       fc.assert(
         fc.property(
-          fc.array(fc.constantFrom("'self'", "'none'", 'https:', 'data:'), { minLength: 1, maxLength: 3 }),
-          fc.array(fc.constantFrom("'self'", "'unsafe-inline'", "'unsafe-eval'"), { minLength: 1, maxLength: 2 }),
+          fc.array(fc.constantFrom("'self'", "'none'", 'https:', 'data:'), {
+            minLength: 1,
+            maxLength: 3,
+          }),
+          fc.array(fc.constantFrom("'self'", "'unsafe-inline'", "'unsafe-eval'"), {
+            minLength: 1,
+            maxLength: 2,
+          }),
           (defaultSrc, scriptSrc) => {
             const directives = {
               ...DEFAULT_CSP_DIRECTIVES,
               'default-src': defaultSrc,
               'script-src': scriptSrc,
             };
-            
+
             const csp = buildCSPHeader(directives);
-            
+
             // Should contain the directives
             expect(csp).toContain('default-src');
             expect(csp).toContain('script-src');
-            
+
             // Should be semicolon-separated
             expect(csp).toContain(';');
           }
@@ -275,7 +281,7 @@ describe('Security Headers', () => {
         ...DEFAULT_CSP_DIRECTIVES,
         'upgrade-insecure-requests': true,
       };
-      
+
       const csp = buildCSPHeader(directives);
       expect(csp).toContain('upgrade-insecure-requests');
     });
@@ -285,7 +291,7 @@ describe('Security Headers', () => {
         ...DEFAULT_CSP_DIRECTIVES,
         'block-all-mixed-content': true,
       };
-      
+
       const csp = buildCSPHeader(directives);
       expect(csp).toContain('block-all-mixed-content');
     });
@@ -293,7 +299,7 @@ describe('Security Headers', () => {
     it('should include report-uri when provided', () => {
       const reportUri = 'https://example.com/csp-report';
       const csp = buildCSPHeader(DEFAULT_CSP_DIRECTIVES, reportUri);
-      
+
       expect(csp).toContain(`report-uri ${reportUri}`);
     });
   });
@@ -301,12 +307,12 @@ describe('Security Headers', () => {
   describe('Permissions-Policy Header Building', () => {
     it('should build valid Permissions-Policy header', () => {
       const policy = buildPermissionsPolicyHeader(DEFAULT_PERMISSIONS_POLICY);
-      
+
       // Should contain disabled features
       expect(policy).toContain('camera=()');
       expect(policy).toContain('microphone=()');
       expect(policy).toContain('geolocation=()');
-      
+
       // Should contain enabled features
       expect(policy).toContain('fullscreen=(self)');
     });
@@ -316,7 +322,7 @@ describe('Security Headers', () => {
         ...DEFAULT_PERMISSIONS_POLICY,
         fullscreen: ['self'],
       };
-      
+
       const policy = buildPermissionsPolicyHeader(directives);
       expect(policy).toContain('fullscreen=(self)');
     });
@@ -326,7 +332,7 @@ describe('Security Headers', () => {
         ...DEFAULT_PERMISSIONS_POLICY,
         fullscreen: ['self', 'https://example.com'],
       };
-      
+
       const policy = buildPermissionsPolicyHeader(directives);
       expect(policy).toContain('fullscreen=(self "https://example.com")');
     });
@@ -348,17 +354,17 @@ describe('Security Headers', () => {
               hstsPreload: preload,
               enablePermissionsPolicy: false,
             };
-            
+
             const hsts = buildHSTSHeader(config);
-            
+
             expect(hsts).toContain(`max-age=${maxAge}`);
-            
+
             if (includeSubDomains) {
               expect(hsts).toContain('includeSubDomains');
             } else {
               expect(hsts).not.toContain('includeSubDomains');
             }
-            
+
             if (preload) {
               expect(hsts).toContain('preload');
             } else {
@@ -376,7 +382,7 @@ describe('Security Headers', () => {
         enableHSTS: true,
         enablePermissionsPolicy: false,
       };
-      
+
       const hsts = buildHSTSHeader(config);
       expect(hsts).toContain('max-age=31536000'); // 1 year default
     });
@@ -390,21 +396,21 @@ describe('Security Headers', () => {
         removeHeader: vi.fn(),
         getHeader: vi.fn(),
       };
-      
+
       const context = {
         switchToHttp: () => ({
           getResponse: () => response,
         }),
       };
-      
+
       const next = {
         handle: () => ({
           pipe: vi.fn().mockReturnThis(),
         }),
       };
-      
+
       interceptor.intercept(context as any, next as any);
-      
+
       // Should have called setHeader multiple times
       expect(response.setHeader).toHaveBeenCalled();
       expect(response.removeHeader).toHaveBeenCalledWith('X-Powered-By');
@@ -416,28 +422,28 @@ describe('Security Headers', () => {
         enableHSTS: true,
         hstsMaxAge: 86400,
       };
-      
+
       const interceptor = new SecurityHeadersInterceptor(customConfig);
       const response = {
         setHeader: vi.fn(),
         removeHeader: vi.fn(),
         getHeader: vi.fn(),
       };
-      
+
       const context = {
         switchToHttp: () => ({
           getResponse: () => response,
         }),
       };
-      
+
       const next = {
         handle: () => ({
           pipe: vi.fn().mockReturnThis(),
         }),
       };
-      
+
       interceptor.intercept(context as any, next as any);
-      
+
       // Should have set HSTS with custom max-age
       const hstsCall = (response.setHeader as any).mock.calls.find(
         (call: any[]) => call[0] === 'Strict-Transport-Security'
@@ -448,15 +454,14 @@ describe('Security Headers', () => {
   });
 });
 
-
 // CORS Tests
 import {
-  validateOrigin,
+  type CorsConfig,
+  __testing as corsTestUtils,
+  createOriginValidator,
   parseCorsOrigins,
   validateCorsConfig,
-  createOriginValidator,
-  CorsConfig,
-  __testing as corsTestUtils,
+  validateOrigin,
 } from './cors.config';
 
 describe('CORS Configuration', () => {
@@ -467,7 +472,7 @@ describe('CORS Configuration', () => {
       fc.constant('https://app.example.com'),
       fc.constant('https://api.example.com'),
       fc.constant('http://localhost:3000'),
-      fc.constant('http://localhost:8080'),
+      fc.constant('http://localhost:8080')
     );
 
     // Arbitrary for malicious origins
@@ -479,7 +484,7 @@ describe('CORS Configuration', () => {
       fc.constant('data:text/html,<script>alert(1)</script>'),
       fc.constant('https://example.com@evil.com'),
       fc.constant('https://example.com%00.evil.com'),
-      fc.constant('null'),
+      fc.constant('null')
     );
 
     it('should allow exact match origins', () => {
@@ -495,44 +500,37 @@ describe('CORS Configuration', () => {
 
     it('should reject origins not in whitelist', () => {
       fc.assert(
-        fc.property(
-          validOriginArb,
-          maliciousOriginArb,
-          (allowedOrigin, requestOrigin) => {
-            const allowedOrigins = [allowedOrigin];
-            const result = validateOrigin(requestOrigin, allowedOrigins, true);
-            
-            // Should reject if not in whitelist
-            if (requestOrigin !== allowedOrigin) {
-              expect(result).toBe(false);
-            }
+        fc.property(validOriginArb, maliciousOriginArb, (allowedOrigin, requestOrigin) => {
+          const allowedOrigins = [allowedOrigin];
+          const result = validateOrigin(requestOrigin, allowedOrigins, true);
+
+          // Should reject if not in whitelist
+          if (requestOrigin !== allowedOrigin) {
+            expect(result).toBe(false);
           }
-        ),
+        }),
         { numRuns: 50 }
       );
     });
 
     it('should reject null/undefined origins in strict mode', () => {
       fc.assert(
-        fc.property(
-          fc.array(validOriginArb, { minLength: 1, maxLength: 5 }),
-          (allowedOrigins) => {
-            expect(validateOrigin(undefined, allowedOrigins, true)).toBe(false);
-            expect(validateOrigin('', allowedOrigins, true)).toBe(false);
-          }
-        ),
+        fc.property(fc.array(validOriginArb, { minLength: 1, maxLength: 5 }), (allowedOrigins) => {
+          expect(validateOrigin(undefined, allowedOrigins, true)).toBe(false);
+          expect(validateOrigin('', allowedOrigins, true)).toBe(false);
+        }),
         { numRuns: 20 }
       );
     });
 
     it('should support wildcard subdomain patterns', () => {
       const allowedOrigins = ['*.example.com'];
-      
+
       // Should allow subdomains
       expect(validateOrigin('https://app.example.com', allowedOrigins, true)).toBe(true);
       expect(validateOrigin('https://api.example.com', allowedOrigins, true)).toBe(true);
       expect(validateOrigin('https://sub.app.example.com', allowedOrigins, true)).toBe(true);
-      
+
       // Should reject non-subdomains
       expect(validateOrigin('https://example.com', allowedOrigins, true)).toBe(false);
       expect(validateOrigin('https://notexample.com', allowedOrigins, true)).toBe(false);
@@ -541,7 +539,7 @@ describe('CORS Configuration', () => {
 
     it('should prevent origin confusion attacks', () => {
       const allowedOrigins = ['https://example.com'];
-      
+
       // These should all be rejected
       const confusionAttempts = [
         'https://example.com.evil.com',
@@ -551,7 +549,7 @@ describe('CORS Configuration', () => {
         'https://example.com%00.evil.com',
         'https://example.com:evil.com',
       ];
-      
+
       for (const attempt of confusionAttempts) {
         expect(validateOrigin(attempt, allowedOrigins, true)).toBe(false);
       }
@@ -559,11 +557,11 @@ describe('CORS Configuration', () => {
 
     it('should handle regex patterns safely', () => {
       const allowedOrigins = ['/^https:\\/\\/[a-z]+\\.example\\.com$/'];
-      
+
       // Should match valid patterns
       expect(validateOrigin('https://app.example.com', allowedOrigins, true)).toBe(true);
       expect(validateOrigin('https://api.example.com', allowedOrigins, true)).toBe(true);
-      
+
       // Should reject invalid patterns
       expect(validateOrigin('https://123.example.com', allowedOrigins, true)).toBe(false);
       expect(validateOrigin('http://app.example.com', allowedOrigins, true)).toBe(false);
@@ -571,34 +569,30 @@ describe('CORS Configuration', () => {
 
     it('should call callback with correct values', () => {
       fc.assert(
-        fc.property(
-          validOriginArb,
-          fc.boolean(),
-          (origin, shouldAllow) => {
-            const allowedOrigins = shouldAllow ? [origin] : ['https://other.com'];
-            const validator = createOriginValidator(allowedOrigins, true);
-            
-            let callbackCalled = false;
-            let callbackError: Error | null = null;
-            let callbackAllow: boolean | undefined;
-            
-            validator(origin, (err, allow) => {
-              callbackCalled = true;
-              callbackError = err;
-              callbackAllow = allow;
-            });
-            
-            expect(callbackCalled).toBe(true);
-            
-            if (shouldAllow) {
-              expect(callbackError).toBeNull();
-              expect(callbackAllow).toBe(true);
-            } else {
-              expect(callbackError).toBeInstanceOf(Error);
-              expect(callbackAllow).toBe(false);
-            }
+        fc.property(validOriginArb, fc.boolean(), (origin, shouldAllow) => {
+          const allowedOrigins = shouldAllow ? [origin] : ['https://other.com'];
+          const validator = createOriginValidator(allowedOrigins, true);
+
+          let callbackCalled = false;
+          let callbackError: Error | null = null;
+          let callbackAllow: boolean | undefined;
+
+          validator(origin, (err, allow) => {
+            callbackCalled = true;
+            callbackError = err;
+            callbackAllow = allow;
+          });
+
+          expect(callbackCalled).toBe(true);
+
+          if (shouldAllow) {
+            expect(callbackError).toBeNull();
+            expect(callbackAllow).toBe(true);
+          } else {
+            expect(callbackError).toBeInstanceOf(Error);
+            expect(callbackAllow).toBe(false);
           }
-        ),
+        }),
         { numRuns: 50 }
       );
     });
@@ -611,23 +605,20 @@ describe('CORS Configuration', () => {
       fc.constant('https://app.example.com'),
       fc.constant('https://api.example.com'),
       fc.constant('http://localhost:3000'),
-      fc.constant('http://localhost:8080'),
+      fc.constant('http://localhost:8080')
     );
 
     it('should parse comma-separated origins', () => {
       fc.assert(
-        fc.property(
-          fc.array(validOriginArb, { minLength: 1, maxLength: 5 }),
-          (origins) => {
-            const envValue = origins.join(',');
-            const parsed = parseCorsOrigins(envValue);
-            
-            expect(parsed).toHaveLength(origins.length);
-            for (const origin of origins) {
-              expect(parsed).toContain(origin);
-            }
+        fc.property(fc.array(validOriginArb, { minLength: 1, maxLength: 5 }), (origins) => {
+          const envValue = origins.join(',');
+          const parsed = parseCorsOrigins(envValue);
+
+          expect(parsed).toHaveLength(origins.length);
+          for (const origin of origins) {
+            expect(parsed).toContain(origin);
           }
-        ),
+        }),
         { numRuns: 30 }
       );
     });
@@ -651,7 +642,7 @@ describe('CORS Configuration', () => {
         allowedOrigins: ['*'],
         credentials: true,
       };
-      
+
       const errors = validateCorsConfig(config);
       expect(errors).toContain('Cannot use wildcard origin (*) with credentials enabled');
     });
@@ -662,9 +653,9 @@ describe('CORS Configuration', () => {
         allowedOrigins: ['not-a-url', 'https://valid.com'],
         credentials: false,
       };
-      
+
       const errors = validateCorsConfig(config);
-      expect(errors.some(e => e.includes('Invalid origin format'))).toBe(true);
+      expect(errors.some((e) => e.includes('Invalid origin format'))).toBe(true);
     });
 
     it('should validate HTTP methods', () => {
@@ -673,9 +664,9 @@ describe('CORS Configuration', () => {
         allowedOrigins: ['https://example.com'],
         methods: ['GET', 'INVALID_METHOD'],
       };
-      
+
       const errors = validateCorsConfig(config);
-      expect(errors.some(e => e.includes('Invalid HTTP method'))).toBe(true);
+      expect(errors.some((e) => e.includes('Invalid HTTP method'))).toBe(true);
     });
 
     it('should accept valid configurations', () => {
@@ -688,7 +679,7 @@ describe('CORS Configuration', () => {
         maxAge: 86400,
         strictOriginValidation: true,
       };
-      
+
       const errors = validateCorsConfig(config);
       expect(errors).toHaveLength(0);
     });

@@ -2,8 +2,8 @@
 // Auto Scaling & Self-Healing - Ultra-Fast 7-Layer Architecture
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { execSync } from 'child_process';
-import { writeFileSync } from 'fs';
+import { execSync } from 'node:child_process';
+import { writeFileSync } from 'node:fs';
 
 interface ScalingMetrics {
   cpuUsage: number;
@@ -27,8 +27,8 @@ interface ScalingConfig {
 
 class AutoScalingManager {
   private config: ScalingConfig;
-  private lastScalingAction: number = 0;
-  private currentInstances: number = 2;
+  private lastScalingAction = 0;
+  private currentInstances = 2;
 
   constructor() {
     this.config = {
@@ -44,9 +44,6 @@ class AutoScalingManager {
   }
 
   async start(): Promise<void> {
-    console.log('🚀 Starting Auto Scaling Manager...');
-    console.log(`📊 Config: ${this.config.minInstances}-${this.config.maxInstances} instances`);
-
     // Initial setup
     await this.setupMonitoring();
     await this.setupHealthChecks();
@@ -68,8 +65,6 @@ class AutoScalingManager {
         console.error('❌ Self-healing error:', error);
       }
     }, 60000); // Check every minute
-
-    console.log('✅ Auto Scaling Manager started');
   }
 
   private async monitorAndScale(): Promise<void> {
@@ -79,9 +74,6 @@ class AutoScalingManager {
     if (scalingDecision.action !== 'none') {
       await this.executeScaling(scalingDecision);
     }
-
-    // Log current status
-    console.log(`📊 Instances: ${this.currentInstances}, CPU: ${metrics.cpuUsage}%, Memory: ${metrics.memoryUsage}%, Response: ${metrics.responseTime}ms`);
   }
 
   private async collectMetrics(): Promise<ScalingMetrics> {
@@ -114,7 +106,10 @@ class AutoScalingManager {
     }
   }
 
-  private analyzeScalingNeeds(metrics: ScalingMetrics): { action: 'scale-up' | 'scale-down' | 'none'; reason: string } {
+  private analyzeScalingNeeds(metrics: ScalingMetrics): {
+    action: 'scale-up' | 'scale-down' | 'none';
+    reason: string;
+  } {
     const now = Date.now();
     const timeSinceLastAction = (now - this.lastScalingAction) / 1000;
 
@@ -130,9 +125,9 @@ class AutoScalingManager {
       metrics.responseTime > this.config.targetResponseTime * 1.5
     ) {
       if (this.currentInstances < this.config.maxInstances) {
-        return { 
-          action: 'scale-up', 
-          reason: `High resource usage - CPU: ${metrics.cpuUsage}%, Memory: ${metrics.memoryUsage}%, Response: ${metrics.responseTime}ms` 
+        return {
+          action: 'scale-up',
+          reason: `High resource usage - CPU: ${metrics.cpuUsage}%, Memory: ${metrics.memoryUsage}%, Response: ${metrics.responseTime}ms`,
         };
       }
     }
@@ -144,9 +139,9 @@ class AutoScalingManager {
       metrics.responseTime < this.config.targetResponseTime * 0.5
     ) {
       if (this.currentInstances > this.config.minInstances) {
-        return { 
-          action: 'scale-down', 
-          reason: `Low resource usage - CPU: ${metrics.cpuUsage}%, Memory: ${metrics.memoryUsage}%` 
+        return {
+          action: 'scale-down',
+          reason: `Low resource usage - CPU: ${metrics.cpuUsage}%, Memory: ${metrics.memoryUsage}%`,
         };
       }
     }
@@ -154,12 +149,14 @@ class AutoScalingManager {
     return { action: 'none', reason: 'Metrics within target range' };
   }
 
-  private async executeScaling(decision: { action: 'scale-up' | 'scale-down'; reason: string }): Promise<void> {
-    console.log(`🎯 Scaling action: ${decision.action} - ${decision.reason}`);
-
-    const newInstanceCount = decision.action === 'scale-up' 
-      ? Math.min(this.currentInstances + 1, this.config.maxInstances)
-      : Math.max(this.currentInstances - 1, this.config.minInstances);
+  private async executeScaling(decision: {
+    action: 'scale-up' | 'scale-down';
+    reason: string;
+  }): Promise<void> {
+    const newInstanceCount =
+      decision.action === 'scale-up'
+        ? Math.min(this.currentInstances + 1, this.config.maxInstances)
+        : Math.max(this.currentInstances - 1, this.config.minInstances);
 
     try {
       // Update docker-compose scale
@@ -176,20 +173,15 @@ class AutoScalingManager {
       this.currentInstances = newInstanceCount;
       this.lastScalingAction = Date.now();
 
-      console.log(`✅ Scaled ${decision.action}: ${this.currentInstances} instances`);
-
       // Send notification
       await this.sendScalingNotification(decision.action, newInstanceCount, decision.reason);
-
     } catch (error) {
-      console.error(`❌ Scaling failed:`, error);
+      console.error('❌ Scaling failed:', error);
       throw error;
     }
   }
 
   private async selfHeal(): Promise<void> {
-    console.log('🔧 Running self-healing checks...');
-
     // Check container health
     await this.checkAndRestartUnhealthyContainers();
 
@@ -213,13 +205,10 @@ class AutoScalingManager {
 
       for (const container of containers) {
         if (container.State !== 'running') {
-          console.log(`🔄 Restarting unhealthy container: ${container.Service}`);
           execSync(`docker-compose restart ${container.Service}`, { stdio: 'inherit' });
-          
+
           // Wait for container to be healthy
           await this.waitForContainerHealth(container.Service);
-          
-          console.log(`✅ Container ${container.Service} restarted successfully`);
         }
       }
     } catch (error) {
@@ -233,15 +222,11 @@ class AutoScalingManager {
       const health = await response.json();
 
       if (health.layers?.queryGateway?.database?.status !== 'healthy') {
-        console.log('🔄 Database connection unhealthy, attempting repair...');
-        
         // Restart database connection pool
         execSync('docker-compose restart api', { stdio: 'inherit' });
-        
+
         // Wait for recovery
         await this.sleep(10000);
-        
-        console.log('✅ Database connection repaired');
       }
     } catch (error) {
       console.warn('Failed to check database connections:', error);
@@ -254,18 +239,14 @@ class AutoScalingManager {
       const health = await response.json();
 
       if (health.layers?.queryGateway?.cache?.status !== 'healthy') {
-        console.log('🔄 Cache connection unhealthy, attempting repair...');
-        
         // Restart KeyDB
         execSync('docker-compose restart keydb', { stdio: 'inherit' });
-        
+
         // Wait for recovery
         await this.sleep(5000);
-        
+
         // Restart API to reconnect
         execSync('docker-compose restart api', { stdio: 'inherit' });
-        
-        console.log('✅ Cache connection repaired');
       }
     } catch (error) {
       console.warn('Failed to check cache connections:', error);
@@ -277,16 +258,12 @@ class AutoScalingManager {
       const result = execSync('df -h /', { encoding: 'utf8' });
       const lines = result.trim().split('\n');
       const diskInfo = lines[1].split(/\s+/);
-      const usagePercent = parseInt(diskInfo[4].replace('%', ''));
+      const usagePercent = Number.parseInt(diskInfo[4].replace('%', ''));
 
       if (usagePercent > 85) {
-        console.log(`⚠️ High disk usage: ${usagePercent}%`);
-        
         // Clean up old logs and temporary files
         execSync('docker system prune -f', { stdio: 'inherit' });
         execSync('find /tmp -type f -atime +7 -delete', { stdio: 'inherit' });
-        
-        console.log('✅ Disk cleanup completed');
       }
     } catch (error) {
       console.warn('Failed to check disk space:', error);
@@ -301,18 +278,13 @@ class AutoScalingManager {
       const memoryUsage = (metrics.memory?.heapUsed / metrics.memory?.heapTotal) * 100;
 
       if (memoryUsage > 90) {
-        console.log(`⚠️ High memory usage: ${memoryUsage.toFixed(2)}%`);
-        
         // Force garbage collection if possible
         await fetch('http://localhost:3001/api/v3/health/gc', { method: 'POST' });
-        
+
         // If still high, restart containers
         if (memoryUsage > 95) {
-          console.log('🔄 Restarting containers due to memory pressure...');
           execSync('docker-compose restart api', { stdio: 'inherit' });
         }
-        
-        console.log('✅ Memory pressure handled');
       }
     } catch (error) {
       console.warn('Failed to check memory usage:', error);
@@ -321,22 +293,25 @@ class AutoScalingManager {
 
   private getContainerStats(): { cpu: number; memory: number } {
     try {
-      const result = execSync('docker stats --no-stream --format "table {{.CPUPerc}}\t{{.MemPerc}}" api', { 
-        encoding: 'utf8' 
-      });
-      
+      const result = execSync(
+        'docker stats --no-stream --format "table {{.CPUPerc}}\t{{.MemPerc}}" api',
+        {
+          encoding: 'utf8',
+        }
+      );
+
       const lines = result.trim().split('\n');
       if (lines.length > 1) {
         const stats = lines[1].split('\t');
         return {
-          cpu: parseFloat(stats[0].replace('%', '')),
-          memory: parseFloat(stats[1].replace('%', '')),
+          cpu: Number.parseFloat(stats[0].replace('%', '')),
+          memory: Number.parseFloat(stats[1].replace('%', '')),
         };
       }
     } catch (error) {
       console.warn('Failed to get container stats:', error);
     }
-    
+
     return { cpu: 0, memory: 0 };
   }
 
@@ -363,7 +338,7 @@ server {
 }`;
 
     writeFileSync('/tmp/nginx-auto.conf', nginxConfig);
-    
+
     try {
       execSync('docker exec nginx nginx -s reload', { stdio: 'inherit' });
     } catch (error) {
@@ -371,75 +346,71 @@ server {
     }
   }
 
-  private async waitForHealthyInstances(expectedCount: number): Promise<void> {
-    console.log(`⏳ Waiting for ${expectedCount} healthy instances...`);
-    
+  private async waitForHealthyInstances(_expectedCount: number): Promise<void> {
     let attempts = 0;
     const maxAttempts = 30;
-    
+
     while (attempts < maxAttempts) {
       try {
         const response = await fetch('http://localhost:3001/api/v3/health');
         if (response.ok) {
-          console.log('✅ All instances are healthy');
           return;
         }
-      } catch (error) {
+      } catch (_error) {
         // Not ready yet
       }
-      
+
       attempts++;
       await this.sleep(2000);
     }
-    
+
     throw new Error('Instances failed to become healthy');
   }
 
   private async waitForContainerHealth(serviceName: string): Promise<void> {
     let attempts = 0;
     const maxAttempts = 30;
-    
+
     while (attempts < maxAttempts) {
       try {
         const result = execSync(`docker-compose ps ${serviceName}`, { encoding: 'utf8' });
         if (result.includes('Up')) {
           return;
         }
-      } catch (error) {
+      } catch (_error) {
         // Not ready yet
       }
-      
+
       attempts++;
       await this.sleep(2000);
     }
-    
+
     throw new Error(`Container ${serviceName} failed to become healthy`);
   }
 
-  private async sendScalingNotification(action: string, instanceCount: number, reason: string): Promise<void> {
-    // In production, this would send notifications via Slack, email, etc.
-    console.log(`📢 Scaling Notification: ${action} to ${instanceCount} instances - ${reason}`);
-  }
+  private async sendScalingNotification(
+    _action: string,
+    _instanceCount: number,
+    _reason: string
+  ): Promise<void> {}
 
   private async setupMonitoring(): Promise<void> {
-    console.log('📊 Setting up monitoring...');
     // Setup Prometheus, Grafana, alerting rules
   }
 
   private async setupHealthChecks(): Promise<void> {
-    console.log('🏥 Setting up health checks...');
     // Setup health check endpoints, monitoring probes
   }
 
   private sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
 
 // Start auto scaling if called directly
 if (require.main === module) {
   const autoScaler = new AutoScalingManager();
-  autoScaler.start().catch(error => {
+  autoScaler.start().catch((error) => {
     console.error('Auto scaling failed:', error);
     process.exit(1);
   });

@@ -9,10 +9,10 @@
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
-import { describe, it, expect, beforeAll } from 'vitest';
+import * as crypto from 'node:crypto';
 import * as fc from 'fast-check';
-import * as crypto from 'crypto';
-import { signData, verifySignature, hashData } from '../electronic-signature.service';
+import { beforeAll, describe, expect, it } from 'vitest';
+import { hashData, signData, verifySignature } from '../electronic-signature.service';
 
 // Helper to generate 14-digit tax ID
 const taxIdArbitrary = fc

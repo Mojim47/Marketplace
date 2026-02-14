@@ -2,10 +2,10 @@
  * ═══════════════════════════════════════════════════════════════════════════
  * SYSTEM INVARIANTS - HARD CONSTRAINTS (NO MUTATION, NO LEARNING)
  * ═══════════════════════════════════════════════════════════════════════════
- * 
+ *
  * These invariants are IMMUTABLE. Violation = system failure.
  * Each invariant has: name, signal, consequence.
- * 
+ *
  * If any invariant cannot be enforced mechanically → SYSTEM UNSAFE
  */
 
@@ -24,8 +24,7 @@ export const AUTH_INVARIANTS = {
    */
   TOKEN_VERIFICATION_MANDATORY: {
     name: 'TOKEN_VERIFICATION_MANDATORY',
-    signal: (ctx: { user?: unknown; isPublic: boolean }) => 
-      !ctx.isPublic && ctx.user === undefined,
+    signal: (ctx: { user?: unknown; isPublic: boolean }) => !ctx.isPublic && ctx.user === undefined,
     consequence: 'REJECT_401',
     enforceable: true,
   },
@@ -37,7 +36,7 @@ export const AUTH_INVARIANTS = {
    */
   EXPIRED_TOKEN_REJECTION: {
     name: 'EXPIRED_TOKEN_REJECTION',
-    signal: (payload: { exp?: number }) => 
+    signal: (payload: { exp?: number }) =>
       payload.exp !== undefined && payload.exp < Math.floor(Date.now() / 1000),
     consequence: 'REJECT_401_TOKEN_EXPIRED',
     enforceable: true,
@@ -50,8 +49,7 @@ export const AUTH_INVARIANTS = {
    */
   PAYLOAD_INTEGRITY: {
     name: 'PAYLOAD_INTEGRITY',
-    signal: (payload: { sub?: string; email?: string }) => 
-      !payload.sub || !payload.email,
+    signal: (payload: { sub?: string; email?: string }) => !payload.sub || !payload.email,
     consequence: 'REJECT_401_INVALID_TOKEN',
     enforceable: true,
   },
@@ -83,8 +81,8 @@ export const PAYMENT_INVARIANTS = {
   DOUBLE_ENTRY_BALANCE: {
     name: 'DOUBLE_ENTRY_BALANCE',
     signal: (entries: Array<{ type: 'DEBIT' | 'CREDIT'; amount: number }>) => {
-      const debits = entries.filter(e => e.type === 'DEBIT').reduce((s, e) => s + e.amount, 0);
-      const credits = entries.filter(e => e.type === 'CREDIT').reduce((s, e) => s + e.amount, 0);
+      const debits = entries.filter((e) => e.type === 'DEBIT').reduce((s, e) => s + e.amount, 0);
+      const credits = entries.filter((e) => e.type === 'CREDIT').reduce((s, e) => s + e.amount, 0);
       return Math.abs(debits - credits) >= 0.01;
     },
     consequence: 'REJECT_TRANSACTION',
@@ -110,8 +108,10 @@ export const PAYMENT_INVARIANTS = {
    */
   IDEMPOTENCY_KEY_BINDING: {
     name: 'IDEMPOTENCY_KEY_BINDING',
-    signal: (stored: { key: string; authority: string }, incoming: { key: string; authority: string }) =>
-      stored.key === incoming.key && stored.authority !== incoming.authority,
+    signal: (
+      stored: { key: string; authority: string },
+      incoming: { key: string; authority: string }
+    ) => stored.key === incoming.key && stored.authority !== incoming.authority,
     consequence: 'REJECT_IDEMPOTENCY_MISMATCH',
     enforceable: true,
   },
@@ -135,10 +135,18 @@ export const PAYMENT_INVARIANTS = {
    */
   ATOMIC_ROLLBACK: {
     name: 'ATOMIC_ROLLBACK',
-    signal: (tx: { status: string; balancesBefore: Map<string, number>; balancesAfter: Map<string, number> }) => {
-      if (tx.status !== 'FAILED') return false;
+    signal: (tx: {
+      status: string;
+      balancesBefore: Map<string, number>;
+      balancesAfter: Map<string, number>;
+    }) => {
+      if (tx.status !== 'FAILED') {
+        return false;
+      }
       for (const [id, before] of tx.balancesBefore) {
-        if (tx.balancesAfter.get(id) !== before) return true;
+        if (tx.balancesAfter.get(id) !== before) {
+          return true;
+        }
       }
       return false;
     },
@@ -174,7 +182,7 @@ export const ERROR_CODE_STATUS_MAP: Record<ErrorCode, HttpStatus> = {
   [ErrorCode.INVALID_INPUT]: HttpStatus.BAD_REQUEST,
   [ErrorCode.MISSING_REQUIRED_FIELD]: HttpStatus.BAD_REQUEST,
   [ErrorCode.INVALID_FORMAT]: HttpStatus.BAD_REQUEST,
-  
+
   // 401 - Authentication
   [ErrorCode.UNAUTHORIZED]: HttpStatus.UNAUTHORIZED,
   [ErrorCode.INVALID_CREDENTIALS]: HttpStatus.UNAUTHORIZED,
@@ -190,24 +198,24 @@ export const ERROR_CODE_STATUS_MAP: Record<ErrorCode, HttpStatus> = {
   [ErrorCode.EMAIL_EXISTS]: HttpStatus.UNAUTHORIZED,
   [ErrorCode.PHONE_EXISTS]: HttpStatus.UNAUTHORIZED,
   [ErrorCode.TWO_FACTOR_REQUIRED]: HttpStatus.UNAUTHORIZED,
-  
+
   // 403 - Authorization
   [ErrorCode.FORBIDDEN]: HttpStatus.FORBIDDEN,
   [ErrorCode.INSUFFICIENT_PERMISSIONS]: HttpStatus.FORBIDDEN,
   [ErrorCode.RESOURCE_ACCESS_DENIED]: HttpStatus.FORBIDDEN,
   [ErrorCode.TENANT_ACCESS_DENIED]: HttpStatus.FORBIDDEN,
   [ErrorCode.IP_BLOCKED]: HttpStatus.FORBIDDEN,
-  
+
   // 404 - Not Found
   [ErrorCode.RESOURCE_NOT_FOUND]: HttpStatus.NOT_FOUND,
   [ErrorCode.ROUTE_NOT_FOUND]: HttpStatus.NOT_FOUND,
-  
+
   // 409 - Conflict
   [ErrorCode.CONFLICT]: HttpStatus.CONFLICT,
   [ErrorCode.RESOURCE_EXISTS]: HttpStatus.CONFLICT,
   [ErrorCode.OPTIMISTIC_LOCK_FAILED]: HttpStatus.CONFLICT,
   [ErrorCode.IDEMPOTENCY_CONFLICT]: HttpStatus.CONFLICT,
-  
+
   // 422 - Business Rule Violation
   [ErrorCode.BUSINESS_RULE_VIOLATION]: HttpStatus.UNPROCESSABLE_ENTITY,
   [ErrorCode.INVALID_STATE_TRANSITION]: HttpStatus.UNPROCESSABLE_ENTITY,
@@ -216,11 +224,11 @@ export const ERROR_CODE_STATUS_MAP: Record<ErrorCode, HttpStatus> = {
   [ErrorCode.MAXIMUM_LIMIT_EXCEEDED]: HttpStatus.UNPROCESSABLE_ENTITY,
   [ErrorCode.PAYMENT_FAILED]: HttpStatus.UNPROCESSABLE_ENTITY,
   [ErrorCode.PAYMENT_VERIFICATION_FAILED]: HttpStatus.UNPROCESSABLE_ENTITY,
-  
+
   // 429 - Rate Limited
   [ErrorCode.RATE_LIMIT_EXCEEDED]: HttpStatus.TOO_MANY_REQUESTS,
   [ErrorCode.QUOTA_EXCEEDED]: HttpStatus.TOO_MANY_REQUESTS,
-  
+
   // 500 - Internal
   [ErrorCode.INTERNAL_ERROR]: HttpStatus.INTERNAL_SERVER_ERROR,
   [ErrorCode.DATABASE_ERROR]: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -228,17 +236,17 @@ export const ERROR_CODE_STATUS_MAP: Record<ErrorCode, HttpStatus> = {
   [ErrorCode.TRANSACTION_TIMEOUT]: HttpStatus.INTERNAL_SERVER_ERROR,
   [ErrorCode.CACHE_ERROR]: HttpStatus.INTERNAL_SERVER_ERROR,
   [ErrorCode.QUEUE_ERROR]: HttpStatus.INTERNAL_SERVER_ERROR,
-  
+
   // 502 - Bad Gateway
   [ErrorCode.BAD_GATEWAY]: HttpStatus.BAD_GATEWAY,
   [ErrorCode.UPSTREAM_ERROR]: HttpStatus.BAD_GATEWAY,
-  
+
   // 503 - Service Unavailable
   [ErrorCode.SERVICE_UNAVAILABLE]: HttpStatus.SERVICE_UNAVAILABLE,
   [ErrorCode.MAINTENANCE_MODE]: HttpStatus.SERVICE_UNAVAILABLE,
   [ErrorCode.CIRCUIT_BREAKER_OPEN]: HttpStatus.SERVICE_UNAVAILABLE,
   [ErrorCode.DEPENDENCY_UNAVAILABLE]: HttpStatus.SERVICE_UNAVAILABLE,
-  
+
   // 504 - Gateway Timeout
   [ErrorCode.GATEWAY_TIMEOUT]: HttpStatus.GATEWAY_TIMEOUT,
   [ErrorCode.UPSTREAM_TIMEOUT]: HttpStatus.GATEWAY_TIMEOUT,
@@ -259,10 +267,12 @@ export const ERROR_INVARIANTS = {
         if (!statusByCode.has(errorCode)) {
           statusByCode.set(errorCode, new Set());
         }
-        statusByCode.get(errorCode)!.add(status);
+        statusByCode.get(errorCode)?.add(status);
       }
       for (const [, statuses] of statusByCode) {
-        if (statuses.size > 1) return true;
+        if (statuses.size > 1) {
+          return true;
+        }
       }
       return false;
     },
@@ -365,8 +375,14 @@ export const DETECTION_POINTS = {
     { point: 'Application.bootstrap', invariants: ['SECRET_KEY_NON_DEFAULT'] },
   ],
   PAYMENT: [
-    { point: 'TransactionManager.validateEntries', invariants: ['DOUBLE_ENTRY_BALANCE', 'AMOUNT_POSITIVITY'] },
-    { point: 'TransactionManager.executeTransaction', invariants: ['NON_NEGATIVE_BALANCE', 'ATOMIC_ROLLBACK'] },
+    {
+      point: 'TransactionManager.validateEntries',
+      invariants: ['DOUBLE_ENTRY_BALANCE', 'AMOUNT_POSITIVITY'],
+    },
+    {
+      point: 'TransactionManager.executeTransaction',
+      invariants: ['NON_NEGATIVE_BALANCE', 'ATOMIC_ROLLBACK'],
+    },
     { point: 'ZarinpalService.verifyPayment', invariants: ['VERIFICATION_BEFORE_COMPLETION'] },
     { point: 'PaymentService.initialize', invariants: ['IDEMPOTENCY_KEY_BINDING'] },
   ],
@@ -386,7 +402,7 @@ export const SYSTEM_SAFETY_STATUS = {
   AUTH: 'SAFE', // All invariants mechanically enforceable
   PAYMENT: 'SAFE', // All invariants mechanically enforceable
   ERROR: 'CONDITIONAL', // INV-ERR-004 requires ESLint rule
-  
+
   OVERALL: 'CONDITIONAL',
   REASON: 'INV-ERR-004 (NO_RAW_ERROR_THROWS) requires static analysis via ESLint rule',
   REMEDIATION: 'Add ESLint rule: no-throw-literal + custom rule for raw Error()',

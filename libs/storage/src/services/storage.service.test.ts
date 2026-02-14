@@ -2,13 +2,13 @@
 // Storage Service Tests
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import * as fs from 'fs';
-import * as path from 'path';
-import { StorageService } from './storage.service';
-import { StorageFactory } from '../factory/storage.factory';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { LocalStorageAdapter } from '../adapters/local.adapter';
+import { StorageFactory } from '../factory/storage.factory';
 import { StorageProviderType } from '../interfaces/storage.interface';
+import { StorageService } from './storage.service';
 
 describe('StorageService', () => {
   const testRootDir = path.join(process.cwd(), '.test-storage-service');
@@ -20,14 +20,14 @@ describe('StorageService', () => {
   beforeEach(async () => {
     factory = new StorageFactory();
     service = new StorageService(factory);
-    
+
     adapter = new LocalStorageAdapter({
       provider: StorageProviderType.LOCAL,
       bucket: testBucket,
       rootDir: testRootDir,
       baseUrl: 'http://localhost:3000/files',
     });
-    
+
     await adapter.ensureBucket();
     service.setProvider(adapter);
   });
@@ -153,7 +153,7 @@ describe('StorageService', () => {
         directory: 'batch-upload',
       });
 
-      expect(results.every(r => r.key.startsWith('batch-upload/'))).toBe(true);
+      expect(results.every((r) => r.key.startsWith('batch-upload/'))).toBe(true);
     });
   });
 
@@ -175,7 +175,7 @@ describe('StorageService', () => {
 
       const stream = await service.getFileStream(key);
       const chunks: Buffer[] = [];
-      
+
       for await (const chunk of stream) {
         chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
       }
@@ -200,7 +200,7 @@ describe('StorageService', () => {
         { data: Buffer.from('1'), name: 'del1.txt' },
         { data: Buffer.from('2'), name: 'del2.txt' },
       ]);
-      const keys = results.map(r => r.key);
+      const keys = results.map((r) => r.key);
 
       const failed = await service.deleteFiles(keys);
 
@@ -251,7 +251,7 @@ describe('StorageService', () => {
     it('should filter by prefix', async () => {
       const result = await service.listFiles({ prefix: 'list' });
 
-      expect(result.files.every(f => f.key.startsWith('list'))).toBe(true);
+      expect(result.files.every((f) => f.key.startsWith('list'))).toBe(true);
     });
   });
 
@@ -283,7 +283,10 @@ describe('StorageService', () => {
 
   describe('moveFile', () => {
     it('should move a file', async () => {
-      const { key: sourceKey } = await service.uploadFile(Buffer.from('Move me'), 'move-source.txt');
+      const { key: sourceKey } = await service.uploadFile(
+        Buffer.from('Move me'),
+        'move-source.txt'
+      );
       const destKey = 'move-dest.txt';
 
       const result = await service.moveFile(sourceKey, destKey);
@@ -378,7 +381,10 @@ describe('StorageService', () => {
       { ext: '.svg', expected: 'image/svg+xml' },
       { ext: '.pdf', expected: 'application/pdf' },
       { ext: '.doc', expected: 'application/msword' },
-      { ext: '.xlsx', expected: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' },
+      {
+        ext: '.xlsx',
+        expected: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      },
       { ext: '.mp3', expected: 'audio/mpeg' },
       { ext: '.mp4', expected: 'video/mp4' },
       { ext: '.glb', expected: 'model/gltf-binary' },
@@ -398,22 +404,18 @@ describe('StorageService', () => {
 
   describe('filename sanitization', () => {
     it('should sanitize special characters', async () => {
-      const result = await service.uploadFile(
-        Buffer.from('test'),
-        'My File (1) [test].txt',
-        { preserveFilename: true }
-      );
+      const result = await service.uploadFile(Buffer.from('test'), 'My File (1) [test].txt', {
+        preserveFilename: true,
+      });
 
       // Special chars replaced with _, consecutive _ collapsed
       expect(result.filename).toBe('my_file_1_test_.txt');
     });
 
     it('should handle unicode characters', async () => {
-      const result = await service.uploadFile(
-        Buffer.from('test'),
-        'فایل تست.txt',
-        { preserveFilename: true }
-      );
+      const result = await service.uploadFile(Buffer.from('test'), 'فایل تست.txt', {
+        preserveFilename: true,
+      });
 
       expect(result.filename).not.toContain('فایل');
     });

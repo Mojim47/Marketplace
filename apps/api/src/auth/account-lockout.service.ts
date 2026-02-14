@@ -1,18 +1,18 @@
 /**
  * Account Lockout Service
- * 
+ *
  * Enterprise-grade account lockout mechanism with:
  * - Database persistence (survives restarts)
  * - User-based and IP-based tracking
  * - Exponential backoff delays
  * - Admin override capability
  * - Audit logging
- * 
+ *
  * Requirements: 1.5 - Account lockout after 5 failed attempts
  */
 
 import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
+import type { PrismaService } from '../database/prisma.service';
 
 /**
  * Lockout Configuration
@@ -21,22 +21,22 @@ import { PrismaService } from '../database/prisma.service';
 export const LOCKOUT_CONFIG = {
   /** Maximum failed attempts before lockout */
   MAX_ATTEMPTS: 5,
-  
+
   /** Time window for counting attempts (15 minutes) */
   ATTEMPT_WINDOW_MS: 15 * 60 * 1000,
-  
+
   /** Base lockout duration (15 minutes) */
   BASE_LOCKOUT_DURATION_MS: 15 * 60 * 1000,
-  
+
   /** Maximum lockout duration (24 hours) */
   MAX_LOCKOUT_DURATION_MS: 24 * 60 * 60 * 1000,
-  
+
   /** Exponential backoff multiplier */
   BACKOFF_MULTIPLIER: 2,
-  
+
   /** Delay between attempts (exponential) - base 1 second */
   BASE_DELAY_MS: 1000,
-  
+
   /** Maximum delay between attempts (30 seconds) */
   MAX_DELAY_MS: 30 * 1000,
 };
@@ -64,7 +64,7 @@ export class AccountLockoutService {
 
   /**
    * Check if login attempt is allowed and record it
-   * 
+   *
    * @param identifier - Email or user ID
    * @param ipAddress - Client IP address
    * @param success - Whether the login was successful
@@ -72,23 +72,23 @@ export class AccountLockoutService {
   async recordLoginAttempt(
     identifier: string,
     ipAddress: string,
-    success: boolean,
+    success: boolean
   ): Promise<LoginAttemptResult> {
     const now = new Date();
     const windowStart = new Date(now.getTime() - LOCKOUT_CONFIG.ATTEMPT_WINDOW_MS);
 
     // Check current lockout status
     const lockoutStatus = await this.getLockoutStatus(identifier);
-    
+
     if (lockoutStatus.isLocked && lockoutStatus.lockedUntil && lockoutStatus.lockedUntil > now) {
       const remainingMs = lockoutStatus.lockedUntil.getTime() - now.getTime();
       const remainingMinutes = Math.ceil(remainingMs / 60000);
-      
+
       return {
         allowed: false,
         remainingAttempts: 0,
         lockedUntil: lockoutStatus.lockedUntil,
-        message: `ÍÓÇÈ ˜ÇÑÈÑí Şİá ÔÏå ÇÓÊ. ${remainingMinutes} ÏŞíŞå ÏíÑ ÊáÇÔ ˜äíÏ`,
+        message: `ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½. ${remainingMinutes} ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½`,
       };
     }
 
@@ -98,7 +98,7 @@ export class AccountLockoutService {
       return {
         allowed: true,
         remainingAttempts: LOCKOUT_CONFIG.MAX_ATTEMPTS,
-        message: 'æÑæÏ ãæİŞ',
+        message: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½',
       };
     }
 
@@ -127,8 +127,8 @@ export class AccountLockoutService {
 
     // Calculate exponential delay
     const delayMs = Math.min(
-      LOCKOUT_CONFIG.BASE_DELAY_MS * Math.pow(LOCKOUT_CONFIG.BACKOFF_MULTIPLIER, newAttemptCount - 1),
-      LOCKOUT_CONFIG.MAX_DELAY_MS,
+      LOCKOUT_CONFIG.BASE_DELAY_MS * LOCKOUT_CONFIG.BACKOFF_MULTIPLIER ** (newAttemptCount - 1),
+      LOCKOUT_CONFIG.MAX_DELAY_MS
     );
 
     // Check if should lock account
@@ -143,18 +143,18 @@ export class AccountLockoutService {
           identifier,
           lockedUntil,
           lockoutCount: 1,
-          reason: 'ÊÚÏÇÏ ÊáÇÔåÇí äÇãæİŞ ÈíÔ ÇÒ ÍÏ ãÌÇÒ',
+          reason: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ôï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½',
         },
         update: {
           lockedUntil,
           lockoutCount: { increment: 1 },
-          reason: 'ÊÚÏÇÏ ÊáÇÔåÇí äÇãæİŞ ÈíÔ ÇÒ ÍÏ ãÌÇÒ',
+          reason: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ôï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½',
         },
       });
 
       this.logger.warn(
         `Account locked: ${identifier} after ${newAttemptCount} failed attempts. ` +
-        `Locked until: ${lockedUntil.toISOString()}`,
+          `Locked until: ${lockedUntil.toISOString()}`
       );
 
       const lockoutMinutes = Math.ceil(lockoutDuration / 60000);
@@ -163,7 +163,7 @@ export class AccountLockoutService {
         remainingAttempts: 0,
         lockedUntil,
         delayMs,
-        message: `ÍÓÇÈ ˜ÇÑÈÑí Èå ãÏÊ ${lockoutMinutes} ÏŞíŞå Şİá ÔÏ`,
+        message: `ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ ${lockoutMinutes} ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½`,
       };
     }
 
@@ -171,7 +171,7 @@ export class AccountLockoutService {
       allowed: true,
       remainingAttempts,
       delayMs,
-      message: `${remainingAttempts} ÊáÇÔ ÈÇŞíãÇäÏå`,
+      message: `${remainingAttempts} ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½`,
     };
   }
 
@@ -258,23 +258,26 @@ export class AccountLockoutService {
    * Calculate lockout duration with exponential backoff
    */
   private calculateLockoutDuration(previousLockouts: number): number {
-    const duration = LOCKOUT_CONFIG.BASE_LOCKOUT_DURATION_MS * 
-      Math.pow(LOCKOUT_CONFIG.BACKOFF_MULTIPLIER, previousLockouts);
-    
+    const duration =
+      LOCKOUT_CONFIG.BASE_LOCKOUT_DURATION_MS *
+      LOCKOUT_CONFIG.BACKOFF_MULTIPLIER ** previousLockouts;
+
     return Math.min(duration, LOCKOUT_CONFIG.MAX_LOCKOUT_DURATION_MS);
   }
 
   /**
    * Get all currently locked accounts (for admin dashboard)
    */
-  async getLockedAccounts(): Promise<Array<{
-    identifier: string;
-    lockedUntil: Date;
-    lockoutCount: number;
-    reason: string;
-  }>> {
+  async getLockedAccounts(): Promise<
+    Array<{
+      identifier: string;
+      lockedUntil: Date;
+      lockoutCount: number;
+      reason: string;
+    }>
+  > {
     const now = new Date();
-    
+
     return this.prisma.accountLockout.findMany({
       where: {
         lockedUntil: { gt: now },

@@ -26,7 +26,7 @@ export enum KYBStatus {
 
 /**
  * State Machine Transitions
- * 
+ *
  * PENDING ? PENDING_KYB (submit documents)
  * PENDING_KYB ? ACTIVE_LIMITED (auto-approve basic checks)
  * ACTIVE_LIMITED ? ACTIVE_FULL (manual approval or auto after 30 days)
@@ -84,10 +84,7 @@ export interface StateTransitionDTO {
  * Validation Rules for State Transitions
  */
 export const STATE_TRANSITION_RULES = {
-  [VerificationStatus.PENDING]: [
-    VerificationStatus.PENDING_KYB,
-    VerificationStatus.REJECTED,
-  ],
+  [VerificationStatus.PENDING]: [VerificationStatus.PENDING_KYB, VerificationStatus.REJECTED],
   [VerificationStatus.PENDING_KYB]: [
     VerificationStatus.ACTIVE_LIMITED,
     VerificationStatus.REJECTED,
@@ -96,9 +93,7 @@ export const STATE_TRANSITION_RULES = {
     VerificationStatus.ACTIVE_FULL,
     VerificationStatus.SUSPENDED,
   ],
-  [VerificationStatus.ACTIVE_FULL]: [
-    VerificationStatus.SUSPENDED,
-  ],
+  [VerificationStatus.ACTIVE_FULL]: [VerificationStatus.SUSPENDED],
   [VerificationStatus.SUSPENDED]: [
     VerificationStatus.ACTIVE_LIMITED,
     VerificationStatus.ACTIVE_FULL,

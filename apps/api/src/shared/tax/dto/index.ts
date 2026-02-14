@@ -3,63 +3,72 @@
  * Requirements: 9.1, 9.2, 9.3
  */
 
-import { IsString, IsNumber, IsOptional, IsDate, IsUUID, IsArray, ValidateNested, Min } from 'class-validator';
-import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import {
+  IsArray,
+  IsDate,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Min,
+  ValidateNested,
+} from 'class-validator';
 
 export class SubmitInvoiceDto {
-  @ApiProperty({ description: 'ÔäÇÓå İÇ˜ÊæÑ' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ç˜ï¿½ï¿½ï¿½' })
   @IsUUID()
   invoiceId: string;
 
-  @ApiPropertyOptional({ description: 'ÔãÇÑå ÓÑíÇá İÇ˜ÊæÑ' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ç˜ï¿½ï¿½ï¿½' })
   @IsOptional()
   @IsString()
   serial?: string;
 
-  @ApiProperty({ description: 'ãÈáÛ ˜á İÇ˜ÊæÑ', example: 1500000 })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Ç˜ï¿½ï¿½ï¿½', example: 1500000 })
   @IsNumber()
   @Min(0)
   total: number;
 
-  @ApiProperty({ description: 'ÊÇÑíÎ İÇ˜ÊæÑ' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ç˜ï¿½ï¿½ï¿½' })
   @Type(() => Date)
   @IsDate()
   createdAt: Date;
 }
 
 export class PollStatusDto {
-  @ApiProperty({ description: 'ÔäÇÓå İÇ˜ÊæÑ' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ç˜ï¿½ï¿½ï¿½' })
   @IsUUID()
   invoiceId: string;
 }
 
 export class InvoiceItemDto {
-  @ApiProperty({ description: 'ÔäÇÓå ÂíÊã' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½' })
   @IsString()
   id: string;
 
-  @ApiProperty({ description: 'ãÈáÛ ˜á', example: 500000 })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½', example: 500000 })
   @IsNumber()
   @Min(0)
   total: number;
 
-  @ApiProperty({ description: 'ãÈáÛ ãÇáíÇÊ', example: 45000 })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½', example: 45000 })
   @IsNumber()
   @Min(0)
   taxAmount: number;
 
-  @ApiProperty({ description: 'ÊÇÑíÎ' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½' })
   @IsString()
   date: string;
 }
 
 export class GenerateReportDto {
-  @ApiProperty({ description: 'ÏæÑå ÒÇÑÔ', example: '1402/09' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½', example: '1402/09' })
   @IsString()
   period: string;
 
-  @ApiProperty({ description: 'áíÓÊ İÇ˜ÊæÑåÇ', type: [InvoiceItemDto] })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ ï¿½Ç˜ï¿½ï¿½ï¿½ï¿½ï¿½', type: [InvoiceItemDto] })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => InvoiceItemDto)
@@ -67,29 +76,29 @@ export class GenerateReportDto {
 }
 
 export class SubmissionResultDto {
-  @ApiProperty({ description: 'ÔäÇÓå İÇ˜ÊæÑ' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ç˜ï¿½ï¿½ï¿½' })
   invoiceId: string;
 
-  @ApiProperty({ description: 'æÖÚíÊ', enum: ['PENDING', 'CONFIRMED', 'REJECTED'] })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½', enum: ['PENDING', 'CONFIRMED', 'REJECTED'] })
   status: 'PENDING' | 'CONFIRMED' | 'REJECTED';
 
-  @ApiPropertyOptional({ description: 'ÔãÇÑå ãÑÌÚ ãæÏíÇä' })
+  @ApiPropertyOptional({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   senaRefId?: string;
 
-  @ApiProperty({ description: 'ÊÇÑíÎ ÇíÌÇÏ' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
   createdAt: Date;
 
-  @ApiProperty({ description: 'ÊÇÑíÎ ÈåÑæÒÑÓÇäí' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' })
   updatedAt: Date;
 }
 
 export class TaxReportResultDto {
-  @ApiProperty({ description: 'ÏæÑå ÒÇÑÔ' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½' })
   period: string;
 
-  @ApiProperty({ description: 'äæÚ ÒÇÑÔ', enum: ['VAT', 'SALES'] })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½', enum: ['VAT', 'SALES'] })
   type: 'VAT' | 'SALES';
 
-  @ApiProperty({ description: 'ãÍÊæÇí XML ÒÇÑÔ' })
+  @ApiProperty({ description: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ XML ï¿½ï¿½ï¿½ï¿½ï¿½' })
   xmlContent: string;
 }

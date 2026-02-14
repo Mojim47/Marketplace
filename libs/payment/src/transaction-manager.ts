@@ -17,8 +17,8 @@
  * @module @nextgen/payment
  */
 
-import { v4 as uuidv4 } from 'uuid';
 import { PaymentInvariantEnforcer } from '@nextgen/errors';
+import { v4 as uuidv4 } from 'uuid';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Types and Interfaces
@@ -347,7 +347,9 @@ export class TransactionManager {
       SELECT * FROM financial_transactions WHERE id = ${transactionId}::uuid
     `;
 
-    if (transactions.length === 0) return null;
+    if (transactions.length === 0) {
+      return null;
+    }
 
     const tx = transactions[0];
     const entries = await this.getTransactionEntries(transactionId);
@@ -440,7 +442,9 @@ export class TransactionManager {
       SELECT * FROM financial_transactions WHERE idempotency_key = ${key}
     `;
 
-    if (transactions.length === 0) return null;
+    if (transactions.length === 0) {
+      return null;
+    }
 
     const tx = transactions[0];
     const entries = await this.getTransactionEntries(tx.id);
@@ -652,7 +656,9 @@ export function wouldResultInNegativeBalance(
   const newBalances = calculateBalancesAfterTransaction(initialBalances, entries);
 
   for (const [, balance] of newBalances) {
-    if (balance < 0) return true;
+    if (balance < 0) {
+      return true;
+    }
   }
 
   return false;

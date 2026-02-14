@@ -10,10 +10,14 @@ function normalize(cart) {
 // Lemma: Persistent storage respects Iranian data residency
 export async function readCart() {
   const raw = cookies().get(CART_KEY)?.value;
-  if (!raw) return [];
+  if (!raw) {
+    return [];
+  }
   try {
     const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
     return normalize(parsed);
   } catch {
     return [];
@@ -36,8 +40,11 @@ export async function addToCart(productId, qty = 1) {
   const amount = Number.isFinite(qty) ? Math.max(1, Math.floor(qty)) : 1;
   const cart = await readCart();
   const existing = cart.find((item) => item.productId === productId);
-  if (existing) existing.quantity += amount;
-  else cart.push({ productId, quantity: amount });
+  if (existing) {
+    existing.quantity += amount;
+  } else {
+    cart.push({ productId, quantity: amount });
+  }
   await writeCart(cart);
 }
 //# sourceMappingURL=cart.js.map

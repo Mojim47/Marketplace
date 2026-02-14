@@ -5,20 +5,24 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import type {
-  ISearchProvider,
-  SearchSchema,
-  SearchQuery,
-  SearchResult,
-  SearchHit,
-  FilterCondition,
   AggregationQuery,
   AggregationResult,
-  Suggestion,
+  FilterCondition,
+  ISearchProvider,
   IndexStats,
-  SearchHealthCheck,
   MemorySearchConfig,
+  SearchHealthCheck,
+  SearchHit,
+  SearchQuery,
+  SearchResult,
+  SearchSchema,
+  Suggestion,
 } from '../interfaces/search.interface';
-import { SearchProviderType, FilterOperator, AggregationType } from '../interfaces/search.interface';
+import {
+  AggregationType,
+  FilterOperator,
+  SearchProviderType,
+} from '../interfaces/search.interface';
 
 interface IndexData {
   schema: SearchSchema;
@@ -95,7 +99,11 @@ export class MemorySearchAdapter implements ISearchProvider {
   // Document Operations
   // ═══════════════════════════════════════════════════════════════════════
 
-  async index<T extends Record<string, unknown>>(index: string, id: string, document: T): Promise<void> {
+  async index<T extends Record<string, unknown>>(
+    index: string,
+    id: string,
+    document: T
+  ): Promise<void> {
     const data = this.getIndex(index);
     data.documents.set(id, { ...document, _id: id });
     data.updatedAt = new Date();
@@ -119,7 +127,11 @@ export class MemorySearchAdapter implements ISearchProvider {
     }
 
     data.updatedAt = new Date();
-    return { success, failed: documents.length - success, errors: errors.length > 0 ? errors : undefined };
+    return {
+      success,
+      failed: documents.length - success,
+      errors: errors.length > 0 ? errors : undefined,
+    };
   }
 
   async get<T>(index: string, id: string): Promise<T | null> {
@@ -136,7 +148,11 @@ export class MemorySearchAdapter implements ISearchProvider {
     return existed;
   }
 
-  async update<T extends Record<string, unknown>>(index: string, id: string, partial: Partial<T>): Promise<void> {
+  async update<T extends Record<string, unknown>>(
+    index: string,
+    id: string,
+    partial: Partial<T>
+  ): Promise<void> {
     const data = this.getIndex(index);
     const existing = data.documents.get(id);
     if (!existing) {
@@ -248,7 +264,9 @@ export class MemorySearchAdapter implements ISearchProvider {
     });
 
     // Calculate facets
-    let facets: Record<string, { buckets: Array<{ value: string | number; count: number }> }> | undefined;
+    let facets:
+      | Record<string, { buckets: Array<{ value: string | number; count: number }> }>
+      | undefined;
     if (query.facets) {
       facets = {};
       for (const facetField of query.facets) {
@@ -271,7 +289,7 @@ export class MemorySearchAdapter implements ISearchProvider {
     });
   }
 
-  async autocomplete(index: string, field: string, prefix: string, limit: number = 10): Promise<string[]> {
+  async autocomplete(index: string, field: string, prefix: string, limit = 10): Promise<string[]> {
     const data = this.getIndex(index);
     const suggestions = new Set<string>();
     const lowerPrefix = prefix.toLowerCase();
@@ -280,14 +298,21 @@ export class MemorySearchAdapter implements ISearchProvider {
       const value = this.getFieldValue(doc, field);
       if (typeof value === 'string' && value.toLowerCase().startsWith(lowerPrefix)) {
         suggestions.add(value);
-        if (suggestions.size >= limit) break;
+        if (suggestions.size >= limit) {
+          break;
+        }
       }
     }
 
     return Array.from(suggestions);
   }
 
-  async fuzzySearch<T>(index: string, field: string, term: string, fuzziness: number = 2): Promise<SearchResult<T>> {
+  async fuzzySearch<T>(
+    index: string,
+    field: string,
+    term: string,
+    fuzziness = 2
+  ): Promise<SearchResult<T>> {
     return this.search<T>(index, {
       query: term,
       fields: [field],
@@ -333,7 +358,7 @@ export class MemorySearchAdapter implements ISearchProvider {
     return results;
   }
 
-  async suggest(index: string, field: string, text: string, limit: number = 5): Promise<Suggestion[]> {
+  async suggest(index: string, field: string, text: string, limit = 5): Promise<Suggestion[]> {
     const data = this.getIndex(index);
     const suggestions: Suggestion[] = [];
     const lowerText = text.toLowerCase();
@@ -353,9 +378,7 @@ export class MemorySearchAdapter implements ISearchProvider {
       }
     }
 
-    return suggestions
-      .sort((a, b) => b.score - a.score)
-      .slice(0, limit);
+    return suggestions.sort((a, b) => b.score - a.score).slice(0, limit);
   }
 
   // ═══════════════════════════════════════════════════════════════════════
@@ -445,25 +468,47 @@ export class MemorySearchAdapter implements ISearchProvider {
       case FilterOperator.NOT_IN:
         return Array.isArray(filterValue) && !filterValue.includes(value);
       case FilterOperator.CONTAINS:
-        return typeof value === 'string' && value.toLowerCase().includes(String(filterValue).toLowerCase());
+        return (
+          typeof value === 'string' &&
+          value.toLowerCase().includes(String(filterValue).toLowerCase())
+        );
       case FilterOperator.STARTS_WITH:
-        return typeof value === 'string' && value.toLowerCase().startsWith(String(filterValue).toLowerCase());
+        return (
+          typeof value === 'string' &&
+          value.toLowerCase().startsWith(String(filterValue).toLowerCase())
+        );
       case FilterOperator.ENDS_WITH:
-        return typeof value === 'string' && value.toLowerCase().endsWith(String(filterValue).toLowerCase());
+        return (
+          typeof value === 'string' &&
+          value.toLowerCase().endsWith(String(filterValue).toLowerCase())
+        );
       case FilterOperator.EXISTS:
-        return filterValue ? value !== undefined && value !== null : value === undefined || value === null;
-      case FilterOperator.RANGE:
-        if (typeof value !== 'number' || !filterValue || typeof filterValue !== 'object') return false;
+        return filterValue
+          ? value !== undefined && value !== null
+          : value === undefined || value === null;
+      case FilterOperator.RANGE: {
+        if (typeof value !== 'number' || !filterValue || typeof filterValue !== 'object') {
+          return false;
+        }
         const range = filterValue as { from?: number; to?: number };
-        if (range.from !== undefined && value < range.from) return false;
-        if (range.to !== undefined && value > range.to) return false;
+        if (range.from !== undefined && value < range.from) {
+          return false;
+        }
+        if (range.to !== undefined && value > range.to) {
+          return false;
+        }
         return true;
+      }
       default:
         return true;
     }
   }
 
-  private calculateTextScore(text: string, query: string, fuzzy?: boolean | { maxEdits?: number }): number {
+  private calculateTextScore(
+    text: string,
+    query: string,
+    fuzzy?: boolean | { maxEdits?: number }
+  ): number {
     const lowerText = text.toLowerCase();
     const lowerQuery = query.toLowerCase();
     const queryTerms = lowerQuery.split(/\s+/);
@@ -484,8 +529,12 @@ export class MemorySearchAdapter implements ISearchProvider {
   }
 
   private levenshteinDistance(a: string, b: string): number {
-    if (a.length === 0) return b.length;
-    if (b.length === 0) return a.length;
+    if (a.length === 0) {
+      return b.length;
+    }
+    if (b.length === 0) {
+      return a.length;
+    }
 
     const matrix: number[][] = [];
     for (let i = 0; i <= b.length; i++) {
@@ -512,12 +561,24 @@ export class MemorySearchAdapter implements ISearchProvider {
   }
 
   private compareValues(a: unknown, b: unknown): number {
-    if (a === b) return 0;
-    if (a === undefined || a === null) return 1;
-    if (b === undefined || b === null) return -1;
-    if (typeof a === 'number' && typeof b === 'number') return a - b;
-    if (typeof a === 'string' && typeof b === 'string') return a.localeCompare(b);
-    if (a instanceof Date && b instanceof Date) return a.getTime() - b.getTime();
+    if (a === b) {
+      return 0;
+    }
+    if (a === undefined || a === null) {
+      return 1;
+    }
+    if (b === undefined || b === null) {
+      return -1;
+    }
+    if (typeof a === 'number' && typeof b === 'number') {
+      return a - b;
+    }
+    if (typeof a === 'string' && typeof b === 'string') {
+      return a.localeCompare(b);
+    }
+    if (a instanceof Date && b instanceof Date) {
+      return a.getTime() - b.getTime();
+    }
     return String(a).localeCompare(String(b));
   }
 
@@ -567,10 +628,12 @@ export class MemorySearchAdapter implements ISearchProvider {
     const counts = new Map<string | number, number>();
 
     for (const doc of documents.values()) {
-      if (filters && !this.matchesFilters(doc, filters)) continue;
+      if (filters && !this.matchesFilters(doc, filters)) {
+        continue;
+      }
       const value = this.getFieldValue(doc, field);
       if (value !== undefined && value !== null) {
-        const key = typeof value === 'object' ? JSON.stringify(value) : value as string | number;
+        const key = typeof value === 'object' ? JSON.stringify(value) : (value as string | number);
         counts.set(key, (counts.get(key) || 0) + 1);
       }
     }
@@ -582,20 +645,33 @@ export class MemorySearchAdapter implements ISearchProvider {
     return { buckets };
   }
 
-  private computeAggregation(documents: Map<string, Record<string, unknown>>, agg: AggregationQuery): AggregationResult {
+  private computeAggregation(
+    documents: Map<string, Record<string, unknown>>,
+    agg: AggregationQuery
+  ): AggregationResult {
     const values: number[] = [];
     for (const doc of documents.values()) {
       const value = this.getFieldValue(doc, agg.field);
-      if (typeof value === 'number') values.push(value);
+      if (typeof value === 'number') {
+        values.push(value);
+      }
     }
 
     const name = agg.name || `${agg.type}_${agg.field}`;
 
     switch (agg.type) {
       case AggregationType.TERMS:
-        return { name, buckets: this.calculateFacet(documents, agg.field).buckets.slice(0, agg.size || 10).map(b => ({ key: b.value, count: b.count })) };
+        return {
+          name,
+          buckets: this.calculateFacet(documents, agg.field)
+            .buckets.slice(0, agg.size || 10)
+            .map((b) => ({ key: b.value, count: b.count })),
+        };
       case AggregationType.AVG:
-        return { name, value: values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0 };
+        return {
+          name,
+          value: values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0,
+        };
       case AggregationType.SUM:
         return { name, value: values.reduce((a, b) => a + b, 0) };
       case AggregationType.MIN:

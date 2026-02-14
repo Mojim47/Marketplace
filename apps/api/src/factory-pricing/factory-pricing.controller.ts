@@ -9,22 +9,22 @@
  */
 
 import {
-  Controller,
-  Post,
-  Get,
-  Put,
   Body,
-  Param,
-  Request,
+  Controller,
   ForbiddenException,
+  Get,
+  Param,
+  Post,
+  Put,
+  Request,
 } from '@nestjs/common';
-import { FactoryPricingService } from './factory-pricing.service';
-import {
-  UpdateVolatilityIndexDTO,
+import { Decimal } from '@prisma/client/runtime/library';
+import type { FactoryPricingService } from './factory-pricing.service';
+import type {
   SetProductPricingDTO,
   SetTierDiscountRateDTO,
+  UpdateVolatilityIndexDTO,
 } from './factory-pricing.types';
-import { Decimal } from '@prisma/client/runtime/library';
 
 @Controller('factory-pricing')
 export class FactoryPricingController {
@@ -39,10 +39,7 @@ export class FactoryPricingController {
    * ???????????????????????????????????????????????????????????????????????????
    */
   @Post('volatility-index')
-  async updateVolatilityIndex(
-    @Request() req: any,
-    @Body() body: UpdateVolatilityIndexDTO
-  ) {
+  async updateVolatilityIndex(@Request() req: any, @Body() body: UpdateVolatilityIndexDTO) {
     // Extract user from request (set by auth middleware)
     const actorId = req.user?.sub || req.user?.id || 'SYSTEM';
     const actorRole = req.user?.role || 'UNKNOWN';
@@ -54,11 +51,7 @@ export class FactoryPricingController {
       );
     }
 
-    const result = await this.pricingService.updateVolatilityIndex(
-      body,
-      actorId,
-      actorRole
-    );
+    const result = await this.pricingService.updateVolatilityIndex(body, actorId, actorRole);
 
     return result;
   }
@@ -83,9 +76,7 @@ export class FactoryPricingController {
 
     // RBAC Middleware Check (factory role only)
     if (actorRole !== 'FACTORY' && actorRole !== 'FACTORY_ADMIN' && actorRole !== 'SYSTEM_ADMIN') {
-      throw new ForbiddenException(
-        'RBAC Violation: Only FACTORY role can update product pricing'
-      );
+      throw new ForbiddenException('RBAC Violation: Only FACTORY role can update product pricing');
     }
 
     // Convert string prices to Decimal
@@ -146,10 +137,7 @@ export class FactoryPricingController {
    * ???????????????????????????????????????????????????????????????????????????
    */
   @Get('products/:factoryId')
-  async getFactoryProducts(
-    @Request() req: any,
-    @Param('factoryId') factoryId: string
-  ) {
+  async getFactoryProducts(@Request() req: any, @Param('factoryId') factoryId: string) {
     const actorRole = req.user?.role || 'UNKNOWN';
 
     // RBAC: Only factory or admin can view products
@@ -171,10 +159,7 @@ export class FactoryPricingController {
    * ???????????????????????????????????????????????????????????????????????????
    */
   @Get('volatility-indexes/:factoryId')
-  async getVolatilityIndexes(
-    @Request() req: any,
-    @Param('factoryId') factoryId: string
-  ) {
+  async getVolatilityIndexes(@Request() req: any, @Param('factoryId') factoryId: string) {
     const actorRole = req.user?.role || 'UNKNOWN';
 
     // RBAC: Only factory or admin can view indexes
@@ -196,10 +181,7 @@ export class FactoryPricingController {
    * ???????????????????????????????????????????????????????????????????????????
    */
   @Get('tiers/:factoryId')
-  async getPriceTiers(
-    @Request() req: any,
-    @Param('factoryId') factoryId: string
-  ) {
+  async getPriceTiers(@Request() req: any, @Param('factoryId') factoryId: string) {
     const actorRole = req.user?.role || 'UNKNOWN';
 
     // RBAC: Only factory or admin can view tiers

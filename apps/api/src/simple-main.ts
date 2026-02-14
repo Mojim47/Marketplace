@@ -3,9 +3,9 @@
  * Minimal server for testing Postman collection
  */
 
-import { NestFactory } from '@nestjs/core';
-import { Module, Controller, Get, Post, Body, Injectable, Logger } from '@nestjs/common';
+import { Body, Controller, Get, Injectable, Logger, Module, Post } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { NestFactory } from '@nestjs/core';
 
 // Simple Health Controller
 @Controller()
@@ -45,7 +45,7 @@ class AuthController {
     this.logger.log(`Register attempt: ${body.email}`);
     return {
       success: true,
-      message: '˜ÇÑÈÑ ÈÇ ãæÝÞíÊ ËÈÊ ÔÏ',
+      message: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½',
       data: {
         id: 'user_' + Date.now(),
         email: body.email,
@@ -59,7 +59,7 @@ class AuthController {
     this.logger.log(`Login attempt: ${body.email}`);
     return {
       success: true,
-      message: 'æÑæÏ ãæÝÞ',
+      message: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½',
       data: {
         access_token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test_token',
         refresh_token: 'refresh_' + Date.now(),
@@ -83,7 +83,7 @@ class AuthController {
   logout() {
     return {
       success: true,
-      message: 'ÎÑæÌ ãæÝÞ',
+      message: 'ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½',
     };
   }
 }
@@ -98,7 +98,7 @@ class ProductsController {
       data: [
         {
           id: 'prod_1',
-          name: 'ãÍÕæá ÊÓÊ',
+          name: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½',
           price: 99.99,
           stock: 100,
         },
@@ -113,7 +113,7 @@ class ProductsController {
   create(@Body() body: any) {
     return {
       success: true,
-      message: 'ãÍÕæá ÇíÌÇÏ ÔÏ',
+      message: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½',
       data: {
         id: 'prod_' + Date.now(),
         ...body,
@@ -129,7 +129,7 @@ class OrdersController {
   create(@Body() body: any) {
     return {
       success: true,
-      message: 'ÓÝÇÑÔ ËÈÊ ÔÏ',
+      message: 'ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½',
       data: {
         id: 'order_' + Date.now(),
         status: 'PENDING',
@@ -146,7 +146,7 @@ class InvoicesController {
   create(@Body() body: any) {
     return {
       success: true,
-      message: 'ÝÇ˜ÊæÑ ÇíÌÇÏ ÔÏ',
+      message: 'ï¿½Ç˜ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½',
       data: {
         id: 'inv_' + Date.now(),
         order_id: body.order_id,
@@ -163,7 +163,7 @@ class PaymentsController {
   process(@Body() body: any) {
     return {
       success: true,
-      message: 'ÑÏÇÎÊ ãæÝÞ',
+      message: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½',
       data: {
         id: 'pay_' + Date.now(),
         invoice_id: body.invoice_id,
@@ -178,10 +178,11 @@ class PaymentsController {
 class TaxController {
   @Post('calculate')
   calculate(@Body() body: any) {
-    const subtotal = body.items?.reduce((sum: number, item: any) => sum + (item.amount || 0), 0) || 0;
+    const subtotal =
+      body.items?.reduce((sum: number, item: any) => sum + (item.amount || 0), 0) || 0;
     const taxRate = 0.09; // 9% VAT
     const tax = subtotal * taxRate;
-    
+
     return {
       success: true,
       data: {
@@ -219,7 +220,7 @@ class AppModule {}
 // Bootstrap
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
-  
+
   const app = await NestFactory.create(AppModule, {
     logger: ['error', 'warn', 'log'],
   });
@@ -231,7 +232,7 @@ async function bootstrap() {
 
   const port = process.env.API_PORT || 3000;
   await app.listen(port, '0.0.0.0');
-  
+
   logger.log(`? API Server running on http://localhost:${port}`);
   logger.log(`?? Health: http://localhost:${port}/api/v3/health`);
 }

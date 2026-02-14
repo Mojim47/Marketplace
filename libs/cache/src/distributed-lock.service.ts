@@ -1,6 +1,12 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import Redlock, { Lock, ResourceLockedError, ExecutionError, Settings, RedlockAbortSignal } from 'redlock';
 import type Redis from 'ioredis';
+import Redlock, {
+  type Lock,
+  ResourceLockedError,
+  ExecutionError,
+  type Settings,
+  type RedlockAbortSignal,
+} from 'redlock';
 
 @Injectable()
 export class DistributedLockService {

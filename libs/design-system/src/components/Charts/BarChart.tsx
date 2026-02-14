@@ -4,7 +4,8 @@
 
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import type React from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '../../utils/cn';
 
 export interface BarDataPoint {
@@ -28,7 +29,6 @@ export interface BarChartProps {
   rtl?: boolean;
   className?: string;
 }
-
 
 export const BarChart: React.FC<BarChartProps> = ({
   data,
@@ -56,10 +56,12 @@ export const BarChart: React.FC<BarChartProps> = ({
   const innerHeight = chartHeight - padding.top - padding.bottom;
 
   const { maxValue, bars } = useMemo(() => {
-    if (data.length === 0) return { maxValue: 0, bars: [] };
-    const max = Math.max(...data.map(d => d.value)) * 1.1;
-    const barWidth = innerWidth / data.length * 0.7;
-    const barGap = innerWidth / data.length * 0.3;
+    if (data.length === 0) {
+      return { maxValue: 0, bars: [] };
+    }
+    const max = Math.max(...data.map((d) => d.value)) * 1.1;
+    const barWidth = (innerWidth / data.length) * 0.7;
+    const barGap = (innerWidth / data.length) * 0.3;
 
     const barsData = data.map((d, i) => {
       const x = padding.left + i * (barWidth + barGap) + barGap / 2;
@@ -81,7 +83,9 @@ export const BarChart: React.FC<BarChartProps> = ({
       },
       { threshold: 0.1 }
     );
-    if (containerRef.current) observer.observe(containerRef.current);
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
     return () => observer.disconnect();
   }, []);
 
@@ -95,7 +99,9 @@ export const BarChart: React.FC<BarChartProps> = ({
     const animateFn = (time: number) => {
       const progress = Math.min((time - startTime) / animationDuration, 1);
       setAnimationProgress(progress);
-      if (progress < 1) frame = requestAnimationFrame(animateFn);
+      if (progress < 1) {
+        frame = requestAnimationFrame(animateFn);
+      }
     };
     frame = requestAnimationFrame(animateFn);
     return () => cancelAnimationFrame(frame);
@@ -115,34 +121,69 @@ export const BarChart: React.FC<BarChartProps> = ({
 
   return (
     <div ref={containerRef} className={cn('relative', className)} dir={rtl ? 'rtl' : 'ltr'}>
-      <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="w-full h-auto" style={{ maxHeight: height }}>
-        {showGrid && yTicks.map((tick, i) => (
-          <line key={i} x1={padding.left} y1={padding.top + innerHeight - (tick / maxValue) * innerHeight}
-            x2={chartWidth - padding.right} y2={padding.top + innerHeight - (tick / maxValue) * innerHeight}
-            stroke={gridColor} strokeDasharray="4 4" opacity={0.5} />
-        ))}
+      <svg
+        viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+        className="w-full h-auto"
+        style={{ maxHeight: height }}
+      >
+        {showGrid &&
+          yTicks.map((tick, i) => (
+            <line
+              key={i}
+              x1={padding.left}
+              y1={padding.top + innerHeight - (tick / maxValue) * innerHeight}
+              x2={chartWidth - padding.right}
+              y2={padding.top + innerHeight - (tick / maxValue) * innerHeight}
+              stroke={gridColor}
+              strokeDasharray="4 4"
+              opacity={0.5}
+            />
+          ))}
 
         {yTicks.map((tick, i) => (
-          <text key={i} x={padding.left - 10} y={padding.top + innerHeight - (tick / maxValue) * innerHeight}
-            textAnchor="end" dominantBaseline="middle" className="text-xs fill-[var(--color-text-tertiary)]">
+          <text
+            key={i}
+            x={padding.left - 10}
+            y={padding.top + innerHeight - (tick / maxValue) * innerHeight}
+            textAnchor="end"
+            dominantBaseline="middle"
+            className="text-xs fill-[var(--color-text-tertiary)]"
+          >
             {formatValue(tick)}
           </text>
         ))}
 
         {bars.map((bar, i) => (
-          <g key={i} onMouseEnter={() => setHoveredIndex(i)} onMouseLeave={() => setHoveredIndex(null)}>
-            <rect x={bar.x} y={bar.y + bar.height * (1 - animationProgress)}
-              width={bar.width} height={bar.height * animationProgress}
-              fill={bar.color || barColor} rx={4}
-              className={cn('transition-all duration-200', hoveredIndex === i && 'brightness-110')} />
+          <g
+            key={i}
+            onMouseEnter={() => setHoveredIndex(i)}
+            onMouseLeave={() => setHoveredIndex(null)}
+          >
+            <rect
+              x={bar.x}
+              y={bar.y + bar.height * (1 - animationProgress)}
+              width={bar.width}
+              height={bar.height * animationProgress}
+              fill={bar.color || barColor}
+              rx={4}
+              className={cn('transition-all duration-200', hoveredIndex === i && 'brightness-110')}
+            />
             {showValues && animationProgress === 1 && (
-              <text x={bar.x + bar.width / 2} y={bar.y - 8} textAnchor="middle"
-                className="text-xs font-medium fill-[var(--color-text-primary)]">
+              <text
+                x={bar.x + bar.width / 2}
+                y={bar.y - 8}
+                textAnchor="middle"
+                className="text-xs font-medium fill-[var(--color-text-primary)]"
+              >
                 {formatValue(bar.value)}
               </text>
             )}
-            <text x={bar.x + bar.width / 2} y={chartHeight - 20} textAnchor="middle"
-              className="text-xs fill-[var(--color-text-tertiary)]">
+            <text
+              x={bar.x + bar.width / 2}
+              y={chartHeight - 20}
+              textAnchor="middle"
+              className="text-xs fill-[var(--color-text-tertiary)]"
+            >
               {rtl && bar.labelFa ? bar.labelFa : bar.label}
             </text>
           </g>

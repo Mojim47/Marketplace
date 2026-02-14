@@ -4,10 +4,10 @@
 // Simple Enterprise-SERTA Analyzer - Standalone Executable Version
 // ═══════════════════════════════════════════════════════════════════════════
 
-import * as fs from 'fs';
-import * as path from 'path';
-import { glob } from 'glob';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import chalk from 'chalk';
+import { glob } from 'glob';
 
 interface SecurityFinding {
   file: string;
@@ -35,12 +35,8 @@ class SimpleSecurityAnalyzer {
   private findings: SecurityFinding[] = [];
 
   async analyzeProject(projectPath: string): Promise<AnalysisResult> {
-    console.log(chalk.blue('🔍 Starting NextGen Marketplace Security Analysis...'));
-    console.log(chalk.gray(`Project: ${projectPath}`));
-
     // Find all TypeScript/JavaScript files
     const files = await this.findFiles(projectPath);
-    console.log(chalk.green(`📁 Found ${files.length} files to analyze`));
 
     // Analyze each file
     for (const file of files) {
@@ -56,11 +52,11 @@ class SimpleSecurityAnalyzer {
       findings: this.findings,
       riskScore,
       summary: {
-        critical: this.findings.filter(f => f.severity === 'critical').length,
-        high: this.findings.filter(f => f.severity === 'high').length,
-        medium: this.findings.filter(f => f.severity === 'medium').length,
-        low: this.findings.filter(f => f.severity === 'low').length,
-      }
+        critical: this.findings.filter((f) => f.severity === 'critical').length,
+        high: this.findings.filter((f) => f.severity === 'high').length,
+        medium: this.findings.filter((f) => f.severity === 'medium').length,
+        low: this.findings.filter((f) => f.severity === 'low').length,
+      },
     };
 
     this.printResults(result);
@@ -74,7 +70,7 @@ class SimpleSecurityAnalyzer {
       '**/*.yaml',
       '**/*.yml',
       '**/Dockerfile*',
-      '**/.env*'
+      '**/.env*',
     ];
 
     const excludePatterns = [
@@ -84,7 +80,7 @@ class SimpleSecurityAnalyzer {
       '**/.git/**',
       '**/coverage/**',
       '**/.next/**',
-      '**/.turbo/**'
+      '**/.turbo/**',
     ];
 
     const allFiles: string[] = [];
@@ -93,7 +89,7 @@ class SimpleSecurityAnalyzer {
       const files = await glob(pattern, {
         cwd: projectPath,
         ignore: excludePatterns,
-        absolute: true
+        absolute: true,
       });
       allFiles.push(...files);
     }
@@ -109,10 +105,9 @@ class SimpleSecurityAnalyzer {
 
       // Security pattern detection
       this.detectSecurityPatterns(relativePath, lines);
-      
+
       // NextGen Marketplace specific patterns
       this.detectNextGenPatterns(relativePath, lines);
-      
     } catch (error: any) {
       console.warn(chalk.yellow(`⚠️ Could not analyze ${filePath}: ${error.message}`));
     }
@@ -131,7 +126,7 @@ class SimpleSecurityAnalyzer {
           type: 'hardcoded_secret',
           severity: 'critical',
           description: 'Hardcoded secret or credential detected',
-          recommendation: 'Move secrets to environment variables or secure vault'
+          recommendation: 'Move secrets to environment variables or secure vault',
         });
       }
 
@@ -143,7 +138,7 @@ class SimpleSecurityAnalyzer {
           type: 'sql_injection',
           severity: 'high',
           description: 'Potential SQL injection vulnerability',
-          recommendation: 'Use parameterized queries or ORM methods'
+          recommendation: 'Use parameterized queries or ORM methods',
         });
       }
 
@@ -155,7 +150,7 @@ class SimpleSecurityAnalyzer {
           type: 'missing_auth',
           severity: 'high',
           description: 'Endpoint missing authentication guard',
-          recommendation: 'Add @UseGuards(JwtAuthGuard) decorator'
+          recommendation: 'Add @UseGuards(JwtAuthGuard) decorator',
         });
       }
 
@@ -167,7 +162,7 @@ class SimpleSecurityAnalyzer {
           type: 'tenant_isolation_bypass',
           severity: 'critical',
           description: 'Database query missing tenant isolation',
-          recommendation: 'Add tenant_id filter to all queries'
+          recommendation: 'Add tenant_id filter to all queries',
         });
       }
 
@@ -179,7 +174,7 @@ class SimpleSecurityAnalyzer {
           type: 'weak_jwt',
           severity: 'high',
           description: 'Weak JWT implementation detected',
-          recommendation: 'Use strong JWT secrets and proper expiration'
+          recommendation: 'Use strong JWT secrets and proper expiration',
         });
       }
     });
@@ -198,7 +193,7 @@ class SimpleSecurityAnalyzer {
           type: 'payment_sandbox',
           severity: 'medium',
           description: 'ZarinPal sandbox mode detected',
-          recommendation: 'Ensure production uses live ZarinPal gateway'
+          recommendation: 'Ensure production uses live ZarinPal gateway',
         });
       }
 
@@ -210,7 +205,7 @@ class SimpleSecurityAnalyzer {
           type: 'compliance_incomplete',
           severity: 'high',
           description: 'Incomplete Moodian tax compliance implementation',
-          recommendation: 'Complete Moodian integration for Iranian tax compliance'
+          recommendation: 'Complete Moodian integration for Iranian tax compliance',
         });
       }
 
@@ -222,12 +217,15 @@ class SimpleSecurityAnalyzer {
           type: 'price_manipulation',
           severity: 'critical',
           description: 'Price taken from client input without validation',
-          recommendation: 'Validate prices server-side against product catalog'
+          recommendation: 'Validate prices server-side against product catalog',
         });
       }
 
       // B2B tier validation
-      if (trimmedLine.includes('tier') && (trimmedLine.includes('Gold') || trimmedLine.includes('Silver'))) {
+      if (
+        trimmedLine.includes('tier') &&
+        (trimmedLine.includes('Gold') || trimmedLine.includes('Silver'))
+      ) {
         if (!trimmedLine.includes('validate') && !trimmedLine.includes('check')) {
           this.addFinding({
             file: filePath,
@@ -235,7 +233,7 @@ class SimpleSecurityAnalyzer {
             type: 'b2b_tier_bypass',
             severity: 'high',
             description: 'B2B tier assignment without proper validation',
-            recommendation: 'Implement proper tier validation and authorization'
+            recommendation: 'Implement proper tier validation and authorization',
           });
         }
       }
@@ -253,11 +251,16 @@ class SimpleSecurityAnalyzer {
       /sk_[a-zA-Z0-9]{20,}/,
     ];
 
-    return patterns.some(pattern => pattern.test(line));
+    return patterns.some((pattern) => pattern.test(line));
   }
 
   private isSQLInjectionRisk(line: string): boolean {
-    if (!line.includes('SELECT') && !line.includes('INSERT') && !line.includes('UPDATE') && !line.includes('DELETE')) {
+    if (
+      !line.includes('SELECT') &&
+      !line.includes('INSERT') &&
+      !line.includes('UPDATE') &&
+      !line.includes('DELETE')
+    ) {
       return false;
     }
 
@@ -266,15 +269,15 @@ class SimpleSecurityAnalyzer {
 
   private isMissingAuthGuard(line: string, lines: string[], index: number): boolean {
     const httpMethods = ['@Get', '@Post', '@Put', '@Delete', '@Patch'];
-    
-    if (!httpMethods.some(method => line.includes(method))) {
+
+    if (!httpMethods.some((method) => line.includes(method))) {
       return false;
     }
 
     // Check previous lines for guards
     const contextLines = lines.slice(Math.max(0, index - 5), index);
-    const hasGuard = contextLines.some(l => 
-      l.includes('@UseGuards') || l.includes('@Auth') || l.includes('@Public')
+    const hasGuard = contextLines.some(
+      (l) => l.includes('@UseGuards') || l.includes('@Auth') || l.includes('@Public')
     );
 
     return !hasGuard;
@@ -282,8 +285,8 @@ class SimpleSecurityAnalyzer {
 
   private isTenantIsolationBypass(line: string): boolean {
     const queryMethods = ['findMany', 'findFirst', 'findUnique', 'update', 'delete'];
-    
-    if (!queryMethods.some(method => line.includes(method))) {
+
+    if (!queryMethods.some((method) => line.includes(method))) {
       return false;
     }
 
@@ -295,7 +298,12 @@ class SimpleSecurityAnalyzer {
       return false;
     }
 
-    return line.includes('123') || line.includes('test') || line.includes('dev') || line.includes('secret');
+    return (
+      line.includes('123') ||
+      line.includes('test') ||
+      line.includes('dev') ||
+      line.includes('secret')
+    );
   }
 
   private isPriceManipulationRisk(line: string): boolean {
@@ -303,8 +311,11 @@ class SimpleSecurityAnalyzer {
       return false;
     }
 
-    return (line.includes('req.body') || line.includes('dto.')) && 
-           !line.includes('validate') && !line.includes('product.price');
+    return (
+      (line.includes('req.body') || line.includes('dto.')) &&
+      !line.includes('validate') &&
+      !line.includes('product.price')
+    );
   }
 
   private addFinding(finding: SecurityFinding): void {
@@ -316,7 +327,7 @@ class SimpleSecurityAnalyzer {
       critical: 10,
       high: 7,
       medium: 4,
-      low: 1
+      low: 1,
     };
 
     const totalScore = this.findings.reduce((sum, finding) => {
@@ -327,22 +338,7 @@ class SimpleSecurityAnalyzer {
   }
 
   private printResults(result: AnalysisResult): void {
-    console.log(chalk.blue('\n📊 Analysis Results'));
-    console.log(chalk.blue('═'.repeat(50)));
-    
-    console.log(`${chalk.bold('Project:')} ${result.projectPath}`);
-    console.log(`${chalk.bold('Files Analyzed:')} ${result.totalFiles}`);
-    console.log(`${chalk.bold('Risk Score:')} ${this.getRiskColor(result.riskScore)}${result.riskScore.toFixed(1)}/10${chalk.reset()}`);
-    
-    console.log(chalk.blue('\n🚨 Security Findings'));
-    console.log(`${chalk.red('Critical:')} ${result.summary.critical}`);
-    console.log(`${chalk.yellow('High:')} ${result.summary.high}`);
-    console.log(`${chalk.blue('Medium:')} ${result.summary.medium}`);
-    console.log(`${chalk.gray('Low:')} ${result.summary.low}`);
-
     if (result.findings.length > 0) {
-      console.log(chalk.blue('\n🔍 Top Findings:'));
-      
       const topFindings = result.findings
         .sort((a, b) => {
           const severityOrder = { critical: 4, high: 3, medium: 2, low: 1 };
@@ -350,38 +346,42 @@ class SimpleSecurityAnalyzer {
         })
         .slice(0, 10);
 
-      topFindings.forEach((finding, i) => {
-        const severityColor = this.getSeverityColor(finding.severity);
-        console.log(`${i + 1}. ${severityColor(finding.type.toUpperCase())} in ${finding.file}:${finding.line}`);
-        console.log(`   ${chalk.gray(finding.description)}`);
+      topFindings.forEach((finding, _i) => {
+        const _severityColor = this.getSeverityColor(finding.severity);
       });
     }
 
-    console.log(chalk.blue('\n' + '═'.repeat(50)));
-    
     if (result.summary.critical > 0) {
-      console.log(chalk.red('⚠️ CRITICAL ISSUES FOUND - Address immediately!'));
     } else if (result.summary.high > 0) {
-      console.log(chalk.yellow('⚠️ HIGH RISK ISSUES FOUND - Review before production'));
     } else {
-      console.log(chalk.green('✅ No critical security issues found'));
     }
   }
 
   private getRiskColor(score: number): any {
-    if (score >= 8) return chalk.red.bold;
-    if (score >= 6) return chalk.yellow.bold;
-    if (score >= 4) return chalk.blue.bold;
+    if (score >= 8) {
+      return chalk.red.bold;
+    }
+    if (score >= 6) {
+      return chalk.yellow.bold;
+    }
+    if (score >= 4) {
+      return chalk.blue.bold;
+    }
     return chalk.green.bold;
   }
 
   private getSeverityColor(severity: string): any {
     switch (severity) {
-      case 'critical': return chalk.red.bold;
-      case 'high': return chalk.yellow.bold;
-      case 'medium': return chalk.blue.bold;
-      case 'low': return chalk.gray.bold;
-      default: return chalk.white;
+      case 'critical':
+        return chalk.red.bold;
+      case 'high':
+        return chalk.yellow.bold;
+      case 'medium':
+        return chalk.blue.bold;
+      case 'low':
+        return chalk.gray.bold;
+      default:
+        return chalk.white;
     }
   }
 }
@@ -391,31 +391,25 @@ async function main() {
   const args = process.argv.slice(2);
   const projectPath = args[0] || '../';
 
-  console.log(chalk.cyan('🧠 Enterprise-SERTA Simple Security Analyzer'));
-  console.log(chalk.cyan('═'.repeat(60)));
-
   try {
     const analyzer = new SimpleSecurityAnalyzer();
     const result = await analyzer.analyzeProject(path.resolve(projectPath));
-    
+
     // Save results
     const outputPath = path.join(process.cwd(), 'serta-results');
     if (!fs.existsSync(outputPath)) {
       fs.mkdirSync(outputPath, { recursive: true });
     }
-    
+
     const resultFile = path.join(outputPath, `analysis-${Date.now()}.json`);
     fs.writeFileSync(resultFile, JSON.stringify(result, null, 2));
-    
-    console.log(chalk.green(`\n📄 Results saved to: ${resultFile}`));
-    
+
     // Exit with appropriate code
     if (result.summary.critical > 0) {
       process.exit(1);
     } else {
       process.exit(0);
     }
-    
   } catch (error) {
     console.error(chalk.red('❌ Analysis failed:'), error);
     process.exit(1);

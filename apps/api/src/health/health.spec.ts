@@ -1,23 +1,18 @@
-﻿import { describe, it, expect, vi, beforeEach } from 'vitest';
+﻿import type { Response } from 'express';
 import * as fc from 'fast-check';
-import { Response } from 'express';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  DatabaseHealthChecker,
+  type DependencyHealth,
   HealthController,
   HealthStatus,
-  DependencyHealth,
-  SystemMetrics,
-  DatabaseHealthChecker,
   RedisHealthChecker,
   StorageHealthChecker,
+  type SystemMetrics,
   __testing,
 } from './health.controller';
 
-const {
-  getSystemMetrics,
-  determineOverallStatus,
-  checkWithTimeout,
-  DEFAULT_CONFIG,
-} = __testing;
+const { getSystemMetrics, determineOverallStatus, checkWithTimeout, DEFAULT_CONFIG } = __testing;
 
 // Mock PrismaService
 const mockPrismaService = {
@@ -35,7 +30,7 @@ describe('Health Check', () => {
     const healthStatusArb = fc.constantFrom(
       HealthStatus.HEALTHY,
       HealthStatus.DEGRADED,
-      HealthStatus.UNHEALTHY,
+      HealthStatus.UNHEALTHY
     );
 
     // Arbitrary for dependency health
@@ -68,7 +63,7 @@ describe('Health Check', () => {
           systemMetricsArb,
           (dependencies, metrics) => {
             // Ensure at least one unhealthy dependency
-            const unhealthyDeps = dependencies.map((d, i) => 
+            const unhealthyDeps = dependencies.map((d, i) =>
               i === 0 ? { ...d, status: HealthStatus.UNHEALTHY } : d
             );
 
@@ -113,7 +108,7 @@ describe('Health Check', () => {
           systemMetricsArb,
           (dependencies, metrics) => {
             // Make all dependencies healthy
-            const healthyDeps = dependencies.map(d => ({
+            const healthyDeps = dependencies.map((d) => ({
               ...d,
               status: HealthStatus.HEALTHY,
             }));
@@ -139,7 +134,7 @@ describe('Health Check', () => {
           fc.integer({ min: 91, max: 100 }),
           (dependencies, memoryPercent) => {
             // Make all dependencies healthy
-            const healthyDeps = dependencies.map(d => ({
+            const healthyDeps = dependencies.map((d) => ({
               ...d,
               status: HealthStatus.HEALTHY,
             }));
@@ -185,39 +180,33 @@ describe('Health Check', () => {
 
     it('should include response time when available', () => {
       fc.assert(
-        fc.property(
-          fc.integer({ min: 1, max: 5000 }),
-          (responseTime) => {
-            const dep: DependencyHealth = {
-              name: 'database',
-              status: HealthStatus.HEALTHY,
-              responseTimeMs: responseTime,
-              lastChecked: new Date().toISOString(),
-            };
+        fc.property(fc.integer({ min: 1, max: 5000 }), (responseTime) => {
+          const dep: DependencyHealth = {
+            name: 'database',
+            status: HealthStatus.HEALTHY,
+            responseTimeMs: responseTime,
+            lastChecked: new Date().toISOString(),
+          };
 
-            expect(dep.responseTimeMs).toBe(responseTime);
-            expect(dep.responseTimeMs).toBeGreaterThan(0);
-          }
-        ),
+          expect(dep.responseTimeMs).toBe(responseTime);
+          expect(dep.responseTimeMs).toBeGreaterThan(0);
+        }),
         { numRuns: 30 }
       );
     });
 
     it('should include error message for unhealthy dependencies', () => {
       fc.assert(
-        fc.property(
-          fc.string({ minLength: 1, maxLength: 200 }),
-          (errorMessage) => {
-            const dep: DependencyHealth = {
-              name: 'database',
-              status: HealthStatus.UNHEALTHY,
-              message: errorMessage,
-              lastChecked: new Date().toISOString(),
-            };
+        fc.property(fc.string({ minLength: 1, maxLength: 200 }), (errorMessage) => {
+          const dep: DependencyHealth = {
+            name: 'database',
+            status: HealthStatus.UNHEALTHY,
+            message: errorMessage,
+            lastChecked: new Date().toISOString(),
+          };
 
-            expect(dep.message).toBe(errorMessage);
-          }
-        ),
+          expect(dep.message).toBe(errorMessage);
+        }),
         { numRuns: 30 }
       );
     });
@@ -263,7 +252,7 @@ describe('Health Check', () => {
 
     it('should return healthy status for successful database check', async () => {
       mockPrismaService.$queryRaw.mockResolvedValueOnce([{ '?column?': 1 }]);
-      
+
       const checker = new DatabaseHealthChecker(mockPrismaService as any);
       const result = await checker.check();
 
@@ -276,7 +265,7 @@ describe('Health Check', () => {
 
     it('should return unhealthy status when database fails', async () => {
       mockPrismaService.$queryRaw.mockRejectedValueOnce(new Error('Connection refused'));
-      
+
       const checker = new DatabaseHealthChecker(mockPrismaService as any);
       const result = await checker.check();
 
@@ -289,7 +278,7 @@ describe('Health Check', () => {
 
     it('should return healthy status for successful redis check', async () => {
       mockRedisClient.ping.mockResolvedValueOnce('PONG');
-      
+
       const checker = new RedisHealthChecker(mockRedisClient as any);
       const result = await checker.check();
 
@@ -302,7 +291,7 @@ describe('Health Check', () => {
 
     it('should return unhealthy status when redis fails', async () => {
       mockRedisClient.ping.mockRejectedValueOnce(new Error('ECONNREFUSED'));
-      
+
       const checker = new RedisHealthChecker(mockRedisClient as any);
       const result = await checker.check();
 
@@ -316,10 +305,10 @@ describe('Health Check', () => {
     it('should return unhealthy status when storage is not configured', async () => {
       // StorageHealthChecker checks env vars in constructor
       const originalEnv = { ...process.env };
-      delete process.env.MINIO_ENDPOINT;
-      delete process.env.MINIO_ROOT_USER;
-      delete process.env.MINIO_ROOT_PASSWORD;
-      
+      process.env.MINIO_ENDPOINT = undefined;
+      process.env.MINIO_ROOT_USER = undefined;
+      process.env.MINIO_ROOT_PASSWORD = undefined;
+
       const checker = new StorageHealthChecker();
       const result = await checker.check();
 
@@ -327,7 +316,7 @@ describe('Health Check', () => {
       expect(result.status).toBe(HealthStatus.UNHEALTHY);
       expect(result.message).toBe('سرويس ذخيره‌سازي پيکربندي نشده است');
       expect(result.details?.error).toContain('MinIO client not configured');
-      
+
       // Restore env
       process.env = originalEnv;
     });
@@ -411,7 +400,7 @@ describe('Health Check', () => {
       const slowChecker = {
         name: 'slow-service',
         check: async () => {
-          await new Promise(resolve => setTimeout(resolve, 10000));
+          await new Promise((resolve) => setTimeout(resolve, 10000));
           return {
             name: 'slow-service',
             status: HealthStatus.HEALTHY,
@@ -604,9 +593,9 @@ describe('Health Check', () => {
     it('should include host and port in database error details', async () => {
       const originalEnv = process.env.DATABASE_URL;
       process.env.DATABASE_URL = 'postgresql://user:pass@db-host:5432/mydb';
-      
+
       mockPrismaService.$queryRaw.mockRejectedValueOnce(new Error('Connection timeout'));
-      
+
       const checker = new DatabaseHealthChecker(mockPrismaService as any);
       const result = await checker.check();
 
@@ -614,16 +603,16 @@ describe('Health Check', () => {
       expect(result.details?.host).toBe('db-host');
       expect(result.details?.port).toBe(5432);
       expect(result.details?.error).toBe('Connection timeout');
-      
+
       process.env.DATABASE_URL = originalEnv;
     });
 
     it('should include host and port in redis error details', async () => {
       const originalUrl = process.env.REDIS_URL;
       process.env.REDIS_URL = 'redis://redis-host:6380';
-      
+
       mockRedisClient.ping.mockRejectedValueOnce(new Error('Connection refused'));
-      
+
       const checker = new RedisHealthChecker(mockRedisClient as any);
       const result = await checker.check();
 
@@ -631,9 +620,8 @@ describe('Health Check', () => {
       expect(result.details?.host).toBe('redis-host');
       expect(result.details?.port).toBe(6380);
       expect(result.details?.error).toBe('Connection refused');
-      
+
       process.env.REDIS_URL = originalUrl;
     });
   });
 });
-

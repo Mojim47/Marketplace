@@ -5,17 +5,17 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { Injectable, Logger } from '@nestjs/common';
+import { LocalStorageAdapter } from '../adapters/local.adapter';
+import { MinioStorageAdapter } from '../adapters/minio.adapter';
+import { S3StorageAdapter } from '../adapters/s3.adapter';
 import type {
   IStorageProvider,
-  StorageConfig,
   LocalStorageConfig,
-  S3StorageConfig,
   MinioStorageConfig,
+  S3StorageConfig,
+  StorageConfig,
 } from '../interfaces/storage.interface';
 import { StorageProviderType } from '../interfaces/storage.interface';
-import { LocalStorageAdapter } from '../adapters/local.adapter';
-import { S3StorageAdapter } from '../adapters/s3.adapter';
-import { MinioStorageAdapter } from '../adapters/minio.adapter';
 
 /**
  * Storage factory for creating provider instances
@@ -74,7 +74,7 @@ export class StorageFactory {
    * @param name - Optional name for caching
    * @returns Storage provider instance
    */
-  createFromEnv(prefix: string = 'STORAGE', name?: string): IStorageProvider {
+  createFromEnv(prefix = 'STORAGE', name?: string): IStorageProvider {
     const provider = process.env[`${prefix}_PROVIDER`] as StorageProviderType;
     const bucket = process.env[`${prefix}_BUCKET`] || 'default';
 
@@ -113,7 +113,7 @@ export class StorageFactory {
           provider: StorageProviderType.MINIO,
           bucket,
           endPoint: process.env[`${prefix}_ENDPOINT`] || 'localhost',
-          port: parseInt(process.env[`${prefix}_PORT`] || '9000', 10),
+          port: Number.parseInt(process.env[`${prefix}_PORT`] || '9000', 10),
           useSSL: process.env[`${prefix}_USE_SSL`] === 'true',
           accessKey: process.env[`${prefix}_ACCESS_KEY`] || '',
           secretKey: process.env[`${prefix}_SECRET_KEY`] || '',

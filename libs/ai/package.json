@@ -31,10 +31,10 @@
   "peerDependencies": {
     "react": "^18.0.0"
   },
-  "keywords": [
-    "ai",
-    "prediction",
-    "time-series",
-    "on-device"
-  ]
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  },
+  "keywords": ["ai", "prediction", "time-series", "on-device"]
 }

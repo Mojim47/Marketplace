@@ -1,46 +1,49 @@
-import { Module, Global, MiddlewareConsumer, NestModule } from '@nestjs/common';
+import { BullModule } from '@nestjs/bullmq';
+import { Global, type MiddlewareConsumer, Module, type NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule } from '@nestjs/throttler';
 import type Redis from 'ioredis';
-import { BullModule } from '@nestjs/bullmq';
-import { ScheduleModule } from '@nestjs/schedule';
-import { APP_GUARD, APP_INTERCEPTOR, APP_FILTER, Reflector } from '@nestjs/core';
 
+import { AppController } from './app.controller';
+
+import { AdminModule } from './admin/admin.module';
+import { AuditModule } from './audit/audit.module';
 // Modules
 import { AuthModule } from './auth/auth.module';
-import { UsersModule } from './users/users.module';
-import { TenantModule } from './tenant/tenant.module';
-import { AdminModule } from './admin/admin.module';
-import { VendorModule } from './vendor/vendor.module';
-import { ProductsModule } from './products/products.module';
-import { OrdersModule } from './orders/orders.module';
-import { HealthModule } from './health/health.module';
-import { FeatureFlagModule } from './feature-flag/feature-flag.module';
-import { AuditModule } from './audit/audit.module';
 import { DatabaseModule } from './database/database.module';
+import { FeatureFlagModule } from './feature-flag/feature-flag.module';
+import { HealthModule } from './health/health.module';
 import { MonitoringModule } from './monitoring/monitoring.module';
-import { SearchModule } from './search/search.module';
+import { OrdersModule } from './orders/orders.module';
+import { ProductsModule } from './products/products.module';
 import { RedisModule } from './redis/redis.module';
+import { SearchModule } from './search/search.module';
+import { TenantModule } from './tenant/tenant.module';
+import { UsersModule } from './users/users.module';
+import { VendorModule } from './vendor/vendor.module';
+import { PaymentModule } from './payment/payment.module';
 
-// Security Module
-import { SecurityModule, WAFGuard, RateLimitGuard } from './shared/security/security.module';
 import { RedisThrottlerStorage } from './common/guards/redis-throttler.storage';
 import { UserRateLimitGuard } from './common/guards/user-rate-limit.guard';
+// Security Module
+import { RateLimitGuard, SecurityModule, WAFGuard } from './shared/security/security.module';
 
+import { AuditInterceptor } from './common/interceptors/audit.interceptor';
+import { LocalizationInterceptor } from './common/interceptors/localization.interceptor';
 // Interceptors
 import { SecurityHeadersInterceptor } from './common/interceptors/security-headers.interceptor';
-import { LocalizationInterceptor } from './common/interceptors/localization.interceptor';
-import { AuditInterceptor } from './common/interceptors/audit.interceptor';
 
 // Filters
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 
 // Common
 import { validateEnv } from '@nextgen/config';
-import { ObservabilityModule } from './_observability/observability.module';
 import { CorrelationIdMiddleware } from './_middleware/correlation-id.middleware';
+import { ObservabilityModule } from './_observability/observability.module';
 
 @Global()
 @Module({
@@ -122,6 +125,7 @@ import { CorrelationIdMiddleware } from './_middleware/correlation-id.middleware
     VendorModule,
     ProductsModule,
     OrdersModule,
+    PaymentModule,
     HealthModule,
     FeatureFlagModule,
     AuditModule,
@@ -129,19 +133,20 @@ import { CorrelationIdMiddleware } from './_middleware/correlation-id.middleware
     SearchModule,
     ObservabilityModule,
   ],
+  controllers: [AppController],
   providers: [
     // ???????????????????????????????????????????????????????????????????????
     // Global Guards (executed in order)
     // Requirements: 1.3, 10.1, 10.2
     // ???????????????????????????????????????????????????????????????????????
-    
+
     // WAF Guard - First line of defense against malicious requests
     // Blocks SQL Injection, XSS, Path Traversal attacks
     {
       provide: APP_GUARD,
       useClass: WAFGuard,
     },
-    
+
     // Rate Limit Guard - Prevents abuse and DDoS attacks
     // Default: 100 requests per minute per IP
     {
@@ -156,21 +161,21 @@ import { CorrelationIdMiddleware } from './_middleware/correlation-id.middleware
     // Global Interceptors (executed in order)
     // Requirements: 1.5, 3.1, 3.2, 7.1
     // ???????????????????????????????????????????????????????????????????????
-    
+
     // Security Headers Interceptor - Adds security headers to all responses
     // CSP, HSTS, X-Frame-Options, etc.
     {
       provide: APP_INTERCEPTOR,
       useClass: SecurityHeadersInterceptor,
     },
-    
+
     // Localization Interceptor - Transforms dates to Jalali and formats currency
     // Adds createdAtJalali, priceFormatted fields to responses
     {
       provide: APP_INTERCEPTOR,
       useClass: LocalizationInterceptor,
     },
-    
+
     // Audit Interceptor - Logs all requests and responses
     // Provides audit trail with chain integrity
     {
@@ -182,7 +187,7 @@ import { CorrelationIdMiddleware } from './_middleware/correlation-id.middleware
     // Global Exception Filter
     // Requirements: 4.4
     // ???????????????????????????????????????????????????????????????????????
-    
+
     // Global Exception Filter - Handles all exceptions with Persian messages
     // Sanitizes error messages in production
     {

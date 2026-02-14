@@ -3,9 +3,8 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { Injectable, Logger } from '@nestjs/common';
-import { Queue, Worker, Job } from 'bullmq';
-import { ConfigService } from '@nestjs/config';
-import { QUEUE_NAMES } from './queue.constants';
+import type { ConfigService } from '@nestjs/config';
+import { Queue, type Worker } from 'bullmq';
 
 @Injectable()
 export class QueueService {

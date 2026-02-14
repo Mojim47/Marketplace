@@ -1,5 +1,5 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { ThrottlerStorage, ThrottlerStorageRecord } from '@nestjs/throttler';
+import { Inject, Injectable } from '@nestjs/common';
+import type { ThrottlerStorage, ThrottlerStorageRecord } from '@nestjs/throttler';
 import type Redis from 'ioredis';
 
 @Injectable()

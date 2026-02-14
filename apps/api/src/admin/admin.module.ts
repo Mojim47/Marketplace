@@ -1,8 +1,8 @@
-import { Module } from '@nestjs/common'
-import { CacheModule } from '@nestjs/cache-manager'
-import { DatabaseModule } from '../database/database.module'
-import { AdminController } from './admin.controller'
-import { AdminService } from './admin.service'
+import { CacheModule } from '@nestjs/cache-manager';
+import { Module } from '@nestjs/common';
+import { DatabaseModule } from '../database/database.module';
+import { AdminController } from './admin.controller';
+import { AdminService } from './admin.service';
 
 @Module({
   imports: [
@@ -14,6 +14,6 @@ import { AdminService } from './admin.service'
   ],
   controllers: [AdminController],
   providers: [AdminService],
-  exports: [AdminService]
+  exports: [AdminService],
 })
 export class AdminModule {}

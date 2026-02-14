@@ -1,7 +1,7 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { PaymentService } from './payment.service';
-import { PaymentSecurityService } from './payment-security.service';
 import { Decimal } from '@prisma/client/runtime/library';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { PaymentSecurityService } from './payment-security.service';
+import { PaymentService } from './payment.service';
 
 vi.mock('@nextgen/payment', () => {
   return {
@@ -92,7 +92,7 @@ describe('PaymentService', () => {
         description: 'Test payment',
         callbackUrl: 'https://example.com/callback',
       } as any,
-      'user_1',
+      'user_1'
     );
 
     expect(zarinpal.requestPayment).toHaveBeenCalledWith(
@@ -107,7 +107,7 @@ describe('PaymentService', () => {
           userId: 'user_1',
           orderNumber: order.orderNumber,
         }),
-      }),
+      })
     );
 
     expect(result).toEqual({

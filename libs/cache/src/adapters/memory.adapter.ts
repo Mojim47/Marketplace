@@ -6,13 +6,13 @@
 
 import { LRUCache } from 'lru-cache';
 import type {
-  ICacheProvider,
-  CacheSetOptions,
   CacheGetOptions,
+  CacheHealthCheck,
   CacheScanOptions,
   CacheScanResult,
+  CacheSetOptions,
   CacheStats,
-  CacheHealthCheck,
+  ICacheProvider,
   MemoryCacheConfig,
 } from '../interfaces/cache.interface';
 import { CacheProviderType } from '../interfaces/cache.interface';
@@ -66,7 +66,7 @@ export class MemoryCacheAdapter implements ICacheProvider {
   }
 
   private matchPattern(key: string, pattern: string): boolean {
-    const regex = new RegExp('^' + pattern.replace(/\*/g, '.*').replace(/\?/g, '.') + '$');
+    const regex = new RegExp(`^${pattern.replace(/\*/g, '.*').replace(/\?/g, '.')}$`);
     return regex.test(key);
   }
 
@@ -75,7 +75,7 @@ export class MemoryCacheAdapter implements ICacheProvider {
       if (!this.tagIndex.has(tag)) {
         this.tagIndex.set(tag, new Set());
       }
-      this.tagIndex.get(tag)!.add(key);
+      this.tagIndex.get(tag)?.add(key);
     }
   }
 
@@ -158,7 +158,7 @@ export class MemoryCacheAdapter implements ICacheProvider {
       return -2;
     }
     const remaining = this.cache.getRemainingTTL(prefixedKey);
-    return remaining === Infinity ? -1 : Math.ceil(remaining / 1000);
+    return remaining === Number.POSITIVE_INFINITY ? -1 : Math.ceil(remaining / 1000);
   }
 
   async expire(key: string, ttl: number): Promise<boolean> {
@@ -220,7 +220,7 @@ export class MemoryCacheAdapter implements ICacheProvider {
   async scan(options?: CacheScanOptions): Promise<CacheScanResult> {
     const pattern = options?.pattern || '*';
     const count = options?.count || 100;
-    const cursor = parseInt(options?.cursor || '0', 10);
+    const cursor = Number.parseInt(options?.cursor || '0', 10);
 
     const allKeys = await this.keys(pattern);
     const start = cursor;
@@ -271,14 +271,14 @@ export class MemoryCacheAdapter implements ICacheProvider {
   // Atomic Operations
   // ═══════════════════════════════════════════════════════════════════════
 
-  async increment(key: string, delta: number = 1): Promise<number> {
+  async increment(key: string, delta = 1): Promise<number> {
     const current = await this.get<number>(key);
     const newValue = (current || 0) + delta;
     await this.set(key, newValue);
     return newValue;
   }
 
-  async decrement(key: string, delta: number = 1): Promise<number> {
+  async decrement(key: string, delta = 1): Promise<number> {
     return this.increment(key, -delta);
   }
 
@@ -300,14 +300,16 @@ export class MemoryCacheAdapter implements ICacheProvider {
 
   async hget<T = unknown>(key: string, field: string): Promise<T | null> {
     const hash = await this.get<Map<string, T>>(key);
-    if (!hash) return null;
+    if (!hash) {
+      return null;
+    }
     return hash.get(field) ?? null;
   }
 
   async hset<T = unknown>(key: string, field: string, value: T): Promise<boolean> {
     let hash = await this.get<Map<string, T>>(key);
     const isNew = !hash || !hash.has(field);
-    
+
     if (!hash) {
       hash = new Map();
     }
@@ -323,17 +325,19 @@ export class MemoryCacheAdapter implements ICacheProvider {
 
   async hdel(key: string, field: string): Promise<boolean> {
     const hash = await this.get<Map<string, unknown>>(key);
-    if (!hash) return false;
-    
+    if (!hash) {
+      return false;
+    }
+
     const existed = hash.has(field);
     hash.delete(field);
-    
+
     if (hash.size === 0) {
       await this.delete(key);
     } else {
       await this.set(key, hash);
     }
-    
+
     return existed;
   }
 
@@ -348,7 +352,9 @@ export class MemoryCacheAdapter implements ICacheProvider {
 
   async rpush<T = unknown>(key: string, value: T): Promise<number> {
     let list = await this.get<T[]>(key);
-    if (!list) list = [];
+    if (!list) {
+      list = [];
+    }
     list.push(value);
     await this.set(key, list);
     return list.length;
@@ -356,7 +362,9 @@ export class MemoryCacheAdapter implements ICacheProvider {
 
   async lpush<T = unknown>(key: string, value: T): Promise<number> {
     let list = await this.get<T[]>(key);
-    if (!list) list = [];
+    if (!list) {
+      list = [];
+    }
     list.unshift(value);
     await this.set(key, list);
     return list.length;
@@ -364,7 +372,9 @@ export class MemoryCacheAdapter implements ICacheProvider {
 
   async rpop<T = unknown>(key: string): Promise<T | null> {
     const list = await this.get<T[]>(key);
-    if (!list || list.length === 0) return null;
+    if (!list || list.length === 0) {
+      return null;
+    }
     const value = list.pop()!;
     await this.set(key, list);
     return value;
@@ -372,7 +382,9 @@ export class MemoryCacheAdapter implements ICacheProvider {
 
   async lpop<T = unknown>(key: string): Promise<T | null> {
     const list = await this.get<T[]>(key);
-    if (!list || list.length === 0) return null;
+    if (!list || list.length === 0) {
+      return null;
+    }
     const value = list.shift()!;
     await this.set(key, list);
     return value;
@@ -385,7 +397,9 @@ export class MemoryCacheAdapter implements ICacheProvider {
 
   async lrange<T = unknown>(key: string, start: number, stop: number): Promise<T[]> {
     const list = await this.get<T[]>(key);
-    if (!list) return [];
+    if (!list) {
+      return [];
+    }
     const end = stop === -1 ? undefined : stop + 1;
     return list.slice(start, end);
   }
@@ -396,7 +410,9 @@ export class MemoryCacheAdapter implements ICacheProvider {
 
   async sadd<T = unknown>(key: string, member: T): Promise<boolean> {
     let set = await this.get<Set<T>>(key);
-    if (!set) set = new Set();
+    if (!set) {
+      set = new Set();
+    }
     const isNew = !set.has(member);
     set.add(member);
     await this.set(key, set);
@@ -405,7 +421,9 @@ export class MemoryCacheAdapter implements ICacheProvider {
 
   async srem<T = unknown>(key: string, member: T): Promise<boolean> {
     const set = await this.get<Set<T>>(key);
-    if (!set) return false;
+    if (!set) {
+      return false;
+    }
     const existed = set.delete(member);
     await this.set(key, set);
     return existed;
@@ -453,7 +471,7 @@ export class MemoryCacheAdapter implements ICacheProvider {
 
   async healthCheck(): Promise<CacheHealthCheck> {
     const startTime = Date.now();
-    
+
     try {
       // Simple read/write test
       const testKey = '__health_check__';

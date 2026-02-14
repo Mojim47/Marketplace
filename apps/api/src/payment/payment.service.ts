@@ -2,35 +2,63 @@
  * ???????????????????????????????????????????????????????????????????????????
  * NextGen Marketplace - Payment Service
  * ???????????????????????????????????????????????????????????????????????????
- * 
+ *
  * Integrated payment service using ZarinPalService from libs/payment.
  * Provides endpoints for payment initiation, verification, and refund.
- * 
+ *
  * Requirements: 4.1, 4.2, 4.3, 4.4, 4.5
  */
 
-import { Injectable, BadRequestException, NotFoundException, Logger, Inject } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
+import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { type PaymentRequestData, ZarinPalService } from '@nextgen/payment';
+import type { CircuitBreakerService } from '@nextgen/resilience';
 import { Decimal } from '@prisma/client/runtime/library';
-import { ZarinPalService, PaymentRequestData } from '@nextgen/payment';
-import { PaymentSecurityService, generateIdempotencyKey, generateRequestHash } from './payment-security.service';
-import { CircuitBreakerService } from '@nextgen/resilience';
-import CircuitBreaker from 'opossum';
-import { 
-  CreatePaymentDto, 
-  VerifyPaymentDto, 
-  RefundPaymentDto,
+import type CircuitBreaker from 'opossum';
+import type { PrismaService } from '../database/prisma.service';
+import type {
+  CreatePaymentDto,
   PaymentRequestResponse,
   PaymentVerifyResponse,
-  TransactionDetailsResponse 
+  RefundPaymentDto,
+  TransactionDetailsResponse,
+  VerifyPaymentDto,
 } from './dto/payment.dto';
+import {
+  type PaymentSecurityService,
+  generateIdempotencyKey,
+  generateRequestHash,
+} from './payment-security.service';
 
 // Audit service interface for dependency injection
 export interface PaymentAuditService {
-  logPaymentInitiated(userId: string, transactionId: string, amount: number, orderId: string, ipAddress?: string): Promise<void>;
-  logPaymentSuccess(userId: string, transactionId: string, amount: number, refId: string, ipAddress?: string): Promise<void>;
-  logPaymentFailure(userId: string, transactionId: string, amount: number, reason: string, ipAddress?: string): Promise<void>;
-  logPaymentRefund(userId: string, transactionId: string, amount: number, refId: string, ipAddress?: string): Promise<void>;
+  logPaymentInitiated(
+    userId: string,
+    transactionId: string,
+    amount: number,
+    orderId: string,
+    ipAddress?: string
+  ): Promise<void>;
+  logPaymentSuccess(
+    userId: string,
+    transactionId: string,
+    amount: number,
+    refId: string,
+    ipAddress?: string
+  ): Promise<void>;
+  logPaymentFailure(
+    userId: string,
+    transactionId: string,
+    amount: number,
+    reason: string,
+    ipAddress?: string
+  ): Promise<void>;
+  logPaymentRefund(
+    userId: string,
+    transactionId: string,
+    amount: number,
+    refId: string,
+    ipAddress?: string
+  ): Promise<void>;
   logPaymentCallback(authority: string, status: string, ipAddress?: string): Promise<void>;
 }
 
@@ -67,7 +95,7 @@ export class PaymentService {
     private readonly prisma: PrismaService,
     private readonly securityService: PaymentSecurityService,
     private readonly circuitBreakerService: CircuitBreakerService,
-    @Inject(PAYMENT_AUDIT_SERVICE) private readonly auditService: PaymentAuditService,
+    @Inject(PAYMENT_AUDIT_SERVICE) private readonly auditService: PaymentAuditService
   ) {
     // Initialize ZarinPal service
     this.zarinpalService = new ZarinPalService();
@@ -82,17 +110,17 @@ export class PaymentService {
     this.requestBreaker = this.circuitBreakerService.createBreaker(
       'zarinpal.request',
       (data) => this.zarinpalService.requestPayment(data),
-      breakerOptions,
+      breakerOptions
     );
     this.verifyBreaker = this.circuitBreakerService.createBreaker(
       'zarinpal.verify',
       (authority, amount) => this.zarinpalService.verifyPayment(authority, amount),
-      breakerOptions,
+      breakerOptions
     );
     this.refundBreaker = this.circuitBreakerService.createBreaker(
       'zarinpal.refund',
       (refId, amount) => this.zarinpalService.refundPayment(refId, amount),
-      breakerOptions,
+      breakerOptions
     );
   }
 
@@ -103,7 +131,7 @@ export class PaymentService {
   async requestPayment(
     dto: CreatePaymentDto,
     userId: string,
-    ipAddress?: string,
+    ipAddress?: string
   ): Promise<PaymentRequestResponse> {
     const { orderId, callbackUrl, description } = dto;
 
@@ -135,14 +163,17 @@ export class PaymentService {
     const requestHash = generateRequestHash({ orderId, amount: amountInRials });
 
     // Check for duplicate request
-    const idempotencyCheck = await this.securityService.checkIdempotency(idempotencyKey, requestHash);
+    const idempotencyCheck = await this.securityService.checkIdempotency(
+      idempotencyKey,
+      requestHash
+    );
     if (idempotencyCheck.isDuplicate) {
       this.logger.log(`Returning cached payment response for order ${orderId}`);
       return idempotencyCheck.response as PaymentRequestResponse;
     }
 
     // Prepare callback URL
-    const finalCallbackUrl = callbackUrl || `${process.env['APP_URL']}/api/payment/verify`;
+    const finalCallbackUrl = callbackUrl || `${process.env.APP_URL}/api/payment/verify`;
 
     // Prepare payment request data
     const paymentData: PaymentRequestData = {
@@ -163,7 +194,7 @@ export class PaymentService {
       const zarinpalResponse = await this.circuitBreakerService.fire(
         this.requestBreaker,
         [paymentData],
-        this.breakerMessage,
+        this.breakerMessage
       );
 
       // Create payment transaction record
@@ -191,7 +222,7 @@ export class PaymentService {
           transaction.id,
           amountInRials,
           orderId,
-          ipAddress,
+          ipAddress
         );
       }
 
@@ -207,7 +238,7 @@ export class PaymentService {
       return response;
     } catch (error) {
       this.logger.error(`Payment request failed for order ${orderId}: ${error.message}`);
-      
+
       // Log audit event for failure
       if (this.auditService) {
         await this.auditService.logPaymentFailure(
@@ -215,7 +246,7 @@ export class PaymentService {
           'N/A',
           amountInRials,
           error.message,
-          ipAddress,
+          ipAddress
         );
       }
 
@@ -229,10 +260,7 @@ export class PaymentService {
    * Requirements: 4.3 - WHEN پرداخت موفق باشد THEN THE Payment_Service SHALL وضعيت سفارش را به‌روز کند
    * Requirements: 4.4 - WHEN پرداخت ناموفق باشد THEN THE Payment_Service SHALL پيام خطاي فارسي برگرداند
    */
-  async verifyPayment(
-    dto: VerifyPaymentDto,
-    ipAddress?: string,
-  ): Promise<PaymentVerifyResponse> {
+  async verifyPayment(dto: VerifyPaymentDto, ipAddress?: string): Promise<PaymentVerifyResponse> {
     const { authority, status } = dto;
 
     // Log callback audit event
@@ -277,7 +305,7 @@ export class PaymentService {
           transaction.id,
           transaction.amount.toNumber(),
           ERROR_MESSAGES.PAYMENT_CANCELLED,
-          ipAddress,
+          ipAddress
         );
       }
 
@@ -293,7 +321,7 @@ export class PaymentService {
       const verifyResponse = await this.circuitBreakerService.fire(
         this.verifyBreaker,
         [authority, amountInTomans],
-        this.breakerMessage,
+        this.breakerMessage
       );
 
       // Update transaction and order in a single transaction
@@ -329,7 +357,7 @@ export class PaymentService {
           transaction.id,
           transaction.amount.toNumber(),
           verifyResponse.refId,
-          ipAddress,
+          ipAddress
         );
       }
 
@@ -358,7 +386,7 @@ export class PaymentService {
           transaction.id,
           transaction.amount.toNumber(),
           error.message,
-          ipAddress,
+          ipAddress
         );
       }
 
@@ -376,7 +404,7 @@ export class PaymentService {
   async refundPayment(
     dto: RefundPaymentDto,
     userId: string,
-    ipAddress?: string,
+    ipAddress?: string
   ): Promise<{ success: boolean; message: string }> {
     const { transactionId, amount, reason } = dto;
 
@@ -408,7 +436,7 @@ export class PaymentService {
       await this.circuitBreakerService.fire(
         this.refundBreaker,
         [transaction.refId, refundAmountTomans],
-        this.breakerMessage,
+        this.breakerMessage
       );
 
       // Update transaction status
@@ -440,7 +468,7 @@ export class PaymentService {
           transactionId,
           refundAmountRials,
           transaction.refId,
-          ipAddress,
+          ipAddress
         );
       }
 
@@ -482,8 +510,8 @@ export class PaymentService {
    */
   async getUserTransactions(
     userId: string,
-    page: number = 1,
-    limit: number = 10,
+    page = 1,
+    limit = 10
   ): Promise<{ transactions: TransactionDetailsResponse[]; total: number }> {
     const skip = (page - 1) * limit;
 
@@ -525,12 +553,3 @@ export class PaymentService {
     return this.zarinpalService.isSandbox();
   }
 }
-
-
-
-
-
-
-
-
-

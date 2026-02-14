@@ -9,8 +9,8 @@
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
 import * as fc from 'fast-check';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { SUIDGeneratorService } from '../suid-generator.service';
 
 // Helper to generate 14-digit tax ID
@@ -44,7 +44,7 @@ describe('SUIDGeneratorService Property Tests', () => {
           taxIdArbitrary,
           fc
             .date({ min: new Date('2020-01-01'), max: new Date('2030-12-31') })
-            .filter((d) => !isNaN(d.getTime())),
+            .filter((d) => !Number.isNaN(d.getTime())),
           (taxId, issueDate) => {
             const result = service.generateSUID(taxId, issueDate);
 
@@ -62,7 +62,7 @@ describe('SUIDGeneratorService Property Tests', () => {
           taxIdArbitrary,
           fc
             .date({ min: new Date('2020-01-01'), max: new Date('2030-12-31') })
-            .filter((d) => !isNaN(d.getTime())),
+            .filter((d) => !Number.isNaN(d.getTime())),
           (taxId, issueDate) => {
             const result = service.generateSUID(taxId, issueDate);
 
@@ -80,7 +80,7 @@ describe('SUIDGeneratorService Property Tests', () => {
           taxIdArbitrary,
           fc
             .date({ min: new Date('2020-01-01'), max: new Date('2030-12-31') })
-            .filter((d) => !isNaN(d.getTime())),
+            .filter((d) => !Number.isNaN(d.getTime())),
           fc.integer({ min: 2, max: 10 }),
           (taxId, issueDate, count) => {
             const suids = new Set<string>();
@@ -104,7 +104,7 @@ describe('SUIDGeneratorService Property Tests', () => {
           taxIdArbitrary,
           fc
             .date({ min: new Date('2020-01-01'), max: new Date('2030-12-31') })
-            .filter((d) => !isNaN(d.getTime())),
+            .filter((d) => !Number.isNaN(d.getTime())),
           (taxId, issueDate) => {
             const result = service.generateSUID(taxId, issueDate);
 
@@ -147,14 +147,14 @@ describe('SUIDGeneratorService Property Tests', () => {
           taxIdArbitrary,
           fc
             .date({ min: new Date('2020-01-01'), max: new Date('2030-12-31') })
-            .filter((d) => !isNaN(d.getTime())),
+            .filter((d) => !Number.isNaN(d.getTime())),
           (taxId, issueDate) => {
             const result = service.generateSUID(taxId, issueDate);
             const parsed = service.parseSUID(result.suid);
 
             // Parsed components must match original
             expect(parsed).not.toBeNull();
-            expect(parsed!.sellerTaxId).toBe(taxId);
+            expect(parsed?.sellerTaxId).toBe(taxId);
           }
         ),
         { numRuns: 100 }

@@ -1,7 +1,7 @@
+import { createHash, createSign } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { Injectable, Logger } from '@nestjs/common';
-import axios, { AxiosInstance } from 'axios';
-import { readFileSync } from 'fs';
-import { createSign, createHash } from 'crypto';
+import axios, { type AxiosInstance } from 'axios';
 
 interface MoodianConfig {
   apiUrl: string;

@@ -2,12 +2,12 @@
 // Storage Factory Tests
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { StorageFactory } from './storage.factory';
-import { StorageProviderType } from '../interfaces/storage.interface';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LocalStorageAdapter } from '../adapters/local.adapter';
-import { S3StorageAdapter } from '../adapters/s3.adapter';
 import { MinioStorageAdapter } from '../adapters/minio.adapter';
+import { S3StorageAdapter } from '../adapters/s3.adapter';
+import { StorageProviderType } from '../interfaces/storage.interface';
+import { StorageFactory } from './storage.factory';
 
 describe('StorageFactory', () => {
   let factory: StorageFactory;
@@ -176,11 +176,14 @@ describe('StorageFactory', () => {
 
   describe('has', () => {
     it('should return true for cached provider', () => {
-      factory.create({
-        provider: StorageProviderType.LOCAL,
-        bucket: 'has-test',
-        rootDir: './test-storage',
-      }, 'has-test');
+      factory.create(
+        {
+          provider: StorageProviderType.LOCAL,
+          bucket: 'has-test',
+          rootDir: './test-storage',
+        },
+        'has-test'
+      );
 
       expect(factory.has('has-test')).toBe(true);
     });
@@ -192,11 +195,14 @@ describe('StorageFactory', () => {
 
   describe('remove', () => {
     it('should remove cached provider', () => {
-      factory.create({
-        provider: StorageProviderType.LOCAL,
-        bucket: 'remove-test',
-        rootDir: './test-storage',
-      }, 'remove-test');
+      factory.create(
+        {
+          provider: StorageProviderType.LOCAL,
+          bucket: 'remove-test',
+          rootDir: './test-storage',
+        },
+        'remove-test'
+      );
 
       const removed = factory.remove('remove-test');
 
@@ -211,16 +217,22 @@ describe('StorageFactory', () => {
 
   describe('clear', () => {
     it('should clear all cached providers', () => {
-      factory.create({
-        provider: StorageProviderType.LOCAL,
-        bucket: 'clear-test-1',
-        rootDir: './test-storage',
-      }, 'clear-1');
-      factory.create({
-        provider: StorageProviderType.LOCAL,
-        bucket: 'clear-test-2',
-        rootDir: './test-storage',
-      }, 'clear-2');
+      factory.create(
+        {
+          provider: StorageProviderType.LOCAL,
+          bucket: 'clear-test-1',
+          rootDir: './test-storage',
+        },
+        'clear-1'
+      );
+      factory.create(
+        {
+          provider: StorageProviderType.LOCAL,
+          bucket: 'clear-test-2',
+          rootDir: './test-storage',
+        },
+        'clear-2'
+      );
 
       factory.clear();
 
@@ -231,16 +243,22 @@ describe('StorageFactory', () => {
 
   describe('getProviderNames', () => {
     it('should return all cached provider names', () => {
-      factory.create({
-        provider: StorageProviderType.LOCAL,
-        bucket: 'names-test-1',
-        rootDir: './test-storage',
-      }, 'names-1');
-      factory.create({
-        provider: StorageProviderType.LOCAL,
-        bucket: 'names-test-2',
-        rootDir: './test-storage',
-      }, 'names-2');
+      factory.create(
+        {
+          provider: StorageProviderType.LOCAL,
+          bucket: 'names-test-1',
+          rootDir: './test-storage',
+        },
+        'names-1'
+      );
+      factory.create(
+        {
+          provider: StorageProviderType.LOCAL,
+          bucket: 'names-test-2',
+          rootDir: './test-storage',
+        },
+        'names-2'
+      );
 
       const names = factory.getProviderNames();
 

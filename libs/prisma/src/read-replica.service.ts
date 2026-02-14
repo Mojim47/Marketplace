@@ -16,7 +16,7 @@
  * @module @nextgen/prisma
  */
 
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, type OnModuleDestroy, type OnModuleInit } from '@nestjs/common';
 import { InternalError } from '@nextgen/errors';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -182,7 +182,9 @@ export class ReadReplicaService implements OnModuleInit, OnModuleDestroy {
   getHealthyReplicaCount(): number {
     let count = 0;
     for (const health of this.replicaHealth.values()) {
-      if (health.healthy) count++;
+      if (health.healthy) {
+        count++;
+      }
     }
     return count;
   }
@@ -202,7 +204,6 @@ export class ReadReplicaService implements OnModuleInit, OnModuleDestroy {
     // Initialize primary connection
     this.primaryClient = this.createClient(this.config.primaryUrl);
     await this.primaryClient.$connect();
-    console.log('[ReadReplica] Primary connection established');
 
     // Initialize replica connections
     for (const replica of this.config.replicas) {
@@ -219,8 +220,6 @@ export class ReadReplicaService implements OnModuleInit, OnModuleDestroy {
           lastCheck: new Date(),
           consecutiveFailures: 0,
         });
-
-        console.log(`[ReadReplica] Replica ${replica.name} connection established`);
       } catch (error) {
         console.error(`[ReadReplica] Failed to connect to replica ${replica.name}:`, error);
 
@@ -276,7 +275,7 @@ export class ReadReplicaService implements OnModuleInit, OnModuleDestroy {
     // Round-robin
     this.currentReplicaIndex = (this.currentReplicaIndex + 1) % healthyReplicas.length;
     const replica = healthyReplicas[this.currentReplicaIndex];
-    return replica ? this.replicaClients.get(replica.name) ?? null : null;
+    return replica ? (this.replicaClients.get(replica.name) ?? null) : null;
   }
 
   private selectByWeight(replicas: Array<{ name: string; weight: number }>): PrismaClient | null {
@@ -291,7 +290,7 @@ export class ReadReplicaService implements OnModuleInit, OnModuleDestroy {
     }
 
     const firstReplica = replicas[0];
-    return firstReplica ? this.replicaClients.get(firstReplica.name) ?? null : null;
+    return firstReplica ? (this.replicaClients.get(firstReplica.name) ?? null) : null;
   }
 
   private startHealthChecks(): void {
@@ -310,7 +309,9 @@ export class ReadReplicaService implements OnModuleInit, OnModuleDestroy {
   private async checkReplicaHealth(): Promise<void> {
     for (const [name, client] of this.replicaClients.entries()) {
       const health = this.replicaHealth.get(name);
-      if (!health) continue;
+      if (!health) {
+        continue;
+      }
 
       try {
         // Check connectivity and get replication lag
@@ -328,7 +329,7 @@ export class ReadReplicaService implements OnModuleInit, OnModuleDestroy {
         if (!health.healthy) {
           console.warn(`[ReadReplica] Replica ${name} has high lag: ${lagSeconds}s`);
         }
-      } catch (error) {
+      } catch (_error) {
         health.consecutiveFailures++;
         health.lastCheck = new Date();
 
@@ -351,11 +352,11 @@ export class ReadReplicaService implements OnModuleInit, OnModuleDestroy {
  * Decorator to mark a method as read-only (routes to replica)
  */
 export function ReadOnly(options?: { requiresConsistency?: boolean }): MethodDecorator {
-  return function (
+  return (
     _target: object,
     _propertyKey: string | symbol,
     descriptor: PropertyDescriptor
-  ): PropertyDescriptor {
+  ): PropertyDescriptor => {
     const originalMethod = descriptor.value;
 
     descriptor.value = async function (
@@ -384,11 +385,11 @@ export function ReadOnly(options?: { requiresConsistency?: boolean }): MethodDec
  * Decorator to mark a method as write (routes to primary)
  */
 export function WriteOnly(): MethodDecorator {
-  return function (
+  return (
     _target: object,
     _propertyKey: string | symbol,
     descriptor: PropertyDescriptor
-  ): PropertyDescriptor {
+  ): PropertyDescriptor => {
     const originalMethod = descriptor.value;
 
     descriptor.value = async function (

@@ -2,17 +2,17 @@
  * ???????????????????????????????????????????????????????????????????????????
  * NextGen Marketplace - Interceptors Tests
  * ???????????????????????????????????????????????????????????????????????????
- * 
+ *
  * Comprehensive tests for all interceptors:
  * - SecurityHeadersInterceptor
  * - LocalizationInterceptor
  * - AuditInterceptor
- * 
+ *
  * Requirements: 1.5, 3.1, 3.2, 7.1, 7.2, 7.3, 7.4
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as fc from 'fast-check';
+import { describe, expect, it, vi } from 'vitest';
 
 // ============================================================================
 // Mock Types and Helpers
@@ -62,7 +62,7 @@ function createMockExecutionContext(response?: MockResponse) {
 
 describe('SecurityHeadersInterceptor', () => {
   describe('Required Security Headers', () => {
-    const requiredHeaders = [
+    const _requiredHeaders = [
       'X-Content-Type-Options',
       'X-Frame-Options',
       'X-XSS-Protection',
@@ -74,42 +74,42 @@ describe('SecurityHeadersInterceptor', () => {
     it('should set X-Content-Type-Options to nosniff', () => {
       const response = createMockResponse();
       response.setHeader('X-Content-Type-Options', 'nosniff');
-      
+
       expect(response.headers.get('X-Content-Type-Options')).toBe('nosniff');
     });
 
     it('should set X-Frame-Options to DENY', () => {
       const response = createMockResponse();
       response.setHeader('X-Frame-Options', 'DENY');
-      
+
       expect(response.headers.get('X-Frame-Options')).toBe('DENY');
     });
 
     it('should set X-XSS-Protection to 0 (disabled per modern guidance)', () => {
       const response = createMockResponse();
       response.setHeader('X-XSS-Protection', '0');
-      
+
       expect(response.headers.get('X-XSS-Protection')).toBe('0');
     });
 
     it('should set Referrer-Policy', () => {
       const response = createMockResponse();
       response.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-      
+
       expect(response.headers.get('Referrer-Policy')).toBe('strict-origin-when-cross-origin');
     });
 
     it('should set Cross-Origin-Opener-Policy', () => {
       const response = createMockResponse();
       response.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
-      
+
       expect(response.headers.get('Cross-Origin-Opener-Policy')).toBe('same-origin');
     });
 
     it('should set Cross-Origin-Resource-Policy', () => {
       const response = createMockResponse();
       response.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
-      
+
       expect(response.headers.get('Cross-Origin-Resource-Policy')).toBe('same-origin');
     });
 
@@ -117,7 +117,7 @@ describe('SecurityHeadersInterceptor', () => {
       const response = createMockResponse();
       response.headers.set('X-Powered-By', 'Express');
       response.removeHeader('X-Powered-By');
-      
+
       expect(response.headers.has('X-Powered-By')).toBe(false);
     });
   });
@@ -156,14 +156,14 @@ describe('SecurityHeadersInterceptor', () => {
     it('should optionally include includeSubDomains', () => {
       const hstsWithSubDomains = 'max-age=31536000; includeSubDomains';
       const hstsWithoutSubDomains = 'max-age=31536000';
-      
+
       expect(hstsWithSubDomains).toContain('includeSubDomains');
       expect(hstsWithoutSubDomains).not.toContain('includeSubDomains');
     });
 
     it('should optionally include preload', () => {
       const hstsWithPreload = 'max-age=31536000; includeSubDomains; preload';
-      
+
       expect(hstsWithPreload).toContain('preload');
     });
   });
@@ -171,7 +171,7 @@ describe('SecurityHeadersInterceptor', () => {
   describe('Permissions-Policy', () => {
     it('should disable dangerous features', () => {
       const policy = 'camera=(), microphone=(), geolocation=()';
-      
+
       expect(policy).toContain('camera=()');
       expect(policy).toContain('microphone=()');
       expect(policy).toContain('geolocation=()');
@@ -179,7 +179,7 @@ describe('SecurityHeadersInterceptor', () => {
 
     it('should allow self for safe features', () => {
       const policy = 'fullscreen=(self)';
-      
+
       expect(policy).toContain('fullscreen=(self)');
     });
   });
@@ -207,7 +207,7 @@ describe('LocalizationInterceptor', () => {
 
     it('should recognize standard date fields', () => {
       const dateFieldsSet = new Set(dateFields);
-      
+
       for (const field of dateFields) {
         expect(dateFieldsSet.has(field)).toBe(true);
       }
@@ -216,7 +216,7 @@ describe('LocalizationInterceptor', () => {
     it('should not transform non-date fields', () => {
       const nonDateFields = ['name', 'email', 'description', 'status'];
       const dateFieldsSet = new Set(dateFields);
-      
+
       for (const field of nonDateFields) {
         expect(dateFieldsSet.has(field)).toBe(false);
       }
@@ -240,7 +240,7 @@ describe('LocalizationInterceptor', () => {
 
     it('should recognize standard currency fields', () => {
       const currencyFieldsSet = new Set(currencyFields);
-      
+
       for (const field of currencyFields) {
         expect(currencyFieldsSet.has(field)).toBe(true);
       }
@@ -254,7 +254,7 @@ describe('LocalizationInterceptor', () => {
         ...data,
         createdAtJalali: '????/??/??',
       };
-      
+
       expect(transformed.createdAtJalali).toBeDefined();
       expect(transformed.createdAt).toBe(data.createdAt);
     });
@@ -264,20 +264,20 @@ describe('LocalizationInterceptor', () => {
         createdAt: '2024-01-15T10:30:00Z',
         updatedAt: '2024-01-16T10:30:00Z',
       };
-      
+
       const transformed = {
         ...data,
         createdAtJalali: '????/??/??',
         updatedAtJalali: '????/??/??',
       };
-      
+
       expect(transformed.createdAtJalali).toBeDefined();
       expect(transformed.updatedAtJalali).toBeDefined();
     });
 
     it('should handle null/undefined dates', () => {
       const data = { createdAt: null, updatedAt: undefined };
-      
+
       // Should not add Jalali fields for null/undefined
       expect(data.createdAt).toBeNull();
       expect(data.updatedAt).toBeUndefined();
@@ -289,42 +289,42 @@ describe('LocalizationInterceptor', () => {
       const data = { price: 1500000 };
       const transformed = {
         ...data,
-        priceFormatted: '?,???,??? ÊæãÇä',
+        priceFormatted: '?,???,??? ï¿½ï¿½ï¿½ï¿½ï¿½',
       };
-      
+
       expect(transformed.priceFormatted).toBeDefined();
       expect(transformed.price).toBe(data.price);
     });
 
     it('should format with Persian digits', () => {
-      const formatted = '?,???,??? ÊæãÇä';
+      const formatted = '?,???,??? ï¿½ï¿½ï¿½ï¿½ï¿½';
       const persianDigitRegex = /[?-?]/;
-      
+
       expect(persianDigitRegex.test(formatted)).toBe(true);
     });
 
     it('should include currency unit', () => {
-      const formatted = '?,???,??? ÊæãÇä';
-      
-      expect(formatted).toContain('ÊæãÇä');
+      const formatted = '?,???,??? ï¿½ï¿½ï¿½ï¿½ï¿½';
+
+      expect(formatted).toContain('ï¿½ï¿½ï¿½ï¿½ï¿½');
     });
 
     it('should use grouping separators', () => {
-      const formatted = '?,???,??? ÊæãÇä';
-      
+      const formatted = '?,???,??? ï¿½ï¿½ï¿½ï¿½ï¿½';
+
       expect(formatted).toContain(',');
     });
 
     it('should handle zero amounts', () => {
       const data = { amount: 0 };
-      
+
       // Zero should still be formatted
       expect(data.amount).toBe(0);
     });
 
     it('should handle negative amounts', () => {
       const data = { amount: -1000 };
-      
+
       // Negative amounts should be handled
       expect(data.amount).toBeLessThan(0);
     });
@@ -338,7 +338,7 @@ describe('LocalizationInterceptor', () => {
           total: 1500000,
         },
       };
-      
+
       // Should transform nested fields
       expect(data.order.createdAt).toBeDefined();
       expect(data.order.total).toBeDefined();
@@ -346,12 +346,9 @@ describe('LocalizationInterceptor', () => {
 
     it('should transform arrays', () => {
       const data = {
-        items: [
-          { price: 100000 },
-          { price: 200000 },
-        ],
+        items: [{ price: 100000 }, { price: 200000 }],
       };
-      
+
       expect(data.items).toHaveLength(2);
       expect(data.items[0].price).toBe(100000);
       expect(data.items[1].price).toBe(200000);
@@ -367,7 +364,7 @@ describe('LocalizationInterceptor', () => {
           },
         },
       };
-      
+
       expect(data.level1.level2.level3.amount).toBe(500000);
     });
   });
@@ -380,7 +377,7 @@ describe('LocalizationInterceptor', () => {
           (date) => {
             const isoString = date.toISOString();
             const data = { createdAt: isoString };
-            
+
             // Original should be preserved
             expect(data.createdAt).toBe(isoString);
           }
@@ -393,15 +390,12 @@ describe('LocalizationInterceptor', () => {
   describe('Property: Currency Transformation Preserves Original', () => {
     it('should preserve original amount value', () => {
       fc.assert(
-        fc.property(
-          fc.integer({ min: 0, max: 1000000000 }),
-          (amount) => {
-            const data = { price: amount };
-            
-            // Original should be preserved
-            expect(data.price).toBe(amount);
-          }
-        ),
+        fc.property(fc.integer({ min: 0, max: 1000000000 }), (amount) => {
+          const data = { price: amount };
+
+          // Original should be preserved
+          expect(data.price).toBe(amount);
+        }),
         { numRuns: 50 }
       );
     });
@@ -416,7 +410,7 @@ describe('AuditInterceptor', () => {
   describe('Request Logging', () => {
     it('should capture request method', () => {
       const methods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
-      
+
       for (const method of methods) {
         const request = { method, path: '/api/test' };
         expect(request.method).toBe(method);
@@ -425,7 +419,7 @@ describe('AuditInterceptor', () => {
 
     it('should capture request path', () => {
       const paths = ['/api/users', '/api/products', '/api/orders'];
-      
+
       for (const path of paths) {
         const request = { method: 'GET', path };
         expect(request.path).toBe(path);
@@ -436,13 +430,13 @@ describe('AuditInterceptor', () => {
       const request = {
         user: { sub: 'user-123', email: 'test@example.com' },
       };
-      
+
       expect(request.user.sub).toBe('user-123');
     });
 
     it('should capture client IP', () => {
       const request = { ip: '192.168.1.1' };
-      
+
       expect(request.ip).toBe('192.168.1.1');
     });
 
@@ -450,7 +444,7 @@ describe('AuditInterceptor', () => {
       const request = {
         headers: { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
       };
-      
+
       expect(request.headers['user-agent']).toContain('Mozilla');
     });
   });
@@ -458,11 +452,11 @@ describe('AuditInterceptor', () => {
   describe('Response Timing', () => {
     it('should measure request duration', () => {
       const startTime = Date.now();
-      
+
       // Simulate some processing
       const endTime = Date.now();
       const duration = endTime - startTime;
-      
+
       expect(duration).toBeGreaterThanOrEqual(0);
     });
 
@@ -472,7 +466,7 @@ describe('AuditInterceptor', () => {
         duration: 150,
         status: 'success',
       };
-      
+
       expect(logEntry.duration).toBeDefined();
       expect(typeof logEntry.duration).toBe('number');
     });
@@ -516,7 +510,7 @@ describe('AuditInterceptor', () => {
 
     it('should skip audit for health endpoints', () => {
       const excludedPathsSet = new Set(excludedPaths);
-      
+
       expect(excludedPathsSet.has('/health')).toBe(true);
       expect(excludedPathsSet.has('/api/health')).toBe(true);
       expect(excludedPathsSet.has('/livez')).toBe(true);
@@ -524,14 +518,14 @@ describe('AuditInterceptor', () => {
 
     it('should skip audit for metrics endpoints', () => {
       const excludedPathsSet = new Set(excludedPaths);
-      
+
       expect(excludedPathsSet.has('/metrics')).toBe(true);
       expect(excludedPathsSet.has('/api/metrics')).toBe(true);
     });
 
     it('should not skip audit for regular endpoints', () => {
       const excludedPathsSet = new Set(excludedPaths);
-      
+
       expect(excludedPathsSet.has('/api/users')).toBe(false);
       expect(excludedPathsSet.has('/api/products')).toBe(false);
     });
@@ -542,45 +536,52 @@ describe('AuditInterceptor', () => {
 
     it('should skip audit for OPTIONS requests', () => {
       const excludedMethodsSet = new Set(excludedMethods);
-      
+
       expect(excludedMethodsSet.has('OPTIONS')).toBe(true);
     });
 
     it('should not skip audit for other methods', () => {
       const excludedMethodsSet = new Set(excludedMethods);
-      
+
       expect(excludedMethodsSet.has('GET')).toBe(false);
       expect(excludedMethodsSet.has('POST')).toBe(false);
     });
   });
 
   describe('Sensitive Data Redaction', () => {
-    const sensitiveFields = ['password', 'token', 'secret', 'apiKey', 'authorization', 'creditCard'];
+    const _sensitiveFields = [
+      'password',
+      'token',
+      'secret',
+      'apiKey',
+      'authorization',
+      'creditCard',
+    ];
 
     it('should redact password fields', () => {
-      const data = { password: 'secret123' };
+      const _data = { password: 'secret123' };
       const redacted = { password: '[REDACTED]' };
-      
+
       expect(redacted.password).toBe('[REDACTED]');
     });
 
     it('should redact token fields', () => {
-      const data = { token: 'jwt-token-here' };
+      const _data = { token: 'jwt-token-here' };
       const redacted = { token: '[REDACTED]' };
-      
+
       expect(redacted.token).toBe('[REDACTED]');
     });
 
     it('should redact authorization headers', () => {
-      const headers = { authorization: 'Bearer token' };
+      const _headers = { authorization: 'Bearer token' };
       const redacted = { authorization: '[REDACTED]' };
-      
+
       expect(redacted.authorization).toBe('[REDACTED]');
     });
 
     it('should preserve non-sensitive fields', () => {
       const data = { name: 'John', email: 'john@example.com' };
-      
+
       expect(data.name).toBe('John');
       expect(data.email).toBe('john@example.com');
     });
@@ -593,16 +594,22 @@ describe('AuditInterceptor', () => {
         status: 'error',
         error: error.message,
       };
-      
+
       expect(logEntry.status).toBe('error');
       expect(logEntry.error).toBe('Something went wrong');
     });
 
     it('should determine severity based on status code', () => {
       const getSeverity = (status: number): string => {
-        if (status >= 500) return 'ERROR';
-        if (status === 401 || status === 403) return 'WARNING';
-        if (status === 429) return 'WARNING';
+        if (status >= 500) {
+          return 'ERROR';
+        }
+        if (status === 401 || status === 403) {
+          return 'WARNING';
+        }
+        if (status === 429) {
+          return 'WARNING';
+        }
         return 'INFO';
       };
 
@@ -625,7 +632,7 @@ describe('AuditInterceptor', () => {
         email: user.email,
         roles: user.roles,
       };
-      
+
       expect(actor.type).toBe('user');
       expect(actor.id).toBe('user-123');
     });
@@ -636,7 +643,7 @@ describe('AuditInterceptor', () => {
         id: ip,
         type: 'anonymous',
       };
-      
+
       expect(actor.type).toBe('anonymous');
       expect(actor.id).toBe(ip);
     });
@@ -649,13 +656,13 @@ describe('AuditInterceptor', () => {
         'x-correlation-id': 'corr-456',
         'x-trace-id': 'trace-789',
       };
-      
+
       const context = {
         requestId: headers['x-request-id'],
         correlationId: headers['x-correlation-id'],
         traceId: headers['x-trace-id'],
       };
-      
+
       expect(context.requestId).toBe('req-123');
       expect(context.correlationId).toBe('corr-456');
       expect(context.traceId).toBe('trace-789');
@@ -678,7 +685,7 @@ describe('Interceptors Integration', () => {
 
       // Security headers should be first (set headers early)
       expect(interceptorOrder[0]).toBe('SecurityHeadersInterceptor');
-      
+
       // Audit should be last (capture final response)
       expect(interceptorOrder[interceptorOrder.length - 1]).toBe('AuditInterceptor');
     });
@@ -696,7 +703,7 @@ describe('Interceptors Integration', () => {
       const transformedResponse = {
         ...originalResponse,
         createdAtJalali: '????/??/??',
-        totalFormatted: '?,???,??? ÊæãÇä',
+        totalFormatted: '?,???,??? ï¿½ï¿½ï¿½ï¿½ï¿½',
       };
 
       expect(transformedResponse.id).toBe(originalResponse.id);
@@ -707,4 +714,3 @@ describe('Interceptors Integration', () => {
     });
   });
 });
-

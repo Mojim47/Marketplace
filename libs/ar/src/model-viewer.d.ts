@@ -1,5 +1,5 @@
 declare namespace JSX {
   interface IntrinsicElements {
-    "model-viewer": Record<string, unknown>;
+    'model-viewer': Record<string, unknown>;
   }
 }

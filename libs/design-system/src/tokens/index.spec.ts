@@ -1,14 +1,14 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
-  colors,
-  typography,
-  spacing,
-  borderRadius,
-  shadows,
-  zIndex,
-  breakpoints,
   animation,
+  borderRadius,
+  breakpoints,
+  colors,
   grid,
+  shadows,
+  spacing,
+  typography,
+  zIndex,
 } from './index';
 
 describe('Design Tokens', () => {

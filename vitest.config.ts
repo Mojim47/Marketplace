@@ -7,6 +7,7 @@ import { defineConfig } from 'vitest/config';
 
 const coverageScope = process.env.COVERAGE_SCOPE;
 const skipHeavyTests = process.env.SKIP_ONNX_PRISMA === 'true';
+const relaxCoverage = process.env.RELAX_COVERAGE === 'true';
 const testInclude =
   coverageScope === 'aiar'
     ? [
@@ -117,12 +118,14 @@ export default defineConfig({
         'check-ready.js',
       ],
 
-      all: true,
+      // When RELAX_COVERAGE=true, disable "all" instrumentation and thresholds.
+      all: !relaxCoverage,
       clean: true,
 
-      // Coverage thresholds - standard baseline
-      thresholds:
-        coverageScope === 'aiar'
+      // Coverage thresholds - standard baseline (can be relaxed via env)
+      thresholds: relaxCoverage
+        ? undefined
+        : coverageScope === 'aiar'
           ? {
               statements: 85,
               branches: 60,

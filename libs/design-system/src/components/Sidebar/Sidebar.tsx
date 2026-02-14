@@ -4,7 +4,8 @@
 
 'use client';
 
-import React, { useState, useCallback, useMemo } from 'react';
+import type React from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { cn } from '../../utils/cn';
 
 export interface SidebarItem {
@@ -55,7 +56,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 
   const toggleGroup = useCallback((id: string) => {
-    setExpandedGroups(prev => {
+    setExpandedGroups((prev) => {
       const next = new Set(prev);
       if (next.has(id)) {
         next.delete(id);
@@ -66,21 +67,29 @@ export const Sidebar: React.FC<SidebarProps> = ({
     });
   }, []);
 
-  const isActive = useCallback((item: SidebarItem): boolean => {
-    if (item.id === activeId) return true;
-    if (item.children) {
-      return item.children.some(child => isActive(child));
-    }
-    return false;
-  }, [activeId]);
+  const isActive = useCallback(
+    (item: SidebarItem): boolean => {
+      if (item.id === activeId) {
+        return true;
+      }
+      if (item.children) {
+        return item.children.some((child) => isActive(child));
+      }
+      return false;
+    },
+    [activeId]
+  );
 
-  const badgeColors = useMemo(() => ({
-    primary: 'bg-[var(--color-brand-primary)] text-white',
-    success: 'bg-[var(--color-semantic-success)] text-white',
-    warning: 'bg-[var(--color-semantic-warning)] text-black',
-    error: 'bg-[var(--color-semantic-error)] text-white',
-    info: 'bg-[var(--color-semantic-info)] text-white',
-  }), []);
+  const badgeColors = useMemo(
+    () => ({
+      primary: 'bg-[var(--color-brand-primary)] text-white',
+      success: 'bg-[var(--color-semantic-success)] text-white',
+      warning: 'bg-[var(--color-semantic-warning)] text-black',
+      error: 'bg-[var(--color-semantic-error)] text-white',
+      info: 'bg-[var(--color-semantic-info)] text-white',
+    }),
+    []
+  );
 
   const renderItem = (item: SidebarItem, depth = 0) => {
     const hasChildren = item.children && item.children.length > 0;
@@ -105,16 +114,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
             'w-full flex items-center gap-3 rounded-xl transition-all duration-200',
             collapsed ? 'justify-center px-3 py-3' : 'px-4 py-3',
             depth > 0 && !collapsed && 'ml-4',
-            itemActive && !item.disabled && [
-              'bg-[var(--color-brand-primary)]/10',
-              'text-[var(--color-brand-primary)]',
-              'font-medium',
-            ],
-            !itemActive && !item.disabled && [
-              'text-[var(--color-text-secondary)]',
-              'hover:bg-[var(--color-interactive-hover)]',
-              'hover:text-[var(--color-text-primary)]',
-            ],
+            itemActive &&
+              !item.disabled && [
+                'bg-[var(--color-brand-primary)]/10',
+                'text-[var(--color-brand-primary)]',
+                'font-medium',
+              ],
+            !itemActive &&
+              !item.disabled && [
+                'text-[var(--color-text-secondary)]',
+                'hover:bg-[var(--color-interactive-hover)]',
+                'hover:text-[var(--color-text-primary)]',
+              ],
             item.disabled && [
               'text-[var(--color-text-disabled)]',
               'cursor-not-allowed',
@@ -125,10 +136,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
           aria-current={item.id === activeId ? 'page' : undefined}
         >
           {/* Icon */}
-          <span className={cn(
-            'flex-shrink-0 w-5 h-5',
-            itemActive && 'text-[var(--color-brand-primary)]'
-          )}>
+          <span
+            className={cn(
+              'flex-shrink-0 w-5 h-5',
+              itemActive && 'text-[var(--color-brand-primary)]'
+            )}
+          >
             {item.icon}
           </span>
 
@@ -141,20 +154,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
               {/* Badge */}
               {item.badge && (
-                <span className={cn(
-                  'px-2 py-0.5 text-xs font-medium rounded-full',
-                  badgeColors[item.badgeColor || 'primary']
-                )}>
+                <span
+                  className={cn(
+                    'px-2 py-0.5 text-xs font-medium rounded-full',
+                    badgeColors[item.badgeColor || 'primary']
+                  )}
+                >
                   {item.badge}
                 </span>
               )}
 
               {/* Expand Icon */}
               {hasChildren && (
-                <ChevronIcon className={cn(
-                  'w-4 h-4 transition-transform duration-200',
-                  isExpanded && 'rotate-90'
-                )} />
+                <ChevronIcon
+                  className={cn(
+                    'w-4 h-4 transition-transform duration-200',
+                    isExpanded && 'rotate-90'
+                  )}
+                />
               )}
             </>
           )}
@@ -176,10 +193,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
           >
             {rtl && item.labelFa ? item.labelFa : item.label}
             {item.badge && (
-              <span className={cn(
-                'ml-2 px-1.5 py-0.5 text-xs rounded-full',
-                badgeColors[item.badgeColor || 'primary']
-              )}>
+              <span
+                className={cn(
+                  'ml-2 px-1.5 py-0.5 text-xs rounded-full',
+                  badgeColors[item.badgeColor || 'primary']
+                )}
+              >
                 {item.badge}
               </span>
             )}
@@ -195,7 +214,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             )}
           >
             <div className="py-1">
-              {item.children!.map(child => renderItem(child, depth + 1))}
+              {item.children?.map((child) => renderItem(child, depth + 1))}
             </div>
           </div>
         )}
@@ -217,24 +236,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
     >
       {/* Header */}
       {header && (
-        <div className={cn(
-          'flex-shrink-0 p-4',
-          'border-b border-[var(--color-border-light)]'
-        )}>
+        <div className={cn('flex-shrink-0 p-4', 'border-b border-[var(--color-border-light)]')}>
           {header}
         </div>
       )}
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto p-3 space-y-1">
-        {items.map(item => renderItem(item))}
+        {items.map((item) => renderItem(item))}
       </nav>
 
       {/* Collapse Toggle */}
-      <div className={cn(
-        'flex-shrink-0 p-3',
-        'border-t border-[var(--color-border-light)]'
-      )}>
+      <div className={cn('flex-shrink-0 p-3', 'border-t border-[var(--color-border-light)]')}>
         <button
           onClick={() => onCollapseToggle?.(!collapsed)}
           className={cn(
@@ -247,26 +260,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
           )}
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
-          <CollapseIcon className={cn(
-            'w-5 h-5 transition-transform duration-300',
-            collapsed && 'rotate-180',
-            rtl && 'rotate-180',
-            collapsed && rtl && 'rotate-0'
-          )} />
-          {!collapsed && (
-            <span className="text-sm">
-              {rtl ? 'جمع کردن' : 'Collapse'}
-            </span>
-          )}
+          <CollapseIcon
+            className={cn(
+              'w-5 h-5 transition-transform duration-300',
+              collapsed && 'rotate-180',
+              rtl && 'rotate-180',
+              collapsed && rtl && 'rotate-0'
+            )}
+          />
+          {!collapsed && <span className="text-sm">{rtl ? 'جمع کردن' : 'Collapse'}</span>}
         </button>
       </div>
 
       {/* Footer */}
       {footer && !collapsed && (
-        <div className={cn(
-          'flex-shrink-0 p-4',
-          'border-t border-[var(--color-border-light)]'
-        )}>
+        <div className={cn('flex-shrink-0 p-4', 'border-t border-[var(--color-border-light)]')}>
           {footer}
         </div>
       )}
@@ -283,7 +291,12 @@ const ChevronIcon: React.FC<{ className?: string }> = ({ className }) => (
 
 const CollapseIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M11 19l-7-7 7-7m8 14l-7-7 7-7"
+    />
   </svg>
 );
 

@@ -1,5 +1,5 @@
-import { jsx as _jsx } from 'react/jsx-runtime';
 import { render } from '@testing-library/react';
+import { jsx as _jsx } from 'react/jsx-runtime';
 import { describe, expect, it, vi } from 'vitest';
 import RootLayout from './layout';
 describe('fa layout', () => {
@@ -11,7 +11,7 @@ describe('fa layout', () => {
     expect(rtlRoot.style.direction).toBe('rtl');
     // font-family is applied on body in RootLayout; in jsdom the nested <body> is inside container
     const renderedBody = container.querySelector('body');
-    expect(renderedBody && renderedBody.style.fontFamily).toContain('Vazir');
+    expect(renderedBody?.style.fontFamily).toContain('Vazir');
     expect(container.textContent).toContain('محتوا');
   });
   it('loads saved mode from localStorage on mount', () => {
