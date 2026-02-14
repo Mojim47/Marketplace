@@ -88,7 +88,7 @@ jobs:
 
       - name: "Upload e2e artifacts"
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: moodian-e2e-logs
           path: |
