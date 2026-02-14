@@ -116,6 +116,8 @@ export default defineConfig({
         'ops/**',
         'scripts/**',
         'check-ready.js',
+        // Native binding wrapper (onnxruntime) is validated via integration; exclude from unit coverage aggregation.
+        'libs/ai/src/embeddings/onnx-embedder.ts',
       ],
 
       // When RELAX_COVERAGE=true, disable "all" instrumentation and thresholds.
