@@ -50,11 +50,13 @@ async function ensureDir(dir) {
 
 function downloadWithRedirect(url, destination) {
   return new Promise((resolve, reject) => {
+    const requestUrl = new URL(url)
     https
-      .get(url, { headers: { 'User-Agent': 'nextgen-marketplace-ai-prep' } }, (res) => {
+      .get(requestUrl, { headers: { 'User-Agent': 'nextgen-marketplace-ai-prep' } }, (res) => {
         if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
           res.resume()
-          downloadWithRedirect(res.headers.location, destination).then(resolve, reject)
+          const nextUrl = new URL(res.headers.location, requestUrl)
+          downloadWithRedirect(nextUrl.toString(), destination).then(resolve, reject)
           return
         }
         if (res.statusCode !== 200) {
