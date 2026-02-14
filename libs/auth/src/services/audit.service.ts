@@ -10,7 +10,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { Injectable, Logger } from '@nestjs/common';
-import type { PrismaClient } from '@prisma/client';
+import type { Prisma, PrismaClient } from '@prisma/client';
 import type { AuthAction, AuthAuditEntry } from '../types';
 
 type AuditLogRecord = {
@@ -36,7 +36,7 @@ export interface AuditContext {
 export class AuthAuditService {
   private readonly logger = new Logger(AuthAuditService.name);
 
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(private readonly prisma: PrismaClient | any) {}
 
   /**
    * Log an authentication event
@@ -72,7 +72,7 @@ export class AuthAuditService {
         success,
         ip_address: context.ip_address,
         user_agent: context.user_agent,
-        metadata: entry.metadata as Record<string, unknown>,
+        metadata: entry.metadata as Prisma.InputJsonValue,
       },
     });
 

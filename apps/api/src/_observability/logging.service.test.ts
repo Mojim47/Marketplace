@@ -266,17 +266,17 @@ describe('LoggingService', () => {
           fc.integer({ min: 100, max: 599 }),
           fc.integer({ min: 1, max: 10000 }),
           (correlationId, method, url, statusCode, duration) => {
-              const context: CorrelationContext = {
-                correlationId,
-                requestId: correlationId,
-                timestamp: Date.now(),
-              };
+            const context: CorrelationContext = {
+              correlationId,
+              requestId: correlationId,
+              timestamp: Date.now(),
+            };
 
-              correlationStorage.run(context, () => {
-                loggingService.logRequest(method, url, statusCode, duration);
+            correlationStorage.run(context, () => {
+              loggingService.logRequest(method, url, statusCode, duration);
 
-                const loggedJson = firstArg(consoleSpy.log);
-                const logEntry: StructuredLogEntry = JSON.parse(loggedJson);
+              const loggedJson = firstArg(consoleSpy.log);
+              const logEntry: StructuredLogEntry = JSON.parse(loggedJson);
 
               // Should include correlation ID
               expect(logEntry.correlationId).toBe(correlationId);

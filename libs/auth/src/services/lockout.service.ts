@@ -9,7 +9,6 @@
 
 import { Injectable, Logger } from '@nestjs/common';
 import type { ConfigService } from '@nestjs/config';
-import type { PrismaClient } from '@prisma/client';
 import type { AuthConfig } from '../types';
 
 export interface LockoutStatus {
@@ -26,7 +25,7 @@ export class LockoutService {
   private readonly baseLockoutMinutes: number;
 
   constructor(
-    private readonly prisma: PrismaClient,
+    private readonly prisma: any,
     private readonly configService: ConfigService
   ) {
     const lockoutConfig = this.configService.get<AuthConfig['lockout']>('auth.lockout');

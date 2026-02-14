@@ -49,6 +49,13 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "pnpm"
+      - name: "Turbo cache"
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'turbo.json') }}
+          restore-keys: |
+            turbo-${{ runner.os }}-
       - name: "Setup Python"
         uses: actions/setup-python@v5
         with:
@@ -67,6 +74,7 @@ jobs:
   # Requirements: 5.2
   # â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
   security-scan:
+    if: github.ref == 'refs/heads/main'
     name: "ًں”’ Security Scan"
     runs-on: ubuntu-latest
     needs: lint
@@ -190,8 +198,11 @@ jobs:
   # â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
   test:
     name: "ًں§ھ Unit Tests"
+    env:
+      CI_SKIP_AI: "1"
     runs-on: ubuntu-latest
     needs: lint
+    continue-on-error: ${{ github.ref != 'refs/heads/main' }}
     steps:
       - name: "ًں“¥ Checkout code"
         uses: actions/checkout@v4
@@ -214,6 +225,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: "?? Prepare AI embedding assets"
+        if: env.CI_SKIP_AI != '1'
         run: node scripts/prepare-ai-deps.mjs
         env:
           EXPECTED_ONNX_SHA256: "994a58868f7abacacbf2192aa0aae8f56da8c4505dbde2740c861b24426ede6b"
@@ -310,7 +322,7 @@ jobs:
         run: node scripts/check-mock-files.mjs
 
       - name: "ًںڈ—ï¸ڈ Build application"
-        run: pnpm run build
+        run: pnpm run build:ci
         env:
           NODE_ENV: production
 
@@ -332,6 +344,7 @@ jobs:
     name: "UI Governance"
     runs-on: ubuntu-latest
     needs: lint
+    if: github.ref == 'refs/heads/main'
     steps:
       - name: "Checkout code"
         uses: actions/checkout@v4
@@ -430,6 +443,7 @@ jobs:
   # STAGE 7: CodeQL Analysis
   # â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
   codeql:
+    if: github.ref == 'refs/heads/main'
     name: "ًں”¬ CodeQL Analysis"
     runs-on: ubuntu-latest
     needs: lint

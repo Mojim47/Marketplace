@@ -62,4 +62,3 @@ export function trackUiEvent(
     ts: now.toISOString(),
   };
 }
-

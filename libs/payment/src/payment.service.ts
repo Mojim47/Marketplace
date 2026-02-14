@@ -16,7 +16,7 @@
  * @module @nextgen/payment
  */
 
-import { Injectable, Inject } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { type PaymentInitRequest, ZarinPalGateway } from './gateways/zarinpal.gateway';
 

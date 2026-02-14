@@ -7,7 +7,9 @@ export function Bulletproof(fallbackValue: any = null) {
       try {
         return await originalMethod.apply(this, args);
       } catch (error: any) {
-        Logger.error(`🛡️ [BULLETPROOF] Shielded crash in ${propertyKey}: ${error?.message ?? error}`);
+        Logger.error(
+          `🛡️ [BULLETPROOF] Shielded crash in ${propertyKey}: ${error?.message ?? error}`
+        );
         return fallbackValue;
       }
     };

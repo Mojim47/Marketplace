@@ -9,7 +9,8 @@ const SLOW_QUERY_MS = 100;
 export class PrismaService
   // Using any to bypass Prisma options typing during fast surgical builds
   extends PrismaClient<any, 'query' | 'warn' | 'error'>
-  implements OnModuleInit, OnModuleDestroy {
+  implements OnModuleInit, OnModuleDestroy
+{
   private readonly logger = new Logger(PrismaService.name);
   private degraded = false;
   private cache = new Map<string, any[]>();

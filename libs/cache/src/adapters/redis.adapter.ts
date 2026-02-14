@@ -509,4 +509,3 @@ export class RedisCacheAdapter implements ICacheProvider {
     return this.client;
   }
 }
-

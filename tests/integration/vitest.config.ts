@@ -28,6 +28,7 @@ export default defineConfig({
       '@nextgen/order': path.resolve(__dirname, '../../libs/order/src'),
       '@nextgen/product': path.resolve(__dirname, '../../libs/product/src'),
       '@nextgen/rma': path.resolve(__dirname, '../../libs/rma/src'),
+      '@nextgen/cache': path.resolve(__dirname, '../../libs/cache/src'),
     },
   },
 });
