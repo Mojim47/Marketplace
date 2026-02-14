@@ -24,7 +24,10 @@ export class LockoutService {
   private readonly maxAttempts: number;
   private readonly baseLockoutMinutes: number;
 
-  constructor(private readonly prisma: any, private readonly configService: ConfigService) {
+  constructor(
+    private readonly prisma: any,
+    private readonly configService: ConfigService
+  ) {
     const lockoutConfig = this.configService.get<AuthConfig['lockout']>('auth.lockout');
     this.maxAttempts = lockoutConfig?.max_failed_attempts || 5;
     this.baseLockoutMinutes = lockoutConfig?.lockout_duration_minutes || 30;
