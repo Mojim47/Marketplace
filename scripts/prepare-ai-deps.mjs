@@ -2,7 +2,7 @@
 // Verified under Mnemosyne Protocol v3.2.1 — Ω-Moji Sovereign Build
 import { createHash } from 'node:crypto'
 import { createReadStream, createWriteStream } from 'node:fs'
-import { mkdir, rename, rm, stat } from 'node:fs/promises'
+import { mkdir, rename, rm, stat, copyFile } from 'node:fs/promises'
 import https from 'node:https'
 import path from 'node:path'
 import { pipeline } from 'node:stream/promises'
@@ -21,6 +21,7 @@ const TARGET_DIR = path.join(ROOT, 'public', 'models', 'ai')
 const TARGET_PATH = path.join(TARGET_DIR, MODEL_FILE)
 const TOKENIZER_PATH = path.join(TARGET_DIR, TOKENIZER_FILE)
 const TOKENIZER_CONFIG_PATH = path.join(TARGET_DIR, TOKENIZER_CONFIG_FILE)
+const MIRROR_DIR = path.join(ROOT, 'ops', 'assets', 'ai', 'models')
 
 function parseArgs() {
   const args = process.argv.slice(2)
@@ -121,6 +122,13 @@ async function prepare() {
     }
     await rename(tokenizerConfigTempPath, TOKENIZER_CONFIG_PATH)
     console.log(`Tokenizer config stored at ${TOKENIZER_CONFIG_PATH}`)
+
+    // Mirror assets into ops/ for offline CI unit tests.
+    await ensureDir(MIRROR_DIR)
+    await copyFile(TARGET_PATH, path.join(MIRROR_DIR, MODEL_FILE))
+    await copyFile(TOKENIZER_PATH, path.join(MIRROR_DIR, TOKENIZER_FILE))
+    await copyFile(TOKENIZER_CONFIG_PATH, path.join(MIRROR_DIR, TOKENIZER_CONFIG_FILE))
+    console.log(`Mirrored assets to ${MIRROR_DIR}`)
   } catch (error) {
     await rm(tempPath).catch(() => {})
     await rm(tokenizerTempPath).catch(() => {})
