@@ -10,6 +10,6 @@
     "noUnusedParameters": false,
     "noUncheckedIndexedAccess": false
   },
-  "include": ["src/**/*.ts", "../errors/src/**/*.ts"],
+  "include": ["src/**/*.ts", "../errors/src/**/*.ts", "../common/src/**/*.ts"],
   "exclude": ["node_modules", "dist", "**/*.spec.ts", "**/*.test.ts"]
 }

@@ -5,8 +5,8 @@
 import { Global, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaClient } from '@prisma/client';
-import { createUniversalMock } from '../common/src/util/black-hole';
-import { provideMock } from '../common/src/util/mock.factory';
+import { createUniversalMock } from '../../common/src/util/black-hole';
+import { provideMock } from '../../common/src/util/mock.factory';
 import { PaymentService } from './payment.service';
 
 // Services

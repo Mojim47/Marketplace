@@ -12,7 +12,7 @@
 
 import { Injectable, Logger } from '@nestjs/common';
 import { AuthenticationError } from '@nextgen/errors';
-import type { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient, UserRole as PrismaUserRole } from '@prisma/client';
 import type {
   AuthenticatedUser,
   LoginRequest,
@@ -333,7 +333,7 @@ export class AuthService {
       data: {
         user_id: user.id,
         tenant_id: tenant.id,
-        role: 'CUSTOMER' as UserRole,
+        role: PrismaUserRole.CUSTOMER,
         is_active: true,
       },
     });
