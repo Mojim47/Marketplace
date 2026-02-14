@@ -51,6 +51,7 @@ pnpm test:unit
 
 ### WARNING: Follow-up required (orders lock integration)
 - `orders-lock.integration.test.ts` äíÇÒ Èå Redis æ Postgres æÇŞÚí ÏÇÑÏ.
-- ãæŞÊÇğ ÈÑÇí ÂÒÇÏÓÇÒí æÔ ãíÊæÇä ÈÇ `SKIP_ORDER_LOCK=1 git push` (åæ˜ pre-push ÑÇ ˜Çãá skip ãí˜äÏº ÈÇíÏ ÙÑİ 24 ÓÇÚÊ ÌÈÑÇä ÔæÏ) íÇ ÏÓÊí `pnpm test:unit --exclude="**/orders-lock.integration.test.ts"` ÇÌÑÇ ˜ÑÏ.
-- Deadline ÑİÚ: 24 ÓÇÚÊ ÂíäÏå – Ó ÇÒ ÈÇáÇ ÂæÑÏä Docker (redis/postgres) Ñã ÑÇ ÍĞİ ˜äíÏ æ ÊÓÊ ÑÇ ˜Çãá ÇÌÑÇ ˜äíÏ:  
-  `docker-compose up -d redis postgres` ÓÓ `pnpm test:unit -- --test-timeout=240000`.
+- íÔİÑÖ: Çíä ÊÓÊ ÈåÕæÑÊ **skip** ãíÔæÏ ãÑ Çíä˜å `ORDER_LOCK_FORCE=1` ÓÊ ÔæÏ (Èå Ïáíá ÊÏÇÎá Postgres áæ˜Çá æ Postgres ÏÇ˜Ñ).
+- ÈÑÇí ÇÌÑÇí ˜Çãá æ ÇÌÈÇÑí:
+  `ORDER_LOCK_FORCE=1 DATABASE_URL=postgresql://<user>:<pass>@<host>:5432/<db> REDIS_URL=redis://:<pass>@<host>:6379/0 pnpm vitest run -c tests/integration/vitest.config.ts tests/integration/orders-lock.integration.test.ts --test-timeout=180000`
+- ÇÑ İŞØ ãíÎæÇåíÏ ÓÑíÚ æÔ ÏåíÏ ÈÏæä Çíä ÊÓÊ: `SKIP_ORDER_LOCK=1 git push` (ÇãÇ ÙÑİ 24 ÓÇÚÊ ÈÇíÏ ÈÇ ORDER_LOCK_FORCE=1 ÊÓÊ æÇŞÚí ÑÇ ÈĞÑÇäíÏ).

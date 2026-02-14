@@ -1,15 +1,39 @@
-const { PrismaClient } = require("../node_modules/@prisma/client");
+const { PrismaClient } = require('../node_modules/@prisma/client');
 (async () => {
   const prisma = new PrismaClient();
   const now = Date.now();
   const slug = `pulse-${now}`;
   const tenant = await prisma.tenant.create({ data: { slug, name: `Pulse Tenant ${now}` } });
-  const user = await prisma.user.create({ data: { tenant_id: tenant.id, email: `pulse${now}@example.com`, password_hash: 'hash' } });
-  const vendor = await prisma.vendor.create({ data: { tenant_id: tenant.id, name: `Pulse Vendor ${now}`, slug: `vendor-${now}` } });
-  const product = await prisma.product.create({ data: { tenant_id: tenant.id, vendor_id: vendor.id, sku: `SKU-${now}`, name: 'Pulse Product', slug: `pulse-prod-${now}`, price: 123.45 } });
-  const asset = await prisma.spatialAsset.create({ data: { tenant_id: tenant.id, product_id: product.id, title: 'Pulse AR Asset', asset_url: 'https://example.com/model.usdz', format: 'usdz' } });
+  const user = await prisma.user.create({
+    data: { tenant_id: tenant.id, email: `pulse${now}@example.com`, password_hash: 'hash' },
+  });
+  const vendor = await prisma.vendor.create({
+    data: { tenant_id: tenant.id, name: `Pulse Vendor ${now}`, slug: `vendor-${now}` },
+  });
+  const product = await prisma.product.create({
+    data: {
+      tenant_id: tenant.id,
+      vendor_id: vendor.id,
+      sku: `SKU-${now}`,
+      name: 'Pulse Product',
+      slug: `pulse-prod-${now}`,
+      price: 123.45,
+    },
+  });
+  const asset = await prisma.spatialAsset.create({
+    data: {
+      tenant_id: tenant.id,
+      product_id: product.id,
+      title: 'Pulse AR Asset',
+      asset_url: 'https://example.com/model.usdz',
+      format: 'usdz',
+    },
+  });
   const start = Date.now();
-  const updated = await prisma.product.update({ where: { id: product.id }, data: { price: 200.0 } });
+  const updated = await prisma.product.update({
+    where: { id: product.id },
+    data: { price: 200.0 },
+  });
   const latency = Date.now() - start;
   await prisma.spatialAsset.delete({ where: { id: asset.id } });
   await prisma.product.delete({ where: { id: product.id } });

@@ -19,13 +19,13 @@ import { FeatureFlagModule } from './feature-flag/feature-flag.module';
 import { HealthModule } from './health/health.module';
 import { MonitoringModule } from './monitoring/monitoring.module';
 import { OrdersModule } from './orders/orders.module';
+import { PaymentModule } from './payment/payment.module';
 import { ProductsModule } from './products/products.module';
 import { RedisModule } from './redis/redis.module';
 import { SearchModule } from './search/search.module';
 import { TenantModule } from './tenant/tenant.module';
 import { UsersModule } from './users/users.module';
 import { VendorModule } from './vendor/vendor.module';
-import { PaymentModule } from './payment/payment.module';
 
 import { RedisThrottlerStorage } from './common/guards/redis-throttler.storage';
 import { UserRateLimitGuard } from './common/guards/user-rate-limit.guard';

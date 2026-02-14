@@ -1,20 +1,20 @@
+import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 import {
   Controller,
-  Get,
-  Logger,
-  Inject,
-  UseGuards,
   ForbiddenException,
+  Get,
   HttpException,
   HttpStatus,
+  Inject,
+  Logger,
   Req,
+  UseGuards,
 } from '@nestjs/common';
-import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
+import type { Request } from 'express';
+import { type HeroAsset, HeroAssetSchema } from '../../../libs/common/src/contracts/hero.contract';
 import { Bulletproof } from '../../../libs/common/src/decorators/bulletproof';
 import { PrismaService } from '../../../libs/prisma/src/prisma.service';
-import { HeroAssetSchema, type HeroAsset } from '../../../libs/common/src/contracts/hero.contract';
-import type { Request } from 'express';
 
 const TARGET_ASSET_ID = 'cmlfxxjxz0006foldf4gefkav';
 const HERO_CACHE_KEY = 'hero-asset-cache';
@@ -29,7 +29,7 @@ export class NeonThrottlerGuard extends ThrottlerGuard {
         theme: 'neon',
         message: 'Rate limit exceeded. Please wait before trying again.',
       },
-      HttpStatus.TOO_MANY_REQUESTS,
+      HttpStatus.TOO_MANY_REQUESTS
     );
   }
 }
@@ -40,7 +40,7 @@ export class AppController {
 
   constructor(
     private readonly prisma: PrismaService,
-    @Inject(CACHE_MANAGER) private readonly cache: Cache,
+    @Inject(CACHE_MANAGER) private readonly cache: Cache
   ) {}
 
   @Get('/v1/marketplace/hero')
@@ -57,10 +57,11 @@ export class AppController {
     const now = Date.now();
 
     // Stale-while-revalidate cache
-    const cached = (await this.cache.get<{
-      data: HeroAsset;
-      fetchedAt: number;
-    }>(HERO_CACHE_KEY)) ?? null;
+    const cached =
+      (await this.cache.get<{
+        data: HeroAsset;
+        fetchedAt: number;
+      }>(HERO_CACHE_KEY)) ?? null;
 
     if (cached && now - cached.fetchedAt <= HERO_CACHE_TTL_MS) {
       return cached.data;
@@ -89,7 +90,11 @@ export class AppController {
         spatialData: asset.metadata ?? {},
       });
 
-      await this.cache.set(HERO_CACHE_KEY, { data: parsed, fetchedAt: now }, HERO_CACHE_MAX_TTL_SECONDS);
+      await this.cache.set(
+        HERO_CACHE_KEY,
+        { data: parsed, fetchedAt: now },
+        HERO_CACHE_MAX_TTL_SECONDS
+      );
 
       return parsed;
     } catch (error: any) {
@@ -107,9 +112,7 @@ export class AppController {
 
   private enforceOrigin(req: any) {
     const allowed =
-      process.env.FRONTEND_ORIGIN ||
-      process.env.NEXT_PUBLIC_APP_ORIGIN ||
-      'http://localhost:3000';
+      process.env.FRONTEND_ORIGIN || process.env.NEXT_PUBLIC_APP_ORIGIN || 'http://localhost:3000';
     const origin = req.headers.origin ?? req.headers.referer ?? '';
     if (origin && !origin.toString().startsWith(allowed)) {
       throw new ForbiddenException({
@@ -128,7 +131,7 @@ export class AppController {
           theme: 'neon',
           message: 'Our nodes are syncing. Please try again shortly.',
         },
-        HttpStatus.SERVICE_UNAVAILABLE,
+        HttpStatus.SERVICE_UNAVAILABLE
       );
     }
   }

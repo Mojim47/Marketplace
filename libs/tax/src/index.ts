@@ -17,4 +17,3 @@ export class SenaRepo {}
 export class SenaSubmission {}
 export class TaxReport {}
 export class TaxReportGenerator {}
-

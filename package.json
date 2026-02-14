@@ -9,8 +9,8 @@
     "pnpm": ">=9.0.0"
   },
   "scripts": {
-    "build": "pnpm run build:ci",
-    "build:ci": "node -e \"require('fs').mkdirSync('dist',{recursive:true});require('fs').writeFileSync('dist/ok.txt','ok');console.log('ZOMBIE_BUILD');\" --",
+    "build": "turbo run build --cache-dir .turbo",
+    "build:ci": "turbo run lint typecheck test build --cache-dir .turbo",
     "build:prod": "turbo run build:prod",
     "dev": "turbo run dev",
     "dev:api": "turbo run dev --filter=@nextgen/api-v3",
@@ -173,23 +173,10 @@
   },
   "pnpm": {
     "peerDependencyRules": {
-      "ignoreMissing": [
-        "@types/react",
-        "react",
-        "react-dom"
-      ]
+      "ignoreMissing": ["@types/react", "react", "react-dom"]
     },
-    "onlyBuiltDependencies": [
-      "@prisma/client"
-    ],
-    "ignoredBuiltDependencies": [
-      "onnxruntime-node",
-      "puppeteer",
-      "playwright"
-    ]
+    "onlyBuiltDependencies": ["@prisma/client"],
+    "ignoredBuiltDependencies": ["onnxruntime-node", "puppeteer", "playwright"]
   },
-  "workspaces": [
-    "apps/*",
-    "libs/*"
-  ]
+  "workspaces": ["apps/*", "libs/*"]
 }

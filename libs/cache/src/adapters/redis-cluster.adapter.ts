@@ -764,4 +764,3 @@ export class RedisClusterAdapter implements ICacheProvider, IPubSubProvider {
     await this.cluster.quit();
   }
 }
-
