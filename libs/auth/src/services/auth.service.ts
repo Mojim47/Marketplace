@@ -12,7 +12,6 @@
 
 import { Injectable, Logger } from '@nestjs/common';
 import { AuthenticationError } from '@nextgen/errors';
-import { Prisma, PrismaClient } from '@prisma/client';
 import type {
   AuthenticatedUser,
   LoginRequest,
@@ -41,7 +40,7 @@ export class AuthService {
 
   constructor(
     // Prisma schema در این شاخه فاقد مدل‌های مورد استفاده است؛ برای عبور از تایپ‌چک در حال حاضر any نگه می‌داریم
-    private readonly prisma: PrismaClient | any,
+    private readonly prisma: any,
     private readonly passwordService: PasswordService,
     private readonly tokenService: TokenService,
     private readonly sessionService: SessionService,
