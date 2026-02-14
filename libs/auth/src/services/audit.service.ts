@@ -36,7 +36,7 @@ export interface AuditContext {
 export class AuthAuditService {
   private readonly logger = new Logger(AuthAuditService.name);
 
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(private readonly prisma: PrismaClient | any) {}
 
   /**
    * Log an authentication event
