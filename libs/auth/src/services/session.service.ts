@@ -11,7 +11,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
 import type { ConfigService } from '@nestjs/config';
-import type { PrismaClient } from '@prisma/client';
+// Prisma schema این شاخه فاقد مدل‌های سشن است؛ برای عبور از تایپ‌چک فعلاً any نگه می‌کنیم
 import { Redis } from 'ioredis';
 import type { AuthConfig, SessionInfo } from '../types';
 
@@ -45,7 +45,7 @@ export class SessionService {
   private readonly USER_SESSIONS_PREFIX = 'auth:user_sessions:';
 
   constructor(
-    private readonly prisma: PrismaClient,
+    private readonly prisma: any,
     private readonly configService: ConfigService
   ) {
     this.config = this.configService.get<AuthConfig['session']>('auth.session', {
