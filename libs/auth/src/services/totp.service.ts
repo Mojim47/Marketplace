@@ -25,7 +25,10 @@ export class TotpService {
   private readonly PERIOD = 30; // seconds
   private readonly ALGORITHM = 'sha1';
 
-  constructor(private readonly prisma: any, private readonly configService: ConfigService) {
+  constructor(
+    private readonly prisma: any,
+    private readonly configService: ConfigService
+  ) {
     const totpConfig = this.configService.get<AuthConfig['totp']>('auth.totp');
     this.issuer = totpConfig?.issuer || 'NextGen Marketplace';
     this.window = totpConfig?.window || 1;
