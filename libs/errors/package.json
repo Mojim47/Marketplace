@@ -6,7 +6,7 @@
   "types": "src/index.ts",
   "license": "MIT",
   "dependencies": {
-    "@nestjs/common": "^10.0.0",
+    "@nestjs/common": "^10.4.22",
     "@nestjs/core": "^10.0.0"
   }
 }
