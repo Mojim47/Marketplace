@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 
 export interface ARViewerProps {
   modelId: string;
@@ -10,23 +10,10 @@ export interface ARViewerProps {
   cameraControls?: boolean;
   backgroundColor?: string;
   exposure?: number;
-}
-
-function resolveModelUrl(modelId: string, modelUrl?: string): string {
-  if (modelUrl) {
-    return modelUrl;
-  }
-  if (modelId.startsWith('http://') || modelId.startsWith('https://')) {
-    return modelId;
-  }
-  if (modelId.startsWith('/')) {
-    return modelId;
-  }
-  const base = process.env.NEXT_PUBLIC_AR_MODEL_BASE_URL?.replace(/\/+$/, '');
-  if (base) {
-    return `${base}/${modelId}`;
-  }
-  return `/models/${modelId}.glb`;
+  onLoad?: () => void;
+  onError?: (error: Error) => void;
+  className?: string;
+  style?: React.CSSProperties;
 }
 
 export function ARViewer({
@@ -39,37 +26,113 @@ export function ARViewer({
   cameraControls = true,
   backgroundColor = '#f8fafc',
   exposure = 1,
+  onLoad,
+  onError,
+  className,
+  style,
 }: ARViewerProps) {
-  useEffect(() => {
-    import('@google/model-viewer');
-  }, []);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
 
-  const resolvedModel = useMemo(() => resolveModelUrl(modelId, modelUrl), [modelId, modelUrl]);
+  useEffect(() => {
+    import('@google/model-viewer').catch((err) => {
+      setHasError(true);
+      onError?.(err instanceof Error ? err : new Error('Failed to load AR library'));
+    });
+  }, [onError]);
+
+  const resolvedModel = useMemo(() => {
+    if (modelUrl) return modelUrl;
+    if (modelId.startsWith('http') || modelId.startsWith('/')) return modelId;
+    const base = process.env.NEXT_PUBLIC_AR_MODEL_BASE_URL?.replace(/\/+$/, '');
+    return base ? `${base}/${modelId}` : `/models/${modelId}.glb`;
+  }, [modelId, modelUrl]);
+
+  const handleLoad = useCallback(() => {
+    setIsLoading(false);
+    onLoad?.();
+  }, [onLoad]);
+
+  const handleError = useCallback(() => {
+    setHasError(true);
+    onError?.(new Error('Failed to load model'));
+  }, [onError]);
+
+  if (hasError) {
+    return (
+      <div style={{
+        width: '100%',
+        height: 420,
+        background: backgroundColor,
+        borderRadius: 12,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: '#ef4444',
+        ...style,
+      }}>
+        خطا در بارگذاری مدل
+      </div>
+    );
+  }
 
   return (
-    <div style={{ width: '100%', background: backgroundColor, borderRadius: 12, padding: 12 }}>
+    <div
+      className={className}
+      style={{
+        width: '100%',
+        background: backgroundColor,
+        borderRadius: 12,
+        padding: 12,
+        ...style,
+      }}
+    >
+      {isLoading && (
+        <div style={{
+          width: '100%',
+          height: 420,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: '#64748b',
+        }}>
+          در حال بارگذاری...
+        </div>
+      )}
+
       <model-viewer
         src={resolvedModel}
         poster={posterUrl}
-        ar={arEnabled ? 'true' : 'false'}
+        ar={arEnabled}
         ar-modes="webxr scene-viewer quick-look"
-        camera-controls={cameraControls ? 'true' : 'false'}
-        auto-rotate={autoRotate ? 'true' : 'false'}
+        camera-controls={cameraControls}
+        auto-rotate={autoRotate}
         exposure={exposure}
-        shadow-intensity="0.7"
-        style={{ width: '100%', height: 420, background: backgroundColor, borderRadius: 10 }}
+        shadow-intensity={0.7}  // ✅ number
+        style={{
+          width: '100%',
+          height: 420,
+          background: backgroundColor,
+          borderRadius: 10,
+          display: isLoading ? 'none' : 'block',
+        }}
+        onLoad={handleLoad}
+        onError={handleError}
       />
-      <div style={{ marginTop: 8, fontSize: 12, color: '#64748b' }}>
-        برای تجربه واقعیت افزوده، دکمه AR را روی دستگاه‌های سازگار لمس کنید.
-      </div>
-      {usdzUrl ? (
+
+      {usdzUrl && (
         <a
           href={usdzUrl}
-          style={{ display: 'inline-block', marginTop: 6, fontSize: 12, color: '#0f172a' }}
+          style={{
+            display: 'inline-block',
+            marginTop: 8,
+            fontSize: 12,
+            color: '#0f172a',
+          }}
         >
-          دانلود فایل USDZ برای iOS
+          دانلود برای iOS
         </a>
-      ) : null}
+      )}
     </div>
   );
 }
