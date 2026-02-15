@@ -122,6 +122,14 @@ jobs:
           sarif_file: "trivy-fs-results.sarif"
           category: "trivy-filesystem"
 
+      - name: "📦 Artifact Trivy filesystem SARIF"
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: trivy-fs-results
+          path: trivy-fs-results.sarif
+          retention-days: 7
+
       # ─────────────────────────────────────────────────────────────────────
       # Trivy Config Scan - Scans IaC files (Dockerfile, K8s, Terraform)
       # ─────────────────────────────────────────────────────────────────────
@@ -151,6 +159,14 @@ jobs:
         with:
           sarif_file: "trivy-config-results.sarif"
           category: "trivy-config"
+
+      - name: "📦 Artifact Trivy config SARIF"
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: trivy-config-results
+          path: trivy-config-results.sarif
+          retention-days: 7
 
       # ─────────────────────────────────────────────────────────────────────
       # Snyk Security Scan - Additional vulnerability scanning
