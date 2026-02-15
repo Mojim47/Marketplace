@@ -178,6 +178,7 @@
     "onlyBuiltDependencies": ["@prisma/client"],
     "ignoredBuiltDependencies": ["onnxruntime-node", "puppeteer", "playwright"],
     "overrides": {
+      "qs": "6.14.2",
       "axios": "1.13.5",
       "fast-xml-parser": "5.3.4",
       "tar@*": "7.5.7"
