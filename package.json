@@ -84,12 +84,12 @@
   "dependencies": {
     "@nestjs/bullmq": "^10.0.0",
     "@nestjs/cache-manager": "^2.0.0",
-    "@nestjs/common": "^10.0.0",
+    "@nestjs/common": "^10.4.22",
     "@nestjs/config": "^3.0.0",
-    "@nestjs/core": "^10.0.0",
+    "@nestjs/core": "^10.4.22",
     "@nestjs/jwt": "^10.0.0",
     "@nestjs/passport": "^10.0.0",
-    "@nestjs/platform-fastify": "^10.0.0",
+    "@nestjs/platform-fastify": "^10.4.22",
     "@nestjs/schedule": "^4.0.0",
     "@nestjs/swagger": "^7.0.0",
     "@nestjs/terminus": "^10.0.0",
@@ -123,14 +123,11 @@
     "zod": "^3.22.0"
   },
   "devDependencies": {
-    "@huggingface/tokenizers": "^0.1.1",
-    "dompurify": "^3.0.0",
-    "jsdom": "^23.0.0",
-    "onnxruntime-node": "^1.20.1",
     "@axe-core/playwright": "^4.10.1",
     "@biomejs/biome": "^1.5.0",
     "@faker-js/faker": "^10.1.0",
     "@fast-check/vitest": "^0.2.4",
+    "@huggingface/tokenizers": "^0.1.1",
     "@lhci/cli": "^0.15.1",
     "@nestjs/cli": "^10.0.0",
     "@nestjs/schematics": "^10.0.0",
@@ -154,8 +151,11 @@
     "@vitest/coverage-v8": "^2.1.9",
     "autoprefixer": "^10.4.20",
     "detect-secrets": "^1.0.6",
+    "dompurify": "^3.0.0",
     "fast-check": "^3.15.0",
     "husky": "^9.0.0",
+    "jsdom": "^23.0.0",
+    "onnxruntime-node": "^1.20.1",
     "pa11y-ci": "^3.1.0",
     "postcss": "^8.4.47",
     "prisma": "5.19.1",
@@ -168,15 +168,33 @@
     "typescript": "^5.3.0",
     "vitest": "2.1.9"
   },
+  "resolutions": {
+    "next": "15.4.7",
+    "react": "19.0.0-rc.1",
+    "react-dom": "19.0.0-rc.1",
+    "fastify": "5.7.3",
+    "lodash": "4.17.23",
+    "js-yaml": "4.1.1"
+  },
   "prisma": {
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
   },
   "pnpm": {
     "peerDependencyRules": {
-      "ignoreMissing": ["@types/react", "react", "react-dom"]
+      "ignoreMissing": [
+        "@types/react",
+        "react",
+        "react-dom"
+      ]
     },
-    "onlyBuiltDependencies": ["@prisma/client"],
-    "ignoredBuiltDependencies": ["onnxruntime-node", "puppeteer", "playwright"],
+    "onlyBuiltDependencies": [
+      "@prisma/client"
+    ],
+    "ignoredBuiltDependencies": [
+      "onnxruntime-node",
+      "puppeteer",
+      "playwright"
+    ],
     "overrides": {
       "qs": "6.14.2",
       "axios": "1.13.5",
@@ -191,5 +209,8 @@
       "js-yaml": "4.1.1"
     }
   },
-  "workspaces": ["apps/*", "libs/*"]
+  "workspaces": [
+    "apps/*",
+    "libs/*"
+  ]
 }
