@@ -97,7 +97,7 @@
     "@prisma/client": "5.19.1",
     "@willsoto/nestjs-prometheus": "^6.0.2",
     "argon2": "^0.31.0",
-    "axios": "^1.6.0",
+    "axios": "^1.13.5",
     "bullmq": "^5.0.0",
     "cache-manager": "^5.0.0",
     "cache-manager-ioredis-yet": "^2.0.0",
@@ -176,7 +176,12 @@
       "ignoreMissing": ["@types/react", "react", "react-dom"]
     },
     "onlyBuiltDependencies": ["@prisma/client"],
-    "ignoredBuiltDependencies": ["onnxruntime-node", "puppeteer", "playwright"]
+    "ignoredBuiltDependencies": ["onnxruntime-node", "puppeteer", "playwright"],
+    "overrides": {
+      "axios": "1.13.5",
+      "fast-xml-parser": "5.3.4",
+      "tar@*": "7.5.7"
+    }
   },
   "workspaces": ["apps/*", "libs/*"]
 }

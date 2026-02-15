@@ -1,11 +1,15 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 // @vitest-environment node
 import { describe, expect, it, vi } from 'vitest';
 import { OnnxEmbedder } from './onnx-embedder';
 
-const ASSETS_ROOT = path.join('ops', 'assets', 'ai');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const ROOT = path.resolve(__dirname, '../../../..');
+const ASSETS_ROOT = path.join(ROOT, 'ops', 'assets', 'ai');
 const CHECKSUM_FILE = path.join(ASSETS_ROOT, 'CHECKSUMS.sha256');
 const modelPath = path.join(ASSETS_ROOT, 'models', 'model.onnx');
 const tokenizerPath = path.join(ASSETS_ROOT, 'models', 'tokenizer.json');

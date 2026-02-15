@@ -16,5 +16,8 @@ apps/admin/.next/
 public/models/
 apps/web/public/models/
 models/
+!ops/assets/ai/models/
+!ops/assets/ai/models/tokenizer.json
+!ops/assets/ai/models/tokenizer_config.json
 coverage/
 *.lcov
