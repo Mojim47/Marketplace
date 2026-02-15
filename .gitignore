@@ -11,6 +11,9 @@ out/
 test-results/
 .lighthouseci/
 *.tsbuildinfo
+.vscode/
+artifacts/
+trivy-local.json
 apps/web/.next/
 apps/admin/.next/
 public/models/
