@@ -136,6 +136,15 @@ jobs:
           exit-code: "1"
           ignore-unfixed: true
 
+      - name: "🛡️ Ensure Trivy config SARIF exists"
+        if: always()
+        run: |
+          if [ ! -f trivy-config-results.sarif ]; then
+            echo "trivy-config-results.sarif missing, generating fallback (non-blocking)..."
+            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+            trivy config --format sarif -o trivy-config-results.sarif --severity CRITICAL,HIGH,MEDIUM --exit-code 0 .
+          fi
+
       - name: "📤 Upload Trivy config scan results"
         uses: github/codeql-action/upload-sarif@v3
         if: always()
@@ -219,13 +228,6 @@ jobs:
           python-version: '3.x'
       - name: "📥 Install dependencies"
         run: pnpm install --frozen-lockfile
-
-      - name: "?? Prepare AI embedding assets"
-        run: node scripts/prepare-ai-deps.mjs
-        env:
-          EXPECTED_ONNX_SHA256: "994a58868f7abacacbf2192aa0aae8f56da8c4505dbde2740c861b24426ede6b"
-          EXPECTED_TOKENIZER_SHA256: "da0e79933b9ed51798a3ae27893d3c5fa4a201126cef75586296df9b4d2c62a0"
-          EXPECTED_TOKENIZER_CONFIG_SHA256: "715e129705e35dae9a000c6db9710ce01049151a6605c282723171c3af57c44c"
 
       - name: "🧪 Run unit tests with coverage"
         run: pnpm run test:unit --coverage
