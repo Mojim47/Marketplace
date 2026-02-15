@@ -72,4 +72,34 @@ describe('AISearchService', () => {
     const stats = await service.getCacheStats();
     expect(stats?.entries).toBeGreaterThan(0);
   });
+
+  it('handles cache miss path with empty hits and suggestions', async () => {
+    const searchService = {
+      ...makeProductSearchService(),
+      search: vi.fn().mockResolvedValue({ hits: [], suggestions: ['گوشی'] }),
+    };
+    const service = new AISearchService(searchService as any);
+    await service.onModuleInit();
+
+    const result = await service.search({ query: 'phone', useCache: false });
+
+    expect(result.fromCache).toBe(false);
+    expect(result.response.content).toContain('هیچ نتیجه دقیقی پیدا نشد.');
+    expect(result.response.content).toContain('پیشنهاد جستجو:');
+    expect(searchService.search).toHaveBeenCalledTimes(1);
+  });
+
+  it('invalidates cached topics after semantic cache fill', async () => {
+    const searchService = makeProductSearchService();
+    const service = new AISearchService(searchService as any);
+    await service.onModuleInit();
+
+    await service.search({ query: 'laptop', topics: ['products', 'product:123'] });
+    const byProduct = await service.invalidateByTopic('product:123');
+    const byAll = await service.invalidateByTopic('products');
+
+    expect(byProduct + byAll).toBeGreaterThanOrEqual(1);
+    const stats = await service.getCacheStats();
+    expect(stats.entries).toBeGreaterThanOrEqual(0);
+  });
 });
