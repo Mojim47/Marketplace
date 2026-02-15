@@ -1,10 +1,10 @@
 ﻿'use client';
 
+import Link from 'next/link';
+import { useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/Button';
 import { useTraceId } from '@/hooks/use-trace-id';
 import { emitUiEvent } from '@/lib/ui-telemetry';
-import Link from 'next/link';
-import { useEffect, useMemo } from 'react';
 
 export default function CheckoutSuccessPage() {
   const traceId = useTraceId();

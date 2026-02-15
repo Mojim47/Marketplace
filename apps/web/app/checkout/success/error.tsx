@@ -1,14 +1,17 @@
 'use client';
 
+import { useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
 import { useTraceId } from '@/hooks/use-trace-id';
 import { emitUiEvent } from '@/lib/ui-telemetry';
-import { useEffect } from 'react';
 
 export default function CheckoutSuccessError({
   error,
   reset,
-}: { error: Error; reset: () => void }) {
+}: {
+  error: Error;
+  reset: () => void;
+}) {
   const traceId = useTraceId();
 
   useEffect(() => {

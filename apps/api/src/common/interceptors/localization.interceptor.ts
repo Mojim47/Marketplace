@@ -24,8 +24,8 @@ import {
 } from '@nestjs/common';
 import {
   type IranianCurrencyFormatter,
-  type JalaliConverter,
   iranianCurrency,
+  type JalaliConverter,
   jalaliConverter,
 } from '@nextgen/localization';
 import type { Observable } from 'rxjs';

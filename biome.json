@@ -1,20 +1,22 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.5.0/schema.json",
-  "organizeImports": {
-    "enabled": true
-  },
+  "$schema": "https://biomejs.dev/schemas/2.3.15/schema.json",
+  "assist": { "actions": { "source": { "organizeImports": "on" } } },
   "files": {
-    "include": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.json"],
-    "ignore": [
-      "node_modules/**",
-      "dist/**",
-      ".next/**",
-      "coverage/**",
-      "*.min.js",
-      "nextgen-api.postman_collection.json",
-      "scripts/nightmare-analysis.ts",
-      "prisma/migrations/**",
-      "pnpm-lock.yaml"
+    "includes": [
+      "**/*.ts",
+      "**/*.tsx",
+      "**/*.js",
+      "**/*.jsx",
+      "**/*.json",
+      "!**/node_modules/**",
+      "!**/dist/**",
+      "!**/.next/**",
+      "!**/coverage/**",
+      "!**/*.min.js",
+      "!**/nextgen-api.postman_collection.json",
+      "!**/scripts/nightmare-analysis.ts",
+      "!**/prisma/migrations/**",
+      "!**/pnpm-lock.yaml"
     ],
     "maxSize": 2097152
   },
@@ -66,20 +68,20 @@
   },
   "overrides": [
     {
-      "include": ["apps/api-elysia/**"],
+      "includes": ["**/apps/api-elysia/**"],
       "javascript": {
         "globals": ["Bun"]
       },
       "linter": {
         "rules": {
           "suspicious": {
-            "noConsoleLog": "off"
+            "noConsole": { "level": "off", "options": { "allow": ["log"] } }
           }
         }
       }
     },
     {
-      "include": ["**/*.test.ts", "**/*.spec.ts", "**/*.test.tsx", "**/*.spec.tsx"],
+      "includes": ["**/*.test.ts", "**/*.spec.ts", "**/*.test.tsx", "**/*.spec.tsx"],
       "linter": {
         "rules": {
           "suspicious": {
@@ -89,7 +91,7 @@
       }
     },
     {
-      "include": ["apps/web/**", "apps/admin/**"],
+      "includes": ["**/apps/web/**", "**/apps/admin/**"],
       "linter": {
         "rules": {
           "correctness": {

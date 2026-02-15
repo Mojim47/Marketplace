@@ -1,11 +1,11 @@
 ﻿'use client';
 
+import { useRouter } from 'next/navigation';
+import { useEffect, useMemo } from 'react';
 import { LocaleSwitch } from '@/components/LocaleSwitch';
 import { Button } from '@/components/ui/Button';
 import { useTraceId } from '@/hooks/use-trace-id';
 import { emitUiEvent } from '@/lib/ui-telemetry';
-import { useRouter } from 'next/navigation';
-import { useEffect, useMemo } from 'react';
 
 type CartItem = {
   id: string;

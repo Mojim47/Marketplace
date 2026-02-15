@@ -1,1 +1,1 @@
-export { CircuitBreakerService, type CircuitBreakerOptions } from './circuit-breaker.service';
+export { type CircuitBreakerOptions, CircuitBreakerService } from './circuit-breaker.service';

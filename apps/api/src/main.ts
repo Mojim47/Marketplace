@@ -1,10 +1,9 @@
 import 'reflect-metadata';
-import * as http from 'http';
 import { CacheModule } from '@nestjs/cache-manager';
 import { Controller, Get, Logger, Module } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
-import { NestFactory } from '@nestjs/core';
+import { APP_GUARD, NestFactory } from '@nestjs/core';
 import { ThrottlerModule } from '@nestjs/throttler';
+import * as http from 'http';
 import { PrismaService } from '../../../libs/prisma/src/prisma.service';
 import { AppController, NeonThrottlerGuard } from './app.controller';
 

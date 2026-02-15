@@ -1,5 +1,5 @@
-import path from 'path';
 import { defineConfig } from '@playwright/test';
+import path from 'path';
 
 const reuseExistingServer = Boolean(process.env.UI_SERVER_ALREADY_RUNNING);
 

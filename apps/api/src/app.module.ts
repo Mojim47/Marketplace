@@ -6,14 +6,24 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule } from '@nestjs/throttler';
+// Common
+import { validateEnv } from '@nextgen/config';
 import type Redis from 'ioredis';
-
-import { AppController } from './app.controller';
-
+import { CorrelationIdMiddleware } from './_middleware/correlation-id.middleware';
+import { ObservabilityModule } from './_observability/observability.module';
 import { AdminModule } from './admin/admin.module';
+import { AppController } from './app.controller';
 import { AuditModule } from './audit/audit.module';
 // Modules
 import { AuthModule } from './auth/auth.module';
+// Filters
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import { RedisThrottlerStorage } from './common/guards/redis-throttler.storage';
+import { UserRateLimitGuard } from './common/guards/user-rate-limit.guard';
+import { AuditInterceptor } from './common/interceptors/audit.interceptor';
+import { LocalizationInterceptor } from './common/interceptors/localization.interceptor';
+// Interceptors
+import { SecurityHeadersInterceptor } from './common/interceptors/security-headers.interceptor';
 import { DatabaseModule } from './database/database.module';
 import { FeatureFlagModule } from './feature-flag/feature-flag.module';
 import { HealthModule } from './health/health.module';
@@ -23,27 +33,11 @@ import { PaymentModule } from './payment/payment.module';
 import { ProductsModule } from './products/products.module';
 import { RedisModule } from './redis/redis.module';
 import { SearchModule } from './search/search.module';
+// Security Module
+import { RateLimitGuard, SecurityModule, WAFGuard } from './shared/security/security.module';
 import { TenantModule } from './tenant/tenant.module';
 import { UsersModule } from './users/users.module';
 import { VendorModule } from './vendor/vendor.module';
-
-import { RedisThrottlerStorage } from './common/guards/redis-throttler.storage';
-import { UserRateLimitGuard } from './common/guards/user-rate-limit.guard';
-// Security Module
-import { RateLimitGuard, SecurityModule, WAFGuard } from './shared/security/security.module';
-
-import { AuditInterceptor } from './common/interceptors/audit.interceptor';
-import { LocalizationInterceptor } from './common/interceptors/localization.interceptor';
-// Interceptors
-import { SecurityHeadersInterceptor } from './common/interceptors/security-headers.interceptor';
-
-// Filters
-import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
-
-// Common
-import { validateEnv } from '@nextgen/config';
-import { CorrelationIdMiddleware } from './_middleware/correlation-id.middleware';
-import { ObservabilityModule } from './_observability/observability.module';
 
 @Global()
 @Module({

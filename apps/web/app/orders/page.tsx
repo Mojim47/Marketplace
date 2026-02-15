@@ -1,10 +1,10 @@
 ﻿'use client';
 
+import { useEffect, useMemo } from 'react';
 import { LocaleSwitch } from '@/components/LocaleSwitch';
 import { Button } from '@/components/ui/Button';
 import { useTraceId } from '@/hooks/use-trace-id';
 import { emitUiEvent } from '@/lib/ui-telemetry';
-import { useEffect, useMemo } from 'react';
 
 type Order = {
   id: string;

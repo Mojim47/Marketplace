@@ -1,6 +1,5 @@
-import { createHash, createHmac, timingSafeEqual } from 'crypto';
-import { randomUUID } from 'crypto';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { createHash, createHmac, randomUUID, timingSafeEqual } from 'crypto';
 
 /**
  * Payment data that should never be stored

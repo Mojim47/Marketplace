@@ -2,7 +2,7 @@
 // Current User Decorator - Extract Current User from Request
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { type ExecutionContext, createParamDecorator } from '@nestjs/common';
+import { createParamDecorator, type ExecutionContext } from '@nestjs/common';
 import type { AuthenticatedUser } from '../types';
 
 /**

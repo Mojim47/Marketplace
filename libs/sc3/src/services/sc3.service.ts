@@ -30,7 +30,7 @@ import type {
 } from '../types';
 import type { AttestationService, AttestationVerificationOptions } from './attestation.service';
 import type { BuildVerificationOptions, BuildVerifierService } from './build-verifier.service';
-import type { DependencyScanOptions, DependencyScannerService } from './dependency-scanner.service';
+import type { DependencyScannerService, DependencyScanOptions } from './dependency-scanner.service';
 import type { ImmutableLogService, LogVerificationOptions } from './immutable-log.service';
 import type { ProvenanceService, ProvenanceVerificationOptions } from './provenance.service';
 

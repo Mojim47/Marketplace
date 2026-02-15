@@ -2,6 +2,7 @@ import { render } from '@testing-library/react';
 import { jsx as _jsx } from 'react/jsx-runtime';
 import { describe, expect, it } from 'vitest';
 import Page from './page';
+
 describe('admin/tax-reports page (fa)', () => {
   it('renders tax reports page in Farsi', () => {
     const { getByText, getAllByText } = render(_jsx(Page, {}));

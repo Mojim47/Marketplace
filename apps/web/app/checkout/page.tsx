@@ -1,12 +1,12 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
+import type { ChangeEvent, FormEvent } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { LocaleSwitch } from '@/components/LocaleSwitch';
 import { Button } from '@/components/ui/Button';
 import { useTraceId } from '@/hooks/use-trace-id';
 import { emitUiEvent } from '@/lib/ui-telemetry';
-import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
-import type { ChangeEvent, FormEvent } from 'react';
 
 type CheckoutForm = {
   fullName: string;

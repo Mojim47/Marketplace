@@ -33,8 +33,8 @@ import type {
   S3StorageConfig,
   SignedUrlOptions,
   StorageHealthCheck,
-  UploadOptions,
   UploadedPart,
+  UploadOptions,
 } from '../interfaces/storage.interface';
 import { StorageProviderType } from '../interfaces/storage.interface';
 

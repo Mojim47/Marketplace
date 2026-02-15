@@ -21,20 +21,18 @@
 
 import { type DynamicModule, Global, Logger, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import Redis from 'ioredis';
-
 // Import security services from libs/security
 import {
   BruteForceProtection,
-  JWTManager,
   createCSRFManager,
   createDevelopmentSecurityHeaders,
   createProductionSecurityHeaders,
   createRateLimiter,
+  JWTManager,
 } from '@nextgen/security';
-
 // Import WAF service from libs/waf
 import { WAFService } from '@nextgen/waf';
+import Redis from 'ioredis';
 
 import { BruteForceGuard, BruteForceService } from './guards/brute-force.guard';
 import { CSRFGuard } from './guards/csrf.guard';
@@ -47,34 +45,34 @@ import { WAFGuard } from './guards/waf.guard';
 // Import tokens
 import { SECURITY_TOKENS } from './tokens';
 
-// Export guards
-export { WAFGuard } from './guards/waf.guard';
-export { JWTAuthGuard, Public, IS_PUBLIC_KEY, AuthenticatedRequest } from './guards/jwt-auth.guard';
 export {
-  RBACGuard,
-  Roles,
-  Permissions,
-  ROLES_KEY,
-  PERMISSIONS_KEY,
-  ROLE_HIERARCHY,
-  ROLE_PERMISSIONS,
-} from './guards/rbac.guard';
+  BRUTE_FORCE_KEY,
+  BruteForceGuard,
+  BruteForceProtected,
+  BruteForceService,
+  SKIP_BRUTE_FORCE_KEY,
+  SkipBruteForce,
+} from './guards/brute-force.guard';
+export { CSRFGuard, SKIP_CSRF_KEY, SkipCSRF } from './guards/csrf.guard';
+export { AuthenticatedRequest, IS_PUBLIC_KEY, JWTAuthGuard, Public } from './guards/jwt-auth.guard';
 export {
+  RATE_LIMIT_TIER_KEY,
   RateLimitGuard,
   RateLimitTier,
-  SkipRateLimit,
-  RATE_LIMIT_TIER_KEY,
   SKIP_RATE_LIMIT_KEY,
+  SkipRateLimit,
 } from './guards/rate-limit.guard';
-export { CSRFGuard, SkipCSRF, SKIP_CSRF_KEY } from './guards/csrf.guard';
 export {
-  BruteForceGuard,
-  BruteForceService,
-  BruteForceProtected,
-  SkipBruteForce,
-  BRUTE_FORCE_KEY,
-  SKIP_BRUTE_FORCE_KEY,
-} from './guards/brute-force.guard';
+  PERMISSIONS_KEY,
+  Permissions,
+  RBACGuard,
+  ROLE_HIERARCHY,
+  ROLE_PERMISSIONS,
+  ROLES_KEY,
+  Roles,
+} from './guards/rbac.guard';
+// Export guards
+export { WAFGuard } from './guards/waf.guard';
 
 // Security module configuration interface
 export interface SecurityModuleConfig {

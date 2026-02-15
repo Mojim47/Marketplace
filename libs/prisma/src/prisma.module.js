@@ -16,8 +16,10 @@ const __decorate =
     }
     return c > 3 && r && Object.defineProperty(target, key, r), r;
   });
+
 import { Global, Module } from '@nestjs/common';
 import { PrismaService } from './prisma.service';
+
 let PrismaModule = class PrismaModule {};
 PrismaModule = __decorate(
   [

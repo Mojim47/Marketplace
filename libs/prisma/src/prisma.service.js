@@ -24,8 +24,10 @@ const __metadata =
     }
   });
 let PrismaService_1;
+
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
+
 /**
  * PrismaService - Database Connection with Connection Pooling
  *

@@ -10,11 +10,11 @@ import {
   runWithCorrelationId,
 } from '../../_middleware/correlation-id.middleware';
 import {
-  AllExceptionsFilter,
-  type SecureErrorResponse,
   __testing,
+  AllExceptionsFilter,
   getCorrelationId,
   isMessageSanitized,
+  type SecureErrorResponse,
 } from './http-exception.filter';
 
 const {

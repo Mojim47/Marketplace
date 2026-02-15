@@ -22,11 +22,7 @@ export const metadata: Metadata = {
   description: 'Modern marketplace for vendors and customers',
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   const locale = cookies().get('NG_LOCALE')?.value ?? 'fa';
   const isRtl = locale.startsWith('fa');
   return (

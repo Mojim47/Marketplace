@@ -1,7 +1,7 @@
 import { Decimal } from '@prisma/client/runtime/library';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { PaymentSecurityService } from './payment-security.service';
 import { PaymentService } from './payment.service';
+import type { PaymentSecurityService } from './payment-security.service';
 
 vi.mock('@nextgen/payment', () => {
   return {

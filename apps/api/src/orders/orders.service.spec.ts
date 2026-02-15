@@ -107,7 +107,10 @@ const createPrismaFake = (stock: number) => {
       updateMany: async ({
         where,
         data,
-      }: { where: { stock: { gte: number } }; data: { stock: { decrement: number } } }) => {
+      }: {
+        where: { stock: { gte: number } };
+        data: { stock: { decrement: number } };
+      }) => {
         if (state.stock >= where.stock.gte) {
           state.stock -= data.stock.decrement;
           return { count: 1 };

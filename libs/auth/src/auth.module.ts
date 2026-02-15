@@ -17,14 +17,9 @@ import { PrismaClient } from '@prisma/client';
 
 // Config
 import { authConfig } from './config/auth.config';
-
-// Strategies
-import { JwtStrategy } from './strategies/jwt.strategy';
-
 // Guards
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
-
 import { AuthAuditService } from './services/audit.service';
 // Services
 import { AuthService } from './services/auth.service';
@@ -34,6 +29,8 @@ import { RateLimitService } from './services/rate-limit.service';
 import { SessionService } from './services/session.service';
 import { TokenService } from './services/token.service';
 import { TotpService } from './services/totp.service';
+// Strategies
+import { JwtStrategy } from './strategies/jwt.strategy';
 
 @Global()
 @Module({

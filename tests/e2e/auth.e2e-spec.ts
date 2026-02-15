@@ -1,7 +1,7 @@
-import { AuthModule } from '@/auth/auth.module';
 import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import * as request from 'supertest';
+import { AuthModule } from '@/auth/auth.module';
 
 describe('JWT Authentication (e2e)', () => {
   let app: INestApplication;

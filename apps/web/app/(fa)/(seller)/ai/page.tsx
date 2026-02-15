@@ -1,7 +1,7 @@
 ﻿'use client';
 
-import { Button, Container, GlassCard, Pill, SectionTitle } from '@/components/ui';
 import { useState } from 'react';
+import { Button, Container, GlassCard, Pill, SectionTitle } from '@/components/ui';
 
 export default function AIDemandPage() {
   const [history, setHistory] = useState('1200000,1500000,1800000,2100000');

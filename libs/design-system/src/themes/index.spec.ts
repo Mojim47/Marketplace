@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { darkTheme, generateCSSVariables, getTheme, highContrastTheme, lightTheme } from './index';
 import type { ThemeMode } from './index';
+import { darkTheme, generateCSSVariables, getTheme, highContrastTheme, lightTheme } from './index';
 
 describe('Theme System', () => {
   describe('lightTheme', () => {

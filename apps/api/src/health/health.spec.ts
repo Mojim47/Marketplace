@@ -2,6 +2,7 @@
 import * as fc from 'fast-check';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  __testing,
   DatabaseHealthChecker,
   type DependencyHealth,
   HealthController,
@@ -9,7 +10,6 @@ import {
   RedisHealthChecker,
   StorageHealthChecker,
   type SystemMetrics,
-  __testing,
 } from './health.controller';
 
 const { getSystemMetrics, determineOverallStatus, checkWithTimeout, DEFAULT_CONFIG } = __testing;

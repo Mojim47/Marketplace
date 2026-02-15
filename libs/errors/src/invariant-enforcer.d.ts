@@ -17,34 +17,23 @@ export declare const AuthInvariantEnforcer: {
    * INV-AUTH-001: Token Verification is Mandatory
    * Ensures protected routes have valid user context
    */
-  verifyTokenMandatory(ctx: {
-    user?: unknown;
-    isPublic: boolean;
-  }): void;
+  verifyTokenMandatory(ctx: { user?: unknown; isPublic: boolean }): void;
   /**
    * INV-AUTH-002: Expired Token Rejection
    * Ensures expired tokens are rejected
    */
-  verifyTokenNotExpired(payload: {
-    exp?: number;
-  }): void;
+  verifyTokenNotExpired(payload: { exp?: number }): void;
   /**
    * INV-AUTH-003: Payload Integrity
    * Ensures JWT payload has required claims
    */
-  verifyPayloadIntegrity(payload: {
-    sub?: string;
-    email?: string;
-  }): void;
+  verifyPayloadIntegrity(payload: { sub?: string; email?: string }): void;
   /**
    * INV-AUTH-004: Secret Key Non-Default
    * Ensures production doesn't use default JWT secret
    * @throws Error - System refuses to start (kill-switch)
    */
-  verifySecretKeyNonDefault(config: {
-    jwtSecret: string;
-    nodeEnv: string;
-  }): void;
+  verifySecretKeyNonDefault(config: { jwtSecret: string; nodeEnv: string }): void;
 };
 export declare const PaymentInvariantEnforcer: {
   /**
@@ -96,10 +85,7 @@ export declare const PaymentInvariantEnforcer: {
    * Ensures payment is verified before marking complete
    * @throws Error - System unsafe (kill-switch)
    */
-  verifyBeforeCompletion(payment: {
-    status: string;
-    gatewayVerified: boolean;
-  }): void;
+  verifyBeforeCompletion(payment: { status: string; gatewayVerified: boolean }): void;
 };
 export declare const ErrorInvariantEnforcer: {
   /**
@@ -132,34 +118,23 @@ export declare const InvariantEnforcer: {
      * INV-AUTH-001: Token Verification is Mandatory
      * Ensures protected routes have valid user context
      */
-    verifyTokenMandatory(ctx: {
-      user?: unknown;
-      isPublic: boolean;
-    }): void;
+    verifyTokenMandatory(ctx: { user?: unknown; isPublic: boolean }): void;
     /**
      * INV-AUTH-002: Expired Token Rejection
      * Ensures expired tokens are rejected
      */
-    verifyTokenNotExpired(payload: {
-      exp?: number;
-    }): void;
+    verifyTokenNotExpired(payload: { exp?: number }): void;
     /**
      * INV-AUTH-003: Payload Integrity
      * Ensures JWT payload has required claims
      */
-    verifyPayloadIntegrity(payload: {
-      sub?: string;
-      email?: string;
-    }): void;
+    verifyPayloadIntegrity(payload: { sub?: string; email?: string }): void;
     /**
      * INV-AUTH-004: Secret Key Non-Default
      * Ensures production doesn't use default JWT secret
      * @throws Error - System refuses to start (kill-switch)
      */
-    verifySecretKeyNonDefault(config: {
-      jwtSecret: string;
-      nodeEnv: string;
-    }): void;
+    verifySecretKeyNonDefault(config: { jwtSecret: string; nodeEnv: string }): void;
   };
   payment: {
     /**
@@ -211,10 +186,7 @@ export declare const InvariantEnforcer: {
      * Ensures payment is verified before marking complete
      * @throws Error - System unsafe (kill-switch)
      */
-    verifyBeforeCompletion(payment: {
-      status: string;
-      gatewayVerified: boolean;
-    }): void;
+    verifyBeforeCompletion(payment: { status: string; gatewayVerified: boolean }): void;
   };
   error: {
     /**
@@ -250,10 +222,7 @@ export declare const InvariantEnforcer: {
    * Run startup invariant checks
    * Call this during application bootstrap with config
    */
-  runStartupChecks(config: {
-    jwtSecret: string;
-    nodeEnv: string;
-  }): void;
+  runStartupChecks(config: { jwtSecret: string; nodeEnv: string }): void;
 };
 export default InvariantEnforcer;
 //# sourceMappingURL=invariant-enforcer.d.ts.map

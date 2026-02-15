@@ -8,6 +8,6 @@
  * @module @nextgen/api/shared/storage
  */
 
-export * from './storage.module';
-export * from './storage.controller';
 export * from './dto';
+export * from './storage.controller';
+export * from './storage.module';

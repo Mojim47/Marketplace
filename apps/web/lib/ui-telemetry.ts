@@ -1,6 +1,6 @@
 'use client';
 
-import { type UiEventName, trackUiEvent } from '@nextgen/observability';
+import { trackUiEvent, type UiEventName } from '@nextgen/observability';
 
 declare global {
   interface Window {

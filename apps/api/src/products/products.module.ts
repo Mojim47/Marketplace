@@ -3,9 +3,9 @@ import { DatabaseModule } from '../database/database.module';
 import { SharedSearchModule } from '../shared/search/search.module';
 import { StorageModule } from '../shared/storage';
 import { ProductSearchService } from './product-search.service';
-import { ProductsCqrsService } from './products-cqrs.service';
 import { ProductsController } from './products.controller';
 import { ProductsService } from './products.service';
+import { ProductsCqrsService } from './products-cqrs.service';
 
 @Module({
   imports: [DatabaseModule, StorageModule.forRoot(), SharedSearchModule.forRoot()],

@@ -19,8 +19,10 @@ const __decorate =
     }
     return c > 3 && r && Object.defineProperty(target, key, r), r;
   });
+
 import { Global, Module } from '@nestjs/common';
 import { ObservabilityService } from './observability.service';
+
 let ObservabilityModule = class ObservabilityModule {};
 ObservabilityModule = __decorate(
   [

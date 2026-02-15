@@ -18,10 +18,7 @@ export declare const AUTH_INVARIANTS: {
    */
   readonly TOKEN_VERIFICATION_MANDATORY: {
     readonly name: 'TOKEN_VERIFICATION_MANDATORY';
-    readonly signal: (ctx: {
-      user?: unknown;
-      isPublic: boolean;
-    }) => boolean;
+    readonly signal: (ctx: { user?: unknown; isPublic: boolean }) => boolean;
     readonly consequence: 'REJECT_401';
     readonly enforceable: true;
   };
@@ -32,9 +29,7 @@ export declare const AUTH_INVARIANTS: {
    */
   readonly EXPIRED_TOKEN_REJECTION: {
     readonly name: 'EXPIRED_TOKEN_REJECTION';
-    readonly signal: (payload: {
-      exp?: number;
-    }) => boolean;
+    readonly signal: (payload: { exp?: number }) => boolean;
     readonly consequence: 'REJECT_401_TOKEN_EXPIRED';
     readonly enforceable: true;
   };
@@ -45,10 +40,7 @@ export declare const AUTH_INVARIANTS: {
    */
   readonly PAYLOAD_INTEGRITY: {
     readonly name: 'PAYLOAD_INTEGRITY';
-    readonly signal: (payload: {
-      sub?: string;
-      email?: string;
-    }) => boolean;
+    readonly signal: (payload: { sub?: string; email?: string }) => boolean;
     readonly consequence: 'REJECT_401_INVALID_TOKEN';
     readonly enforceable: true;
   };
@@ -59,10 +51,7 @@ export declare const AUTH_INVARIANTS: {
    */
   readonly SECRET_KEY_NON_DEFAULT: {
     readonly name: 'SECRET_KEY_NON_DEFAULT';
-    readonly signal: (config: {
-      jwtSecret: string;
-      nodeEnv: string;
-    }) => boolean;
+    readonly signal: (config: { jwtSecret: string; nodeEnv: string }) => boolean;
     readonly consequence: 'SYSTEM_UNSAFE_REFUSE_START';
     readonly enforceable: true;
   };
@@ -148,10 +137,7 @@ export declare const PAYMENT_INVARIANTS: {
    */
   readonly VERIFICATION_BEFORE_COMPLETION: {
     readonly name: 'VERIFICATION_BEFORE_COMPLETION';
-    readonly signal: (payment: {
-      status: string;
-      gatewayVerified: boolean;
-    }) => boolean;
+    readonly signal: (payment: { status: string; gatewayVerified: boolean }) => boolean;
     readonly consequence: 'SYSTEM_UNSAFE_FINANCIAL_LOSS';
     readonly enforceable: true;
   };

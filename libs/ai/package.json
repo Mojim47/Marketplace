@@ -36,5 +36,10 @@
       "optional": true
     }
   },
-  "keywords": ["ai", "prediction", "time-series", "on-device"]
+  "keywords": [
+    "ai",
+    "prediction",
+    "time-series",
+    "on-device"
+  ]
 }

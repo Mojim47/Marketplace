@@ -2,8 +2,8 @@
 // Queue Library - BullMQ Integration
 // ═══════════════════════════════════════════════════════════════════════════
 
-export { QueueService } from './queue.service';
-export { QueueModule } from './queue.module';
-export { getQueueConfig, getDefaultJobOptions } from './queue.config';
-export * from './queue.types';
+export { getDefaultJobOptions, getQueueConfig } from './queue.config';
 export * from './queue.constants';
+export { QueueModule } from './queue.module';
+export { QueueService } from './queue.service';
+export * from './queue.types';

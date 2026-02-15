@@ -1,9 +1,9 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { Fragment as _Fragment, jsx as _jsx, jsxs as _jsxs } from 'react/jsx-runtime';
-import { OfflineClient } from '../(fa)/offline-client';
 import { Footer } from '../../../../../libs/ui/src/components/layout/Footer';
 import { Header } from '../../../../../libs/ui/src/components/layout/Header';
+import { OfflineClient } from '../(fa)/offline-client';
 export function SiteShell({ children, direction, skipLabel, mainTestId }) {
   const [mode, setMode] = useState('light');
   useEffect(() => {

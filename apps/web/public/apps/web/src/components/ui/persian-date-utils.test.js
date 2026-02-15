@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { toPersianDigits } from './persian-date-picker';
+
 describe('toPersianDigits', () => {
   it('converts all western digits to Persian', () => {
     const western = '0123456789-2024';

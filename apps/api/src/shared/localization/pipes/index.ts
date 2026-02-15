@@ -9,13 +9,13 @@
  */
 
 export {
-  IranianMobilePipe,
-  NationalIdPipe,
   BankCardPipe,
-  IBANPipe,
-  PostalCodePipe,
-  LandlinePipe,
-  PersianTextPipe,
   CompanyRegistrationPipe,
   EconomicCodePipe,
+  IBANPipe,
+  IranianMobilePipe,
+  LandlinePipe,
+  NationalIdPipe,
+  PersianTextPipe,
+  PostalCodePipe,
 } from './persian-validation.pipe';

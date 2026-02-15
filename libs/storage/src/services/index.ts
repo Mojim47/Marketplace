@@ -2,5 +2,5 @@
 // Storage Services - Barrel Export
 // ═══════════════════════════════════════════════════════════════════════════
 
+export type { FileUploadOptions, UploadResult } from './storage.service';
 export { StorageService } from './storage.service';
-export type { UploadResult, FileUploadOptions } from './storage.service';

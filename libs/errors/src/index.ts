@@ -60,36 +60,34 @@
 
 export { AppError, ErrorCode, type ErrorResponse } from './app-error';
 export {
-  ValidationError,
   AuthenticationError,
   AuthorizationError,
-  NotFoundError,
-  ConflictError,
-  BusinessRuleError,
-  DomainError, // Legacy - deprecated
-  RateLimitError,
-  InternalError,
-  UnavailableError,
   BadGatewayError,
+  BusinessRuleError,
+  ConflictError,
+  DomainError, // Legacy - deprecated
   GatewayTimeoutError,
+  InternalError,
+  NotFoundError,
+  RateLimitError,
+  UnavailableError,
+  ValidationError,
 } from './errors';
 export { GlobalExceptionFilter } from './exception-filter';
-
+// Invariant Enforcer - Runtime enforcement of invariants
+export {
+  AuthInvariantEnforcer,
+  ErrorInvariantEnforcer,
+  InvariantEnforcer,
+  PaymentInvariantEnforcer,
+} from './invariant-enforcer';
 // Invariants - Hard constraints for system correctness
 export {
   AUTH_INVARIANTS,
-  PAYMENT_INVARIANTS,
-  ERROR_INVARIANTS,
-  ERROR_CODE_STATUS_MAP,
-  KILL_SWITCH_CONDITIONS,
   DETECTION_POINTS,
+  ERROR_CODE_STATUS_MAP,
+  ERROR_INVARIANTS,
+  KILL_SWITCH_CONDITIONS,
+  PAYMENT_INVARIANTS,
   SYSTEM_SAFETY_STATUS,
 } from './invariants';
-
-// Invariant Enforcer - Runtime enforcement of invariants
-export {
-  InvariantEnforcer,
-  AuthInvariantEnforcer,
-  PaymentInvariantEnforcer,
-  ErrorInvariantEnforcer,
-} from './invariant-enforcer';
