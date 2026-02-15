@@ -181,7 +181,9 @@
       "qs": "6.14.2",
       "axios": "1.13.5",
       "fast-xml-parser": "5.3.4",
-      "tar@*": "7.5.7"
+      "tar@*": "7.5.7",
+      "fastify": "5.7.3",
+      "@fastify/middie": "9.1.0"
     }
   },
   "workspaces": ["apps/*", "libs/*"]
