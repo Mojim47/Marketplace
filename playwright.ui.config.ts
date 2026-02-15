@@ -1,4 +1,5 @@
-﻿import { defineConfig } from '@playwright/test';
+import path from 'path';
+import { defineConfig } from '@playwright/test';
 
 const reuseExistingServer = Boolean(process.env.UI_SERVER_ALREADY_RUNNING);
 
@@ -63,4 +64,5 @@ export default defineConfig({
       },
     },
   ],
+  snapshotPathTemplate: '{testDir}/{testFileName}-snapshots/{arg}-{projectName}{ext}',
 });
