@@ -2,18 +2,13 @@
 
 import { trackUiEvent, type UiEventName } from '@nextgen/observability';
 
-declare global {
-  interface Window {
-    __uiEvents?: Array<ReturnType<typeof trackUiEvent>>;
-  }
-}
-
 export function emitUiEvent(name: UiEventName, payload: Record<string, unknown>, traceId?: string) {
   const event = trackUiEvent(name, payload, { traceId });
 
   if (typeof window !== 'undefined') {
-    window.__uiEvents = window.__uiEvents ?? [];
-    window.__uiEvents.push(event);
+    const uiWindow = window as Window & { __uiEvents?: Array<ReturnType<typeof trackUiEvent>> };
+    uiWindow.__uiEvents = uiWindow.__uiEvents ?? [];
+    uiWindow.__uiEvents.push(event);
   }
 
   if (typeof navigator !== 'undefined' && 'sendBeacon' in navigator) {

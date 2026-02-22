@@ -21,10 +21,13 @@
     "noImplicitOverride": false,
     "isolatedModules": false
   },
-  "include": ["src/**/*", "../../libs/**/src/**/*"],
+  "include": ["src/**/*"],
   "exclude": [
     "node_modules",
     "dist",
+    "src/_b2b/**",
+    "src/_bulk/**",
+    "src/_hierarchy/**",
     "**/*.spec.ts",
     "**/*.spec.tsx",
     "**/*.test.ts",

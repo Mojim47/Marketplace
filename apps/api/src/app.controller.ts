@@ -69,7 +69,7 @@ export class AppController {
 
     try {
       const start = Date.now();
-      const asset = await this.prisma.spatialAsset.findUnique({
+      const asset = await (this.prisma as any).spatialAsset.findUnique({
         where: { id: TARGET_ASSET_ID },
       });
 

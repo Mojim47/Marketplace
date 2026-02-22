@@ -6,9 +6,9 @@
   "types": "src/index.ts",
   "license": "MIT",
   "scripts": {
-    "test": "npx vitest run --config vitest.config.ts --passWithNoTests",
-    "test:watch": "npx vitest --config vitest.config.ts",
-    "test:coverage": "npx vitest run --config vitest.config.ts --coverage"
+    "test": "node ../../node_modules/vitest/vitest.mjs run --config vitest.config.ts --passWithNoTests",
+    "test:watch": "node ../../node_modules/vitest/vitest.mjs --config vitest.config.ts",
+    "test:coverage": "node ../../node_modules/vitest/vitest.mjs run --config vitest.config.ts --coverage"
   },
   "dependencies": {
     "@elastic/elasticsearch": "^8.12.0",

@@ -40,7 +40,7 @@ export default function HomePage() {
                   <span className="text-emerald-300">Online</span>
                 </div>
                 <div className="rounded-2xl bg-slate-900/60 p-4">
-                  <p className="text-sm text-slate-200">"گوشي پرچم‌دار با دوربين حرفه‌اي"</p>
+                  <p className="text-sm text-slate-200">&quot;گوشي پرچم‌دار با دوربين حرفه‌اي&quot;</p>
                   <div className="mt-4 space-y-2">
                     {[
                       { name: 'Galaxy Ultra 5G', score: 'شباهت 93%' },

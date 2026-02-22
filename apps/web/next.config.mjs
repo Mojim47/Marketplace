@@ -1,5 +1,6 @@
 ﻿/** @type {import('next').NextConfig} */
 const isProd = process.env.NODE_ENV === 'production';
+const isProdBuild = isProd && process.env.NEXT_PHASE === 'phase-production-build';
 const isDev = !isProd;
 
 const parseList = (value) =>
@@ -9,7 +10,7 @@ const parseList = (value) =>
     .filter(Boolean);
 
 const requiredCspEnv = ['CSP_API_DOMAIN', 'CSP_CDN_DOMAIN', 'CSP_ANALYTICS_DOMAIN'];
-if (isProd) {
+if (isProdBuild) {
   const missing = requiredCspEnv.filter((key) => !process.env[key] || !String(process.env[key]).trim());
   if (missing.length) {
     throw new Error(`Missing CSP allowlist env vars in production: ${missing.join(', ')}`);

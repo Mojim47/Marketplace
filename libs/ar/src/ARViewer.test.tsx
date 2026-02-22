@@ -4,14 +4,14 @@ import { ARViewer } from './ARViewer';
 describe('ARViewer', () => {
   it('renders helper text and model-viewer element', () => {
     const { container } = render(<ARViewer modelId="sample-model" />);
-    expect(screen.getByText(/واقعیت افزوده/i)).toBeTruthy();
+    expect(screen.getByText(/در حال بارگذاری/i)).toBeTruthy();
     const viewer = container.querySelector('model-viewer');
     expect(viewer).toBeTruthy();
   });
 
   it('renders USDZ link when provided', () => {
     render(<ARViewer modelId="sample-model" usdzUrl="/models/sample.usdz" />);
-    const link = screen.getByText(/USDZ/i);
+    const link = screen.getByText(/دانلود برای iOS/i);
     expect(link).toBeTruthy();
   });
 
