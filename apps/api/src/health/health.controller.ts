@@ -1,4 +1,4 @@
-﻿import {
+import {
   Controller,
   Get,
   HttpStatus,
@@ -9,6 +9,13 @@
   Res,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  HealthCheck,
+  HealthCheckError,
+  HealthCheckService,
+  MemoryHealthIndicator,
+  PrismaHealthIndicator,
+} from '@nestjs/terminus';
 import type { PrismaService } from '@nextgen/prisma';
 import type Redis from 'ioredis';
 import * as Minio from 'minio';
@@ -80,7 +87,7 @@ export interface HealthCheckResponse {
  * Liveness probe response
  */
 export interface LivenessResponse {
-  alive: boolean;
+  status: 'ok';
   timestamp: string;
 }
 
@@ -492,6 +499,9 @@ export class HealthController {
   private readonly dependencyCheckers: DependencyChecker[];
 
   constructor(
+    private readonly health: HealthCheckService,
+    private readonly prisma: PrismaHealthIndicator,
+    private readonly memory: MemoryHealthIndicator,
     @Optional() private readonly databaseChecker?: DatabaseHealthChecker,
     @Optional() private readonly redisChecker?: RedisHealthChecker,
     @Optional() private readonly storageChecker?: StorageHealthChecker
@@ -519,7 +529,7 @@ export class HealthController {
   @ApiResponse({ status: 200, description: 'Application is alive' })
   liveness(@Res() res: Response): void {
     const response: LivenessResponse = {
-      alive: true,
+      status: 'ok',
       timestamp: new Date().toISOString(),
     };
 
@@ -534,21 +544,37 @@ export class HealthController {
   @ApiOperation({ summary: 'Readiness probe - is the application ready to serve?' })
   @ApiResponse({ status: 200, description: 'Application is ready' })
   @ApiResponse({ status: 503, description: 'Application is not ready' })
+  @HealthCheck()
   async readiness(@Res() res: Response): Promise<void> {
-    const dependencies = await this.checkAllDependencies();
+    try {
+      await this.health.check([
+        async () => this.prisma.pingCheck('database'),
+        async () => this.memory.checkHeap('memory_heap', 300 * 1024 * 1024),
+        async () => this.redisReadinessCheck(),
+      ]);
 
-    const isReady = dependencies.every((d) => d.status !== HealthStatus.UNHEALTHY);
+      const dependencies = await this.checkAllDependencies();
+      const response: ReadinessResponse = {
+        ready: true,
+        timestamp: new Date().toISOString(),
+        service: 'nextgen-api',
+        version: process.env.APP_VERSION || '1.0.0',
+        dependencies,
+      };
 
-    const response: ReadinessResponse = {
-      ready: isReady,
-      timestamp: new Date().toISOString(),
-      service: 'nextgen-api',
-      version: process.env.APP_VERSION || '1.0.0',
-      dependencies,
-    };
+      res.status(HttpStatus.OK).json(response);
+    } catch {
+      const dependencies = await this.checkAllDependencies();
+      const response: ReadinessResponse = {
+        ready: false,
+        timestamp: new Date().toISOString(),
+        service: 'nextgen-api',
+        version: process.env.APP_VERSION || '1.0.0',
+        dependencies,
+      };
 
-    const status = isReady ? HttpStatus.OK : HttpStatus.SERVICE_UNAVAILABLE;
-    res.status(status).json(response);
+      res.status(HttpStatus.SERVICE_UNAVAILABLE).json(response);
+    }
   }
 
   /**
@@ -605,6 +631,32 @@ export class HealthController {
 
     return Promise.all(checks);
   }
+
+  private async redisReadinessCheck() {
+    if (!this.redisChecker) {
+      return {
+        redis: {
+          status: 'up',
+        },
+      };
+    }
+
+    const redisHealth = await checkWithTimeout(this.redisChecker, this.config.timeout);
+    if (redisHealth.status === HealthStatus.UNHEALTHY) {
+      throw new HealthCheckError('Redis health check failed', {
+        redis: {
+          status: 'down',
+          message: redisHealth.message || 'Redis is unavailable',
+        },
+      });
+    }
+
+    return {
+      redis: {
+        status: 'up',
+      },
+    };
+  }
 }
 
 /**
@@ -619,3 +671,4 @@ export const __testing = {
   RedisHealthChecker,
   StorageHealthChecker,
 };
+

@@ -17,6 +17,7 @@
     "@nestjs/throttler": "^5.0.0",
     "@nestjs/jwt": "^10.0.0",
     "@nestjs/passport": "^10.0.0",
+    "@nestjs/terminus": "^10.3.0",
     "@nextgen/context": "workspace:*",
     "@nextgen/security": "workspace:*",
     "@nextgen/validation": "workspace:*",

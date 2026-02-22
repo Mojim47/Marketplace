@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { TerminusModule } from '@nestjs/terminus';
 import { PrismaModule } from '@nextgen/prisma';
 import { RedisModule } from '../redis/redis.module';
 import {
@@ -20,7 +21,7 @@ import { LivezController } from './livez.controller';
  * Validates: Requirements 2.1, 2.2, 2.3, 2.4, 2.5
  */
 @Module({
-  imports: [PrismaModule, RedisModule],
+  imports: [TerminusModule, PrismaModule, RedisModule],
   controllers: [HealthController, LivezController],
   providers: [DatabaseHealthChecker, RedisHealthChecker, StorageHealthChecker],
   exports: [DatabaseHealthChecker, RedisHealthChecker, StorageHealthChecker],
