@@ -43,6 +43,10 @@ class StubModule {}
 
 async function bootstrap() {
   const logger = new Logger('LazarusKernel');
+  const defaultPort = 4000;
+  const portValue = process.env.API_PORT ?? process.env.PORT ?? String(defaultPort);
+  const parsedPort = Number.parseInt(portValue, 10);
+  const port = Number.isNaN(parsedPort) ? defaultPort : parsedPort;
 
   process.on('uncaughtException', (err) => logger.error(`🔥 UNCAUGHT: ${err.message}`));
   process.on('unhandledRejection', (reason) => logger.error(`🔥 REJECTION: ${reason}`));
@@ -55,16 +59,16 @@ async function bootstrap() {
       logger: ['error', 'warn', 'log'],
     });
 
-    await app.listen(3000);
-    logger.log('✅ SYSTEM ONLINE: REAL CORE ACTIVE');
+    await app.listen(port);
+    logger.log(`✅ SYSTEM ONLINE: REAL CORE ACTIVE on http://localhost:${port}`);
   } catch (error: any) {
     logger.error(`💥 CORE DETONATION DETECTED: ${error.message}`);
     logger.warn('🛡️ ENGAGING STUB SYSTEM...');
 
     try {
       const app = await NestFactory.create(StubModule);
-      await app.listen(3000);
-      logger.log('✅ SYSTEM ONLINE: STUB MODE');
+      await app.listen(port);
+      logger.log(`✅ SYSTEM ONLINE: STUB MODE on http://localhost:${port}`);
     } catch (stubError: any) {
       logger.error(`☠️ STUB FAILURE: ${stubError.message}`);
       http
@@ -72,7 +76,7 @@ async function bootstrap() {
           res.writeHead(200);
           res.end(JSON.stringify({ status: 'RAW_NODE_LIFE_SUPPORT' }));
         })
-        .listen(3000, () => console.log('🚑 SYSTEM ONLINE: RAW NODE'));
+        .listen(port, () => console.log(`🚑 SYSTEM ONLINE: RAW NODE on http://localhost:${port}`));
     }
   }
 }
