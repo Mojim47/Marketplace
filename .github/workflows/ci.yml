@@ -307,6 +307,29 @@ jobs:
     name: "🏗️ Build"
     runs-on: ubuntu-latest
     needs: [test, security-scan]
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: nextgen_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: "📥 Checkout code"
         uses: actions/checkout@v4
@@ -331,6 +354,11 @@ jobs:
       - name: "🔧 Generate Prisma client"
         run: pnpm run db:generate
 
+      - name: "🗄️ Prepare CI database schema"
+        run: pnpm run db:migrate:deploy
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/nextgen_ci
+
       - name: "🚫 Check for mock files in build paths"
         run: node scripts/check-mock-files.mjs
 
@@ -338,6 +366,14 @@ jobs:
         run: pnpm run build:ci
         env:
           NODE_ENV: production
+
+      - name: "🚀 API Bootstrap Guard"
+        run: bash ops/scripts/ci-api-bootstrap.sh
+        env:
+          API_PORT: "4010"
+          DATABASE_URL: postgresql://test:test@localhost:5432/nextgen_ci
+          REDIS_URL: redis://localhost:6379
+          BOOTSTRAP_TIMEOUT_SECONDS: "30"
 
       - name: "🔍 Verify no mock files in build output"
         run: node scripts/check-mock-files.mjs
@@ -501,7 +537,6 @@ jobs:
           echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Branch:** \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Triggered by:** @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
-
 
 
 
