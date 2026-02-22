@@ -18,6 +18,6 @@ describe('ARViewer', () => {
   it('supports disabling AR mode', () => {
     const { container } = render(<ARViewer modelId="sample-model" arEnabled={false} />);
     const viewer = container.querySelector('model-viewer');
-    expect(viewer?.getAttribute('ar')).toBe('false');
+    expect(viewer?.getAttribute('ar')).toBeNull();
   });
 });

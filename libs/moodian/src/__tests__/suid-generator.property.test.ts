@@ -129,7 +129,9 @@ describe('SUIDGeneratorService Property Tests', () => {
               .array(fc.integer({ min: 0, max: 9 }), { minLength: 15, maxLength: 20 })
               .map((d) => d.join('')),
             // Contains non-digits
-            fc.string({ minLength: 14, maxLength: 14 }).filter((s) => !/^\d{14}$/.test(s))
+            fc
+              .string({ minLength: 14, maxLength: 14 })
+              .filter((s) => !/^\d{14}$/.test(s))
           ),
           (invalidTaxId) => {
             expect(() => service.generateSUID(invalidTaxId)).toThrow();

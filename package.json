@@ -124,7 +124,7 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.10.1",
-    "@biomejs/biome": "^1.5.0",
+    "@biomejs/biome": "1.5.0",
     "@faker-js/faker": "^10.1.0",
     "@fast-check/vitest": "^0.2.4",
     "@huggingface/tokenizers": "^0.1.1",
@@ -135,6 +135,7 @@
     "@playwright/test": "^1.57.0",
     "@tailwindcss/aspect-ratio": "^0.4.2",
     "@tailwindcss/forms": "^0.5.9",
+    "@tailwindcss/postcss": "^4.1.0",
     "@tailwindcss/typography": "^0.5.16",
     "@testcontainers/postgresql": "^11.11.0",
     "@testing-library/jest-dom": "^6.4.2",
@@ -196,6 +197,8 @@
       "playwright"
     ],
     "overrides": {
+      "@prisma/client": "5.19.1",
+      "prisma": "5.19.1",
       "qs": "6.14.2",
       "axios": "1.13.5",
       "fast-xml-parser": "5.3.4",

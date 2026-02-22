@@ -1,8 +1,7 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.3.15/schema.json",
-  "assist": { "actions": { "source": { "organizeImports": "on" } } },
+  "$schema": "https://biomejs.dev/schemas/1.5.3/schema.json",
   "files": {
-    "includes": [
+    "include": [
       "**/*.ts",
       "**/*.tsx",
       "**/*.js",
@@ -45,7 +44,7 @@
     ],
     "formatter": {
       "quoteStyle": "single",
-      "trailingCommas": "es5",
+      "trailingComma": "es5",
       "semicolons": "always",
       "arrowParentheses": "always",
       "bracketSpacing": true,
@@ -58,49 +57,11 @@
     }
   },
   "json": {
-    "formatter": {
-      "trailingCommas": "none"
-    },
     "parser": {
       "allowComments": true,
       "allowTrailingCommas": false
     }
   },
-  "overrides": [
-    {
-      "includes": ["**/apps/api-elysia/**"],
-      "javascript": {
-        "globals": ["Bun"]
-      },
-      "linter": {
-        "rules": {
-          "suspicious": {
-            "noConsole": { "level": "off", "options": { "allow": ["log"] } }
-          }
-        }
-      }
-    },
-    {
-      "includes": ["**/*.test.ts", "**/*.spec.ts", "**/*.test.tsx", "**/*.spec.tsx"],
-      "linter": {
-        "rules": {
-          "suspicious": {
-            "noExplicitAny": "off"
-          }
-        }
-      }
-    },
-    {
-      "includes": ["**/apps/web/**", "**/apps/admin/**"],
-      "linter": {
-        "rules": {
-          "correctness": {
-            "useExhaustiveDependencies": "warn"
-          }
-        }
-      }
-    }
-  ],
   "vcs": {
     "enabled": true,
     "clientKind": "git",

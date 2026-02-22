@@ -21,8 +21,9 @@ export const metadata: Metadata = {
   description: 'Admin Panel',
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
-  const locale = cookies().get('NG_LOCALE')?.value ?? 'fa';
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  const cookieStore = await cookies();
+  const locale = cookieStore.get('NG_LOCALE')?.value ?? 'fa';
   const isRtl = locale.startsWith('fa');
   return (
     <html lang={isRtl ? 'fa' : 'en'} dir={isRtl ? 'rtl' : 'ltr'} data-locale={locale}>

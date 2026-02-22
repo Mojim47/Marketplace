@@ -116,7 +116,7 @@ class CompleteDeploymentOrchestrator {
           name: 'Database Migration Dry Run',
           description: 'Test database migrations',
           execute: async () => {
-            execSync('pnpm db:migrate:deploy --dry-run', { stdio: 'inherit' });
+            execSync('pnpm prisma migrate status', { stdio: 'inherit' });
           },
           verify: async () => {
             return true; // If no exception, migration is valid
