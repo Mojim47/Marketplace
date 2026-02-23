@@ -1,4 +1,4 @@
-﻿import type { Response } from 'express';
+import type { Response } from 'express';
 import * as fc from 'fast-check';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {

@@ -1,4 +1,4 @@
-﻿import { Container, GlassCard, SectionTitle } from '@/components/ui';
+import { Container, GlassCard, SectionTitle } from '@/components/ui';
 
 export default function TermsPage() {
   return (

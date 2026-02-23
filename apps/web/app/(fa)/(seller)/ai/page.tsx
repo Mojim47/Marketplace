@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState } from 'react';
 import { Button, Container, GlassCard, Pill, SectionTitle } from '@/components/ui';

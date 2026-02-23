@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Verified under Mnemosyne Protocol v3.2.1 — Ω-Moji Sovereign Build
+// Verified under Mnemosyne Protocol v3.2.1  -Moji Sovereign Build
 import { createHash } from 'node:crypto'
 import { createReadStream, createWriteStream } from 'node:fs'
 import { mkdir, rename, rm, stat, copyFile } from 'node:fs/promises'

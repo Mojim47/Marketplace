@@ -1,4 +1,4 @@
-﻿declare module '@google/model-viewer' {
+declare module '@google/model-viewer' {
   export class ModelViewerElement extends HTMLElement {
     src: string;
     poster?: string;

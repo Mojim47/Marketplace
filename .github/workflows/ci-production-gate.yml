@@ -556,12 +556,20 @@ jobs:
           pm2 logs nextgen-api-gate --lines 100 --nostream || true
           pm2 delete nextgen-api-gate
 
+      - name: prepare optional upload placeholders
+        if: always()
+        run: |
+          mkdir -p artifacts
+          mkdir -p artifacts/release
+          [ -f api.log ] || touch api.log
+
       - name: upload immutable artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: launch-artifacts-${{ github.sha }}
           path: artifacts/
+          if-no-files-found: ignore
 
       - name: upload api logs
         if: always()
@@ -569,6 +577,7 @@ jobs:
         with:
           name: api-gate-logs
           path: api.log
+          if-no-files-found: ignore
 
       - name: notify gate failure (Slack/Teams)
         if: failure()

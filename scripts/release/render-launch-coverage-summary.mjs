@@ -43,7 +43,7 @@ function getPct(total, key) {
 }
 
 function statusIcon(actual, target) {
-  return actual >= target ? '✅' : '❌';
+  return actual >= target ? '' : '';
 }
 
 function main() {

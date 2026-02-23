@@ -23,4 +23,4 @@ echo "[+] Downloading models (pin exact versions)"
 echo "[+] Generating checksums"
 (cd "$ASSETS_DIR" && sha256sum onnxruntime/* models/* > CHECKSUMS.sha256)
 
-echo "[✓] Assets locked offline. Update tests to read from ops/assets/ai and verify CHECKSUMS."
+echo "[] Assets locked offline. Update tests to read from ops/assets/ai and verify CHECKSUMS."
