@@ -7,4 +7,10 @@ test.describe('web a11y', () => {
     const results = await new AxeBuilder({ page }).analyze();
     expect(results.violations).toEqual([]);
   });
+
+  test('categories page', async ({ page }) => {
+    await page.goto('/categories');
+    const results = await new AxeBuilder({ page }).analyze();
+    expect(results.violations).toEqual([]);
+  });
 });

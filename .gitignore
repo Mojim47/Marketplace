@@ -1,6 +1,7 @@
 node_modules/
 dist/
 .env
+.env.production
 *.log
 .prisma/
 prisma/dev.db

@@ -8,7 +8,7 @@ export default function TermsPage() {
           <p className="text-xs text-slate-300">Terms of Service</p>
           <SectionTitle className="mt-2 text-3xl text-white">شرایط و مقررات استفاده</SectionTitle>
           <p className="mt-3 text-sm text-slate-300">
-            استفاده از خدمات NextGen Marketplace به معنی پذیرش کامل این شرایط است.
+            استفاده از خدمات AIMarket به معنی پذیرش کامل این شرایط است.
           </p>
         </GlassCard>
 
@@ -20,7 +20,7 @@ export default function TermsPage() {
             },
             {
               title: 'محتوا و مالکیت',
-              body: 'تمامی محتوا، طراحی و داده‌ها متعلق به NextGen Marketplace است و استفاده غیرمجاز ممنوع است.',
+              body: 'تمامی محتوا، طراحی و داده‌ها متعلق به AIMarket است و استفاده غیرمجاز ممنوع است.',
             },
             {
               title: 'پرداخت و بازگشت',

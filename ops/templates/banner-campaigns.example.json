@@ -1,0 +1,23 @@
+{
+  "banners": [
+    {
+      "id": "spring-hero-2026",
+      "type": "hero",
+      "start_date": "2026-03-01T00:00:00Z",
+      "end_date": "2026-03-20T23:59:59Z",
+      "priority": 90,
+      "target_segment": "all",
+      "device_target": "all",
+      "title": "جشنواره بهاری تکنولوژی",
+      "subtitle": "پیشنهادهای هوشمند با تحویل سریع و پرداخت امن",
+      "image_url": "https://cdn.example.com/banners/spring-hero-2026.webp",
+      "cta_label": "مشاهده پیشنهادها",
+      "cta_href": "/categories?campaign=spring-2026",
+      "tracking": {
+        "campaign": "spring_2026",
+        "source": "homepage",
+        "medium": "hero_banner"
+      }
+    }
+  ]
+}

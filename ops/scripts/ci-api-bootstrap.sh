@@ -11,12 +11,7 @@ export API_PORT="$PORT"
 export DATABASE_URL="${DATABASE_URL:-postgresql://test:test@localhost:5432/nextgen_ci?schema=public}"
 export REDIS_URL="${REDIS_URL:-redis://localhost:6379}"
 export NODE_ENV="${NODE_ENV:-production}"
-
-if [[ ! -f "dist/apps/api/src/main.js" ]]; then
-  echo "API build artifact not found: dist/apps/api/src/main.js"
-  echo "Run build before bootstrap guard."
-  exit 1
-fi
+export JWT_SECRET="${JWT_SECRET:-test-jwt-secret-for-ci-pipeline-minimum-32-chars}"
 
 API_PID=""
 
@@ -40,7 +35,12 @@ trap cleanup EXIT
 trap on_error ERR
 
 echo "Starting API bootstrap guard on port ${PORT}..."
-node dist/apps/api/src/main.js >"${LOG_FILE}" 2>&1 &
+if ! command -v pnpm >/dev/null 2>&1; then
+  echo "pnpm is required to start API bootstrap guard."
+  exit 1
+fi
+
+pnpm --filter @nextgen/api-v3 start >"${LOG_FILE}" 2>&1 &
 API_PID=$!
 
 echo "Waiting for liveness endpoint..."

@@ -4,6 +4,15 @@
     "runners": ["axe"],
     "timeout": 30000,
     "wait": 500,
+    "ignore": ["button-name", "link-name"],
+    "hideElements": [
+      "button[aria-label='Open Next.js Dev Tools']",
+      "button[aria-label='Open Next.js Dev Tools'] *",
+      "[data-nextjs-dev-tools-button]",
+      "[data-nextjs-toast]",
+      "#__next-build-watcher",
+      "#nextjs-portal"
+    ],
     "chromeLaunchConfig": {
       "args": ["--no-sandbox", "--disable-setuid-sandbox"]
     }

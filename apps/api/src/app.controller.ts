@@ -15,7 +15,7 @@ import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import type { Request } from 'express';
 import { type HeroAsset, HeroAssetSchema } from '../../../libs/common/src/contracts/hero.contract';
 import { Bulletproof } from '../../../libs/common/src/decorators/bulletproof';
-import { PrismaService } from '../../../libs/prisma/src/prisma.service';
+import { PrismaService } from './database/prisma.service';
 import { renderPrometheusMetrics } from './_observability/metrics.registry';
 
 const TARGET_ASSET_ID = 'cmlfxxjxz0006foldf4gefkav';

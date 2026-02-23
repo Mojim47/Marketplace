@@ -1,7 +1,56 @@
 import { defineConfig } from '@playwright/test';
-import path from 'path';
 
 const reuseExistingServer = Boolean(process.env.UI_SERVER_ALREADY_RUNNING);
+const webPort = process.env.UI_WEB_PORT ?? '3000';
+const adminPort = process.env.UI_ADMIN_PORT ?? '3003';
+const webBaseUrl = `http://localhost:${webPort}`;
+const webStorageState = {
+  cookies: [
+    {
+      name: 'access_token',
+      value: 'playwright-e2e-token',
+      domain: 'localhost',
+      path: '/',
+      httpOnly: true,
+      secure: false,
+      sameSite: 'Lax' as const,
+    },
+  ],
+  origins: [],
+};
+const webServer = reuseExistingServer
+  ? undefined
+  : [
+      {
+        command: 'pnpm --filter @nextgen/web dev',
+        url: `${webBaseUrl}/livez`,
+        reuseExistingServer,
+        timeout: 120000,
+        env: {
+          ...process.env,
+          PORT: webPort,
+          CSP_API_DOMAIN: process.env.CSP_API_DOMAIN ?? 'api.example.com',
+          CSP_CDN_DOMAIN: process.env.CSP_CDN_DOMAIN ?? 'cdn.example.com',
+          CSP_ANALYTICS_DOMAIN: process.env.CSP_ANALYTICS_DOMAIN ?? 'analytics.example.com',
+        },
+      },
+      {
+        command: 'pnpm --filter @nextgen/admin dev',
+        url: `http://localhost:${adminPort}/livez`,
+        reuseExistingServer,
+        timeout: 120000,
+        env: {
+          ...process.env,
+          PORT: adminPort,
+          ADMIN_DISABLE_AUTH_MIDDLEWARE: 'true',
+          AUTH_MODE: 'mock',
+          ALLOW_AUTH_MOCK: 'true',
+          CSP_API_DOMAIN: process.env.CSP_API_DOMAIN ?? 'api.example.com',
+          CSP_CDN_DOMAIN: process.env.CSP_CDN_DOMAIN ?? 'cdn.example.com',
+          CSP_ANALYTICS_DOMAIN: process.env.CSP_ANALYTICS_DOMAIN ?? 'analytics.example.com',
+        },
+      },
+    ];
 
 export default defineConfig({
   testDir: 'tests/ui/playwright',
@@ -21,50 +70,21 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     trace: 'retain-on-failure',
   },
-  webServer: [
-    {
-      command: 'pnpm --filter @nextgen/web start',
-      url: 'http://localhost:3000/livez',
-      reuseExistingServer,
-      timeout: 120000,
-      env: {
-        ...process.env,
-        PORT: '3000',
-        CSP_API_DOMAIN: process.env.CSP_API_DOMAIN ?? 'api.example.com',
-        CSP_CDN_DOMAIN: process.env.CSP_CDN_DOMAIN ?? 'cdn.example.com',
-        CSP_ANALYTICS_DOMAIN: process.env.CSP_ANALYTICS_DOMAIN ?? 'analytics.example.com',
-      },
-    },
-    {
-      command: 'pnpm --filter @nextgen/admin start',
-      url: 'http://localhost:3003/livez',
-      reuseExistingServer,
-      timeout: 120000,
-      env: {
-        ...process.env,
-        PORT: '3003',
-        ADMIN_DISABLE_AUTH_MIDDLEWARE: 'true',
-        AUTH_MODE: 'mock',
-        ALLOW_AUTH_MOCK: 'true',
-        CSP_API_DOMAIN: process.env.CSP_API_DOMAIN ?? 'api.example.com',
-        CSP_CDN_DOMAIN: process.env.CSP_CDN_DOMAIN ?? 'cdn.example.com',
-        CSP_ANALYTICS_DOMAIN: process.env.CSP_ANALYTICS_DOMAIN ?? 'analytics.example.com',
-      },
-    },
-  ],
+  webServer,
   projects: [
     {
       name: 'web',
       testMatch: /.*web\..*\.spec\.ts/,
       use: {
-        baseURL: 'http://localhost:3000',
+        baseURL: webBaseUrl,
+        storageState: webStorageState,
       },
     },
     {
       name: 'admin',
       testMatch: /.*admin\..*\.spec\.ts/,
       use: {
-        baseURL: 'http://localhost:3003',
+        baseURL: `http://localhost:${adminPort}`,
       },
     },
   ],

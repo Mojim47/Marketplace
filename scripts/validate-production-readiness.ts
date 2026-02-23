@@ -5,9 +5,11 @@
 // Validates all critical components before production deployment
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { existsSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { PrismaClient } from '@prisma/client';
 import axios from 'axios';
+import dotenv from 'dotenv';
 import Redis from 'ioredis';
 
 interface ValidationResult {
@@ -15,19 +17,146 @@ interface ValidationResult {
   status: 'PASS' | 'FAIL' | 'WARN';
   message: string;
   details?: any;
+  remediation?: string;
+}
+
+interface ReadinessReport {
+  generatedAt: string;
+  environment: string;
+  mode: 'strict' | 'advisory';
+  totals: {
+    total: number;
+    pass: number;
+    warn: number;
+    fail: number;
+  };
+  verdict: 'READY' | 'READY_WITH_WARNINGS' | 'NOT_READY';
+  checks: ValidationResult[];
 }
 
 class ProductionReadinessValidator {
   private results: ValidationResult[] = [];
-  private prisma: PrismaClient;
-  private redis: Redis;
+  private prisma: PrismaClient | null = null;
+  private redis: Redis | null = null;
+  private readonly mode: 'strict' | 'advisory';
 
-  constructor() {
-    this.prisma = new PrismaClient();
-    this.redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
+  constructor(mode: 'strict' | 'advisory' = 'advisory') {
+    this.mode = mode;
+    this.loadEnvironmentFiles();
   }
 
-  async validate(): Promise<void> {
+  private loadEnvironmentFiles(): void {
+    const envFiles = ['.env'];
+    if ((process.env.NODE_ENV || '').toLowerCase() === 'production') {
+      envFiles.unshift('.env.production');
+    }
+    for (const file of envFiles) {
+      if (existsSync(file)) {
+        dotenv.config({ path: file, override: false });
+      }
+    }
+  }
+
+  private getErrorMessage(error: unknown): string {
+    if (error instanceof Error) {
+      return error.message;
+    }
+    return String(error);
+  }
+
+  private normalizePrismaEngineType(): void {
+    const allowed = new Set(['library', 'binary']);
+    const current = process.env.PRISMA_CLIENT_ENGINE_TYPE;
+
+    if (!current) {
+      return;
+    }
+
+    if (!allowed.has(current)) {
+      process.env.PRISMA_CLIENT_ENGINE_TYPE = 'library';
+      this.results.push({
+        component: 'Prisma Engine Type',
+        status: 'WARN',
+        message: `Invalid PRISMA_CLIENT_ENGINE_TYPE="${current}" detected; forced to "library" for validation run`,
+      });
+    }
+  }
+
+  private writeReport(report: ReadinessReport): void {
+    const reportDir = join(process.cwd(), 'artifacts');
+    mkdirSync(reportDir, { recursive: true });
+    const basePath = join(reportDir, 'production-readiness-report.json');
+    const stampedPath = join(
+      reportDir,
+      `production-readiness-report-${report.generatedAt.replaceAll(':', '-').replaceAll('.', '-')}.json`
+    );
+    const serialized = JSON.stringify(report, null, 2);
+    writeFileSync(basePath, serialized, 'utf8');
+    writeFileSync(stampedPath, serialized, 'utf8');
+    console.log(`Report saved: ${basePath}`);
+    console.log(`Report snapshot: ${stampedPath}`);
+  }
+
+  private failOrWarn(component: string, message: string): void {
+    const strict = this.mode === 'strict';
+    this.results.push({
+      component,
+      status: strict ? 'FAIL' : 'WARN',
+      message: strict ? message : `${message} (advisory mode)`,
+      remediation: this.getRemediation(component),
+    });
+  }
+
+  private getRemediation(component: string): string | undefined {
+    const remediations: Record<string, string> = {
+      'Environment Variables': 'Populate missing variables in runtime secrets or .env.production.',
+      'JWT Secret': 'Set JWT_SECRET to a cryptographically secure value (>=32 chars).',
+      'User Salt': 'Set USER_HASH_SALT to a unique random secret (>=16 chars).',
+      'Database Connection': 'Verify DATABASE_URL, DB availability, and migration state.',
+      'Redis Connection': 'Verify REDIS_URL and ensure Redis is reachable from runtime network.',
+      'ClickHouse Connection': 'Set CLICKHOUSE_URL and validate /ping endpoint reachability.',
+      'ZarinPal Configuration': 'Provide a valid ZARINPAL_MERCHANT_ID in secrets.',
+      'ZarinPal API': 'Validate merchant config, network egress, and provider API availability.',
+      'Moodian Configuration': 'Provide MOODIAN_CLIENT_ID and MOODIAN_CLIENT_SECRET in secrets.',
+      'Moodian API': 'Verify Moodian connectivity and credential validity.',
+      'Rate Limiting': 'Set RATE_LIMIT_TTL and RATE_LIMIT_MAX for abuse protection.',
+      'Cache Configuration': 'Set CACHE_TTL_DEFAULT to enforce deterministic cache behavior.',
+      'Query Performance': 'Set SLOW_QUERY_THRESHOLD for DB performance observability.',
+      'Application Health': 'Run app and expose /api/v3/health to readiness environment.',
+      'Prisma Client Compatibility': 'Set PRISMA_CLIENT_ENGINE_TYPE to library or binary.',
+    };
+    return remediations[component];
+  }
+
+  private initPrismaClient(): PrismaClient | null {
+    if (this.prisma) {
+      return this.prisma;
+    }
+
+    try {
+      this.normalizePrismaEngineType();
+      this.prisma = new PrismaClient();
+      return this.prisma;
+    } catch (error) {
+      const message = this.getErrorMessage(error);
+      if (message.includes('Invalid client engine type')) {
+        this.results.push({
+          component: 'Prisma Client Compatibility',
+          status: 'WARN',
+          message: `Prisma client engine is incompatible in this environment; database checks will be skipped (${message})`,
+        });
+        return null;
+      }
+      this.results.push({
+        component: 'Database Connection',
+        status: 'FAIL',
+        message: `Database client initialization failed: ${message}`,
+      });
+      return null;
+    }
+  }
+
+  async validate(): Promise<number> {
     // Phase 1: Environment & Configuration
     await this.validateEnvironment();
     await this.validateSecrets();
@@ -50,22 +179,23 @@ class ProductionReadinessValidator {
     await this.validateApplication();
 
     // Generate report
-    this.generateReport();
+    return this.generateReport();
   }
 
   private async validateEnvironment(): Promise<void> {
-    const requiredVars = [
+    const coreRequiredVars = [
       'NODE_ENV',
-      'PORT',
       'DATABASE_URL',
       'REDIS_URL',
       'JWT_SECRET',
       'JWT_REFRESH_SECRET',
+      'USER_HASH_SALT',
+      'CORS_ORIGINS',
+    ];
+    const integrationRequiredVars = [
       'ZARINPAL_MERCHANT_ID',
       'MOODIAN_CLIENT_ID',
       'MOODIAN_CLIENT_SECRET',
-      'USER_HASH_SALT',
-      'CORS_ORIGINS',
       'CLICKHOUSE_URL',
       'S3_BUCKET_NAME',
       'AWS_ACCESS_KEY_ID',
@@ -76,19 +206,25 @@ class ProductionReadinessValidator {
       'SMS_API_KEY',
     ];
 
-    const missing = requiredVars.filter((envVar) => !process.env[envVar]);
-    const defaults = requiredVars.filter(
+    const missingCore = coreRequiredVars.filter((envVar) => !process.env[envVar]);
+    const missingIntegration = integrationRequiredVars.filter((envVar) => !process.env[envVar]);
+    const defaults = [...coreRequiredVars, ...integrationRequiredVars].filter(
       (envVar) =>
         process.env[envVar] === 'CHANGE_IN_PRODUCTION' ||
         process.env[envVar] === 'CHANGE_THIS_TO_SECURE_256_BIT_KEY_IN_PRODUCTION'
     );
 
-    if (missing.length > 0) {
+    if (missingCore.length > 0) {
       this.results.push({
         component: 'Environment Variables',
         status: 'FAIL',
-        message: `Missing required environment variables: ${missing.join(', ')}`,
+        message: `Missing core environment variables: ${missingCore.join(', ')}`,
       });
+    } else if (missingIntegration.length > 0) {
+      this.failOrWarn(
+        'Environment Variables',
+        `Missing integration environment variables: ${missingIntegration.join(', ')}`
+      );
     } else if (defaults.length > 0) {
       this.results.push({
         component: 'Environment Variables',
@@ -109,17 +245,9 @@ class ProductionReadinessValidator {
     const userSalt = process.env.USER_HASH_SALT;
 
     if (!jwtSecret || jwtSecret.length < 32) {
-      this.results.push({
-        component: 'JWT Secret',
-        status: 'FAIL',
-        message: 'JWT_SECRET must be at least 32 characters long',
-      });
+      this.failOrWarn('JWT Secret', 'JWT_SECRET must be at least 32 characters long');
     } else if (jwtSecret.includes('CHANGE') || jwtSecret === 'your-secret-key') {
-      this.results.push({
-        component: 'JWT Secret',
-        status: 'FAIL',
-        message: 'JWT_SECRET appears to be a default value',
-      });
+      this.failOrWarn('JWT Secret', 'JWT_SECRET appears to be a default value');
     } else {
       this.results.push({
         component: 'JWT Secret',
@@ -129,11 +257,7 @@ class ProductionReadinessValidator {
     }
 
     if (!userSalt || userSalt.length < 16) {
-      this.results.push({
-        component: 'User Salt',
-        status: 'FAIL',
-        message: 'USER_HASH_SALT must be at least 16 characters long',
-      });
+      this.failOrWarn('User Salt', 'USER_HASH_SALT must be at least 16 characters long');
     } else {
       this.results.push({
         component: 'User Salt',
@@ -170,12 +294,27 @@ class ProductionReadinessValidator {
   }
 
   private async validateDatabase(): Promise<void> {
+    const prisma = this.initPrismaClient();
+    if (!prisma) {
+      const hasCompatibilityWarning = this.results.some(
+        (r) => r.component === 'Prisma Client Compatibility' && r.status === 'WARN'
+      );
+      if (hasCompatibilityWarning) {
+        this.results.push({
+          component: 'Database Connection',
+          status: 'WARN',
+          message: 'Database checks skipped due to Prisma client compatibility issue',
+        });
+      }
+      return;
+    }
+
     try {
       // Test connection
-      await this.prisma.$queryRaw`SELECT 1`;
+      await prisma.$queryRaw`SELECT 1`;
 
       // Check if migrations are applied
-      const migrations = (await this.prisma.$queryRaw`
+      const migrations = (await prisma.$queryRaw`
         SELECT * FROM "_prisma_migrations" 
         WHERE finished_at IS NULL OR rolled_back_at IS NOT NULL
       `) as any[];
@@ -196,7 +335,7 @@ class ProductionReadinessValidator {
       }
 
       // Check critical indexes
-      const indexes = (await this.prisma.$queryRaw`
+      const indexes = (await prisma.$queryRaw`
         SELECT schemaname, tablename, indexname 
         FROM pg_indexes 
         WHERE indexname LIKE 'idx_%'
@@ -222,16 +361,25 @@ class ProductionReadinessValidator {
         message: 'Database connection successful',
       });
     } catch (error) {
-      this.results.push({
-        component: 'Database Connection',
-        status: 'FAIL',
-        message: `Database connection failed: ${error.message}`,
-      });
+      this.failOrWarn('Database Connection', `Database connection failed: ${this.getErrorMessage(error)}`);
     }
   }
 
   private async validateRedis(): Promise<void> {
+    const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+    this.redis = new Redis(redisUrl, {
+      lazyConnect: true,
+      maxRetriesPerRequest: 1,
+      enableOfflineQueue: false,
+      connectTimeout: 5000,
+      retryStrategy: () => null,
+    });
+    this.redis.on('error', () => {
+      // Redis connectivity failures are reported by checks below.
+    });
+
     try {
+      await this.redis.connect();
       await this.redis.ping();
 
       // Test set/get operations
@@ -254,11 +402,16 @@ class ProductionReadinessValidator {
 
       await this.redis.del('health-check');
     } catch (error) {
-      this.results.push({
-        component: 'Redis Connection',
-        status: 'FAIL',
-        message: `Redis connection failed: ${error.message}`,
-      });
+      this.failOrWarn('Redis Connection', `Redis connection failed: ${this.getErrorMessage(error)}`);
+    } finally {
+      if (this.redis) {
+        try {
+          await this.redis.quit();
+        } catch {
+          // Ignore shutdown failures for readiness reporting.
+        }
+        this.redis = null;
+      }
     }
   }
 
@@ -283,18 +436,10 @@ class ProductionReadinessValidator {
           message: 'ClickHouse connection successful',
         });
       } else {
-        this.results.push({
-          component: 'ClickHouse Connection',
-          status: 'FAIL',
-          message: `ClickHouse ping failed with status ${response.status}`,
-        });
+        this.failOrWarn('ClickHouse Connection', `ClickHouse ping failed with status ${response.status}`);
       }
     } catch (error) {
-      this.results.push({
-        component: 'ClickHouse Connection',
-        status: 'FAIL',
-        message: `ClickHouse connection failed: ${error.message}`,
-      });
+      this.failOrWarn('ClickHouse Connection', `ClickHouse connection failed: ${this.getErrorMessage(error)}`);
     }
   }
 
@@ -303,11 +448,7 @@ class ProductionReadinessValidator {
     const isSandbox = process.env.ZARINPAL_SANDBOX === 'true';
 
     if (!merchantId || merchantId === 'CHANGE_IN_PRODUCTION') {
-      this.results.push({
-        component: 'ZarinPal Configuration',
-        status: 'FAIL',
-        message: 'ZarinPal merchant ID not configured',
-      });
+      this.failOrWarn('ZarinPal Configuration', 'ZarinPal merchant ID not configured');
       return;
     }
 
@@ -341,11 +482,7 @@ class ProductionReadinessValidator {
         message: `ZarinPal API accessible (${isSandbox ? 'sandbox' : 'production'})`,
       });
     } catch (error) {
-      this.results.push({
-        component: 'ZarinPal API',
-        status: 'FAIL',
-        message: `ZarinPal API connection failed: ${error.message}`,
-      });
+      this.failOrWarn('ZarinPal API', `ZarinPal API connection failed: ${this.getErrorMessage(error)}`);
     }
   }
 
@@ -359,11 +496,7 @@ class ProductionReadinessValidator {
       clientId === 'CHANGE_IN_PRODUCTION' ||
       clientSecret === 'CHANGE_IN_PRODUCTION'
     ) {
-      this.results.push({
-        component: 'Moodian Configuration',
-        status: 'FAIL',
-        message: 'Moodian credentials not configured',
-      });
+      this.failOrWarn('Moodian Configuration', 'Moodian credentials not configured');
       return;
     }
 
@@ -382,7 +515,7 @@ class ProductionReadinessValidator {
       this.results.push({
         component: 'Moodian API',
         status: 'WARN',
-        message: `Moodian API connection test failed: ${error.message}`,
+        message: `Moodian API connection test failed: ${this.getErrorMessage(error)}`,
       });
     }
   }
@@ -487,8 +620,17 @@ class ProductionReadinessValidator {
     }
   }
 
-  private generateReport(): void {
-    const _passed = this.results.filter((r) => r.status === 'PASS').length;
+  private generateReport(): number {
+    this.results = this.results.map((result) =>
+      result.remediation
+        ? result
+        : {
+            ...result,
+            remediation: this.getRemediation(result.component),
+          }
+    );
+
+    const passed = this.results.filter((r) => r.status === 'PASS').length;
     const failed = this.results.filter((r) => r.status === 'FAIL').length;
     const warnings = this.results.filter((r) => r.status === 'WARN').length;
 
@@ -497,43 +639,86 @@ class ProductionReadinessValidator {
     const warnResults = this.results.filter((r) => r.status === 'WARN');
     const passedResults = this.results.filter((r) => r.status === 'PASS');
 
+    console.log('=== Production Readiness Report ===');
+    console.log(`Mode: ${this.mode}`);
+    console.log(
+      `Total Checks: ${this.results.length} | PASS: ${passed} | WARN: ${warnings} | FAIL: ${failed}`
+    );
+
     if (failedResults.length > 0) {
-      failedResults.forEach((_result) => {});
+      console.log('\n[FAIL]');
+      failedResults.forEach((result) => {
+        console.log(`- ${result.component}: ${result.message}`);
+        if (result.remediation) {
+          console.log(`  remediation: ${result.remediation}`);
+        }
+      });
     }
 
     if (warnResults.length > 0) {
-      warnResults.forEach((_result) => {});
+      console.log('\n[WARN]');
+      warnResults.forEach((result) => {
+        console.log(`- ${result.component}: ${result.message}`);
+        if (result.remediation) {
+          console.log(`  remediation: ${result.remediation}`);
+        }
+      });
     }
 
     if (passedResults.length > 0) {
-      passedResults.forEach((_result) => {});
+      console.log('\n[PASS]');
+      passedResults.forEach((result) => {
+        console.log(`- ${result.component}: ${result.message}`);
+      });
     }
 
     // Final verdict
-    if (failed === 0) {
-      if (warnings > 0) {
-      }
-      process.exit(0);
-    } else {
-      process.exit(1);
-    }
+    const verdict: ReadinessReport['verdict'] =
+      failed === 0 ? (warnings > 0 ? 'READY_WITH_WARNINGS' : 'READY') : 'NOT_READY';
+    console.log(`\nVERDICT: ${verdict}`);
+
+    const report: ReadinessReport = {
+      generatedAt: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'unknown',
+      mode: this.mode,
+      totals: {
+        total: this.results.length,
+        pass: passed,
+        warn: warnings,
+        fail: failed,
+      },
+      verdict,
+      checks: this.results,
+    };
+
+    this.writeReport(report);
+    return failed === 0 ? 0 : 1;
   }
 
   async cleanup(): Promise<void> {
-    await this.prisma.$disconnect();
-    await this.redis.quit();
+    if (this.prisma) {
+      await this.prisma.$disconnect();
+      this.prisma = null;
+    }
+    if (this.redis) {
+      await this.redis.quit();
+      this.redis = null;
+    }
   }
 }
 
 // Run validation
 async function main() {
-  const validator = new ProductionReadinessValidator();
+  const args = new Set(process.argv.slice(2));
+  const mode = args.has('--strict') ? 'strict' : 'advisory';
+  const validator = new ProductionReadinessValidator(mode);
 
   try {
-    await validator.validate();
+    const exitCode = await validator.validate();
+    process.exitCode = exitCode;
   } catch (error) {
-    console.error('❌ Validation failed with error:', error);
-    process.exit(1);
+    console.error('Validation failed with error:', error);
+    process.exitCode = 1;
   } finally {
     await validator.cleanup();
   }

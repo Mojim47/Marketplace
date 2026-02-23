@@ -26,6 +26,13 @@ fi
 
 echo "No new secrets detected."
 
+# Enforce UTF-8 (no BOM), LF endings, and ASCII-only executable scripts on staged files
+node scripts/policy/validate-text-governance.mjs --staged
+
+# Enforce secrets contracts/schemas before push
+node scripts/release/verify-secrets-policy-schema.mjs
+node scripts/release/verify-secrets-contract-sync.mjs
+
 # Run Biome check on staged files
 pnpm biome check --staged --no-errors-on-unmatched
 

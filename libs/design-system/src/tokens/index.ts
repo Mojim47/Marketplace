@@ -352,3 +352,6 @@ export type ZIndex = typeof zIndex;
 export type Breakpoints = typeof breakpoints;
 export type Animation = typeof animation;
 export type Grid = typeof grid;
+
+export * from './colors';
+export * from './spacing';

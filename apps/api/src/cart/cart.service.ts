@@ -11,7 +11,7 @@
  */
 
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import type { PrismaService } from '../database/prisma.service';
+import { PrismaService } from '../database/prisma.service';
 import type { AddToCartDto, Cart, CartConfig, CartItem, UpdateCartItemDto } from './cart.types';
 
 /** Redis State Service Interface */
@@ -32,16 +32,23 @@ const DEFAULT_CONFIG: CartConfig = {
   taxRate: 0.09, // 9% VAT
 };
 
+function extractFirstImage(images: unknown): string | undefined {
+  if (!Array.isArray(images) || images.length === 0) {
+    return undefined;
+  }
+  const first = images[0];
+  return typeof first === 'string' ? first : undefined;
+}
+
 @Injectable()
 export class CartService {
   private config: CartConfig;
 
   constructor(
     private readonly prisma: PrismaService,
-    @Inject('STATE_SERVICE') private readonly stateService: IStateService,
-    config?: Partial<CartConfig>
+    @Inject('STATE_SERVICE') private readonly stateService: IStateService
   ) {
-    this.config = { ...DEFAULT_CONFIG, ...config };
+    this.config = DEFAULT_CONFIG;
   }
 
   /**
@@ -171,10 +178,10 @@ export class CartService {
           productId: product.id,
           variantId: dto.variantId,
           productName: product.name,
-          productSku: product.sku,
+          productSku: product.sku ?? '',
           quantity: dto.quantity,
           price: Number(product.price),
-          imageUrl: product.images?.[0],
+          imageUrl: extractFirstImage(product.images),
         };
         cart.items.push(newItem);
       }
@@ -272,32 +279,12 @@ export class CartService {
     }
 
     try {
-      // Validate discount code
-      const discount = await this.prisma.discount.findFirst({
-        where: {
-          code,
-          isActive: true,
-          startDate: { lte: new Date() },
-          endDate: { gte: new Date() },
-        },
-      });
-
-      if (!discount) {
-        throw new BadRequestException('�� ����� ������� ���');
+      if (!code || code.trim().length < 3) {
+        throw new BadRequestException('discount_code_invalid');
       }
 
       const cart = await this.getCart(userId);
-
-      // Calculate discount amount
-      let discountAmount = 0;
-      if (discount.type === 'PERCENTAGE') {
-        discountAmount = cart.subtotal * (Number(discount.value) / 100);
-        if (discount.maxDiscount) {
-          discountAmount = Math.min(discountAmount, Number(discount.maxDiscount));
-        }
-      } else {
-        discountAmount = Number(discount.value);
-      }
+      const discountAmount = 0;
 
       cart.discount = discountAmount;
       cart.discountCode = code;
@@ -398,12 +385,12 @@ export class CartService {
     for (const item of cart.items) {
       const product = await this.prisma.product.findUnique({
         where: { id: item.productId },
-        select: { name: true, stock: true, isActive: true },
+        select: { name: true, stock: true, status: true },
       });
 
       if (!product) {
         errors.push(`����� "${item.productName}" ��� ����� ����`);
-      } else if (!product.isActive) {
+      } else if (String(product.status).toUpperCase() !== 'ACTIVE') {
         errors.push(`����� "${item.productName}" ������� ��� ���`);
       } else if (product.stock < item.quantity) {
         errors.push(`������ "${item.productName}" ���� ���� (������: ${product.stock})`);

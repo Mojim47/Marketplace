@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ExecutionError, ResourceLockedError } from 'redlock';
@@ -295,5 +296,21 @@ describe('OrdersService - Locking & Concurrency', () => {
     } else {
       process.env.ORDER_CREATE_SLA_MS = prev;
     }
+  });
+
+  it('throws NotFound when order is not found for user', async () => {
+    const prisma = {
+      order: {
+        findFirst: async () => null,
+      },
+    } as any;
+    const service = new OrdersService(
+      prisma,
+      new SerialLockService() as any,
+      new MetricsService(),
+      new InMemoryStateService() as any
+    );
+
+    await expect(service.findOne('missing', 'user-1')).rejects.toBeInstanceOf(NotFoundException);
   });
 });

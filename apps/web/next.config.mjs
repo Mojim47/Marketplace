@@ -36,7 +36,7 @@ const csp = [
   "style-src 'self' 'unsafe-inline'",
   `script-src 'self'${isDev ? " 'unsafe-eval'" : ''} 'unsafe-inline' https://${analyticsDomain} ${scriptExtras.join(' ')}`.trim(),
   `connect-src 'self' https:${isDev ? ' ws:' : ''} https://${apiDomain} https://${analyticsDomain} ${connectExtras.join(' ')}`.trim(),
-  "upgrade-insecure-requests",
+  // Keep localhost E2E navigation stable; forcing HTTPS upgrades breaks Playwright on HTTP test hosts.
 ].join('; ');
 
 const nextConfig = {

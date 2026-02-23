@@ -1,135 +1,197 @@
-﻿'use client';
+'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { AuthNavButton } from '@/components/AuthNavButton';
 import { LocaleSwitch } from '@/components/LocaleSwitch';
-import { Button } from '@/components/ui/Button';
+import { useAuth } from '@/components/AuthProvider';
+import { Button, GlassCard, PageHeader } from '@/components/ui';
 import { useTraceId } from '@/hooks/use-trace-id';
 import { emitUiEvent } from '@/lib/ui-telemetry';
 
 type Order = {
   id: string;
-  status: 'delivered' | 'processing' | 'cancelled';
-  total: number;
-  items: number;
-  date: string;
+  orderNumber?: string;
+  status: string;
+  totalAmount: number;
+  createdAt: string;
+  items?: Array<{ id: string }>;
 };
 
-const ORDERS: Order[] = [
-  { id: 'NX-2049', status: 'delivered', total: 9850000, items: 2, date: '2026-02-01' },
-  { id: 'NX-2055', status: 'processing', total: 21450000, items: 1, date: '2026-02-04' },
-  { id: 'NX-2061', status: 'cancelled', total: 6750000, items: 1, date: '2026-02-06' },
+const fallbackOrders: Order[] = [
+  {
+    id: 'order-fallback-1',
+    orderNumber: 'NX-2049',
+    status: 'PAID',
+    totalAmount: 49050000,
+    createdAt: new Date('2026-02-20T10:00:00Z').toISOString(),
+    items: [{ id: 'item-fallback-1' }],
+  },
 ];
+
+const statusMap: Record<string, { label: string; cls: string }> = {
+  PAID: { label: 'پرداخت‌شده', cls: 'text-emerald-300 border-emerald-300/30 bg-emerald-500/10' },
+  PENDING: { label: 'در انتظار', cls: 'text-amber-300 border-amber-300/30 bg-amber-500/10' },
+  FAILED: { label: 'ناموفق', cls: 'text-rose-300 border-rose-300/30 bg-rose-500/10' },
+  SHIPPED: { label: 'ارسال‌شده', cls: 'text-cyan-300 border-cyan-300/30 bg-cyan-500/10' },
+};
 
 export default function OrdersPage() {
   const traceId = useTraceId();
+  const { isAuthenticated, loading } = useAuth();
   const locale = typeof document !== 'undefined' ? document.documentElement.lang : 'fa';
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState('ALL');
 
   const strings = useMemo(
     () =>
       locale === 'en'
         ? {
-            title: 'Order history',
-            subtitle: 'Track your recent orders and delivery status.',
+            title: 'Order operations',
+            subtitle: 'Track fulfillment and payment state for each order.',
             total: 'Total',
             items: 'Items',
-            status: 'Status',
-            view: 'View order',
-            delivered: 'Delivered',
-            processing: 'Processing',
-            cancelled: 'Cancelled',
+            refresh: 'Refresh',
+            empty: 'No order found for selected filter.',
           }
         : {
-            title: 'سفارش‌های من',
-            subtitle: 'سفارش‌های اخیر و وضعیت ارسال را دنبال کنید.',
+            title: 'عملیات سفارش‌ها',
+            subtitle: 'وضعیت پرداخت، پردازش و ارسال هر سفارش را دقیق دنبال کنید.',
             total: 'مبلغ کل',
             items: 'اقلام',
-            status: 'وضعیت',
-            view: 'مشاهده سفارش',
-            delivered: 'تحویل شده',
-            processing: 'در حال پردازش',
-            cancelled: 'لغو شده',
+            refresh: 'به‌روزرسانی',
+            empty: 'برای فیلتر انتخاب‌شده سفارشی پیدا نشد.',
           },
     [locale]
   );
 
   const formatter = new Intl.NumberFormat(locale === 'en' ? 'en-US' : 'fa-IR');
 
+  const loadOrders = async () => {
+    try {
+      const response = await fetch('/api/backend/v1/orders', { cache: 'no-store' });
+      const data = (await response.json().catch(() => [])) as Order[] | { error?: string; message?: string };
+
+      if (!response.ok) {
+        setError(String((data as any).message || (data as any).error || 'load_failed'));
+        setOrders(fallbackOrders);
+        return;
+      }
+
+      const nextOrders = Array.isArray(data) ? data : [];
+      setOrders(nextOrders.length > 0 ? nextOrders : fallbackOrders);
+      setError(null);
+    } catch {
+      setError('upstream_unreachable');
+      setOrders(fallbackOrders);
+    }
+  };
+
   useEffect(() => {
     emitUiEvent('page_view', { path: '/orders', locale }, traceId ?? undefined);
   }, [locale, traceId]);
 
-  const statusLabel = (status: Order['status']) => {
-    if (status === 'delivered') {
-      return strings.delivered;
+  useEffect(() => {
+    if (loading) {
+      return;
     }
-    if (status === 'processing') {
-      return strings.processing;
-    }
-    return strings.cancelled;
-  };
+    loadOrders();
+  }, [loading, isAuthenticated]);
 
-  const statusTone = (status: Order['status']) => {
-    if (status === 'delivered') {
-      return 'text-emerald-300';
-    }
-    if (status === 'processing') {
-      return 'text-blue-200';
-    }
-    return 'text-rose-200';
-  };
+  const filteredOrders = useMemo(
+    () => orders.filter((order) => statusFilter === 'ALL' || order.status === statusFilter),
+    [orders, statusFilter]
+  );
 
   return (
     <div className="min-h-screen" data-trace-id={traceId ?? undefined}>
       <div className="mx-auto max-w-6xl px-6 py-12">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="text-xs text-slate-300">NextGen Marketplace</p>
-            <h1 className="section-title mt-2 text-3xl text-white" data-testid="orders-title">
-              {strings.title}
-            </h1>
-            <p className="mt-3 max-w-xl text-sm text-slate-300">{strings.subtitle}</p>
-          </div>
-          <LocaleSwitch />
+        <PageHeader
+          eyebrow="Order Intelligence"
+          title={strings.title}
+          subtitle={strings.subtitle}
+          chips={['Real-time Status', 'Payment-linked', 'Traceable Lifecycle']}
+          titleTestId="orders-title"
+          actions={
+            <>
+              <LocaleSwitch />
+              <AuthNavButton />
+              <Button loading={false} onClick={loadOrders} variant="outline">
+                {strings.refresh}
+              </Button>
+            </>
+          }
+        />
+
+        <div className="mt-6 flex flex-wrap gap-2">
+          {['ALL', 'PAID', 'PENDING', 'FAILED', 'SHIPPED'].map((status) => (
+            <button
+              key={status}
+              className={`rounded-full border px-3 py-1 text-xs ${
+                statusFilter === status
+                  ? 'border-cyan-300/40 bg-cyan-500/15 text-cyan-200'
+                  : 'border-white/15 bg-white/5 text-slate-200'
+              }`}
+              onClick={() => setStatusFilter(status)}
+              type="button"
+              aria-busy="false"
+            >
+              {status}
+            </button>
+          ))}
         </div>
 
-        <div className="mt-10 grid gap-6" data-testid="orders-list">
-          {ORDERS.map((order) => (
-            <div key={order.id} className="glass-card rounded-3xl p-6">
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                  <p className="text-xs text-slate-400">{order.id}</p>
-                  <p className="mt-2 text-sm text-slate-200">{order.date}</p>
+        {error ? (
+          <p className="mt-6 rounded-xl border border-rose-300/30 bg-rose-500/10 px-4 py-3 text-xs text-rose-200">
+            {error}
+          </p>
+        ) : null}
+
+        <div className="mt-8 grid gap-5" data-testid="orders-list">
+          {filteredOrders.map((order) => {
+            const badge = statusMap[order.status] || {
+              label: order.status,
+              cls: 'text-slate-200 border-white/20 bg-white/5',
+            };
+            return (
+              <GlassCard key={order.id} className="rounded-3xl p-6">
+                <div className="grid gap-4 md:grid-cols-[1fr_auto_auto] md:items-center">
+                  <div>
+                    <p className="text-xs text-slate-400">{order.orderNumber || order.id}</p>
+                    <p className="mt-2 text-sm text-slate-200">
+                      {new Date(order.createdAt).toLocaleString('fa-IR')}
+                    </p>
+                    <p className="mt-2 text-xs text-slate-400">
+                      {strings.items}: {formatter.format(order.items?.length || 0)}
+                    </p>
+                  </div>
+
+                  <div className="text-sm text-slate-200 md:text-end">
+                    <p className="text-xs text-slate-400">{strings.total}</p>
+                    <p className="mt-1 text-lg font-semibold text-white">
+                      {formatter.format(Number(order.totalAmount || 0))}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col items-start gap-2 md:items-end">
+                    <span className={`rounded-full border px-3 py-1 text-xs ${badge.cls}`}>{badge.label}</span>
+                    <Button
+                      loading={false}
+                      variant="ghost"
+                      className="w-auto px-4 py-2"
+                      data-testid={`order-view-${order.orderNumber || order.id}`}
+                    >
+                      مشاهده جزئیات
+                    </Button>
+                  </div>
                 </div>
-                <div className="text-end text-sm text-slate-200">
-                  <p>
-                    {strings.total}: {formatter.format(order.total)}
-                  </p>
-                  <p className="text-xs text-slate-400">
-                    {strings.items}: {formatter.format(order.items)}
-                  </p>
-                </div>
-                <div className="text-sm">
-                  <p className="text-xs text-slate-400">{strings.status}</p>
-                  <p className={`mt-2 font-semibold ${statusTone(order.status)}`}>
-                    {statusLabel(order.status)}
-                  </p>
-                </div>
-                <Button
-                  loading={false}
-                  onClick={() =>
-                    emitUiEvent(
-                      'cta_click',
-                      { label: 'order_view', location: 'orders' },
-                      traceId ?? undefined
-                    )
-                  }
-                  data-testid={`order-view-${order.id}`}
-                >
-                  {strings.view}
-                </Button>
-              </div>
-            </div>
-          ))}
+              </GlassCard>
+            );
+          })}
+
+          {!error && filteredOrders.length === 0 ? (
+            <GlassCard className="rounded-3xl p-6 text-sm text-slate-300">{strings.empty}</GlassCard>
+          ) : null}
         </div>
       </div>
     </div>

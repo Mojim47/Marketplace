@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Post,
   Request,
+  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -52,6 +53,30 @@ export class AuthController {
   @ApiResponse({ status: 409, description: '����� ����� ���� ����' })
   async register(@Body() dto: RegisterDto): Promise<AuthResponse> {
     return this.authService.register(dto);
+  }
+
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'تازه سازي توکن دسترسي' })
+  @ApiResponse({ status: 200, description: 'توکن تازه صادر شد' })
+  @ApiResponse({ status: 401, description: 'رفرش توکن نامعتبر است' })
+  async refresh(@Body() body: { refreshToken?: string }) {
+    const refreshToken = body?.refreshToken;
+    if (!refreshToken) {
+      throw new UnauthorizedException('refreshToken is required');
+    }
+
+    const tokenPair = await this.authService.refreshAccessToken(refreshToken);
+    if (!tokenPair) {
+      throw new UnauthorizedException('invalid_refresh_token');
+    }
+
+    return {
+      success: true,
+      access_token: tokenPair.accessToken,
+      refresh_token: tokenPair.refreshToken,
+      expires_at: tokenPair.expiresAt,
+    };
   }
 
   // ???????????????????????????????????????????????????????????????????????????

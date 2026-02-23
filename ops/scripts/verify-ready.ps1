@@ -19,7 +19,8 @@ Write-Host ""
 # ═══════════════════════════════════════════════════════════════════════════
 Write-Host "📦 Step 1: Checking for lockfile..." -ForegroundColor Yellow
 
-$lockfilePath = Join-Path $PSScriptRoot "pnpm-lock.yaml"
+$repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")
+$lockfilePath = Join-Path $repoRoot "pnpm-lock.yaml"
 
 if (Test-Path $lockfilePath) {
     Write-Host "✅ pnpm-lock.yaml found" -ForegroundColor Green

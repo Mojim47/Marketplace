@@ -16,9 +16,10 @@ import {
   MemoryHealthIndicator,
   PrismaHealthIndicator,
 } from '@nestjs/terminus';
-import type { PrismaService } from '@nextgen/prisma';
+import { PrismaService } from '../database/prisma.service';
 import type Redis from 'ioredis';
 import * as Minio from 'minio';
+import { RuntimeReconciliationService } from '../runtime/runtime-reconciliation.service';
 
 interface Response {
   status(code: number): Response;
@@ -100,6 +101,19 @@ export interface ReadinessResponse {
   service: string;
   version: string;
   dependencies: DependencyHealth[];
+}
+
+export interface StartupResponse {
+  started: boolean;
+  timestamp: string;
+  service: string;
+  version: string;
+  checks: {
+    db: boolean;
+    redis: boolean;
+    schema: boolean;
+    queue: boolean;
+  };
 }
 
 /**
@@ -243,6 +257,112 @@ export class RedisHealthChecker implements DependencyChecker {
           host,
           port,
           error: errorMessage,
+        },
+      };
+    }
+  }
+}
+
+@Injectable()
+export class SchemaHealthChecker implements DependencyChecker {
+  name = 'schema';
+
+  constructor(private readonly prisma: PrismaService) {}
+
+  async check(): Promise<DependencyHealth> {
+    const startTime = Date.now();
+    const expectedSchemaVersion = process.env.APP_SCHEMA_VERSION;
+
+    try {
+      const rows = await this.prisma.$queryRawUnsafe<Array<{ migration_name: string; finished_at: Date | null }>>(
+        'SELECT migration_name, finished_at FROM "_prisma_migrations" ORDER BY finished_at DESC NULLS LAST LIMIT 1'
+      );
+
+      const latest = rows[0];
+      if (!latest?.finished_at) {
+        return {
+          name: this.name,
+          status: HealthStatus.UNHEALTHY,
+          responseTimeMs: Date.now() - startTime,
+          message: 'migration_pending_or_incomplete',
+          lastChecked: new Date().toISOString(),
+        };
+      }
+
+      if (expectedSchemaVersion && latest.migration_name !== expectedSchemaVersion) {
+        return {
+          name: this.name,
+          status: HealthStatus.UNHEALTHY,
+          responseTimeMs: Date.now() - startTime,
+          message: 'schema_version_mismatch',
+          lastChecked: new Date().toISOString(),
+          details: { error: `expected=${expectedSchemaVersion}, actual=${latest.migration_name}` },
+        };
+      }
+
+      return {
+        name: this.name,
+        status: HealthStatus.HEALTHY,
+        responseTimeMs: Date.now() - startTime,
+        lastChecked: new Date().toISOString(),
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'unknown';
+      return {
+        name: this.name,
+        status: HealthStatus.UNHEALTHY,
+        responseTimeMs: Date.now() - startTime,
+        message: 'schema_check_failed',
+        lastChecked: new Date().toISOString(),
+        details: {
+          error: errorMessage,
+        },
+      };
+    }
+  }
+}
+
+@Injectable()
+export class QueueLagHealthChecker implements DependencyChecker {
+  name = 'queue';
+
+  constructor(@Inject('REDIS_CLIENT') private readonly redis: Redis) {}
+
+  async check(): Promise<DependencyHealth> {
+    const startTime = Date.now();
+    const queueWaitKey = process.env.QUEUE_WAIT_KEY || 'bull:email:wait';
+    const lagThreshold = Number.parseInt(process.env.QUEUE_LAG_THRESHOLD || '1000', 10);
+
+    try {
+      const lag = await this.redis.llen(queueWaitKey);
+      if (lag > lagThreshold) {
+        return {
+          name: this.name,
+          status: HealthStatus.UNHEALTHY,
+          responseTimeMs: Date.now() - startTime,
+          message: 'queue_lag_threshold_exceeded',
+          lastChecked: new Date().toISOString(),
+          details: {
+            error: `lag=${lag} threshold=${lagThreshold}`,
+          },
+        };
+      }
+
+      return {
+        name: this.name,
+        status: HealthStatus.HEALTHY,
+        responseTimeMs: Date.now() - startTime,
+        lastChecked: new Date().toISOString(),
+      };
+    } catch (error) {
+      return {
+        name: this.name,
+        status: HealthStatus.UNHEALTHY,
+        responseTimeMs: Date.now() - startTime,
+        message: 'queue_check_failed',
+        lastChecked: new Date().toISOString(),
+        details: {
+          error: error instanceof Error ? error.message : 'unknown',
         },
       };
     }
@@ -499,12 +619,16 @@ export class HealthController {
   private readonly dependencyCheckers: DependencyChecker[];
 
   constructor(
-    private readonly health: HealthCheckService,
-    private readonly prisma: PrismaHealthIndicator,
+    private readonly healthCheckService: HealthCheckService,
+    private readonly prismaIndicator: PrismaHealthIndicator,
+    private readonly prismaService: PrismaService,
     private readonly memory: MemoryHealthIndicator,
     @Optional() private readonly databaseChecker?: DatabaseHealthChecker,
     @Optional() private readonly redisChecker?: RedisHealthChecker,
-    @Optional() private readonly storageChecker?: StorageHealthChecker
+    @Optional() private readonly storageChecker?: StorageHealthChecker,
+    @Optional() private readonly schemaChecker?: SchemaHealthChecker,
+    @Optional() private readonly queueChecker?: QueueLagHealthChecker,
+    @Optional() private readonly runtimeReconciliation?: RuntimeReconciliationService
   ) {
     this.config = DEFAULT_CONFIG;
     this.dependencyCheckers = [];
@@ -517,6 +641,12 @@ export class HealthController {
     }
     if (this.storageChecker) {
       this.dependencyCheckers.push(this.storageChecker);
+    }
+    if (this.schemaChecker) {
+      this.dependencyCheckers.push(this.schemaChecker);
+    }
+    if (this.queueChecker) {
+      this.dependencyCheckers.push(this.queueChecker);
     }
   }
 
@@ -546,11 +676,36 @@ export class HealthController {
   @ApiResponse({ status: 503, description: 'Application is not ready' })
   @HealthCheck()
   async readiness(@Res() res: Response): Promise<void> {
+    if (this.runtimeReconciliation) {
+      const snapshot = await this.runtimeReconciliation.reconcileNow('readiness_probe');
+      const dependencies = snapshot.dependencies.map((dependency) => ({
+        name: dependency.name,
+        status: dependency.healthy ? HealthStatus.HEALTHY : HealthStatus.UNHEALTHY,
+        responseTimeMs: dependency.latencyMs,
+        message: dependency.reason,
+        lastChecked: dependency.lastCheckedAt,
+        details: {
+          error: dependency.circuitState !== 'CLOSED' ? `circuit=${dependency.circuitState}` : undefined,
+        },
+      }));
+      const response: ReadinessResponse = {
+        ready: snapshot.ready,
+        timestamp: new Date().toISOString(),
+        service: 'nextgen-api',
+        version: process.env.APP_VERSION || '1.0.0',
+        dependencies,
+      };
+      res.status(snapshot.ready ? HttpStatus.OK : HttpStatus.SERVICE_UNAVAILABLE).json(response);
+      return;
+    }
+
     try {
-      await this.health.check([
-        async () => this.prisma.pingCheck('database'),
+      await this.healthCheckService.check([
+        async () => this.prismaIndicator.pingCheck('database', this.prismaService),
         async () => this.memory.checkHeap('memory_heap', 300 * 1024 * 1024),
         async () => this.redisReadinessCheck(),
+        async () => this.schemaReadinessCheck(),
+        async () => this.queueReadinessCheck(),
       ]);
 
       const dependencies = await this.checkAllDependencies();
@@ -575,6 +730,50 @@ export class HealthController {
 
       res.status(HttpStatus.SERVICE_UNAVAILABLE).json(response);
     }
+  }
+
+  @Get('startup')
+  @ApiOperation({ summary: 'Startup probe - cold boot + dependency contract check' })
+  @ApiResponse({ status: 200, description: 'Application startup contract satisfied' })
+  @ApiResponse({ status: 503, description: 'Startup contract failed' })
+  async startup(@Res() res: Response): Promise<void> {
+    if (this.runtimeReconciliation) {
+      const snapshot = await this.runtimeReconciliation.reconcileNow('startup_probe');
+      const checks = {
+        db: snapshot.dependencies.some((d) => d.name === 'db' && d.healthy),
+        redis: snapshot.dependencies.some((d) => d.name === 'redis' && d.healthy),
+        schema: snapshot.dependencies.some((d) => d.name === 'migration' && d.healthy),
+        queue: snapshot.dependencies.some((d) => d.name === 'queue' && d.healthy),
+      };
+      const response: StartupResponse = {
+        started: snapshot.ready,
+        timestamp: new Date().toISOString(),
+        service: 'nextgen-api',
+        version: process.env.APP_VERSION || '1.0.0',
+        checks,
+      };
+      res.status(snapshot.ready ? HttpStatus.OK : HttpStatus.SERVICE_UNAVAILABLE).json(response);
+      return;
+    }
+
+    const dependencies = await this.checkAllDependencies();
+    const checks = {
+      db: dependencies.some((d) => d.name === 'database' && d.status === HealthStatus.HEALTHY),
+      redis: dependencies.some((d) => d.name === 'redis' && d.status === HealthStatus.HEALTHY),
+      schema: dependencies.some((d) => d.name === 'schema' && d.status === HealthStatus.HEALTHY),
+      queue: dependencies.some((d) => d.name === 'queue' && d.status === HealthStatus.HEALTHY),
+    };
+    const started = checks.db && checks.redis && checks.schema && checks.queue;
+
+    const response: StartupResponse = {
+      started,
+      timestamp: new Date().toISOString(),
+      service: 'nextgen-api',
+      version: process.env.APP_VERSION || '1.0.0',
+      checks,
+    };
+
+    res.status(started ? HttpStatus.OK : HttpStatus.SERVICE_UNAVAILABLE).json(response);
   }
 
   /**
@@ -653,6 +852,60 @@ export class HealthController {
 
     return {
       redis: {
+        status: 'up',
+      },
+    };
+  }
+
+  private async schemaReadinessCheck() {
+    if (!this.schemaChecker) {
+      throw new HealthCheckError('Schema checker unavailable', {
+        schema: {
+          status: 'down',
+          message: 'schema_checker_unavailable',
+        },
+      });
+    }
+
+    const schemaHealth = await checkWithTimeout(this.schemaChecker, this.config.timeout);
+    if (schemaHealth.status === HealthStatus.UNHEALTHY) {
+      throw new HealthCheckError('Schema health check failed', {
+        schema: {
+          status: 'down',
+          message: schemaHealth.message || 'schema_unavailable',
+        },
+      });
+    }
+
+    return {
+      schema: {
+        status: 'up',
+      },
+    };
+  }
+
+  private async queueReadinessCheck() {
+    if (!this.queueChecker) {
+      throw new HealthCheckError('Queue checker unavailable', {
+        queue: {
+          status: 'down',
+          message: 'queue_checker_unavailable',
+        },
+      });
+    }
+
+    const queueHealth = await checkWithTimeout(this.queueChecker, this.config.timeout);
+    if (queueHealth.status === HealthStatus.UNHEALTHY) {
+      throw new HealthCheckError('Queue health check failed', {
+        queue: {
+          status: 'down',
+          message: queueHealth.message || 'queue_unavailable',
+        },
+      });
+    }
+
+    return {
+      queue: {
         status: 'up',
       },
     };

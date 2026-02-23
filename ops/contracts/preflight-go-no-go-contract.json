@@ -1,0 +1,34 @@
+{
+  "version": "2026-02-23",
+  "name": "full-preflight-go-no-go",
+  "requiredEnv": [
+    "DATABASE_URL",
+    "REDIS_URL",
+    "JWT_SECRET",
+    "PROCESS_MANAGER",
+    "ENV_PRODUCTION_FILE"
+  ],
+  "healthEndpoints": ["/health/live", "/health/ready", "/health/startup"],
+  "checks": {
+    "databaseConnectivity": {
+      "command": "psql \"${DATABASE_URL}\" -v ON_ERROR_STOP=1 -Atc \"SELECT 1;\""
+    },
+    "redisConnectivity": {
+      "command": "redis-cli -u \"${REDIS_URL}\" ping"
+    },
+    "migrationGate": {
+      "deploy": "pnpm exec prisma migrate deploy --schema prisma/schema.prisma",
+      "status": "pnpm exec prisma migrate status --schema prisma/schema.prisma"
+    },
+    "aiCanaryShadowReadiness": {
+      "requiredEnv": ["AI_CANARY_MODEL_VERSION", "AI_MODEL_CANARY_PERCENT", "AI_SHADOW_EVAL_REPORT_PATH"]
+    },
+    "arTelemetryMetrics": [
+      "ar_overlay_latency_seconds_bucket",
+      "ar_overlay_guard_events_total",
+      "ai_inference_total",
+      "ai_shadow_eval_total"
+    ]
+  },
+  "failClosed": true
+}

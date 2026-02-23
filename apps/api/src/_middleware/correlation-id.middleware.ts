@@ -104,6 +104,7 @@ export function runWithCorrelationId<T>(correlationId: string, fn: () => T): T {
   const context: CorrelationContext = {
     correlationId,
     requestId: randomUUID(),
+    traceId: correlationId,
     timestamp: Date.now(),
   };
   return correlationStorage.run(context, fn);

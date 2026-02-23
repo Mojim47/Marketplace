@@ -1,12 +1,31 @@
 'use client';
 
-import { trackUiEvent, type UiEventName } from '@nextgen/observability';
+type UiEventName =
+  | 'page_view'
+  | 'cta_click'
+  | 'flow_start'
+  | 'flow_complete'
+  | 'error_shown'
+  | 'flow_transition'
+  | 'guard_blocked';
+
+type UiEvent = {
+  name: UiEventName;
+  timestamp: string;
+  payload: Record<string, unknown>;
+  traceId?: string;
+};
 
 export function emitUiEvent(name: UiEventName, payload: Record<string, unknown>, traceId?: string) {
-  const event = trackUiEvent(name, payload, { traceId });
+  const event: UiEvent = {
+    name,
+    timestamp: new Date().toISOString(),
+    payload,
+    traceId,
+  };
 
   if (typeof window !== 'undefined') {
-    const uiWindow = window as Window & { __uiEvents?: Array<ReturnType<typeof trackUiEvent>> };
+    const uiWindow = window as Window & { __uiEvents?: UiEvent[] };
     uiWindow.__uiEvents = uiWindow.__uiEvents ?? [];
     uiWindow.__uiEvents.push(event);
   }

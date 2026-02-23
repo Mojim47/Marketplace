@@ -1,11 +1,16 @@
-import type { ReactNode } from 'react';
+import type { HTMLAttributes, ReactNode } from 'react';
 
 export function GlassCard({
   children,
   className = '',
+  ...props
 }: {
   children: ReactNode;
   className?: string;
-}) {
-  return <div className={`glass-card ${className}`}>{children}</div>;
+} & HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div className={`glass-card ${className}`} {...props}>
+      {children}
+    </div>
+  );
 }

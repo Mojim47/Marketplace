@@ -55,6 +55,11 @@ jobs:
       - name: "📥 Install dependencies"
         run: pnpm install --frozen-lockfile
 
+      - name: "🐘 Install PostgreSQL client"
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
       # Trivy Filesystem Scan - MUST PASS
       - name: "🛡️ Run Trivy vulnerability scanner"
         uses: aquasecurity/trivy-action@master
@@ -137,8 +142,8 @@ jobs:
       - name: "🔧 Generate Prisma client"
         run: pnpm run db:generate
 
-      - name: "🗄️ Run database migrations"
-        run: pnpm run db:migrate:deploy
+      - name: "🗄️ Backup + safe database migrations"
+        run: pnpm run db:migrate:deploy:safe
         env:
           DATABASE_URL: postgresql://test:test@localhost:5432/nextgen_test
 
@@ -254,7 +259,6 @@ jobs:
           images: ghcr.io/${{ github.repository }}
           tags: |
             type=sha,prefix=
-            type=raw,value=latest,enable={{is_default_branch}}
             type=semver,pattern={{version}}
 
       # Scan Docker image before push
@@ -306,12 +310,144 @@ jobs:
       - name: "📥 Checkout code"
         uses: actions/checkout@v4
 
+      - name: "📦 Setup pnpm"
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: "🟢 Setup Node.js"
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: "📥 Install dependencies"
+        run: pnpm install --frozen-lockfile
+
+      - name: "📈 Verify scaling + pooling readiness gate"
+        run: pnpm run release:scaling:check
+        env:
+          K8S_API_STACK_PATH: k8s/base/api-stack.yml
+          K8S_HPA_PATH: k8s/base/hpa-autoscaling.yml
+          HELM_VALUES_PATH: helm/values.yaml
+          SCALING_READINESS_REPORT_PATH: artifacts/release/scaling-readiness-report.json
+
+      - name: "🧪 Run chaos rollback drill gate"
+        run: pnpm run release:chaos:drill
+        env:
+          CHAOS_DRILL_REPORT_PATH: artifacts/release/chaos-rollback-drill-report.json
+
+      - name: "📡 Live metrics probe gate (pre-cutover)"
+        run: pnpm run release:live-metrics:probe
+        env:
+          LIVE_METRICS_URL: ${{ secrets.NG_PROD_OBS_METRICS_URL || secrets.API_METRICS_URL }}
+          LIVE_METRICS_AUTH_TOKEN: ${{ secrets.NG_PROD_OBS_METRICS_AUTH_TOKEN || '' }}
+          LIVE_METRICS_TIMEOUT_MS: ${{ secrets.NG_PROD_OBS_METRICS_TIMEOUT_MS || '5000' }}
+          PRODUCTION_HARDENING_CONTRACT_PATH: ops/contracts/production-hardening-contract.json
+
+      - name: "🔐 Verify secrets policy schema gate"
+        run: node scripts/release/verify-secrets-policy-schema.mjs
+        env:
+          SECRETS_ROTATION_POLICY_PATH: ops/contracts/secrets-rotation-policy.json
+          SECRETS_ROTATION_POLICY_SCHEMA_PATH: ops/contracts/secrets-rotation-policy.schema.json
+
+      - name: "🔐 Verify secrets contract sync gate"
+        run: node scripts/release/verify-secrets-contract-sync.mjs
+        env:
+          SECRETS_ROTATION_POLICY_PATH: ops/contracts/secrets-rotation-policy.json
+          SECRETS_ROTATION_POLICY_SCHEMA_PATH: ops/contracts/secrets-rotation-policy.schema.json
+          SECRETS_ROTATION_REGISTRY_PATH: ops/contracts/secrets-rotation-registry.json
+          SECRETS_ROTATION_REGISTRY_SCHEMA_PATH: ops/contracts/secrets-rotation-registry.schema.json
+
+      - name: "🔐 Verify secrets rotation gate"
+        run: node scripts/release/verify-secrets-rotation-gate.mjs
+        env:
+          SECRETS_ROTATION_ENFORCE: "true"
+          SECRETS_PROVIDER: ${{ secrets.NG_PROD_SECRETS_PROVIDER || 'vault' }}
+          SECRETS_ROTATION_MAX_AGE_DAYS: ${{ secrets.NG_PROD_SECRETS_ROTATION_MAX_AGE_DAYS || '90' }}
+          SECRETS_ROTATION_REGISTRY_PATH: ops/contracts/secrets-rotation-registry.json
+          VAULT_ADDR: ${{ secrets.NG_PROD_VAULT_ADDR || '' }}
+          AWS_REGION: ${{ secrets.NG_PROD_AWS_REGION || '' }}
+          DATABASE_URL_ROTATED_AT: ${{ secrets.NG_PROD_RUNTIME_DATABASE_URL_ROTATED_AT || secrets.DATABASE_URL_ROTATED_AT }}
+          DATABASE_URL_SECRET_VERSION: ${{ secrets.NG_PROD_RUNTIME_DATABASE_URL_SECRET_VERSION || secrets.DATABASE_URL_SECRET_VERSION }}
+          REDIS_URL_ROTATED_AT: ${{ secrets.NG_PROD_RUNTIME_REDIS_URL_ROTATED_AT || secrets.REDIS_URL_ROTATED_AT }}
+          REDIS_URL_SECRET_VERSION: ${{ secrets.NG_PROD_RUNTIME_REDIS_URL_SECRET_VERSION || secrets.REDIS_URL_SECRET_VERSION }}
+          JWT_SECRET_ROTATED_AT: ${{ secrets.NG_PROD_RUNTIME_JWT_SECRET_ROTATED_AT || secrets.JWT_SECRET_ROTATED_AT }}
+          JWT_SECRET_VERSION: ${{ secrets.NG_PROD_RUNTIME_JWT_SECRET_VERSION || secrets.JWT_SECRET_VERSION }}
+
+      - name: "🗄️ Backup production DB before migration"
+        id: db_backup
+        env:
+          DATABASE_URL: ${{ secrets.NG_PROD_RUNTIME_DATABASE_URL || secrets.DATABASE_URL }}
+        run: |
+          backup_file="$(pnpm run --silent db:migrate:backup)"
+          echo "DB_MIGRATION_BACKUP_FILE=$backup_file" >> "$GITHUB_ENV"
+          echo "backup_file=$backup_file" >> "$GITHUB_OUTPUT"
+
+      - name: "🗄️ Safe production migration gate"
+        run: pnpm run db:migrate:deploy:safe
+        env:
+          DATABASE_URL: ${{ secrets.NG_PROD_RUNTIME_DATABASE_URL || secrets.DATABASE_URL }}
+          DB_MIGRATION_BACKUP_FILE: ${{ steps.db_backup.outputs.backup_file }}
+
+      - name: "🧭 Generate rollback runbook"
+        run: node scripts/release/generate-rollback-runbook.mjs
+        env:
+          ARTIFACT_REF: ${{ github.sha }}
+          ARTIFACT_IMAGE: ghcr.io/${{ github.repository }}:${{ github.sha }}
+          DB_MIGRATION_BACKUP_FILE: ${{ steps.db_backup.outputs.backup_file }}
+
+      - name: "🩺 DB runtime signals gate"
+        run: pnpm run db:signals:check
+        env:
+          DATABASE_URL: ${{ secrets.NG_PROD_RUNTIME_DATABASE_URL || secrets.DATABASE_URL }}
+          DB_MIGRATION_BACKUP_FILE: ${{ steps.db_backup.outputs.backup_file }}
+          DB_SLOW_QUERY_THRESHOLD_MS: ${{ secrets.NG_PROD_DB_SLOW_QUERY_THRESHOLD_MS || '250' }}
+          DB_MAX_SLOW_QUERIES: ${{ secrets.NG_PROD_DB_MAX_SLOW_QUERIES || '0' }}
+          DB_MAX_REPLICA_LAG_SECONDS: ${{ secrets.NG_PROD_DB_MAX_REPLICA_LAG_SECONDS || '5' }}
+          DB_MAX_BACKUP_AGE_HOURS: ${{ secrets.NG_PROD_DB_MAX_BACKUP_AGE_HOURS || '24' }}
+          DB_REQUIRE_PG_STAT_STATEMENTS: ${{ secrets.NG_PROD_DB_REQUIRE_PG_STAT_STATEMENTS || 'true' }}
+          DB_RUNTIME_SIGNALS_REPORT_PATH: artifacts/release/db-runtime-signals-prod.json
+
       - name: "🚀 Deploy to production"
         run: |
           echo "🚀 Deploying to production..."
           echo "Image: ghcr.io/${{ github.repository }}:${{ github.sha }}"
           # Add actual deployment commands here
           # kubectl set image deployment/api api=ghcr.io/${{ github.repository }}:${{ github.sha }}
+
+      - name: "🔎 Run staging/prod contract preflight"
+        run: bash ops/scripts/staging-preflight-contract.sh
+        env:
+          ARTIFACT_REF: ${{ github.sha }}
+          ARTIFACT_IMAGE: ghcr.io/${{ github.repository }}:${{ github.sha }}
+          ENV_PRODUCTION_FILE: ${{ secrets.NG_PROD_RUNTIME_ENV_PRODUCTION_FILE || secrets.ENV_PRODUCTION_FILE }}
+          DATABASE_URL: ${{ secrets.NG_PROD_RUNTIME_DATABASE_URL || secrets.DATABASE_URL }}
+          REDIS_URL: ${{ secrets.NG_PROD_RUNTIME_REDIS_URL || secrets.REDIS_URL }}
+          JWT_SECRET: ${{ secrets.NG_PROD_RUNTIME_JWT_SECRET || secrets.JWT_SECRET }}
+          PROCESS_MANAGER: ${{ secrets.NG_PROD_DEPLOY_PROCESS_MANAGER || secrets.PROCESS_MANAGER }}
+          SYSTEMD_UNIT: ${{ secrets.NG_PROD_DEPLOY_SYSTEMD_UNIT || secrets.SYSTEMD_UNIT }}
+          PM2_APP: ${{ secrets.NG_PROD_DEPLOY_PM2_APP || secrets.PM2_APP }}
+          PM2_CONFIG: ${{ secrets.NG_PROD_DEPLOY_PM2_CONFIG || secrets.PM2_CONFIG }}
+
+      - name: "🛡️ Run immutable go/no-go gate"
+        run: bash ops/scripts/prod-go-no-go-gate.sh
+        env:
+          ARTIFACT_REF: ${{ github.sha }}
+          ARTIFACT_IMAGE: ghcr.io/${{ github.repository }}:${{ github.sha }}
+          ENV_PRODUCTION_FILE: ${{ secrets.NG_PROD_RUNTIME_ENV_PRODUCTION_FILE || secrets.ENV_PRODUCTION_FILE }}
+          DATABASE_URL: ${{ secrets.NG_PROD_RUNTIME_DATABASE_URL || secrets.DATABASE_URL }}
+          REDIS_URL: ${{ secrets.NG_PROD_RUNTIME_REDIS_URL || secrets.REDIS_URL }}
+          API_PORT: ${{ secrets.NG_PROD_RUNTIME_API_PORT || secrets.API_PORT }}
+          JWT_SECRET: ${{ secrets.NG_PROD_RUNTIME_JWT_SECRET || secrets.JWT_SECRET }}
+          LOG_FORMAT: ${{ secrets.NG_PROD_RUNTIME_LOG_FORMAT || 'json' }}
+          PROCESS_MANAGER: ${{ secrets.NG_PROD_DEPLOY_PROCESS_MANAGER || secrets.PROCESS_MANAGER }}
+          SYSTEMD_UNIT: ${{ secrets.NG_PROD_DEPLOY_SYSTEMD_UNIT || secrets.SYSTEMD_UNIT }}
+          PM2_APP: ${{ secrets.NG_PROD_DEPLOY_PM2_APP || secrets.PM2_APP }}
+          PM2_CONFIG: ${{ secrets.NG_PROD_DEPLOY_PM2_CONFIG || secrets.PM2_CONFIG }}
+          API_BASE_URL: ${{ secrets.NG_PROD_OBS_API_BASE_URL || secrets.API_BASE_URL }}
+          HEALTH_LIVE_URL: ${{ secrets.NG_PROD_OBS_API_HEALTH_LIVE_URL || secrets.API_HEALTH_LIVE_URL }}
+          HEALTH_READY_URL: ${{ secrets.NG_PROD_OBS_API_HEALTH_READY_URL || secrets.API_HEALTH_READY_URL }}
 
       - name: "🏥 Run health checks (gate)"
         run: |
@@ -325,6 +461,39 @@ jobs:
 
       - name: "✅ Deployment complete"
         run: echo "✅ Production deployment successful!"
+
+      - name: "📤 Upload rollback runbook"
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rollback-runbook-${{ github.sha }}
+          path: artifacts/release/rollback-runbook-${{ github.sha }}.*
+
+      - name: "📤 Upload DB runtime signals report"
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-runtime-signals-${{ github.sha }}
+          path: artifacts/release/db-runtime-signals-prod.json
+
+      - name: "📤 Upload scaling + chaos reports"
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deploy-resilience-reports-${{ github.sha }}
+          path: |
+            artifacts/release/scaling-readiness-report.json
+            artifacts/release/chaos-rollback-drill-report.json
+
+      - name: "🚨 Notify deploy gate failure (Slack/Teams)"
+        if: failure()
+        continue-on-error: true
+        run: node scripts/release/notify-gate-failure.mjs
+        env:
+          GATE_NAME: deploy-production
+          DEPLOY_ENV: production
+          SLACK_WEBHOOK_URL: ${{ secrets.NG_ALERTS_SLACK_WEBHOOK || '' }}
+          TEAMS_WEBHOOK_URL: ${{ secrets.NG_ALERTS_TEAMS_WEBHOOK || '' }}
 
   # ═══════════════════════════════════════════════════════════════════════════
   # STAGE 6: Post-Deploy Verification

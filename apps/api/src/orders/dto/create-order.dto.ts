@@ -3,6 +3,7 @@ import { Type } from 'class-transformer';
 import {
   IsArray,
   IsEmail,
+  IsNumber,
   IsInt,
   IsOptional,
   IsPhoneNumber,
@@ -15,12 +16,17 @@ import {
 export class OrderItemDto {
   @ApiProperty()
   @IsUUID()
-  productId: string;
+  productId!: string;
 
   @ApiProperty()
   @IsInt()
   @Min(1)
-  quantity: number;
+  quantity!: number;
+
+  @ApiProperty()
+  @IsNumber()
+  @Min(0)
+  price!: number;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -33,7 +39,7 @@ export class CreateOrderDto {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => OrderItemDto)
-  items: OrderItemDto[];
+  items!: OrderItemDto[];
 
   @ApiPropertyOptional()
   @IsOptional()

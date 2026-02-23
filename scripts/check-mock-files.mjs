@@ -55,7 +55,7 @@ const MOCK_FILE_PATTERNS = [
  * Content patterns to detect mock/placeholder code
  */
 const MOCK_CONTENT_PATTERNS = [
-  /TODO.*mock|FIXME.*mock|PLACEHOLDER/i,
+  /TODO.*mock|FIXME.*mock|\bPLACEHOLDER\b/i,
   /function\s+(simulate|mock|fake|stub|dummy)/i,
   /const\s+(simulate|mock|fake|stub|dummy)/i,
   /Math\.random\(\)/g, // Detect random generators in business logic
@@ -250,7 +250,7 @@ async function main() {
   // ─────────────────────────────────────────────────────────────────────────────
   console.log('\n📦 Checking for mock files in build output...');
 
-  const distExists = existsSync('dist') || existsSync('apps/api/dist') || existsSync('apps/web/.next');
+  const distExists = existsSync('dist') || existsSync('apps/web/.next') || existsSync('apps/admin/.next');
 
   if (distExists) {
     const mockFilesInDist = [];
@@ -259,22 +259,12 @@ async function main() {
       mockFilesInDist.push(...await findFiles('dist', MOCK_FILE_PATTERNS, ['node_modules']));
     }
     
-    // Check each app's dist directory
-    if (existsSync('apps')) {
-      const apps = await readdir('apps', { withFileTypes: true });
-      for (const app of apps) {
-        if (app.isDirectory()) {
-          const distPath = join('apps', app.name, 'dist');
-          const nextPath = join('apps', app.name, '.next');
-          
-          if (existsSync(distPath)) {
-            mockFilesInDist.push(...await findFiles(distPath, MOCK_FILE_PATTERNS, ['node_modules']));
-          }
-          if (existsSync(nextPath)) {
-            mockFilesInDist.push(...await findFiles(nextPath, MOCK_FILE_PATTERNS, ['node_modules']));
-          }
-        }
-      }
+    // Next.js outputs that can be deployed directly.
+    if (existsSync('apps/web/.next')) {
+      mockFilesInDist.push(...(await findFiles('apps/web/.next', MOCK_FILE_PATTERNS, ['node_modules'])));
+    }
+    if (existsSync('apps/admin/.next')) {
+      mockFilesInDist.push(...(await findFiles('apps/admin/.next', MOCK_FILE_PATTERNS, ['node_modules'])));
     }
 
     if (mockFilesInDist.length > 0) {

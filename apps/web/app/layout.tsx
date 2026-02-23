@@ -4,6 +4,8 @@ import type { Metadata } from 'next';
 import { Fraunces, Vazirmatn } from 'next/font/google';
 import { cookies } from 'next/headers';
 import type { ReactNode } from 'react';
+import { AuthProvider } from '@/components/AuthProvider';
+import { SiteShell } from '@/components/SiteShell';
 
 const vazirmatn = Vazirmatn({
   subsets: ['latin', 'arabic'],
@@ -18,8 +20,8 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: 'NextGen Marketplace',
-  description: 'Modern marketplace for vendors and customers',
+  title: 'AIMarket',
+  description: 'AIMarket 2026 - AI-first production marketplace',
 };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
@@ -29,7 +31,9 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   return (
     <html lang={isRtl ? 'fa' : 'en'} dir={isRtl ? 'rtl' : 'ltr'} data-locale={locale}>
       <body className={`${vazirmatn.variable} ${fraunces.variable} antialiased`}>
-        <main className="min-h-screen">{children}</main>
+        <AuthProvider>
+          <SiteShell>{children}</SiteShell>
+        </AuthProvider>
       </body>
     </html>
   );

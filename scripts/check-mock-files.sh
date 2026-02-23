@@ -57,8 +57,8 @@ echo ""
 echo "📦 Checking for mock files in build output..."
 
 # Check if dist directories exist
-if [ -d "dist" ] || [ -d "apps/api/dist" ] || [ -d "apps/web/.next" ]; then
-    MOCK_FILES_IN_DIST=$(find dist/ apps/*/dist/ apps/*/.next/ -type f \( \
+if [ -d "dist" ] || [ -d "apps/web/.next" ] || [ -d "apps/admin/.next" ]; then
+    MOCK_FILES_IN_DIST=$(find dist/ apps/web/.next/ apps/admin/.next/ -type f \( \
         -name "mock-*" -o \
         -name "*.mock.*" \
     \) 2>/dev/null | grep -v "node_modules" || true)

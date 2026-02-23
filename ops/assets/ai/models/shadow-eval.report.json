@@ -1,0 +1,9 @@
+{
+  "modelVersion": "2026.02.23",
+  "shadowModelVersion": "2026.01.31",
+  "windowSize": 200,
+  "averageDrift": 0.11,
+  "maxDrift": 0.31,
+  "threshold": 0.45,
+  "generatedAt": "2026-02-23T00:00:00Z"
+}

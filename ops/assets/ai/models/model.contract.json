@@ -1,0 +1,19 @@
+{
+  "modelName": "nextgen-semantic-embedder",
+  "modelVersion": "2026.02.23",
+  "artifactPath": "model.onnx",
+  "artifactSha256": "87dd8fdbd32ad809a60935507163aad28d68b62f6084bc7c5a7765e716d2dd84",
+  "tokenizerPath": "tokenizer.json",
+  "tokenizerSha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+  "datasetHash": "6ea94f1b93942067a7355d32f0fcb4be38f3f82cc0e4cb258f10993f69c6d723",
+  "metrics": {
+    "evaluationMetric": "ndcg@10",
+    "evaluationValue": 0.812,
+    "minimumAcceptedValue": 0.78
+  },
+  "driftBaseline": {
+    "metric": "embedding_cosine_shift",
+    "threshold": 0.08
+  },
+  "signedAt": "2026-02-23T00:00:00Z"
+}

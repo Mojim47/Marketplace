@@ -38,6 +38,8 @@ jobs:
     steps:
       - name: "📥 Checkout code"
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: "📦 Setup pnpm"
         uses: pnpm/action-setup@v2
@@ -62,6 +64,39 @@ jobs:
           python-version: '3.x'
       - name: "📥 Install dependencies"
         run: pnpm install --frozen-lockfile
+
+      - name: "🔐 Enforce UTF-8/LF/ASCII text policy"
+        shell: bash
+        run: |
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          if [ -z "$BASE_SHA" ]; then
+            BASE_SHA="${{ github.event.before }}"
+          fi
+          if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ]; then
+            BASE_SHA="$(git rev-parse HEAD~1)"
+          fi
+          CHANGED_FILES="$(git diff --name-only --diff-filter=ACMR "$BASE_SHA"...HEAD | tr '\n' ' ')"
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "No changed files for text governance policy"
+            exit 0
+          fi
+          node scripts/policy/validate-text-governance.mjs --enforce-ascii-scripts $CHANGED_FILES
+
+      - name: "🧭 DB schema drift gate"
+        run: pnpm run db:drift:check
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+
+      - name: "🧪 DB constraints audit"
+        run: pnpm run db:constraints:audit
+
+      - name: "📤 Upload DB audit artifacts"
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: db-audit-artifacts
+          path: artifacts/db-audit/
+          retention-days: 14
 
       - name: "🔍 Run Biome lint & format check"
         run: pnpm run check
@@ -367,13 +402,17 @@ jobs:
         env:
           NODE_ENV: production
 
-      - name: "🚀 API Bootstrap Guard"
-        run: bash ops/scripts/ci-api-bootstrap.sh
+      - name: "🚀 API Bootstrap + Observability Guard"
+        run: node ops/scripts/ci-bootstrap-observability-gate.mjs
         env:
           API_PORT: "4010"
+          BOOTSTRAP_LOG_PATH: "api.log"
           DATABASE_URL: postgresql://test:test@localhost:5432/nextgen_ci
           REDIS_URL: redis://localhost:6379
-          BOOTSTRAP_TIMEOUT_SECONDS: "30"
+          BOOTSTRAP_TIMEOUT_MS: "45000"
+          ERROR_BUDGET_RATIO: "0.005"
+          LATENCY_P95_SLO_SECONDS: "0.4"
+          METRIC_ROUTE_CARDINALITY_MAX: "50"
 
       - name: "🔍 Verify no mock files in build output"
         run: node scripts/check-mock-files.mjs
@@ -417,8 +456,58 @@ jobs:
       - name: "Install Playwright browsers"
         run: pnpm exec playwright install --with-deps
 
+      - name: "Run UI Playwright regression suite"
+        run: pnpm ui:playwright
+
+      - name: "Run UI pa11y accessibility suite"
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm --filter @nextgen/web dev > web-pa11y.log 2>&1 &
+          WEB_PID=$!
+          pnpm --filter @nextgen/admin dev > admin-pa11y.log 2>&1 &
+          ADMIN_PID=$!
+          cleanup() {
+            kill "$WEB_PID" "$ADMIN_PID" || true
+          }
+          trap cleanup EXIT
+          for _ in $(seq 1 60); do
+            if curl -sf http://localhost:3000/livez >/dev/null && curl -sf http://localhost:3003/livez >/dev/null; then
+              break
+            fi
+            sleep 2
+          done
+          pnpm ui:pa11y
+
+      - name: "Run UI drift gate"
+        run: pnpm ui:drift:check
+
+      - name: "Generate Phase 1 migration report"
+        if: always()
+        run: pnpm ui:phase1:report
+
+      - name: "Run product architecture audit"
+        run: pnpm ui:product:audit
+        env:
+          UI_PRODUCT_AUDIT_MIN_COVERAGE: "60"
+
+      - name: "Generate page matrix"
+        run: pnpm ui:page-matrix
+
+      - name: "Generate top-gap backlog"
+        run: pnpm ui:product:backlog
+
       - name: "Run UI governance gates"
-        run: pnpm ui:governance  # ═══════════════════════════════════════════════════════════════════════════
+        run: pnpm ui:governance
+
+      - name: "Upload UI drift artifacts"
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ui-drift-artifacts
+          path: artifacts/ui-audit/
+          retention-days: 14
+  # ═══════════════════════════════════════════════════════════════════════════
   # STAGE 6: Integration Tests (on PR to main only)
   # ═══════════════════════════════════════════════════════════════════════════
   integration-tests:
@@ -474,7 +563,12 @@ jobs:
         run: pnpm run db:generate
 
       - name: "🗄️ Run database migrations"
-        run: pnpm run db:migrate:deploy
+        run: pnpm run db:migrate:deploy:safe
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/nextgen_test
+
+      - name: "🧭 Runtime schema drift gate"
+        run: pnpm run db:drift:runtime
         env:
           DATABASE_URL: postgresql://test:test@localhost:5432/nextgen_test
 
@@ -537,11 +631,3 @@ jobs:
           echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Branch:** \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Triggered by:** @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
-
-
-
-
-
-
-
-

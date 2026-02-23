@@ -28,6 +28,7 @@ import { DatabaseModule } from './database/database.module';
 import { FeatureFlagModule } from './feature-flag/feature-flag.module';
 import { HealthModule } from './health/health.module';
 import { MonitoringModule } from './monitoring/monitoring.module';
+import { OutboxModule } from './outbox/outbox.module';
 import { OrdersModule } from './orders/orders.module';
 import { PaymentModule } from './payment/payment.module';
 import { ProductsModule } from './products/products.module';
@@ -124,6 +125,7 @@ import { VendorModule } from './vendor/vendor.module';
     FeatureFlagModule,
     AuditModule,
     MonitoringModule,
+    OutboxModule,
     SearchModule,
     ObservabilityModule,
   ],

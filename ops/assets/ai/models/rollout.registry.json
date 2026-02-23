@@ -1,0 +1,17 @@
+{
+  "activeModelVersion": "none",
+  "previousModelVersion": "none",
+  "canary": {
+    "enabled": false,
+    "modelVersion": "2026.02.23-canary",
+    "trafficPercent": 0
+  },
+  "lastUpdatedAt": "2026-02-23T21:26:26.392Z",
+  "lastRollback": {
+    "reason": "shadow_drift_exceeded",
+    "traceId": "phone",
+    "fromVersion": "none",
+    "toVersion": "none",
+    "at": "2026-02-23T21:26:26.392Z"
+  }
+}
