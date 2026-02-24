@@ -1,10 +1,12 @@
 :root {
-  --vp-bg: #f4f6fb;
+  --vp-bg: #f8fafc;
   --vp-card: #ffffff;
-  --vp-border: #dbe1ec;
-  --vp-ink: #0f172a;
-  --vp-muted: #475569;
-  --vp-brand: #0ea5e9;
+  --vp-border: rgba(59, 130, 246, 0.2);
+  --vp-ink: #1e293b;
+  --vp-muted: #64748b;
+  --vp-brand: #3b82f6;
+  --vp-warning: #f59e0b;
+  --vp-success: #10b981;
 }
 
 * {
@@ -15,9 +17,9 @@ html,
 body {
   margin: 0;
   padding: 0;
-  background: radial-gradient(900px 500px at 90% -10%, #c7f2ff, transparent 60%), var(--vp-bg);
+  background: radial-gradient(900px 500px at 90% -10%, #dbeafe, transparent 60%), var(--vp-bg);
   color: var(--vp-ink);
-  font-family: Tahoma, sans-serif;
+  font-family: var(--font-vazirmatn, Tahoma), sans-serif;
 }
 
 a {
@@ -39,7 +41,7 @@ a {
   background: var(--vp-card);
   border: 1px solid var(--vp-border);
   border-radius: 20px;
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.07);
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
 }
 
 .vendor-header {
@@ -74,7 +76,7 @@ a {
 
 .vendor-nav a:hover {
   border-color: var(--vp-brand);
-  color: #0369a1;
+  color: #1d4ed8;
 }
 
 .vendor-grid {
@@ -104,6 +106,28 @@ a {
 .vendor-muted {
   color: var(--vp-muted);
   font-size: 13px;
+}
+
+.vendor-status {
+  border-radius: 999px;
+  border: 1px solid var(--vp-border);
+  padding: 2px 8px;
+  font-size: 11px;
+}
+
+.vendor-status.success {
+  background: rgb(16 185 129 / 0.12);
+  color: #047857;
+}
+
+.vendor-status.warning {
+  background: rgb(245 158 11 / 0.12);
+  color: #b45309;
+}
+
+.vendor-status.info {
+  background: rgb(59 130 246 / 0.12);
+  color: #1d4ed8;
 }
 
 @media (max-width: 900px) {

@@ -4,12 +4,15 @@
 @tailwind utilities;
 
 :root {
-  --admin-bg: var(--color-neutral-900);
-  --admin-ink: var(--color-neutral-0);
-  --admin-muted: var(--color-neutral-200);
-  --admin-card: rgb(var(--color-neutral-900-rgb) / 0.78);
-  --admin-border: rgb(var(--color-neutral-400-rgb) / 0.2);
-  --admin-brand: var(--color-primary-400);
+  --admin-bg: #0a0c0f;
+  --admin-ink: #f8fafc;
+  --admin-muted: #94a3b8;
+  --admin-card: #14181c;
+  --admin-border: rgba(255, 215, 0, 0.2);
+  --admin-accent: #ffd700;
+  --admin-success: #00ff88;
+  --admin-warning: #ffb547;
+  --admin-error: #ff4d4d;
 }
 
 html,
@@ -27,17 +30,41 @@ body::before {
   position: fixed;
   inset: 0;
   z-index: -1;
-  background: radial-gradient(1000px 600px at 85% -10%, rgb(var(--color-primary-400-rgb) / 0.25), transparent 60%),
-    linear-gradient(160deg, var(--color-neutral-900) 0%, var(--color-neutral-800) 50%, var(--color-neutral-900) 100%);
+  background: radial-gradient(1000px 600px at 92% -10%, rgba(255, 215, 0, 0.18), transparent 62%),
+    radial-gradient(900px 500px at 8% 12%, rgba(59, 130, 246, 0.14), transparent 58%),
+    linear-gradient(160deg, #090b0e 0%, #0d1319 44%, #090b0e 100%);
 }
 
 .admin-card {
   background: var(--admin-card);
   border: 1px solid var(--admin-border);
-  box-shadow: var(--shadow-2xl);
+  box-shadow: 0 14px 30px rgb(0 0 0 / 0.35);
 }
 
 .admin-title {
   font-family: var(--font-fraunces), serif;
   letter-spacing: -0.02em;
+}
+
+.admin-kpi {
+  border: 1px solid var(--admin-border);
+  background: linear-gradient(180deg, rgb(20 24 28 / 0.95), rgb(13 18 23 / 0.9));
+}
+
+.admin-pill {
+  border: 1px solid var(--admin-border);
+  background: rgb(255 215 0 / 0.08);
+  color: #ffe27a;
+}
+
+.admin-log-info {
+  color: #93c5fd;
+}
+
+.admin-log-warning {
+  color: var(--admin-warning);
+}
+
+.admin-log-error {
+  color: var(--admin-error);
 }

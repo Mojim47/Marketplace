@@ -23,7 +23,14 @@ export function VendorShell({
     <div className="vendor-shell">
       <div className="vendor-wrap">
         <header className="vendor-card vendor-header">
-          <div className="vendor-muted">NextGen Vendor Portal</div>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="vendor-muted">Vendor Operations Center</div>
+            <div className="flex gap-2">
+              <span className="vendor-status success">SLA 99.8%</span>
+              <span className="vendor-status info">Orders +18</span>
+              <span className="vendor-status warning">Low Stock 6</span>
+            </div>
+          </div>
           <h1 className="vendor-title">{title}</h1>
           <p className="vendor-subtitle">{subtitle}</p>
           <nav className="vendor-nav" aria-label="vendor navigation">
