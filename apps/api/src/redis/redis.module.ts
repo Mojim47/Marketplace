@@ -8,9 +8,9 @@
  * - SESSION_SERVICE: User session management
  */
 
+import { randomUUID } from 'crypto';
 import { type DynamicModule, Global, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { randomUUID } from 'crypto';
 import Redis from 'ioredis';
 
 export interface RedisModuleOptions {

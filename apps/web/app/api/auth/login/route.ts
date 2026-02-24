@@ -1,6 +1,6 @@
+import { AUTH_COOKIE_NAME, type WebAuthResponse, getApiBaseUrl } from '@/lib/auth-config';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { AUTH_COOKIE_NAME, getApiBaseUrl, type WebAuthResponse } from '@/lib/auth-config';
 
 const loginSchema = z.object({
   mobile: z.string().regex(/^09\d{9}$/),
@@ -25,7 +25,9 @@ const refreshCookieOptions = {
 };
 
 function isMockMode() {
-  return (process.env.AUTH_MODE || '').toLowerCase() === 'mock' || process.env.ALLOW_AUTH_MOCK === 'true';
+  return (
+    (process.env.AUTH_MODE || '').toLowerCase() === 'mock' || process.env.ALLOW_AUTH_MOCK === 'true'
+  );
 }
 
 function createMockAccessToken(mobile: string) {
