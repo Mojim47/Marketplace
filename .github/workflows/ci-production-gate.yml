@@ -68,6 +68,8 @@ jobs:
           cache: pnpm
 
       - name: freeze gate
+        env:
+          FREEZE_OVERRIDE: ${{ github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'freeze-approved') && 'true' || 'false' }}
         run: bash ops/scripts/enforce-system-freeze.sh origin/main
 
       - name: install frozen lockfile
