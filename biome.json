@@ -1,26 +1,25 @@
 {
   "$schema": "https://biomejs.dev/schemas/1.5.3/schema.json",
   "files": {
-    "include": [
-      "**/*.ts",
-      "**/*.tsx",
-      "**/*.js",
-      "**/*.jsx",
-      "**/*.json",
-      "!**/node_modules/**",
-      "!**/dist/**",
-      "!**/.next/**",
-      "!**/coverage/**",
-      "!**/*.min.js",
-      "!**/nextgen-api.postman_collection.json",
-      "!**/scripts/nightmare-analysis.ts",
-      "!**/prisma/migrations/**",
-      "!**/pnpm-lock.yaml"
+    "include": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.json"],
+    "ignore": [
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/.next/**",
+      "**/coverage/**",
+      "**/*.min.js",
+      "**/nextgen-api.postman_collection.json",
+      "**/scripts/nightmare-analysis.ts",
+      "**/prisma/migrations/**",
+      "**/pnpm-lock.yaml"
     ],
     "maxSize": 2097152
   },
   "linter": {
     "enabled": false
+  },
+  "organizeImports": {
+    "enabled": true
   },
   "formatter": {
     "enabled": true,
@@ -44,7 +43,7 @@
     ],
     "formatter": {
       "quoteStyle": "single",
-      "trailingComma": "es5",
+      "trailingCommas": "es5",
       "semicolons": "always",
       "arrowParentheses": "always",
       "bracketSpacing": true,

@@ -1,15 +1,16 @@
 'use client';
 
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AuthNavButton } from '@/components/AuthNavButton';
-import { LocaleSwitch } from '@/components/LocaleSwitch';
 import { useAuth } from '@/components/AuthProvider';
-import { Button, GlassCard, PageHeader } from '@/components/ui';
+import { LocaleSwitch } from '@/components/LocaleSwitch';
+import { Button, PageHeader } from '@/components/ui';
 import { useTraceId } from '@/hooks/use-trace-id';
 import { transitionFlow } from '@/lib/marketplace-state-machine';
 import { emitUiEvent } from '@/lib/ui-telemetry';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 type CartItem = {
   productId: string;
@@ -35,9 +36,39 @@ type Product = {
   price: number;
 };
 
+const promoBanners = [
+  { title: 'Smart Savings', subtitle: 'تخفیف‌های پویا بر اساس سبد خرید', badge: 'AI Offer' },
+  {
+    title: 'Express Delivery',
+    subtitle: 'ارسال زیر 24 ساعت برای کالاهای منتخب',
+    badge: 'Fast Lane',
+  },
+  {
+    title: 'Secure Checkout',
+    subtitle: 'تسویه زرین‌پال با گارانتی پرداخت امن',
+    badge: 'Trusted Pay',
+  },
+];
+
+const productImages = [
+  '/images/products/phone-ultra.jpg',
+  '/images/products/laptop.jpg',
+  '/images/products/headphones.jpg',
+  '/images/products/camera.jpg',
+  '/images/products/router.jpg',
+  '/images/products/smartwatch.jpg',
+  '/images/products/monitor.jpg',
+  '/images/products/speaker.jpg',
+  '/images/products/smart-home.jpg',
+  '/images/products/lock.jpg',
+];
+
 async function fetchJson<T>(url: string, init?: globalThis.RequestInit): Promise<T> {
   const response = await fetch(url, init);
-  const data = (await response.json().catch(() => ({}))) as T & { error?: string; message?: string };
+  const data = (await response.json().catch(() => ({}))) as T & {
+    error?: string;
+    message?: string;
+  };
 
   if (!response.ok) {
     throw new Error((data as any).message || (data as any).error || 'request_failed');
@@ -91,9 +122,15 @@ export default function CartPage() {
     const value = await fetchJson<CartResponse>('/api/backend/cart');
     setCart(value);
     if (!value.items || value.items.length === 0) {
-      transitionFlow('S4_CART_EMPTY', { reason: 'cart_loaded_empty', traceId: traceId ?? undefined });
+      transitionFlow('S4_CART_EMPTY', {
+        reason: 'cart_loaded_empty',
+        traceId: traceId ?? undefined,
+      });
     } else {
-      transitionFlow('S5_CART_ACTIVE', { reason: 'cart_loaded_with_items', traceId: traceId ?? undefined });
+      transitionFlow('S5_CART_ACTIVE', {
+        reason: 'cart_loaded_with_items',
+        traceId: traceId ?? undefined,
+      });
     }
   }, [traceId]);
 
@@ -136,7 +173,10 @@ export default function CartPage() {
         body: JSON.stringify({ productId, quantity: 1 }),
       });
       await loadCart();
-      transitionFlow('S5_CART_ACTIVE', { reason: 'cart_item_added', traceId: traceId ?? undefined });
+      transitionFlow('S5_CART_ACTIVE', {
+        reason: 'cart_item_added',
+        traceId: traceId ?? undefined,
+      });
     } catch (err) {
       setError((err as Error).message);
       transitionFlow('S_ERR', {
@@ -188,21 +228,33 @@ export default function CartPage() {
     return (
       <div className="min-h-screen">
         <div className="mx-auto max-w-4xl px-6 py-12 text-center">
-          <h1 className="section-title text-3xl text-slate-900" data-testid="cart-title">
-            {strings.title}
-          </h1>
-          <p className="text-sm text-slate-700">{strings.loginRequired}</p>
-          <div className="mt-6 grid gap-4">
-            <div data-testid="cart-items" className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600">
-              برای مشاهده جزئیات سبد خرید وارد حساب شوید.
+          <div className="market-shell">
+            <h1 className="section-title text-3xl text-slate-900" data-testid="cart-title">
+              {strings.title}
+            </h1>
+            <p className="mt-2 text-sm text-slate-700">{strings.loginRequired}</p>
+            <div className="mt-6 grid gap-3 text-start">
+              <div
+                data-testid="cart-items"
+                className="market-panel-soft p-4 text-xs text-slate-600"
+              >
+                برای مشاهده جزئیات سبد خرید وارد حساب شوید.
+              </div>
+              <div
+                data-testid="cart-summary"
+                className="market-panel-soft p-4 text-xs text-slate-600"
+              >
+                خلاصه مالی بعد از ورود نمایش داده می‌شود.
+              </div>
             </div>
-            <div data-testid="cart-summary" className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600">
-              خلاصه مالی بعد از ورود نمایش داده می‌شود.
-            </div>
+            <Link
+              href="/auth/login?next=/cart"
+              className="btn btn-3d mt-5 inline-flex"
+              data-testid="cart-checkout-cta"
+            >
+              ورود
+            </Link>
           </div>
-          <Link href="/auth/login?next=/cart" className="btn btn-primary mt-4 inline-flex" data-testid="cart-checkout-cta">
-            ورود
-          </Link>
         </div>
       </div>
     );
@@ -227,124 +279,160 @@ export default function CartPage() {
           }
         />
 
-        {error ? <p className="mt-6 rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-xs text-rose-700">{error}</p> : null}
+        <div className="mt-6 flex flex-wrap gap-2">
+          {promoBanners.map((banner) => (
+            <span key={banner.title} className="market-strip">
+              {banner.badge}: {banner.subtitle}
+            </span>
+          ))}
+        </div>
 
-        <div className="mt-10 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-          <GlassCard className="rounded-3xl p-6" data-testid="cart-items">
-            <div className="flex items-center justify-between">
-              <h2 className="section-title text-xl text-slate-900">{strings.items}</h2>
-              <span className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-700">
-                {cart?.items?.length || 0}
-              </span>
-            </div>
+        {error ? (
+          <p className="mt-6 rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-xs text-rose-700">
+            {error}
+          </p>
+        ) : null}
 
-            {isEmpty ? (
-              <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-600">
-                {strings.empty}
+        <div className="market-shell mt-8">
+          <div className="grid gap-6 lg:grid-cols-[1.25fr_0.75fr]">
+            <section className="market-panel p-6" data-testid="cart-items">
+              <div className="flex items-center justify-between">
+                <h2 className="section-title text-xl text-slate-900">{strings.items}</h2>
+                <span className="market-strip">{cart?.items?.length || 0} آیتم</span>
               </div>
-            ) : (
-              <div className="mt-6 space-y-4">
-                {(cart?.items || []).map((item) => (
-                  <div
-                    key={item.productId}
-                    className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
-                  >
-                    <div className="space-y-1">
-                      <p className="text-sm text-slate-900">{item.productName}</p>
-                      <p className="text-xs text-slate-600">{item.productSku}</p>
-                    </div>
-                    <div className="text-end text-sm text-slate-700">
-                      <p>{formatter.format(item.price)}</p>
-                      <div className="mt-2 flex items-center justify-end gap-2">
+
+              {isEmpty ? (
+                <div className="market-panel-soft mt-6 p-5 text-sm text-slate-600">
+                  {strings.empty}
+                </div>
+              ) : (
+                <div className="mt-6 space-y-3">
+                  {(cart?.items || []).map((item) => (
+                    <article
+                      key={item.productId}
+                      className="market-list-item flex flex-wrap items-center justify-between gap-4 px-4 py-3"
+                    >
+                      <div>
+                        <p className="text-sm text-slate-900">{item.productName}</p>
+                        <p className="text-xs text-slate-600">{item.productSku}</p>
+                      </div>
+                      <div className="text-end text-sm text-slate-700">
+                        <p>{formatter.format(item.price)}</p>
+                        <div className="mt-2 flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            className="rounded-lg border border-slate-300 px-2 py-1 text-xs"
+                            onClick={() =>
+                              updateQuantity(item.productId, Math.max(1, item.quantity - 1))
+                            }
+                            disabled={busy}
+                            aria-busy={busy}
+                          >
+                            -
+                          </button>
+                          <span className="text-xs">{item.quantity}</span>
+                          <button
+                            type="button"
+                            className="rounded-lg border border-slate-300 px-2 py-1 text-xs"
+                            onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                            disabled={busy}
+                            aria-busy={busy}
+                          >
+                            +
+                          </button>
+                          <button
+                            type="button"
+                            className="rounded-lg border border-rose-300 bg-rose-50 px-2 py-1 text-xs text-rose-700"
+                            onClick={() => removeItem(item.productId)}
+                            disabled={busy}
+                            aria-busy={busy}
+                          >
+                            حذف
+                          </button>
+                        </div>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+
+              <div className="mt-8 border-t border-slate-200 pt-5">
+                <h3 className="text-sm text-slate-700">{strings.quickAdd}</h3>
+                <div className="market-banner-grid mt-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {catalog.map((product) => (
+                    <div key={product.id} className="market-banner-card">
+                      <Image
+                        src={productImages[Math.abs(product.id.length) % productImages.length]}
+                        alt={product.name}
+                        width={640}
+                        height={380}
+                        className="h-28 w-full object-cover"
+                      />
+                      <div className="p-3">
+                        <p className="text-sm text-slate-900">{product.name}</p>
+                        <p className="mt-1 text-xs text-slate-600">
+                          {formatter.format(product.price)}
+                        </p>
                         <button
                           type="button"
-                          className="rounded-lg border border-slate-300 px-2 py-1 text-xs"
-                          onClick={() => updateQuantity(item.productId, Math.max(1, item.quantity - 1))}
+                          className="btn btn-3d mt-3 text-xs"
+                          onClick={() => addToCart(product.id)}
                           disabled={busy}
                           aria-busy={busy}
                         >
-                          -
-                        </button>
-                        <span className="text-xs">{item.quantity}</span>
-                        <button
-                          type="button"
-                          className="rounded-lg border border-slate-300 px-2 py-1 text-xs"
-                          onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                          disabled={busy}
-                          aria-busy={busy}
-                        >
-                          +
-                        </button>
-                        <button
-                          type="button"
-                          className="rounded-lg border border-rose-300 bg-rose-50 px-2 py-1 text-xs text-rose-700"
-                          onClick={() => removeItem(item.productId)}
-                          disabled={busy}
-                          aria-busy={busy}
-                        >
-                          حذف
+                          افزودن به سبد
                         </button>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <div className="mt-8 border-t border-slate-200 pt-5">
-              <h3 className="text-sm text-slate-700">{strings.quickAdd}</h3>
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                {catalog.map((product) => (
-                  <div key={product.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                    <p className="text-sm text-slate-900">{product.name}</p>
-                    <p className="mt-1 text-xs text-slate-600">{formatter.format(product.price)}</p>
-                    <button
-                      type="button"
-                      className="mt-3 rounded-full border border-slate-300 px-3 py-1 text-xs"
-                      onClick={() => addToCart(product.id)}
-                      disabled={busy}
-                      aria-busy={busy}
-                    >
-                      افزودن به سبد
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </GlassCard>
-
-          <GlassCard className="sticky top-32 rounded-3xl p-6 h-fit" data-testid="cart-summary">
-            <h2 className="section-title text-xl text-slate-900">{strings.summary}</h2>
-            <div className="mt-6 space-y-3 text-sm text-slate-700">
-              <div className="flex items-center justify-between">
-                <span>جمع کالاها</span>
-                <span>{formatter.format(cart?.subtotal || 0)}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>تخفیف</span>
-                <span>{formatter.format(cart?.discount || 0)}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>مالیات</span>
-                <span>{formatter.format(cart?.taxAmount || 0)}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>ارسال</span>
-                <span>{formatter.format(cart?.shippingCost || 0)}</span>
-              </div>
-              <div className="border-t border-slate-200 pt-4 text-slate-900">
-                <div className="flex items-center justify-between">
-                  <span>{strings.total}</span>
-                  <span className="text-lg font-semibold">{formatter.format(cart?.total || 0)}</span>
+                  ))}
                 </div>
               </div>
-            </div>
-            <div className="mt-6">
-              <Button loading={false} onClick={handleCheckout} disabled={isEmpty} data-testid="cart-checkout-cta">
-                {strings.checkout}
-              </Button>
-            </div>
-          </GlassCard>
+            </section>
+
+            <aside
+              className="market-panel h-fit p-6 lg:sticky lg:top-32"
+              data-testid="cart-summary"
+            >
+              <h2 className="section-title text-xl text-slate-900">{strings.summary}</h2>
+              <div className="mt-6 space-y-3 text-sm text-slate-700">
+                <div className="market-kpi flex items-center justify-between">
+                  <span>جمع کالاها</span>
+                  <span>{formatter.format(cart?.subtotal || 0)}</span>
+                </div>
+                <div className="market-kpi flex items-center justify-between">
+                  <span>تخفیف</span>
+                  <span>{formatter.format(cart?.discount || 0)}</span>
+                </div>
+                <div className="market-kpi flex items-center justify-between">
+                  <span>مالیات</span>
+                  <span>{formatter.format(cart?.taxAmount || 0)}</span>
+                </div>
+                <div className="market-kpi flex items-center justify-between">
+                  <span>ارسال</span>
+                  <span>{formatter.format(cart?.shippingCost || 0)}</span>
+                </div>
+                <div className="market-panel-soft p-4 text-slate-900">
+                  <div className="flex items-center justify-between">
+                    <span>{strings.total}</span>
+                    <span className="text-lg font-semibold">
+                      {formatter.format(cart?.total || 0)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-6">
+                <Button
+                  loading={false}
+                  onClick={handleCheckout}
+                  disabled={isEmpty}
+                  className="btn-3d"
+                  data-testid="cart-checkout-cta"
+                >
+                  {strings.checkout}
+                </Button>
+              </div>
+            </aside>
+          </div>
         </div>
       </div>
     </div>

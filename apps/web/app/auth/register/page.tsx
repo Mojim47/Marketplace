@@ -1,11 +1,11 @@
 'use client';
 
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { FormEvent, useState } from 'react';
 import { AuthExperiencePanel } from '@/components/AuthExperiencePanel';
 import { useAuth } from '@/components/AuthProvider';
 import { Button, Container, GlassCard, PageHeader, SectionTitle } from '@/components/ui';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { FormEvent, useState } from 'react';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -63,7 +63,9 @@ export default function RegisterPage() {
             >
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label htmlFor="register-first-name" className="text-xs text-slate-600">نام</label>
+                  <label htmlFor="register-first-name" className="text-xs text-slate-600">
+                    نام
+                  </label>
                   <input
                     id="register-first-name"
                     className="mt-2 w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm text-slate-900"
@@ -73,7 +75,9 @@ export default function RegisterPage() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="register-last-name" className="text-xs text-slate-600">نام خانوادگی</label>
+                  <label htmlFor="register-last-name" className="text-xs text-slate-600">
+                    نام خانوادگی
+                  </label>
                   <input
                     id="register-last-name"
                     className="mt-2 w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm text-slate-900"
@@ -85,7 +89,9 @@ export default function RegisterPage() {
               </div>
 
               <div>
-                <label htmlFor="register-mobile" className="text-xs text-slate-600">شماره موبایل</label>
+                <label htmlFor="register-mobile" className="text-xs text-slate-600">
+                  شماره موبایل
+                </label>
                 <input
                   id="register-mobile"
                   type="tel"
@@ -99,7 +105,9 @@ export default function RegisterPage() {
               </div>
 
               <div>
-                <label htmlFor="register-password" className="text-xs text-slate-600">رمز عبور</label>
+                <label htmlFor="register-password" className="text-xs text-slate-600">
+                  رمز عبور
+                </label>
                 <input
                   id="register-password"
                   type="password"
@@ -112,9 +120,18 @@ export default function RegisterPage() {
                 />
               </div>
 
-              {error ? <p className="rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-xs text-rose-700">{error}</p> : null}
+              {error ? (
+                <p className="rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-xs text-rose-700">
+                  {error}
+                </p>
+              ) : null}
 
-              <Button loading={loading} loadingText="در حال ثبت‌نام..." type="submit" className="btn-3d">
+              <Button
+                loading={loading}
+                loadingText="در حال ثبت‌نام..."
+                type="submit"
+                className="btn-3d"
+              >
                 ایجاد حساب
               </Button>
             </form>

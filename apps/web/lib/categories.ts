@@ -1,5 +1,5 @@
+import { type TaxonomyNode, aimarketTaxonomy } from '@/lib/aimarket-taxonomy';
 import { prisma } from '@/lib/prisma-server';
-import { aimarketTaxonomy, type TaxonomyNode } from '@/lib/aimarket-taxonomy';
 import { isStrictProdPolicyEnabled } from '@/lib/runtime-policy';
 
 export type CategoryNode = {
@@ -43,7 +43,10 @@ function fallbackTree(options?: {
       .filter((node) => {
         const hay = `${node.name} ${node.slug} ${node.description ?? ''}`.toLowerCase();
         const matchesQ = q.length === 0 || hay.includes(q);
-        const matchesGroup = !options?.group || node.slug === options.group || node.children.some((child) => child.slug === options.group);
+        const matchesGroup =
+          !options?.group ||
+          node.slug === options.group ||
+          node.children.some((child) => child.slug === options.group);
         const matchesLevel = !options?.level || node.slug === options.level;
         return matchesQ && matchesGroup && matchesLevel ? true : node.children.length > 0;
       });
@@ -57,7 +60,8 @@ export async function listCategoryTree(options?: {
   q?: string | null;
 }): Promise<CategoryNode[]> {
   try {
-    const rows = await prisma.category.findMany({
+    const categoryClient = (prisma as any).category;
+    const rows: any[] = await categoryClient.findMany({
       where: {
         ...(options?.group
           ? {
@@ -131,7 +135,8 @@ export async function listCategoryTree(options?: {
 
 export async function getCategoryBySlug(slug: string): Promise<CategoryNode | null> {
   try {
-    const category = await prisma.category.findUnique({
+    const categoryClient = (prisma as any).category;
+    const category: any = await categoryClient.findUnique({
       where: { slug },
       select: {
         id: true,
@@ -184,7 +189,7 @@ export async function getCategoryBySlug(slug: string): Promise<CategoryNode | nu
       level: category.level,
       sortOrder: category.sort_order,
       isFeatured: category.is_featured,
-      children: category.children.map((child) => ({
+      children: category.children.map((child: any) => ({
         id: child.id,
         name: child.name,
         slug: child.slug,
@@ -193,7 +198,7 @@ export async function getCategoryBySlug(slug: string): Promise<CategoryNode | nu
         level: child.level,
         sortOrder: child.sort_order,
         isFeatured: child.is_featured,
-        children: child.children.map((g) => ({
+        children: child.children.map((g: any) => ({
           id: g.id,
           name: g.name,
           slug: g.slug,

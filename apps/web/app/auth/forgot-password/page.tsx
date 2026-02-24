@@ -1,9 +1,9 @@
 'use client';
 
-import Link from 'next/link';
-import { FormEvent, useState } from 'react';
 import { AuthExperiencePanel } from '@/components/AuthExperiencePanel';
 import { Button, Container, GlassCard, PageHeader, SectionTitle } from '@/components/ui';
+import Link from 'next/link';
+import { FormEvent, useState } from 'react';
 
 export default function ForgotPasswordPage() {
   const [mobile, setMobile] = useState('');
@@ -55,7 +55,9 @@ export default function ForgotPasswordPage() {
               data-empty-state={!mobile ? 'true' : 'false'}
             >
               <div>
-                <label htmlFor="forgot-mobile" className="text-xs text-slate-600">شماره موبایل</label>
+                <label htmlFor="forgot-mobile" className="text-xs text-slate-600">
+                  شماره موبایل
+                </label>
                 <input
                   id="forgot-mobile"
                   className="mt-2 w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm text-slate-900"
@@ -66,16 +68,31 @@ export default function ForgotPasswordPage() {
                 />
               </div>
 
-              {error ? <p className="rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-xs text-rose-700">{error}</p> : null}
-              {message ? <p className="rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-xs text-emerald-700">{message}</p> : null}
+              {error ? (
+                <p className="rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-xs text-rose-700">
+                  {error}
+                </p>
+              ) : null}
+              {message ? (
+                <p className="rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-xs text-emerald-700">
+                  {message}
+                </p>
+              ) : null}
 
-              <Button loading={loading} loadingText="در حال ارسال..." type="submit" className="btn-3d">
+              <Button
+                loading={loading}
+                loadingText="در حال ارسال..."
+                type="submit"
+                className="btn-3d"
+              >
                 ارسال کد
               </Button>
             </form>
 
             <div className="mt-6 text-sm">
-              <Link href="/auth/login" className="text-slate-600 transition hover:text-orange-700">بازگشت به ورود</Link>
+              <Link href="/auth/login" className="text-slate-600 transition hover:text-orange-700">
+                بازگشت به ورود
+              </Link>
             </div>
           </GlassCard>
 

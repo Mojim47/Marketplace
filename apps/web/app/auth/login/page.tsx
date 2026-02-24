@@ -1,11 +1,11 @@
 'use client';
 
-import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { FormEvent, useState } from 'react';
 import { AuthExperiencePanel } from '@/components/AuthExperiencePanel';
 import { useAuth } from '@/components/AuthProvider';
 import { Button, Container, GlassCard, PageHeader, SectionTitle } from '@/components/ui';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { FormEvent, useState } from 'react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -66,7 +66,9 @@ export default function LoginPage() {
               data-empty-state={!mobile || !password ? 'true' : 'false'}
             >
               <div>
-                <label htmlFor="login-identifier" className="text-xs text-slate-600">شماره موبایل</label>
+                <label htmlFor="login-identifier" className="text-xs text-slate-600">
+                  شماره موبایل
+                </label>
                 <input
                   id="login-identifier"
                   type="tel"
@@ -80,7 +82,9 @@ export default function LoginPage() {
               </div>
 
               <div>
-                <label htmlFor="login-password" className="text-xs text-slate-600">رمز عبور</label>
+                <label htmlFor="login-password" className="text-xs text-slate-600">
+                  رمز عبور
+                </label>
                 <input
                   id="login-password"
                   type="password"
@@ -92,18 +96,33 @@ export default function LoginPage() {
                 />
               </div>
 
-              {error ? <p className="rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-xs text-rose-700">{error}</p> : null}
+              {error ? (
+                <p className="rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-xs text-rose-700">
+                  {error}
+                </p>
+              ) : null}
 
-              <Button loading={submitting} loadingText="در حال ورود..." type="submit" className="btn-3d">
+              <Button
+                loading={submitting}
+                loadingText="در حال ورود..."
+                type="submit"
+                className="btn-3d"
+              >
                 ورود
               </Button>
             </form>
 
             <div className="mt-6 flex flex-wrap items-center justify-between gap-3 text-sm">
-              <Link href="/auth/forgot-password" className="text-slate-600 transition hover:text-orange-700">
+              <Link
+                href="/auth/forgot-password"
+                className="text-slate-600 transition hover:text-orange-700"
+              >
                 فراموشی رمز عبور
               </Link>
-              <Link href="/auth/register" className="text-slate-600 transition hover:text-orange-700">
+              <Link
+                href="/auth/register"
+                className="text-slate-600 transition hover:text-orange-700"
+              >
                 حساب ندارید؟ ثبت‌نام
               </Link>
             </div>

@@ -1,8 +1,8 @@
 'use client';
 
+import { ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react';
 
 type Campaign = {
   id: string;
@@ -119,6 +119,7 @@ export function CampaignCarousel() {
             aria-label={paused ? 'ادامه چرخش خودکار' : 'توقف چرخش خودکار'}
             className="rounded-full border border-slate-200 bg-slate-50 p-2 text-slate-700"
             onClick={() => setPaused((prev) => !prev)}
+            aria-busy="false"
           >
             {paused ? <Play size={16} /> : <Pause size={16} />}
           </button>
@@ -127,6 +128,7 @@ export function CampaignCarousel() {
             aria-label="کمپین قبلی"
             className="rounded-full border border-slate-200 bg-slate-50 p-2 text-slate-700"
             onClick={() => setIndex((prev) => (prev - 1 + campaigns.length) % campaigns.length)}
+            aria-busy="false"
           >
             <ChevronRight size={16} />
           </button>
@@ -135,6 +137,7 @@ export function CampaignCarousel() {
             aria-label="کمپین بعدی"
             className="rounded-full border border-slate-200 bg-slate-50 p-2 text-slate-700"
             onClick={() => setIndex((prev) => (prev + 1) % campaigns.length)}
+            aria-busy="false"
           >
             <ChevronLeft size={16} />
           </button>
@@ -149,6 +152,7 @@ export function CampaignCarousel() {
             aria-label={`نمایش کمپین ${i + 1}`}
             className={`h-1.5 rounded-full transition-all ${i === index ? 'w-8 bg-orange-500' : 'w-3 bg-slate-300'}`}
             onClick={() => setIndex(i)}
+            aria-busy="false"
           />
         ))}
       </div>

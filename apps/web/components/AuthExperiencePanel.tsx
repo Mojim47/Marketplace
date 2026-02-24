@@ -1,9 +1,17 @@
 import Link from 'next/link';
 
 const promoBanners = [
-  { title: 'Flash Deals 2026', subtitle: 'تخفیف‌های لحظه‌ای با ارسال سریع', href: '/categories?campaign=flash-deals' },
+  {
+    title: 'Flash Deals 2026',
+    subtitle: 'تخفیف‌های لحظه‌ای با ارسال سریع',
+    href: '/categories?campaign=flash-deals',
+  },
   { title: 'Smart Checkout', subtitle: 'تسویه امن با زمان پاسخ زیر 200ms', href: '/checkout' },
-  { title: 'Seller Week', subtitle: 'مزایای ویژه فروشندگان منتخب', href: '/auth/register?as=seller' },
+  {
+    title: 'Seller Week',
+    subtitle: 'مزایای ویژه فروشندگان منتخب',
+    href: '/auth/register?as=seller',
+  },
 ];
 
 export function AuthExperiencePanel({ heading }: { heading: string }) {
@@ -12,7 +20,9 @@ export function AuthExperiencePanel({ heading }: { heading: string }) {
       <div className="auth-hero-shell">
         <p className="text-xs text-orange-700">AIMarket Experience</p>
         <h3 className="section-title mt-2 text-2xl text-slate-900">{heading}</h3>
-        <p className="mt-2 text-sm text-slate-600">هویت محصولی، پیشنهاد هوشمند و مسیر خرید بدون اصطکاک در یک سطح دیداری واحد.</p>
+        <p className="mt-2 text-sm text-slate-600">
+          هویت محصولی، پیشنهاد هوشمند و مسیر خرید بدون اصطکاک در یک سطح دیداری واحد.
+        </p>
         <div className="auth-marquee mt-4">
           <div className="auth-marquee-track">
             <span>ارسال کمتر از 24 ساعت</span>
@@ -34,4 +44,3 @@ export function AuthExperiencePanel({ heading }: { heading: string }) {
     </aside>
   );
 }
-

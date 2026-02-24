@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
 import { AuthNavButton } from '@/components/AuthNavButton';
-import { LocaleSwitch } from '@/components/LocaleSwitch';
 import { useAuth } from '@/components/AuthProvider';
-import { Button, GlassCard, PageHeader } from '@/components/ui';
+import { LocaleSwitch } from '@/components/LocaleSwitch';
+import { Button, PageHeader } from '@/components/ui';
 import { useTraceId } from '@/hooks/use-trace-id';
 import { emitUiEvent } from '@/lib/ui-telemetry';
+import { useEffect, useMemo, useState } from 'react';
 
 type Order = {
   id: string;
@@ -70,7 +70,9 @@ export default function OrdersPage() {
   const loadOrders = async () => {
     try {
       const response = await fetch('/api/backend/v1/orders', { cache: 'no-store' });
-      const data = (await response.json().catch(() => [])) as Order[] | { error?: string; message?: string };
+      const data = (await response.json().catch(() => [])) as
+        | Order[]
+        | { error?: string; message?: string };
 
       if (!response.ok) {
         setError(String((data as any).message || (data as any).error || 'load_failed'));
@@ -130,7 +132,7 @@ export default function OrdersPage() {
               className={`rounded-full border px-3 py-1 text-xs ${
                 statusFilter === status
                   ? 'border-orange-300 bg-orange-50 text-orange-700'
-                  : 'border-slate-200 bg-slate-50 text-slate-700'
+                  : 'border-slate-200 bg-white/80 text-slate-700'
               }`}
               onClick={() => setStatusFilter(status)}
               type="button"
@@ -141,53 +143,61 @@ export default function OrdersPage() {
           ))}
         </div>
 
-        {error ? <p className="mt-6 rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-xs text-rose-700">{error}</p> : null}
+        {error ? (
+          <p className="mt-6 rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-xs text-rose-700">
+            {error}
+          </p>
+        ) : null}
 
-        <div className="mt-8 grid gap-5" data-testid="orders-list">
-          {filteredOrders.map((order) => {
-            const badge = statusMap[order.status] || {
-              label: order.status,
-              cls: 'text-slate-700 border-slate-300 bg-slate-50',
-            };
-            return (
-              <GlassCard key={order.id} className="rounded-3xl p-6">
-                <div className="grid gap-4 md:grid-cols-[1fr_auto_auto] md:items-center">
-                  <div>
-                    <p className="text-xs text-slate-500">{order.orderNumber || order.id}</p>
-                    <p className="mt-2 text-sm text-slate-700">
-                      {new Date(order.createdAt).toLocaleString('fa-IR')}
-                    </p>
-                    <p className="mt-2 text-xs text-slate-500">
-                      {strings.items}: {formatter.format(order.items?.length || 0)}
-                    </p>
+        <div className="market-shell mt-8" data-testid="orders-list">
+          <div className="market-banner-grid">
+            {filteredOrders.map((order) => {
+              const badge = statusMap[order.status] || {
+                label: order.status,
+                cls: 'text-slate-700 border-slate-300 bg-slate-50',
+              };
+              return (
+                <article key={order.id} className="market-banner-card p-5">
+                  <div className="grid gap-4 md:grid-cols-[1fr_auto_auto] md:items-center">
+                    <div>
+                      <p className="text-xs text-orange-700">{order.orderNumber || order.id}</p>
+                      <p className="mt-2 text-sm text-slate-700">
+                        {new Date(order.createdAt).toLocaleString('fa-IR')}
+                      </p>
+                      <p className="mt-2 text-xs text-slate-500">
+                        {strings.items}: {formatter.format(order.items?.length || 0)}
+                      </p>
+                    </div>
+
+                    <div className="text-sm text-slate-700 md:text-end">
+                      <p className="text-xs text-slate-500">{strings.total}</p>
+                      <p className="mt-1 text-lg font-semibold text-slate-900">
+                        {formatter.format(Number(order.totalAmount || 0))}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-col items-start gap-2 md:items-end">
+                      <span className={`rounded-full border px-3 py-1 text-xs ${badge.cls}`}>
+                        {badge.label}
+                      </span>
+                      <Button
+                        loading={false}
+                        variant="ghost"
+                        className="w-auto px-4 py-2"
+                        data-testid={`order-view-${order.orderNumber || order.id}`}
+                      >
+                        مشاهده جزئیات
+                      </Button>
+                    </div>
                   </div>
+                </article>
+              );
+            })}
 
-                  <div className="text-sm text-slate-700 md:text-end">
-                    <p className="text-xs text-slate-500">{strings.total}</p>
-                    <p className="mt-1 text-lg font-semibold text-slate-900">
-                      {formatter.format(Number(order.totalAmount || 0))}
-                    </p>
-                  </div>
-
-                  <div className="flex flex-col items-start gap-2 md:items-end">
-                    <span className={`rounded-full border px-3 py-1 text-xs ${badge.cls}`}>{badge.label}</span>
-                    <Button
-                      loading={false}
-                      variant="ghost"
-                      className="w-auto px-4 py-2"
-                      data-testid={`order-view-${order.orderNumber || order.id}`}
-                    >
-                      مشاهده جزئیات
-                    </Button>
-                  </div>
-                </div>
-              </GlassCard>
-            );
-          })}
-
-          {!error && filteredOrders.length === 0 ? (
-            <GlassCard className="rounded-3xl p-6 text-sm text-slate-600">{strings.empty}</GlassCard>
-          ) : null}
+            {!error && filteredOrders.length === 0 ? (
+              <div className="market-panel-soft p-6 text-sm text-slate-600">{strings.empty}</div>
+            ) : null}
+          </div>
         </div>
       </div>
     </div>

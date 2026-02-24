@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
-import { NextRequest, NextResponse } from 'next/server';
 import { aimarketTaxonomy, flattenTaxonomy } from '@/lib/aimarket-taxonomy';
 import { prisma } from '@/lib/prisma-server';
 import { isStrictProdPolicyEnabled } from '@/lib/runtime-policy';
+import { NextRequest, NextResponse } from 'next/server';
 
 type SuggestionItem = {
   type: 'history' | 'trending' | 'category';
@@ -19,6 +19,7 @@ type SuggestionResponse = {
 };
 
 const VISITOR_COOKIE = 'aimarket_vid';
+const prismaSuggestion = prisma as any;
 
 function normalizeQuery(input: string): string {
   return input.trim().toLowerCase().replace(/\s+/g, ' ');
@@ -50,14 +51,19 @@ function createCategorySuggestion(query: string, categoryScope: string | null): 
     }));
 }
 
-async function getHistorySuggestions(visitorId: string, query: string, categoryScope: string | null) {
+async function getHistorySuggestions(
+  visitorId: string,
+  query: string,
+  categoryScope: string | null
+) {
   const normalized = normalizeQuery(query);
   if (!normalized) {
     return [] as SuggestionItem[];
   }
 
   try {
-    const history = await prisma.searchSuggestionHistory.findMany({
+    const history: Array<{ query: string; category?: { slug?: string | null } | null }> =
+      await prismaSuggestion.searchSuggestionHistory.findMany({
       where: {
         visitor_id: visitorId,
         normalized_query: {
@@ -74,7 +80,7 @@ async function getHistorySuggestions(visitorId: string, query: string, categoryS
       },
     });
 
-    return history.map((item, index) => ({
+    return history.map((item: { query: string; category?: { slug?: string | null } | null }, index: number) => ({
       type: 'history' as const,
       value: item.query,
       label: item.query,
@@ -96,7 +102,8 @@ async function getTrendingSuggestions(query: string, categoryScope: string | nul
   }
 
   try {
-    const trends = await prisma.searchSuggestionTrend.findMany({
+    const trends: Array<{ query: string; hits: number; category?: { slug?: string | null } | null }> =
+      await prismaSuggestion.searchSuggestionTrend.findMany({
       where: {
         normalized_query: {
           contains: normalized,
@@ -114,7 +121,7 @@ async function getTrendingSuggestions(query: string, categoryScope: string | nul
     });
 
     if (trends.length > 0) {
-      return trends.map((item) => ({
+      return trends.map((item: { query: string; hits: number; category?: { slug?: string | null } | null }) => ({
         type: 'trending' as const,
         value: item.query,
         label: item.query,
@@ -204,7 +211,10 @@ export async function GET(request: NextRequest) {
   }
   const categories = createCategorySuggestion(normalized, categoryScope);
 
-  const suggestions = mergeUnique([...history, ...trending, ...categories], Math.min(20, Math.max(5, limit)));
+  const suggestions = mergeUnique(
+    [...history, ...trending, ...categories],
+    Math.min(20, Math.max(5, limit))
+  );
 
   const response = NextResponse.json<SuggestionResponse>({
     query,
@@ -227,9 +237,10 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const body = (await request.json().catch(() => null)) as
-    | { query?: string; categorySlug?: string | null }
-    | null;
+  const body = (await request.json().catch(() => null)) as {
+    query?: string;
+    categorySlug?: string | null;
+  } | null;
 
   const query = normalizeQuery(body?.query ?? '');
   const categorySlug = body?.categorySlug ?? null;
@@ -243,13 +254,13 @@ export async function POST(request: NextRequest) {
 
   try {
     const category = categorySlug
-      ? await prisma.category.findUnique({
+      ? await prismaSuggestion.category.findUnique({
           where: { slug: categorySlug },
           select: { id: true },
         })
       : null;
 
-    await prisma.searchSuggestionHistory.create({
+    await prismaSuggestion.searchSuggestionHistory.create({
       data: {
         visitor_id: visitorId,
         query,
@@ -258,7 +269,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const trendRow = await prisma.searchSuggestionTrend.findFirst({
+    const trendRow = await prismaSuggestion.searchSuggestionTrend.findFirst({
       where: {
         normalized_query: query,
         category_id: category?.id ?? null,
@@ -267,7 +278,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (trendRow) {
-      await prisma.searchSuggestionTrend.update({
+      await prismaSuggestion.searchSuggestionTrend.update({
         where: { id: trendRow.id },
         data: {
           query,
@@ -276,7 +287,7 @@ export async function POST(request: NextRequest) {
         },
       });
     } else {
-      await prisma.searchSuggestionTrend.create({
+      await prismaSuggestion.searchSuggestionTrend.create({
         data: {
           query,
           normalized_query: query,

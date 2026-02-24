@@ -1,22 +1,13 @@
 'use client';
 
-import {
-  ChevronDown,
-  Cpu,
-  Home,
-  Menu,
-  Smartphone,
-  Sparkles,
-  Tv,
-  X,
-} from 'lucide-react';
-import Link from 'next/link';
-import { useMemo, useState, type ReactNode } from 'react';
 import { AuthNavButton } from '@/components/AuthNavButton';
 import { LocaleSwitch } from '@/components/LocaleSwitch';
 import { SearchBox } from '@/components/SearchBox';
 import { Container } from '@/components/ui/Container';
 import { l1Categories } from '@/lib/aimarket-taxonomy';
+import { ChevronDown, Cpu, Home, Menu, Smartphone, Sparkles, Tv, X } from 'lucide-react';
+import Link from 'next/link';
+import { type ReactNode, useMemo, useState } from 'react';
 
 const topNav = [
   { href: '/', label: 'خانه' },
@@ -93,7 +84,10 @@ export function SiteShell({ children }: { children: ReactNode }) {
         <div className="border-b border-orange-100 bg-orange-50">
           <Container className="flex flex-wrap items-center gap-3 py-2 text-xs text-slate-600">
             {statusItems.map((item) => (
-              <span key={item.label} className="rounded-full border border-orange-200 bg-white px-3 py-1">
+              <span
+                key={item.label}
+                className="rounded-full border border-orange-200 bg-white px-3 py-1"
+              >
                 <strong className="text-slate-900">{item.value}</strong>
                 <span className="mx-1">•</span>
                 <span>{item.label}</span>
@@ -144,17 +138,27 @@ export function SiteShell({ children }: { children: ReactNode }) {
               className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 transition hover:border-orange-300 hover:bg-orange-50"
               aria-expanded={megaOpen}
               aria-haspopup="menu"
+              aria-busy="false"
             >
               دسته‌بندی‌ها
-              <ChevronDown size={14} className={`${megaOpen ? 'rotate-180' : ''} transition-transform`} />
+              <ChevronDown
+                size={14}
+                className={`${megaOpen ? 'rotate-180' : ''} transition-transform`}
+              />
             </button>
 
             {megaOpen ? (
               <div className="absolute right-0 top-11 z-50 w-[760px] rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl">
                 <div className="grid grid-cols-4 gap-3">
                   {megaCategories.map((group) => (
-                    <div key={group.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                      <Link href={group.href} className="inline-flex items-center gap-2 text-sm text-slate-900">
+                    <div
+                      key={group.id}
+                      className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                    >
+                      <Link
+                        href={group.href}
+                        className="inline-flex items-center gap-2 text-sm text-slate-900"
+                      >
                         <group.icon size={16} className="text-orange-500" />
                         {group.title}
                       </Link>
@@ -177,7 +181,11 @@ export function SiteShell({ children }: { children: ReactNode }) {
             ) : null}
           </div>
 
-          <nav aria-label="main navigation" className="flex flex-wrap gap-2 text-sm text-slate-700" data-keyboard-nav="true">
+          <nav
+            aria-label="main navigation"
+            className="flex flex-wrap gap-2 text-sm text-slate-700"
+            data-keyboard-nav="true"
+          >
             {topNav.map((item) => (
               <Link
                 key={item.href}
@@ -201,12 +209,16 @@ export function SiteShell({ children }: { children: ReactNode }) {
               <SearchBox compact />
             </div>
 
-            <nav aria-label="mobile navigation" className="grid grid-cols-2 gap-2" data-keyboard-nav="true">
+            <nav
+              aria-label="mobile navigation"
+              className="grid grid-cols-2 gap-2"
+              data-keyboard-nav="true"
+            >
               {topNav.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700"
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700"
                   onClick={() => setMobileOpen(false)}
                 >
                   {item.label}
@@ -235,14 +247,24 @@ export function SiteShell({ children }: { children: ReactNode }) {
       <nav
         aria-label="mobile commerce actions"
         className="fixed inset-x-4 bottom-4 z-40 grid grid-cols-3 gap-2 rounded-2xl border border-slate-200 bg-white/95 p-2 shadow-xl lg:hidden"
+        data-keyboard-nav="true"
       >
-        <Link href="/cart" className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-center text-xs text-slate-700">
+        <Link
+          href="/cart"
+          className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-center text-xs text-slate-700"
+        >
           سبد خرید
         </Link>
-        <Link href="/checkout" className="rounded-xl bg-emerald-500 px-3 py-2 text-center text-xs text-white">
+        <Link
+          href="/checkout"
+          className="rounded-xl bg-emerald-500 px-3 py-2 text-center text-xs text-white"
+        >
           تسویه سریع
         </Link>
-        <Link href="/profile" className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-center text-xs text-slate-700">
+        <Link
+          href="/profile"
+          className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-center text-xs text-slate-700"
+        >
           حساب من
         </Link>
       </nav>

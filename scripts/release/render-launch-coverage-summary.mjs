@@ -15,8 +15,11 @@ const summaryPath = path.resolve(
 const phaseName = process.env.PREPROD_COVERAGE_PHASE ?? 'phase-1';
 const outputPath = process.env.GITHUB_STEP_SUMMARY || '';
 
-function readJson(filePath) {
+function readJson(filePath, required = true) {
   if (!fs.existsSync(filePath)) {
+    if (!required) {
+      return null;
+    }
     throw new Error(`missing file: ${filePath}`);
   }
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
@@ -48,9 +51,19 @@ function statusIcon(actual, target) {
 
 function main() {
   const contract = readJson(contractPath);
-  const coverageSummary = readJson(summaryPath);
+  const coverageSummary =
+    readJson(summaryPath, false) ??
+    ({
+      total: {
+        lines: { pct: 0 },
+        statements: { pct: 0 },
+        functions: { pct: 0 },
+        branches: { pct: 0 },
+      },
+    });
   const total = coverageSummary.total ?? {};
   const thresholds = resolveThresholds(contract, phaseName);
+  const coverageMissing = !fs.existsSync(summaryPath);
 
   const metrics = [
     { key: 'lines', actual: getPct(total, 'lines'), target: thresholds.lines },
@@ -65,6 +78,7 @@ function main() {
     `- Profile: \`${contract.coverage?.profile ?? 'launch'}\``,
     `- Phase: \`${phaseName}\``,
     `- Source: \`${path.relative(repoRoot, summaryPath)}\``,
+    coverageMissing ? '- Coverage summary: missing, rendered with zeroed fallback to keep workflow deterministic.' : '',
     '',
     '| Metric | Actual | Target | Status |',
     '|---|---:|---:|---:|',

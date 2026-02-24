@@ -1,15 +1,15 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import type { ChangeEvent, FormEvent } from 'react';
-import { useEffect, useMemo, useState } from 'react';
 import { AuthNavButton } from '@/components/AuthNavButton';
-import { LocaleSwitch } from '@/components/LocaleSwitch';
 import { useAuth } from '@/components/AuthProvider';
-import { Button, GlassCard, PageHeader } from '@/components/ui';
+import { LocaleSwitch } from '@/components/LocaleSwitch';
+import { Button, PageHeader } from '@/components/ui';
 import { useTraceId } from '@/hooks/use-trace-id';
 import { transitionFlow } from '@/lib/marketplace-state-machine';
 import { emitUiEvent } from '@/lib/ui-telemetry';
+import { useRouter } from 'next/navigation';
+import type { ChangeEvent, FormEvent } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 type CheckoutForm = {
   fullName: string;
@@ -31,7 +31,9 @@ type CheckoutSession = {
   id: string;
 };
 
-function hasValidOrderIdentity(payload: unknown): payload is { orderId: string; orderNumber: string } {
+function hasValidOrderIdentity(
+  payload: unknown
+): payload is { orderId: string; orderNumber: string } {
   if (!payload || typeof payload !== 'object') {
     return false;
   }
@@ -46,7 +48,10 @@ function hasValidOrderIdentity(payload: unknown): payload is { orderId: string; 
 
 async function fetchJson<T>(url: string, init?: globalThis.RequestInit): Promise<T> {
   const response = await fetch(url, init);
-  const data = (await response.json().catch(() => ({}))) as T & { error?: string; message?: string };
+  const data = (await response.json().catch(() => ({}))) as T & {
+    error?: string;
+    message?: string;
+  };
 
   if (!response.ok) {
     throw new Error(String((data as any).message || (data as any).error || response.status));
@@ -173,8 +178,13 @@ export default function CheckoutPage() {
     setLoadingSubmit(true);
 
     try {
-      const session = await fetchJson<CheckoutSession>('/api/backend/checkout/init', { method: 'POST' });
-      transitionFlow('S6_CHECKOUT_INIT', { reason: 'checkout_init_success', traceId: traceId ?? undefined });
+      const session = await fetchJson<CheckoutSession>('/api/backend/checkout/init', {
+        method: 'POST',
+      });
+      transitionFlow('S6_CHECKOUT_INIT', {
+        reason: 'checkout_init_success',
+        traceId: traceId ?? undefined,
+      });
 
       await fetchJson(`/api/backend/checkout/${session.id}/shipping`, {
         method: 'PUT',
@@ -270,7 +280,11 @@ export default function CheckoutPage() {
         return;
       }
       setError(message);
-      emitUiEvent('error_shown', { code: 'checkout_failed', reason: message }, traceId ?? undefined);
+      emitUiEvent(
+        'error_shown',
+        { code: 'checkout_failed', reason: message },
+        traceId ?? undefined
+      );
     } finally {
       setLoadingSubmit(false);
     }
@@ -293,101 +307,171 @@ export default function CheckoutPage() {
           }
         />
 
-        <div className="mt-6 grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:grid-cols-4">
-          {steps.map((step) => (
-            <div key={step.title} className="rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-700">
-              <p>{step.title}</p>
-              <p className="mt-1 text-[11px] text-slate-500">{step.status}</p>
-            </div>
-          ))}
+        <div className="mt-6 flex flex-wrap gap-2">
+          <span className="market-strip">Only ZarinPal Gateway</span>
+          <span className="market-strip">Anti-fraud order identity validation</span>
+          <span className="market-strip">Shipping SLA monitored</span>
         </div>
 
-        <div className="mt-10 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-          <form
-            className="glass-card rounded-3xl p-6"
-            onSubmit={handleSubmit}
-            data-testid="checkout-form"
-            data-error-state={error ? 'true' : 'false'}
-            data-empty-state={validateForm() ? 'false' : 'true'}
-          >
-            <h2 className="section-title text-xl text-slate-900">{strings.customer}</h2>
-            <div className="mt-6 space-y-4 text-sm">
-              <div>
-                <label htmlFor="checkout-fullname" className="text-xs text-slate-600">{strings.fullName}</label>
-                <input id="checkout-fullname" className="mt-2 w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm text-slate-900" value={form.fullName} onChange={handleChange('fullName')} />
+        <div className="market-shell mt-8">
+          <div className="grid gap-3 sm:grid-cols-4">
+            {steps.map((step) => (
+              <div key={step.title} className="market-panel-soft px-3 py-2 text-xs text-slate-700">
+                <p>{step.title}</p>
+                <p className="mt-1 text-[11px] text-slate-500">{step.status}</p>
               </div>
-              <div>
-                <label htmlFor="checkout-phone" className="text-xs text-slate-600">{strings.phone}</label>
-                <input id="checkout-phone" className="mt-2 w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm text-slate-900" value={form.phone} onChange={handleChange('phone')} />
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label htmlFor="checkout-province" className="text-xs text-slate-600">{strings.province}</label>
-                  <input id="checkout-province" className="mt-2 w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm text-slate-900" value={form.province} onChange={handleChange('province')} />
-                </div>
-                <div>
-                  <label htmlFor="checkout-city" className="text-xs text-slate-600">{strings.city}</label>
-                  <input id="checkout-city" className="mt-2 w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm text-slate-900" value={form.city} onChange={handleChange('city')} />
-                </div>
-              </div>
-              <div>
-                <label htmlFor="checkout-address" className="text-xs text-slate-600">{strings.address}</label>
-                <textarea id="checkout-address" className="mt-2 w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm text-slate-900" value={form.address} onChange={handleChange('address')} rows={3} />
-              </div>
-              <div>
-                <label htmlFor="checkout-postal" className="text-xs text-slate-600">{strings.postalCode}</label>
-                <input id="checkout-postal" className="mt-2 w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm text-slate-900" value={form.postalCode} onChange={handleChange('postalCode')} />
-              </div>
-            </div>
+            ))}
+          </div>
 
-            <div className="mt-8">
-              <h3 className="text-sm text-slate-600">{strings.payment}</h3>
-              <div className="mt-3 grid gap-3">
-                <div className="flex items-center justify-between rounded-2xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+          <div className="mt-6 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+            <form
+              className="market-panel p-6"
+              onSubmit={handleSubmit}
+              data-testid="checkout-form"
+              data-error-state={error ? 'true' : 'false'}
+              data-empty-state={validateForm() ? 'false' : 'true'}
+            >
+              <h2 className="section-title text-xl text-slate-900">{strings.customer}</h2>
+              <div className="mt-6 space-y-4 text-sm">
+                <div>
+                  <label htmlFor="checkout-fullname" className="text-xs text-slate-600">
+                    {strings.fullName}
+                  </label>
+                  <input
+                    id="checkout-fullname"
+                    className="market-input mt-2"
+                    value={form.fullName}
+                    onChange={handleChange('fullName')}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="checkout-phone" className="text-xs text-slate-600">
+                    {strings.phone}
+                  </label>
+                  <input
+                    id="checkout-phone"
+                    className="market-input mt-2"
+                    value={form.phone}
+                    onChange={handleChange('phone')}
+                  />
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label htmlFor="checkout-province" className="text-xs text-slate-600">
+                      {strings.province}
+                    </label>
+                    <input
+                      id="checkout-province"
+                      className="market-input mt-2"
+                      value={form.province}
+                      onChange={handleChange('province')}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="checkout-city" className="text-xs text-slate-600">
+                      {strings.city}
+                    </label>
+                    <input
+                      id="checkout-city"
+                      className="market-input mt-2"
+                      value={form.city}
+                      onChange={handleChange('city')}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label htmlFor="checkout-address" className="text-xs text-slate-600">
+                    {strings.address}
+                  </label>
+                  <textarea
+                    id="checkout-address"
+                    className="market-input mt-2"
+                    value={form.address}
+                    onChange={handleChange('address')}
+                    rows={3}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="checkout-postal" className="text-xs text-slate-600">
+                    {strings.postalCode}
+                  </label>
+                  <input
+                    id="checkout-postal"
+                    className="market-input mt-2"
+                    value={form.postalCode}
+                    onChange={handleChange('postalCode')}
+                  />
+                </div>
+              </div>
+
+              <div className="mt-8">
+                <h3 className="text-sm text-slate-600">{strings.payment}</h3>
+                <div className="market-panel-soft mt-3 flex items-center justify-between px-4 py-3 text-sm text-emerald-700">
                   <span>{strings.card}</span>
-                  <span className="text-xs">Only Gateway</span>
+                  <span className="market-strip text-[11px]">Only Gateway</span>
                 </div>
               </div>
-            </div>
 
-            {error ? <p className="mt-6 rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-xs text-rose-700">{error}</p> : null}
-            {successMsg ? <p className="mt-6 rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-xs text-emerald-700">{successMsg}</p> : null}
+              {error ? (
+                <p className="mt-6 rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-xs text-rose-700">
+                  {error}
+                </p>
+              ) : null}
+              {successMsg ? (
+                <p className="mt-6 rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-xs text-emerald-700">
+                  {successMsg}
+                </p>
+              ) : null}
 
-            <div className="mt-8">
-              <Button loading={loadingSubmit} loadingText={strings.submit} data-testid="checkout-submit">
-                {strings.submit}
-              </Button>
-            </div>
-          </form>
+              <div className="mt-8">
+                <Button
+                  loading={loadingSubmit}
+                  loadingText={strings.submit}
+                  className="btn-3d"
+                  data-testid="checkout-submit"
+                >
+                  {strings.submit}
+                </Button>
+              </div>
+            </form>
 
-          <GlassCard className="sticky top-32 h-fit rounded-3xl p-6" data-testid="checkout-summary">
-            <h2 className="section-title text-xl text-slate-900">{strings.summary}</h2>
-            <div className="mt-6 space-y-4 text-sm">
-              {(cart?.items || []).map((item) => (
-                <div key={item.productId} className="flex items-center justify-between text-slate-700">
-                  <span>{item.productName}</span>
-                  <span>{formatter.format(item.price * item.quantity)}</span>
+            <aside
+              className="market-panel h-fit p-6 lg:sticky lg:top-32"
+              data-testid="checkout-summary"
+            >
+              <h2 className="section-title text-xl text-slate-900">{strings.summary}</h2>
+              <div className="mt-6 space-y-3 text-sm">
+                {(cart?.items || []).map((item) => (
+                  <div
+                    key={item.productId}
+                    className="market-kpi flex items-center justify-between text-slate-700"
+                  >
+                    <span>{item.productName}</span>
+                    <span>{formatter.format(item.price * item.quantity)}</span>
+                  </div>
+                ))}
+                <div className="market-kpi flex items-center justify-between text-slate-600">
+                  <span>جمع جزئی</span>
+                  <span>{formatter.format(cart?.subtotal || 0)}</span>
                 </div>
-              ))}
-              <div className="flex items-center justify-between text-slate-600">
-                <span>جمع جزئی</span>
-                <span>{formatter.format(cart?.subtotal || 0)}</span>
-              </div>
-              <div className="flex items-center justify-between text-slate-600">
-                <span>مالیات</span>
-                <span>{formatter.format(cart?.taxAmount || 0)}</span>
-              </div>
-              <div className="border-t border-slate-200 pt-4 text-slate-900">
-                <div className="flex items-center justify-between">
-                  <span>{strings.total}</span>
-                  <span className="text-lg font-semibold">{formatter.format(cart?.total || 0)}</span>
+                <div className="market-kpi flex items-center justify-between text-slate-600">
+                  <span>مالیات</span>
+                  <span>{formatter.format(cart?.taxAmount || 0)}</span>
+                </div>
+                <div className="market-panel-soft p-4 text-slate-900">
+                  <div className="flex items-center justify-between">
+                    <span>{strings.total}</span>
+                    <span className="text-lg font-semibold">
+                      {formatter.format(cart?.total || 0)}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="mt-6 rounded-2xl border border-dashed border-slate-300 p-4 text-xs text-slate-600">
-              اعتبارسنجی سمت سرور برای موجودی، قیمت و پرداخت در هر مرحله انجام می‌شود.
-            </div>
-          </GlassCard>
+              <div className="market-banner-card mt-6 p-4 text-xs text-slate-700">
+                اعتبارسنجی سمت سرور برای موجودی، قیمت و پرداخت در هر مرحله انجام می‌شود.
+              </div>
+            </aside>
+          </div>
         </div>
       </div>
     </div>

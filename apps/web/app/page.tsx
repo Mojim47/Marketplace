@@ -1,10 +1,5 @@
-import Link from 'next/link';
-import Image from 'next/image';
-import { ArrowUpLeft, Boxes, Brain, Gauge, Layers3, ShieldCheck, Sparkles } from 'lucide-react';
 import { CampaignCarousel } from '@/components/campaign-carousel';
 import { HeroCard } from '@/components/hero-card';
-import { CATALOG_PRODUCTS } from '@/lib/catalog-data';
-import { l1Categories } from '@/lib/aimarket-taxonomy';
 import {
   BentoFeatureGrid,
   Button,
@@ -17,6 +12,11 @@ import {
   ProgressBar,
   SectionTitle,
 } from '@/components/ui';
+import { l1Categories } from '@/lib/aimarket-taxonomy';
+import { CATALOG_PRODUCTS } from '@/lib/catalog-data';
+import { ArrowUpLeft, Boxes, Brain, Gauge, Layers3, ShieldCheck, Sparkles } from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
 
 const spotlightProducts = CATALOG_PRODUCTS;
 const money = new Intl.NumberFormat('fa-IR');
@@ -40,9 +40,21 @@ const workflow = [
 ];
 
 const heroCampaigns = [
-  { title: 'کمپین نوروز 2026', subtitle: 'تخفیف پلکانی + ارسال سریع', href: '/categories?campaign=norooz-2026' },
-  { title: 'AI Gadget Week', subtitle: 'پیشنهاد شخصی‌سازی شده براساس رفتار خرید', href: '/categories?campaign=ai-week' },
-  { title: 'عرضه ویژه فروشنده ها', subtitle: 'فعال‌سازی فروش + داشبورد آنی', href: '/auth/register?as=seller' },
+  {
+    title: 'کمپین نوروز 2026',
+    subtitle: 'تخفیف پلکانی + ارسال سریع',
+    href: '/categories?campaign=norooz-2026',
+  },
+  {
+    title: 'AI Gadget Week',
+    subtitle: 'پیشنهاد شخصی‌سازی شده براساس رفتار خرید',
+    href: '/categories?campaign=ai-week',
+  },
+  {
+    title: 'عرضه ویژه فروشنده ها',
+    subtitle: 'فعال‌سازی فروش + داشبورد آنی',
+    href: '/auth/register?as=seller',
+  },
 ];
 
 const userPanelItems = [
@@ -66,7 +78,14 @@ const intelligence = [
 
 const smartCategories = l1Categories.map((category, index) => ({
   title: category.name,
-  hint: index === 0 ? 'Trending' : index === 1 ? 'AI Recommended' : index === 2 ? 'Top Rated' : 'Fast Discovery',
+  hint:
+    index === 0
+      ? 'Trending'
+      : index === 1
+        ? 'AI Recommended'
+        : index === 2
+          ? 'Top Rated'
+          : 'Fast Discovery',
   href: `/categories?group=${encodeURIComponent(category.slug)}`,
 }));
 
@@ -109,7 +128,10 @@ export default function HomePage() {
           </div>
 
           <section className="grid gap-4 rounded-3xl border border-slate-200/80 bg-white/90 p-4 shadow-sm lg:grid-cols-[0.9fr_1.55fr_0.85fr]">
-            <div className="rounded-2xl bg-gradient-to-b from-orange-50 to-amber-50 p-4" aria-label="دسته‌بندی‌ها">
+            <div
+              className="rounded-2xl bg-gradient-to-b from-orange-50 to-amber-50 p-4"
+              aria-label="دسته‌بندی‌ها"
+            >
               <p className="text-xs text-orange-600">Category Showcase</p>
               <h2 className="section-title mt-2 text-xl text-slate-900">L1/L2/L3 به‌صورت بنری</h2>
               <div className="mt-4 space-y-3">
@@ -120,7 +142,13 @@ export default function HomePage() {
                     className="group relative block overflow-hidden rounded-2xl"
                   >
                     <div className="relative h-24">
-                      <Image src={banner.image} alt={banner.title} fill className="object-cover transition duration-500 group-hover:scale-105" sizes="(min-width:1024px) 24vw, 90vw" />
+                      <Image
+                        src={banner.image}
+                        alt={banner.title}
+                        fill
+                        className="object-cover transition duration-500 group-hover:scale-105"
+                        sizes="(min-width:1024px) 24vw, 90vw"
+                      />
                       <div className="absolute inset-0 bg-gradient-to-r from-black/55 via-black/20 to-transparent" />
                       <div className="absolute inset-y-0 left-0 flex flex-col justify-center px-4 text-white">
                         <p className="text-xs text-orange-200">{banner.tag}</p>
@@ -135,10 +163,16 @@ export default function HomePage() {
             <div className="rounded-2xl border border-orange-200 bg-gradient-to-br from-orange-50 via-white to-amber-50 p-5">
               <p className="text-xs text-orange-600">Campaign Control Center</p>
               <h2 className="section-title mt-2 text-3xl text-slate-900">Hero سه‌ستونه AIMarket</h2>
-              <p className="mt-2 text-sm text-slate-600">چیدمان شبیه Alibaba: دسته‌بندی + کمپین + پنل کاربر در بالای صفحه.</p>
+              <p className="mt-2 text-sm text-slate-600">
+                چیدمان شبیه Alibaba: دسته‌بندی + کمپین + پنل کاربر در بالای صفحه.
+              </p>
               <div className="mt-5 grid gap-3 sm:grid-cols-3">
                 {heroCampaigns.map((campaign) => (
-                  <Link key={campaign.title} href={campaign.href} className="rounded-2xl border border-orange-200 bg-white p-3 transition hover:-translate-y-1 hover:border-orange-400">
+                  <Link
+                    key={campaign.title}
+                    href={campaign.href}
+                    className="rounded-2xl border border-orange-200 bg-white p-3 transition hover:-translate-y-1 hover:border-orange-400"
+                  >
                     <p className="text-xs text-orange-700">{campaign.title}</p>
                     <p className="mt-2 text-xs text-slate-600">{campaign.subtitle}</p>
                   </Link>
@@ -146,7 +180,10 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4" aria-label="پنل کاربر">
+            <div
+              className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+              aria-label="پنل کاربر"
+            >
               <p className="text-xs text-orange-600">پنل کاربر</p>
               <h2 className="section-title mt-2 text-xl text-slate-900">وضعیت لحظه‌ای حساب</h2>
               <div className="mt-4 space-y-3">
@@ -161,8 +198,18 @@ export default function HomePage() {
                 ))}
               </div>
               <div className="mt-4 grid gap-2">
-                <Link href="/auth/login" className="btn btn-outline inline-flex items-center justify-center">ورود</Link>
-                <Link href="/orders" className="btn btn-primary inline-flex items-center justify-center">پیگیری سفارش</Link>
+                <Link
+                  href="/auth/login"
+                  className="btn btn-outline inline-flex items-center justify-center"
+                >
+                  ورود
+                </Link>
+                <Link
+                  href="/orders"
+                  className="btn btn-primary inline-flex items-center justify-center"
+                >
+                  پیگیری سفارش
+                </Link>
               </div>
             </div>
           </section>
@@ -176,8 +223,8 @@ export default function HomePage() {
               </h1>
 
               <p className="max-w-2xl text-base leading-8 text-[color:var(--ink-muted)] sm:text-lg">
-                AIMarket یک تجربه کامل محصولی است: کشف، مقایسه، مشاهده در AR،
-                خرید امن و عملیات پایدار. همه چیز برای تبدیل واقعی طراحی شده، نه فقط ظاهر.
+                AIMarket یک تجربه کامل محصولی است: کشف، مقایسه، مشاهده در AR، خرید امن و عملیات
+                پایدار. همه چیز برای تبدیل واقعی طراحی شده، نه فقط ظاهر.
               </p>
 
               <div className="flex flex-wrap gap-3">
@@ -308,8 +355,12 @@ export default function HomePage() {
                 <GlassCard className="group rounded-3xl p-5 transition duration-200 hover:-translate-y-1 hover:border-orange-300">
                   <p className="text-xs text-orange-700">{item.hint}</p>
                   <h3 className="section-title mt-2 text-2xl text-slate-900">{item.title}</h3>
-                  <p className="mt-3 text-sm text-slate-600">کشف سریع محصولات متناسب با قصد خرید کاربر.</p>
-                  <span className="mt-4 inline-flex text-xs text-orange-600">ورود به دسته بندی</span>
+                  <p className="mt-3 text-sm text-slate-600">
+                    کشف سریع محصولات متناسب با قصد خرید کاربر.
+                  </p>
+                  <span className="mt-4 inline-flex text-xs text-orange-600">
+                    ورود به دسته بندی
+                  </span>
                 </GlassCard>
               </Link>
             ))}
@@ -328,7 +379,9 @@ export default function HomePage() {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-xs text-orange-700">AI Gadget Week</p>
-                <p className="mt-1 text-sm text-slate-700">پیشنهاد پویا براساس رفتار خرید و موجودی لحظه‌ای</p>
+                <p className="mt-1 text-sm text-slate-700">
+                  پیشنهاد پویا براساس رفتار خرید و موجودی لحظه‌ای
+                </p>
               </div>
               <div className="rounded-full border border-orange-300 bg-white px-3 py-1 text-xs text-orange-700">
                 02:14:59 تا پایان موج قیمت
@@ -344,27 +397,42 @@ export default function HomePage() {
               >
                 <Link href={`/product/${product.slug}`} className="block">
                   <div className="relative mb-3 h-28 overflow-hidden rounded-xl border border-slate-200 bg-slate-100 lg:h-32">
-                    <Image src={product.image} alt={product.name} fill className="object-cover" sizes="(min-width: 1024px) 18vw, 45vw" />
+                    <Image
+                      src={product.image}
+                      alt={product.name}
+                      fill
+                      className="object-cover"
+                      sizes="(min-width: 1024px) 18vw, 45vw"
+                    />
                   </div>
                 </Link>
                 <div className="flex items-start justify-between gap-2">
-                  <h3 className="line-clamp-1 text-sm font-semibold text-slate-900">{product.name}</h3>
+                  <h3 className="line-clamp-1 text-sm font-semibold text-slate-900">
+                    {product.name}
+                  </h3>
                   <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] text-emerald-700">
                     {product.rating.toFixed(1)}
                   </span>
                 </div>
-                <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-600">{product.summary}</p>
+                <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-600">
+                  {product.summary}
+                </p>
                 <p className="mt-2 text-[11px] text-slate-500">Seller: {product.seller}</p>
                 <p className="text-[11px] text-slate-500">MOQ: {product.minOrderQty} عدد</p>
 
                 <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-2.5">
                   <p className="text-[11px] text-slate-500">قیمت</p>
-                  <p className="text-sm font-semibold text-slate-900 font-mono">{money.format(product.priceIrr)} تومان</p>
+                  <p className="text-sm font-semibold text-slate-900 font-mono">
+                    {money.format(product.priceIrr)} تومان
+                  </p>
                   <p className="mt-1 text-[11px] text-emerald-700">{product.eta}</p>
                 </div>
 
                 <div className="mt-3 flex gap-2">
-                  <Link href="/checkout" className="btn btn-primary inline-flex flex-1 items-center justify-center !px-2 !py-2 !text-xs">
+                  <Link
+                    href="/checkout"
+                    className="btn btn-primary inline-flex flex-1 items-center justify-center !px-2 !py-2 !text-xs"
+                  >
                     خرید سریع
                   </Link>
                   <Link
@@ -395,13 +463,22 @@ export default function HomePage() {
           <GlassCard className="rounded-3xl border border-slate-200 bg-white p-6 lg:col-span-2">
             <SectionTitle className="text-2xl text-slate-900">Seller Trust Block</SectionTitle>
             <p className="mt-3 text-sm leading-7 text-slate-600">
-              این بخش دقیقاً برای تصمیم سریع خرید B2B/B2C طراحی شده: تایید هویت، زمان پاسخ، و تضمین ارسال.
+              این بخش دقیقاً برای تصمیم سریع خرید B2B/B2C طراحی شده: تایید هویت، زمان پاسخ، و تضمین
+              ارسال.
             </p>
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">Verified Supplier</div>
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">Trade Assurance</div>
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">On-time Delivery</div>
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">Response SLA &lt; 10m</div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
+                Verified Supplier
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
+                Trade Assurance
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
+                On-time Delivery
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
+                Response SLA &lt; 10m
+              </div>
             </div>
           </GlassCard>
 
@@ -409,15 +486,23 @@ export default function HomePage() {
             <SectionTitle className="text-2xl text-slate-900">فروشندگان منتخب</SectionTitle>
             <div className="mt-5 space-y-3">
               {featuredSellers.map((seller) => (
-                <div key={seller.name} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div
+                  key={seller.name}
+                  className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                >
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-sm text-slate-900">{seller.name}</p>
                     <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700">
                       {seller.badge}
                     </span>
                   </div>
-                  <p className="mt-2 text-xs text-slate-600">Rating {seller.rating} • پاسخ گویی {seller.response}</p>
-                  <Link href={`/categories?seller=${encodeURIComponent(seller.name)}`} className="mt-3 inline-flex text-xs text-orange-600 hover:text-orange-700">
+                  <p className="mt-2 text-xs text-slate-600">
+                    Rating {seller.rating} • پاسخ گویی {seller.response}
+                  </p>
+                  <Link
+                    href={`/categories?seller=${encodeURIComponent(seller.name)}`}
+                    className="mt-3 inline-flex text-xs text-orange-600 hover:text-orange-700"
+                  >
                     مشاهده محصولات فروشنده
                   </Link>
                 </div>
@@ -429,31 +514,53 @@ export default function HomePage() {
         <section className="mt-16 rounded-3xl border border-slate-200 bg-white p-8">
           <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
             <div>
-              <SectionTitle className="text-3xl text-slate-900">زیرساخت قابل اعتماد برای مقیاس پذیری واقعی</SectionTitle>
+              <SectionTitle className="text-3xl text-slate-900">
+                زیرساخت قابل اعتماد برای مقیاس پذیری واقعی
+              </SectionTitle>
               <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
-                از لایه امنیت تا مشاهده پذیری، مسیرها با معیارهای قابل سنجش طراحی شده اند تا تیم محصول
-                بتواند با اطمینان نسخه جدید منتشر کند.
+                از لایه امنیت تا مشاهده پذیری، مسیرها با معیارهای قابل سنجش طراحی شده اند تا تیم
+                محصول بتواند با اطمینان نسخه جدید منتشر کند.
               </p>
               <div className="mt-6 flex flex-wrap gap-3 text-xs">
-                <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-slate-700">Zero-trust Headers</span>
-                <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-slate-700">Idempotent Checkout</span>
-                <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-slate-700">Trace-based Monitoring</span>
-                <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-slate-700">Fallback-safe Search</span>
+                <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-slate-700">
+                  Zero-trust Headers
+                </span>
+                <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-slate-700">
+                  Idempotent Checkout
+                </span>
+                <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-slate-700">
+                  Trace-based Monitoring
+                </span>
+                <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-slate-700">
+                  Fallback-safe Search
+                </span>
               </div>
             </div>
 
             <div className="grid gap-3 text-sm text-slate-700">
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <p className="inline-flex items-center gap-2"><ShieldCheck size={16} /> امنیت تراکنش</p>
-                <p className="mt-2 text-xs text-slate-600">حفاظت چندلایه، کنترل نرخ، و ممیزی کامل.</p>
+                <p className="inline-flex items-center gap-2">
+                  <ShieldCheck size={16} /> امنیت تراکنش
+                </p>
+                <p className="mt-2 text-xs text-slate-600">
+                  حفاظت چندلایه، کنترل نرخ، و ممیزی کامل.
+                </p>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <p className="inline-flex items-center gap-2"><Layers3 size={16} /> عملیات چندسرویسی</p>
-                <p className="mt-2 text-xs text-slate-600">سلامت سرویس ها، صف ها و مسیرهای حیاتی در لحظه.</p>
+                <p className="inline-flex items-center gap-2">
+                  <Layers3 size={16} /> عملیات چندسرویسی
+                </p>
+                <p className="mt-2 text-xs text-slate-600">
+                  سلامت سرویس ها، صف ها و مسیرهای حیاتی در لحظه.
+                </p>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <p className="inline-flex items-center gap-2"><Boxes size={16} /> زنجیره تامین</p>
-                <p className="mt-2 text-xs text-slate-600">پیش بینی تقاضا، کنترل موجودی، و هشدار کمبود.</p>
+                <p className="inline-flex items-center gap-2">
+                  <Boxes size={16} /> زنجیره تامین
+                </p>
+                <p className="mt-2 text-xs text-slate-600">
+                  پیش بینی تقاضا، کنترل موجودی، و هشدار کمبود.
+                </p>
               </div>
             </div>
           </div>
@@ -464,10 +571,16 @@ export default function HomePage() {
               آماده برای رشد محصول، نه فقط دمو.
             </p>
             <div className="flex gap-2">
-              <Link href="/auth/register" className="btn btn-primary inline-flex items-center justify-center">
+              <Link
+                href="/auth/register"
+                className="btn btn-primary inline-flex items-center justify-center"
+              >
                 ایجاد حساب جدید
               </Link>
-              <Link href="/orders" className="btn btn-outline inline-flex items-center justify-center">
+              <Link
+                href="/orders"
+                className="btn btn-outline inline-flex items-center justify-center"
+              >
                 پیگیری سفارش
               </Link>
             </div>
@@ -477,27 +590,52 @@ export default function HomePage() {
         <section className="mt-12 rounded-3xl border border-slate-200 bg-gradient-to-br from-orange-50 via-white to-amber-50 p-8">
           <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
             <div>
-              <SectionTitle className="text-3xl text-slate-900">باشگاه خبرنامه و جامعه کاربران</SectionTitle>
+              <SectionTitle className="text-3xl text-slate-900">
+                باشگاه خبرنامه و جامعه کاربران
+              </SectionTitle>
               <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
                 برای دریافت کمپین های اختصاصی، آپدیت های محصول و پیشنهادهای شخصی سازی شده عضو شوید.
               </p>
             </div>
-            <form className="grid w-full max-w-md gap-2 sm:grid-cols-[1fr_auto]" data-error-state="false" data-empty-state="true">
+            <form
+              className="grid w-full max-w-md gap-2 sm:grid-cols-[1fr_auto]"
+              data-error-state="false"
+              data-empty-state="true"
+            >
               <input
                 type="email"
                 placeholder="email@example.com"
                 className="rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/80"
                 aria-label="ایمیل برای عضویت در خبرنامه"
               />
-              <button type="submit" className="btn btn-primary inline-flex items-center justify-center">
+              <button
+                type="submit"
+                className="btn btn-primary inline-flex items-center justify-center"
+                aria-busy="false"
+              >
                 عضویت
               </button>
             </form>
           </div>
           <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-600">
-            <Link href="/docs" className="rounded-full border border-slate-200 px-3 py-1 hover:text-orange-700">راهنمای حریم خصوصی</Link>
-            <Link href="/terms-of-service" className="rounded-full border border-slate-200 px-3 py-1 hover:text-orange-700">شرایط استفاده</Link>
-            <Link href="/privacy-policy" className="rounded-full border border-slate-200 px-3 py-1 hover:text-orange-700">سیاست داده</Link>
+            <Link
+              href="/docs"
+              className="rounded-full border border-slate-200 px-3 py-1 hover:text-orange-700"
+            >
+              راهنمای حریم خصوصی
+            </Link>
+            <Link
+              href="/terms-of-service"
+              className="rounded-full border border-slate-200 px-3 py-1 hover:text-orange-700"
+            >
+              شرایط استفاده
+            </Link>
+            <Link
+              href="/privacy-policy"
+              className="rounded-full border border-slate-200 px-3 py-1 hover:text-orange-700"
+            >
+              سیاست داده
+            </Link>
           </div>
         </section>
       </Container>

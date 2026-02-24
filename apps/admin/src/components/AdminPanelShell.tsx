@@ -1,7 +1,7 @@
-import Link from 'next/link';
-import { Bell, Command, Search } from 'lucide-react';
-import type { ReactNode } from 'react';
 import { LocaleSwitch } from '@/components/LocaleSwitch';
+import { Bell, Command, Search } from 'lucide-react';
+import Link from 'next/link';
+import type { ReactNode } from 'react';
 
 const nav = [
   { href: '/', label: 'داشبورد' },
@@ -51,6 +51,7 @@ export function AdminPanelShell({
                 type="button"
                 className="rounded-full border border-white/15 bg-white/5 p-2 text-slate-200"
                 aria-label="admin alerts"
+                aria-busy="false"
               >
                 <Bell size={14} />
               </button>
@@ -59,7 +60,10 @@ export function AdminPanelShell({
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <p className="text-xs text-slate-300">Admin Control Center</p>
-              <h1 className="admin-title mt-2 text-3xl text-white" data-testid="admin-dashboard-title">
+              <h1
+                className="admin-title mt-2 text-3xl text-white"
+                data-testid="admin-dashboard-title"
+              >
                 {title}
               </h1>
               <p className="mt-2 text-sm text-slate-300">{subtitle}</p>

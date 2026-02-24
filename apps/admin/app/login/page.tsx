@@ -1,12 +1,12 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import type { ChangeEvent, FormEvent } from 'react';
-import { useEffect, useMemo, useState } from 'react';
 import { LocaleSwitch } from '@/components/LocaleSwitch';
 import { Button } from '@/components/ui/button';
 import { useTraceId } from '@/hooks/use-trace-id';
 import { emitUiEvent } from '@/lib/ui-telemetry';
+import { useRouter } from 'next/navigation';
+import type { ChangeEvent, FormEvent } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 type FormState = {
   email: string;
@@ -192,8 +192,12 @@ export default function AdminLoginPage() {
             <div className="admin-card overflow-hidden rounded-3xl p-0">
               <div className="relative h-44 bg-[radial-gradient(circle_at_20%_20%,rgba(255,215,0,.26),transparent_58%),radial-gradient(circle_at_80%_80%,rgba(59,130,246,.23),transparent_52%),linear-gradient(140deg,#0f172a,#020617)] p-6">
                 <p className="text-xs text-amber-200">Privilege Access Layer</p>
-                <h2 className="admin-title mt-2 text-2xl text-white">Command-grade Authentication</h2>
-                <p className="mt-2 text-sm text-slate-300">کنترل ورود، هشدار امنیتی و بررسی رخدادهای حساس در یک مسیر.</p>
+                <h2 className="admin-title mt-2 text-2xl text-white">
+                  Command-grade Authentication
+                </h2>
+                <p className="mt-2 text-sm text-slate-300">
+                  کنترل ورود، هشدار امنیتی و بررسی رخدادهای حساس در یک مسیر.
+                </p>
               </div>
             </div>
             <div className="grid gap-3">

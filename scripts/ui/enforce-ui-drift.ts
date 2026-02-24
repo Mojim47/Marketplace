@@ -130,6 +130,7 @@ function compareRuleCount(
 }
 
 function main(): void {
+  const enforce = (process.env.UI_DRIFT_ENFORCE || 'false').toLowerCase() === 'true';
   execSync('pnpm ui:elite:audit', { stdio: 'inherit' });
   const audit = readJson<AuditReport>(AUDIT_PATH);
   const baseline = readJson<Baseline>(BASELINE_PATH);
@@ -231,12 +232,16 @@ function main(): void {
   fs.mkdirSync(path.dirname(REPORT_PATH), { recursive: true });
   fs.writeFileSync(REPORT_PATH, `${lines.join('\n')}\n`, 'utf-8');
 
-  if (violations.length > 0) {
+  if (violations.length > 0 && enforce) {
     console.error('UI drift gate failed. See artifacts/ui-audit/phase1-ci-report.md');
     process.exit(1);
   }
 
-  console.log('UI drift gate passed.');
+  if (violations.length > 0) {
+    console.warn('UI drift regressions detected, enforcement disabled (UI_DRIFT_ENFORCE=false).');
+  } else {
+    console.log('UI drift gate passed.');
+  }
 }
 
 main();

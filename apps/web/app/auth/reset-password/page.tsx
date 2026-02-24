@@ -1,9 +1,9 @@
 'use client';
 
-import Link from 'next/link';
-import { FormEvent, useState } from 'react';
 import { AuthExperiencePanel } from '@/components/AuthExperiencePanel';
 import { Button, Container, GlassCard, PageHeader, SectionTitle } from '@/components/ui';
+import Link from 'next/link';
+import { FormEvent, useState } from 'react';
 
 export default function ResetPasswordPage() {
   const [mobile, setMobile] = useState('');
@@ -56,52 +56,73 @@ export default function ResetPasswordPage() {
               data-error-state={error ? 'true' : 'false'}
               data-empty-state={!mobile || !code || !newPassword ? 'true' : 'false'}
             >
-            <div>
-              <label htmlFor="reset-mobile" className="text-xs text-slate-600">شماره موبایل</label>
-              <input
-                id="reset-mobile"
-                className="mt-2 w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm text-slate-900"
-                placeholder="09123456789"
-                value={mobile}
-                onChange={(event) => setMobile(event.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <label htmlFor="reset-code" className="text-xs text-slate-600">کد پیامکی</label>
-              <input
-                id="reset-code"
-                className="mt-2 w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm text-slate-900"
-                placeholder="1234"
-                value={code}
-                onChange={(event) => setCode(event.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <label htmlFor="reset-password" className="text-xs text-slate-600">رمز عبور جدید</label>
-              <input
-                id="reset-password"
-                type="password"
-                className="mt-2 w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm text-slate-900"
-                placeholder="حداقل 8 کاراکتر"
-                value={newPassword}
-                onChange={(event) => setNewPassword(event.target.value)}
-                required
-                minLength={8}
-              />
-            </div>
+              <div>
+                <label htmlFor="reset-mobile" className="text-xs text-slate-600">
+                  شماره موبایل
+                </label>
+                <input
+                  id="reset-mobile"
+                  className="mt-2 w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm text-slate-900"
+                  placeholder="09123456789"
+                  value={mobile}
+                  onChange={(event) => setMobile(event.target.value)}
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="reset-code" className="text-xs text-slate-600">
+                  کد پیامکی
+                </label>
+                <input
+                  id="reset-code"
+                  className="mt-2 w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm text-slate-900"
+                  placeholder="1234"
+                  value={code}
+                  onChange={(event) => setCode(event.target.value)}
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="reset-password" className="text-xs text-slate-600">
+                  رمز عبور جدید
+                </label>
+                <input
+                  id="reset-password"
+                  type="password"
+                  className="mt-2 w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm text-slate-900"
+                  placeholder="حداقل 8 کاراکتر"
+                  value={newPassword}
+                  onChange={(event) => setNewPassword(event.target.value)}
+                  required
+                  minLength={8}
+                />
+              </div>
 
-            {error ? <p className="rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-xs text-rose-700">{error}</p> : null}
-            {message ? <p className="rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-xs text-emerald-700">{message}</p> : null}
+              {error ? (
+                <p className="rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-xs text-rose-700">
+                  {error}
+                </p>
+              ) : null}
+              {message ? (
+                <p className="rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-xs text-emerald-700">
+                  {message}
+                </p>
+              ) : null}
 
-            <Button loading={loading} loadingText="در حال ثبت..." type="submit" className="btn-3d">
-              ثبت رمز جدید
-            </Button>
+              <Button
+                loading={loading}
+                loadingText="در حال ثبت..."
+                type="submit"
+                className="btn-3d"
+              >
+                ثبت رمز جدید
+              </Button>
             </form>
 
             <div className="mt-6 text-sm">
-              <Link href="/auth/login" className="text-slate-600 transition hover:text-orange-700">بازگشت به صفحه ورود</Link>
+              <Link href="/auth/login" className="text-slate-600 transition hover:text-orange-700">
+                بازگشت به صفحه ورود
+              </Link>
             </div>
           </GlassCard>
           <div>
