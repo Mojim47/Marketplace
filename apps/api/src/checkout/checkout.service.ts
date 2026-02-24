@@ -152,7 +152,9 @@ export class CheckoutService {
       return;
     }
 
-    this.logGuardBlocked(session, transition.targetStep, guard, transition.guardReason, {
+    const guardReason = 'guardReason' in transition ? transition.guardReason : 'step_transition_blocked';
+
+    this.logGuardBlocked(session, transition.targetStep, guard, guardReason, {
       currentStep: session.step,
       action,
     });

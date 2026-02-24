@@ -199,15 +199,16 @@ export class RuntimeReconciliationService implements OnModuleInit, OnModuleDestr
         const result = await this.guardrails.execute(step.name, step.check, step.policy);
         const latencyMs = Date.now() - startedAt;
         if (!result.ok) {
+          const failureReason = 'reason' in result ? result.reason : 'dependency_check_failed';
           this.setDependencyStatus({
             name: step.name,
             healthy: false,
-            reason: result.reason,
+            reason: failureReason,
             latencyMs,
             circuitState: result.circuitState,
             lastCheckedAt: new Date().toISOString(),
           });
-          this.applyState(RuntimeState.DEGRADED, false, `${step.name}:${result.reason}`, traceId, trigger);
+          this.applyState(RuntimeState.DEGRADED, false, `${step.name}:${failureReason}`, traceId, trigger);
           return this.snapshot();
         }
 
