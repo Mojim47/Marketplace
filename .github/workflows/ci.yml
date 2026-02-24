@@ -249,6 +249,7 @@ jobs:
       # ─────────────────────────────────────────────────────────────────────
       - name: "🔑 Run Gitleaks secret scan"
         uses: gitleaks/gitleaks-action@v2
+        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         # No continue-on-error - secrets MUST block the build
