@@ -71,7 +71,7 @@ const featuredSellers = [
 
 const experienceMetrics = [
   { label: 'A11y Compliance', value: 98, hint: 'WCAG AA + Keyboard', tone: 'emerald' as const },
-  { label: 'UI Response Health', value: 94, hint: 'Interaction < 200ms', tone: 'cyan' as const },
+  { label: 'UI Response Health', value: 94, hint: 'Interaction < 200ms', tone: 'orange' as const },
   { label: 'Visual Stability', value: 91, hint: 'Regression Guarded', tone: 'amber' as const },
 ];
 
@@ -181,14 +181,14 @@ export default function HomePage() {
             </div>
 
             <GlassCard className="rounded-3xl p-6">
-              <SectionTitle className="text-xl text-white">اتاق فرمان عملیات</SectionTitle>
-              <p className="mt-2 text-sm text-slate-300">
+              <SectionTitle className="text-xl text-slate-900">اتاق فرمان عملیات</SectionTitle>
+              <p className="mt-2 text-sm text-slate-600">
                 وضعیت زنده موتور قیمت گذاری، موجودی و سلامت سرویس ها در یک نما.
               </p>
 
               <div className="mt-6 space-y-4">
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                  <div className="mb-3 flex items-center justify-between text-sm text-slate-200">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <div className="mb-3 flex items-center justify-between text-sm text-slate-700">
                     <span className="inline-flex items-center gap-2">
                       <Gauge size={15} /> سلامت سرویس ها
                     </span>
@@ -198,12 +198,12 @@ export default function HomePage() {
                   <ProgressBar className="mt-3" label="Search" value={95} meta="P95 112ms" />
                 </div>
 
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                  <div className="mb-3 flex items-center justify-between text-sm text-slate-200">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <div className="mb-3 flex items-center justify-between text-sm text-slate-700">
                     <span className="inline-flex items-center gap-2">
                       <Brain size={15} /> AI Decision Engine
                     </span>
-                    <strong className="text-cyan-300">Live</strong>
+                    <strong className="text-orange-600">Live</strong>
                   </div>
                   {intelligence.map((item) => (
                     <ProgressBar
@@ -231,8 +231,8 @@ export default function HomePage() {
         <section className="mt-14 grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
           <GlassCard className="rounded-3xl p-6">
             <div className="mb-4 flex items-center justify-between gap-3">
-              <SectionTitle className="text-3xl text-white">Experience Layer 2026</SectionTitle>
-              <span className="rounded-full border border-cyan-300/30 bg-cyan-400/10 px-3 py-1 text-xs text-cyan-200">
+              <SectionTitle className="text-3xl text-slate-900">Experience Layer 2026</SectionTitle>
+              <span className="rounded-full border border-orange-300 bg-orange-50 px-3 py-1 text-xs text-orange-700">
                 Elite Patterns
               </span>
             </div>
@@ -241,7 +241,7 @@ export default function HomePage() {
 
           <div className="grid gap-4">
             <GlassCard className="rounded-3xl p-6">
-              <SectionTitle className="text-xl text-white">شاخص های کیفیت تجربه</SectionTitle>
+              <SectionTitle className="text-xl text-slate-900">شاخص های کیفیت تجربه</SectionTitle>
               <div className="mt-4 grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
                 {experienceMetrics.map((metric) => (
                   <MetricRing
@@ -277,19 +277,19 @@ export default function HomePage() {
 
         <section className="mt-14">
           <div className="mb-6 flex items-center justify-between gap-4">
-            <SectionTitle className="text-3xl text-white">دسته بندی هوشمند</SectionTitle>
-            <Link href="/categories" className="text-sm text-cyan-300 hover:text-cyan-200">
+            <SectionTitle className="text-3xl text-slate-900">دسته بندی هوشمند</SectionTitle>
+            <Link href="/categories" className="text-sm text-orange-600 hover:text-orange-700">
               مدیریت همه دسته ها
             </Link>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {smartCategories.map((item) => (
               <Link key={item.title} href={item.href}>
-                <GlassCard className="group rounded-3xl p-5 transition duration-200 hover:-translate-y-1 hover:border-cyan-300/30">
-                  <p className="text-xs text-cyan-200">{item.hint}</p>
-                  <h3 className="section-title mt-2 text-2xl text-white">{item.title}</h3>
-                  <p className="mt-3 text-sm text-slate-300">کشف سریع محصولات متناسب با قصد خرید کاربر.</p>
-                  <span className="mt-4 inline-flex text-xs text-cyan-300">ورود به دسته بندی</span>
+                <GlassCard className="group rounded-3xl p-5 transition duration-200 hover:-translate-y-1 hover:border-orange-300">
+                  <p className="text-xs text-orange-700">{item.hint}</p>
+                  <h3 className="section-title mt-2 text-2xl text-slate-900">{item.title}</h3>
+                  <p className="mt-3 text-sm text-slate-600">کشف سریع محصولات متناسب با قصد خرید کاربر.</p>
+                  <span className="mt-4 inline-flex text-xs text-orange-600">ورود به دسته بندی</span>
                 </GlassCard>
               </Link>
             ))}
@@ -347,8 +347,8 @@ export default function HomePage() {
         <section className="mt-16 grid gap-6 lg:grid-cols-3">
           {workflow.map((step) => (
             <GlassCard key={step.title} className="rounded-3xl p-6">
-              <SectionTitle className="text-xl text-white">{step.title}</SectionTitle>
-              <p className="mt-3 text-sm leading-6 text-slate-300">{step.desc}</p>
+              <SectionTitle className="text-xl text-slate-900">{step.title}</SectionTitle>
+              <p className="mt-3 text-sm leading-6 text-slate-600">{step.desc}</p>
               <div className="mt-4 inline-flex rounded-full border border-emerald-300/30 bg-emerald-400/10 px-3 py-1 text-xs text-emerald-200">
                 {step.metric}
               </div>
@@ -391,40 +391,40 @@ export default function HomePage() {
           </GlassCard>
         </section>
 
-        <section className="mt-16 rounded-3xl border border-white/10 bg-slate-900/60 p-8">
+        <section className="mt-16 rounded-3xl border border-slate-200 bg-white p-8">
           <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
             <div>
-              <SectionTitle className="text-3xl text-white">زیرساخت قابل اعتماد برای مقیاس پذیری واقعی</SectionTitle>
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">
+              <SectionTitle className="text-3xl text-slate-900">زیرساخت قابل اعتماد برای مقیاس پذیری واقعی</SectionTitle>
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
                 از لایه امنیت تا مشاهده پذیری، مسیرها با معیارهای قابل سنجش طراحی شده اند تا تیم محصول
                 بتواند با اطمینان نسخه جدید منتشر کند.
               </p>
               <div className="mt-6 flex flex-wrap gap-3 text-xs">
-                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-slate-200">Zero-trust Headers</span>
-                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-slate-200">Idempotent Checkout</span>
-                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-slate-200">Trace-based Monitoring</span>
-                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-slate-200">Fallback-safe Search</span>
+                <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-slate-700">Zero-trust Headers</span>
+                <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-slate-700">Idempotent Checkout</span>
+                <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-slate-700">Trace-based Monitoring</span>
+                <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-slate-700">Fallback-safe Search</span>
               </div>
             </div>
 
-            <div className="grid gap-3 text-sm text-slate-200">
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+            <div className="grid gap-3 text-sm text-slate-700">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <p className="inline-flex items-center gap-2"><ShieldCheck size={16} /> امنیت تراکنش</p>
-                <p className="mt-2 text-xs text-slate-300">حفاظت چندلایه، کنترل نرخ، و ممیزی کامل.</p>
+                <p className="mt-2 text-xs text-slate-600">حفاظت چندلایه، کنترل نرخ، و ممیزی کامل.</p>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <p className="inline-flex items-center gap-2"><Layers3 size={16} /> عملیات چندسرویسی</p>
-                <p className="mt-2 text-xs text-slate-300">سلامت سرویس ها، صف ها و مسیرهای حیاتی در لحظه.</p>
+                <p className="mt-2 text-xs text-slate-600">سلامت سرویس ها، صف ها و مسیرهای حیاتی در لحظه.</p>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <p className="inline-flex items-center gap-2"><Boxes size={16} /> زنجیره تامین</p>
-                <p className="mt-2 text-xs text-slate-300">پیش بینی تقاضا، کنترل موجودی، و هشدار کمبود.</p>
+                <p className="mt-2 text-xs text-slate-600">پیش بینی تقاضا، کنترل موجودی، و هشدار کمبود.</p>
               </div>
             </div>
           </div>
 
-          <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-6">
-            <p className="inline-flex items-center gap-2 text-sm text-slate-200">
+          <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6">
+            <p className="inline-flex items-center gap-2 text-sm text-slate-700">
               <Sparkles size={16} className="text-amber-300" />
               آماده برای رشد محصول، نه فقط دمو.
             </p>
@@ -439,11 +439,11 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className="mt-12 rounded-3xl border border-white/10 bg-gradient-to-br from-cyan-500/10 via-slate-900/80 to-slate-900/70 p-8">
+        <section className="mt-12 rounded-3xl border border-slate-200 bg-gradient-to-br from-orange-50 via-white to-amber-50 p-8">
           <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
             <div>
-              <SectionTitle className="text-3xl text-white">باشگاه خبرنامه و جامعه کاربران</SectionTitle>
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">
+              <SectionTitle className="text-3xl text-slate-900">باشگاه خبرنامه و جامعه کاربران</SectionTitle>
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
                 برای دریافت کمپین های اختصاصی، آپدیت های محصول و پیشنهادهای شخصی سازی شده عضو شوید.
               </p>
             </div>
@@ -451,7 +451,7 @@ export default function HomePage() {
               <input
                 type="email"
                 placeholder="email@example.com"
-                className="rounded-2xl border border-white/20 bg-black/30 px-4 py-3 text-sm text-white placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/80"
+                className="rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/80"
                 aria-label="ایمیل برای عضویت در خبرنامه"
               />
               <button type="submit" className="btn btn-primary inline-flex items-center justify-center">
@@ -459,10 +459,10 @@ export default function HomePage() {
               </button>
             </form>
           </div>
-          <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-300">
-            <Link href="/docs" className="rounded-full border border-white/15 px-3 py-1 hover:text-white">راهنمای حریم خصوصی</Link>
-            <Link href="/terms-of-service" className="rounded-full border border-white/15 px-3 py-1 hover:text-white">شرایط استفاده</Link>
-            <Link href="/privacy-policy" className="rounded-full border border-white/15 px-3 py-1 hover:text-white">سیاست داده</Link>
+          <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-600">
+            <Link href="/docs" className="rounded-full border border-slate-200 px-3 py-1 hover:text-orange-700">راهنمای حریم خصوصی</Link>
+            <Link href="/terms-of-service" className="rounded-full border border-slate-200 px-3 py-1 hover:text-orange-700">شرایط استفاده</Link>
+            <Link href="/privacy-policy" className="rounded-full border border-slate-200 px-3 py-1 hover:text-orange-700">سیاست داده</Link>
           </div>
         </section>
       </Container>

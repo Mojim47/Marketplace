@@ -89,14 +89,14 @@ export function HeroCard() {
           </p>
 
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-xl border border-white/10 bg-black/20 p-3 text-xs text-slate-200">
-              دقت هم‌ترازی: <strong className="text-cyan-300">97%</strong>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
+              دقت هم‌ترازی: <strong className="text-orange-600">97%</strong>
             </div>
-            <div className="rounded-xl border border-white/10 bg-black/20 p-3 text-xs text-slate-200">
-              تاخیر پایپ‌لاین: <strong className="text-emerald-300">&lt;50ms</strong>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
+              تاخیر پایپ‌لاین: <strong className="text-emerald-600">&lt;50ms</strong>
             </div>
-            <div className="rounded-xl border border-white/10 bg-black/20 p-3 text-xs text-slate-200">
-              نرخ موفقیت رندر: <strong className="text-amber-300">99.1%</strong>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
+              نرخ موفقیت رندر: <strong className="text-amber-600">99.1%</strong>
             </div>
           </div>
 

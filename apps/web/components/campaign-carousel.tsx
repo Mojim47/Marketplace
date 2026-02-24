@@ -20,7 +20,7 @@ const campaigns: Campaign[] = [
     subtitle: 'پیشنهادهای محدود با ارسال سریع و امتیاز وفاداری ویژه.',
     cta: 'مشاهده کمپین',
     href: '/categories?campaign=norooz-2026',
-    tone: 'from-cyan-500/25 via-sky-500/15 to-transparent',
+    tone: 'from-orange-200/65 via-amber-100/60 to-transparent',
   },
   {
     id: 'ai-gadgets',
@@ -28,7 +28,7 @@ const campaigns: Campaign[] = [
     subtitle: 'انتخاب هوشمند با فیلترهای مبتنی بر رفتار خرید واقعی.',
     cta: 'کشف محصولات',
     href: '/categories?campaign=ai-week',
-    tone: 'from-emerald-500/20 via-cyan-500/15 to-transparent',
+    tone: 'from-emerald-200/65 via-orange-100/55 to-transparent',
   },
   {
     id: 'seller-boost',
@@ -36,7 +36,7 @@ const campaigns: Campaign[] = [
     subtitle: 'طرح‌های تشویقی برای فروشندگان با پاسخ‌دهی سریع و رضایت بالا.',
     cta: 'ورود فروشنده',
     href: '/auth/register?as=seller',
-    tone: 'from-amber-500/20 via-orange-500/15 to-transparent',
+    tone: 'from-amber-200/65 via-orange-100/55 to-transparent',
   },
 ];
 
@@ -72,7 +72,7 @@ export function CampaignCarousel() {
     <section
       role="region"
       aria-label="کمپین های ویژه"
-      className="relative overflow-hidden rounded-3xl border border-white/10 bg-slate-900/65 p-6"
+      className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocusCapture={() => setPaused(true)}
@@ -105,9 +105,9 @@ export function CampaignCarousel() {
 
       <div className="relative z-10 grid gap-5 sm:grid-cols-[1fr_auto] sm:items-center">
         <div className="min-h-[9.5rem] sm:min-h-[8rem]">
-          <p className="text-xs text-cyan-200">Campaign Engine</p>
-          <h3 className="section-title mt-2 text-2xl text-white">{active.title}</h3>
-          <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-200">{active.subtitle}</p>
+          <p className="text-xs text-orange-700">Campaign Engine</p>
+          <h3 className="section-title mt-2 text-2xl text-slate-900">{active.title}</h3>
+          <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">{active.subtitle}</p>
           <Link href={active.href} className="btn btn-primary mt-5 inline-flex">
             {active.cta}
           </Link>
@@ -117,7 +117,7 @@ export function CampaignCarousel() {
           <button
             type="button"
             aria-label={paused ? 'ادامه چرخش خودکار' : 'توقف چرخش خودکار'}
-            className="rounded-full border border-white/20 bg-white/5 p-2 text-slate-100"
+            className="rounded-full border border-slate-200 bg-slate-50 p-2 text-slate-700"
             onClick={() => setPaused((prev) => !prev)}
           >
             {paused ? <Play size={16} /> : <Pause size={16} />}
@@ -125,7 +125,7 @@ export function CampaignCarousel() {
           <button
             type="button"
             aria-label="کمپین قبلی"
-            className="rounded-full border border-white/20 bg-white/5 p-2 text-slate-100"
+            className="rounded-full border border-slate-200 bg-slate-50 p-2 text-slate-700"
             onClick={() => setIndex((prev) => (prev - 1 + campaigns.length) % campaigns.length)}
           >
             <ChevronRight size={16} />
@@ -133,7 +133,7 @@ export function CampaignCarousel() {
           <button
             type="button"
             aria-label="کمپین بعدی"
-            className="rounded-full border border-white/20 bg-white/5 p-2 text-slate-100"
+            className="rounded-full border border-slate-200 bg-slate-50 p-2 text-slate-700"
             onClick={() => setIndex((prev) => (prev + 1) % campaigns.length)}
           >
             <ChevronLeft size={16} />
@@ -147,7 +147,7 @@ export function CampaignCarousel() {
             key={item.id}
             type="button"
             aria-label={`نمایش کمپین ${i + 1}`}
-            className={`h-1.5 rounded-full transition-all ${i === index ? 'w-8 bg-cyan-300' : 'w-3 bg-white/30'}`}
+            className={`h-1.5 rounded-full transition-all ${i === index ? 'w-8 bg-orange-500' : 'w-3 bg-slate-300'}`}
             onClick={() => setIndex(i)}
           />
         ))}

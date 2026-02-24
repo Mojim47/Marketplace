@@ -36,8 +36,8 @@ export default function SellerDashboardPage() {
         <header className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-3">
             <Pill>Seller Command Center</Pill>
-            <SectionTitle className="text-3xl text-white">داشبورد فروشنده</SectionTitle>
-            <p className="text-sm text-slate-300">
+            <SectionTitle className="text-3xl text-slate-900">داشبورد فروشنده</SectionTitle>
+            <p className="text-sm text-slate-600">
               تصميم‌گيري سريع با داده‌هاي واقعي، هوش مصنوعي روي دستگاه و مانيتورينگ لحظه‌اي.
             </p>
           </div>
@@ -62,8 +62,8 @@ export default function SellerDashboardPage() {
         <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
           <GlassCard className="rounded-3xl p-6">
             <div className="flex items-center justify-between">
-              <SectionTitle className="text-xl text-white">نبض فروش</SectionTitle>
-              <span className="text-xs text-slate-400">به‌روزرساني 5 دقيقه پيش</span>
+              <SectionTitle className="text-xl text-slate-900">نبض فروش</SectionTitle>
+              <span className="text-xs text-slate-500">به‌روزرساني 5 دقيقه پيش</span>
             </div>
             <div className="mt-6 space-y-4">
               <ProgressBar label="وب‌سايت" value={72} meta="72% از فروش" />
@@ -77,22 +77,22 @@ export default function SellerDashboardPage() {
               ].map((item) => (
                 <div
                   key={item.label}
-                  className="rounded-2xl bg-slate-900/60 p-4 text-sm text-slate-200"
+                  className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700"
                 >
-                  <p className="text-xs text-slate-400">{item.label}</p>
-                  <p className="mt-2 text-lg font-semibold text-white">{item.value}</p>
+                  <p className="text-xs text-slate-500">{item.label}</p>
+                  <p className="mt-2 text-lg font-semibold text-slate-900">{item.value}</p>
                 </div>
               ))}
             </div>
           </GlassCard>
 
           <GlassCard className="rounded-3xl p-6">
-            <SectionTitle className="text-xl text-white">بينش‌هاي هوشمند</SectionTitle>
+            <SectionTitle className="text-xl text-slate-900">بينش‌هاي هوشمند</SectionTitle>
             <div className="mt-4 space-y-3">
               {insights.map((item) => (
-                <div key={item.title} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                  <p className="text-sm font-semibold text-white">{item.title}</p>
-                  <p className="mt-2 text-xs text-slate-300">{item.body}</p>
+                <div key={item.title} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-sm font-semibold text-slate-900">{item.title}</p>
+                  <p className="mt-2 text-xs text-slate-600">{item.body}</p>
                 </div>
               ))}
             </div>
@@ -101,24 +101,24 @@ export default function SellerDashboardPage() {
 
         <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
           <GlassCard className="rounded-3xl p-6">
-            <SectionTitle className="text-xl text-white">سلامت موجودي</SectionTitle>
+            <SectionTitle className="text-xl text-slate-900">سلامت موجودي</SectionTitle>
             <div className="mt-4 space-y-3">
               {inventory.map((item) => (
                 <div
                   key={item.name}
-                  className="flex items-center justify-between rounded-2xl bg-slate-900/60 px-4 py-3 text-sm"
+                  className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm"
                 >
                   <div>
-                    <p className="text-slate-200">{item.name}</p>
-                    <p className="text-xs text-slate-400">سطح موجودي: {item.level}</p>
+                    <p className="text-slate-800">{item.name}</p>
+                    <p className="text-xs text-slate-500">سطح موجودي: {item.level}</p>
                   </div>
                   <span
                     className={`text-xs ${
                       item.status === 'ايمن'
-                        ? 'text-emerald-300'
+                        ? 'text-emerald-600'
                         : item.status === 'هشدار'
-                          ? 'text-amber-300'
-                          : 'text-rose-300'
+                          ? 'text-amber-600'
+                          : 'text-rose-600'
                     }`}
                   >
                     {item.status}
@@ -129,8 +129,8 @@ export default function SellerDashboardPage() {
           </GlassCard>
 
           <GlassCard className="rounded-3xl p-6">
-            <SectionTitle className="text-xl text-white">استوديو تجربه AR</SectionTitle>
-            <p className="mt-2 text-sm text-slate-300">
+            <SectionTitle className="text-xl text-slate-900">استوديو تجربه AR</SectionTitle>
+            <p className="mt-2 text-sm text-slate-600">
               مدل‌هاي سه‌بعدي جديد را بارگذاري کنيد و نرخ تعامل را با نمايش واقعيت افزوده افزايش دهيد.
             </p>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -142,10 +142,10 @@ export default function SellerDashboardPage() {
               ].map((item) => (
                 <div
                   key={item.label}
-                  className="rounded-2xl bg-slate-900/60 p-4 text-sm text-slate-200"
+                  className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700"
                 >
-                  <p className="text-xs text-slate-400">{item.label}</p>
-                  <p className="mt-2 text-lg font-semibold text-white">{item.value}</p>
+                  <p className="text-xs text-slate-500">{item.label}</p>
+                  <p className="mt-2 text-lg font-semibold text-slate-900">{item.value}</p>
                 </div>
               ))}
             </div>

@@ -25,16 +25,16 @@ export default function AboutPage() {
         <Pill>Production Ready</Pill>
       </div>
 
-      <header className="mt-6 rounded-3xl border border-white/10 bg-slate-900/60 p-8">
-        <SectionTitle className="text-3xl text-white">داستان AIMarket</SectionTitle>
-        <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-300">
+      <header className="mt-6 rounded-3xl border border-slate-200 bg-white p-8">
+        <SectionTitle className="text-3xl text-slate-900">داستان AIMarket</SectionTitle>
+        <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-600">
           ما یک مارکت‌پلیس نسل جدید ساخته ایم که همزمان نیاز مشتری، فروشنده و تیم عملیات را پوشش می دهد.
           هدف ما ایجاد یک پلتفرم سریع، امن و قابل توسعه برای تجارت مدرن است.
         </p>
         <div className="mt-6">
           <Link
             href="/categories"
-            className="inline-flex rounded-full border border-white/15 px-5 py-2 text-sm text-white transition hover:border-white/25"
+            className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-5 py-2 text-sm text-slate-800 transition hover:border-orange-300 hover:text-orange-700"
           >
             مشاهده دسته بندی ها
           </Link>
@@ -44,8 +44,8 @@ export default function AboutPage() {
       <section className="mt-8 grid gap-6 md:grid-cols-3">
         {values.map((item) => (
           <GlassCard key={item.title} className="rounded-3xl p-6">
-            <h2 className="section-title text-xl text-white">{item.title}</h2>
-            <p className="mt-3 text-sm leading-6 text-slate-300">{item.body}</p>
+            <h2 className="section-title text-xl text-slate-900">{item.title}</h2>
+            <p className="mt-3 text-sm leading-6 text-slate-600">{item.body}</p>
           </GlassCard>
         ))}
       </section>

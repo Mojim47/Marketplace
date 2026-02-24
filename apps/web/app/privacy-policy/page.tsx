@@ -5,9 +5,9 @@ export default function PrivacyPolicyPage() {
     <div className="min-h-screen">
       <Container className="py-16">
         <GlassCard className="rounded-3xl p-8">
-          <p className="text-xs text-slate-300">Privacy & Trust</p>
-          <SectionTitle className="mt-2 text-3xl text-white">حریم خصوصی کاربران</SectionTitle>
-          <p className="mt-3 text-sm text-slate-300">
+          <p className="text-xs text-slate-500">Privacy & Trust</p>
+          <SectionTitle className="mt-2 text-3xl text-slate-900">حریم خصوصی کاربران</SectionTitle>
+          <p className="mt-3 text-sm text-slate-600">
             تعهد ما حفظ امنیت داده‌های شما و شفافیت کامل در استفاده از اطلاعات است.
           </p>
         </GlassCard>
@@ -32,8 +32,8 @@ export default function PrivacyPolicyPage() {
             },
           ].map((item) => (
             <GlassCard key={item.title} className="rounded-2xl p-6">
-              <SectionTitle className="text-xl text-white">{item.title}</SectionTitle>
-              <p className="mt-2 text-sm leading-7 text-slate-300">{item.body}</p>
+              <SectionTitle className="text-xl text-slate-900">{item.title}</SectionTitle>
+              <p className="mt-2 text-sm leading-7 text-slate-600">{item.body}</p>
             </GlassCard>
           ))}
         </section>

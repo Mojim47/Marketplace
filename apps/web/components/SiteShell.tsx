@@ -106,7 +106,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
           <div className="flex items-center gap-3">
             <button
               aria-label={mobileOpen ? 'بستن منو' : 'باز کردن منو'}
-              className="rounded-xl border border-white/15 p-2 text-slate-200 lg:hidden"
+              className="rounded-xl border border-slate-200 bg-white p-2 text-slate-700 lg:hidden"
               onClick={() => setMobileOpen((prev) => !prev)}
               type="button"
               aria-busy="false"
@@ -231,6 +231,21 @@ export function SiteShell({ children }: { children: ReactNode }) {
       </header>
 
       <main className="min-h-[calc(100vh-260px)]">{children}</main>
+
+      <nav
+        aria-label="mobile commerce actions"
+        className="fixed inset-x-4 bottom-4 z-40 grid grid-cols-3 gap-2 rounded-2xl border border-slate-200 bg-white/95 p-2 shadow-xl lg:hidden"
+      >
+        <Link href="/cart" className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-center text-xs text-slate-700">
+          سبد خرید
+        </Link>
+        <Link href="/checkout" className="rounded-xl bg-emerald-500 px-3 py-2 text-center text-xs text-white">
+          تسویه سریع
+        </Link>
+        <Link href="/profile" className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-center text-xs text-slate-700">
+          حساب من
+        </Link>
+      </nav>
 
       <footer className="mt-20 border-t border-slate-200 bg-white">
         <Container className="grid gap-8 py-10 md:grid-cols-4">
