@@ -94,7 +94,10 @@
     "release:scaling:check": "node scripts/release/verify-scaling-readiness.mjs",
     "build:api": "tsc -p tsconfig.prod.json --skipLibCheck",
     "build:api:docker": "tsc -p tsconfig.prod.json --skipLibCheck",
-    "prisma:generate:prod": "prisma generate --no-engine"
+    "prisma:generate:prod": "prisma generate --no-engine",
+    "cleanup:phase0:audit": "powershell -ExecutionPolicy Bypass -File scripts/cleanup/phase0-audit.ps1",
+    "cleanup:phase1:dry": "powershell -ExecutionPolicy Bypass -File scripts/cleanup/phase1-clean.ps1 -DryRun",
+    "cleanup:phase1": "powershell -ExecutionPolicy Bypass -File scripts/cleanup/phase1-clean.ps1"
   },
   "dependencies": {
     "@nestjs/bullmq": "^10.0.0",
