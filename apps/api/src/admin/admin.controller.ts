@@ -7,6 +7,7 @@ import {
   Logger,
   Param,
   Patch,
+  Query,
   Request,
   UseGuards,
 } from '@nestjs/common';
@@ -39,6 +40,23 @@ interface BanUserDto {
 interface ToggleVendorStoryDto {
   enabled: boolean;
   rolloutPercent?: number;
+}
+
+interface VendorStoryAnalyticsDto {
+  vendorId: string;
+  vendorName: string;
+  active: boolean;
+  storiesEnabled: boolean;
+  storyRolloutPercent: number;
+  activeStories: number;
+  impressions: number;
+  clicks: number;
+  conversions: number;
+  ctr: number;
+  cvr: number;
+  freshness: number;
+  rankScore: number;
+  windowDays: number;
 }
 
 interface AuthenticatedRequest {
@@ -184,6 +202,22 @@ export class AdminController {
   async getVendorStoryCapabilities() {
     this.logger.log('Fetching vendor story capabilities');
     return this.adminService.getVendorStoryCapabilities();
+  }
+
+  /**
+   * Analytics snapshot for vendor stories
+   * GET /admin/vendors/story-analytics?windowDays=14
+   */
+  @Get('vendors/story-analytics')
+  async getVendorStoryAnalytics(
+    @Query('windowDays') windowDays?: string
+  ): Promise<VendorStoryAnalyticsDto[]> {
+    const parsedWindow =
+      typeof windowDays === 'string' && windowDays.trim() !== ''
+        ? Number.parseInt(windowDays, 10)
+        : 14;
+    this.logger.log(`Fetching vendor story analytics for ${parsedWindow} day window`);
+    return this.adminService.getVendorStoryAnalytics(parsedWindow);
   }
 
   /**

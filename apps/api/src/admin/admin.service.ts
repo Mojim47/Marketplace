@@ -34,9 +34,35 @@ interface VendorStoryCapability {
   createdAt: Date;
 }
 
+interface VendorStoryAnalytics {
+  vendorId: string;
+  vendorName: string;
+  active: boolean;
+  storiesEnabled: boolean;
+  storyRolloutPercent: number;
+  activeStories: number;
+  impressions: number;
+  clicks: number;
+  conversions: number;
+  ctr: number;
+  cvr: number;
+  freshness: number;
+  rankScore: number;
+  windowDays: number;
+}
+
 const SETTINGS_CACHE_KEY = 'platform:settings';
 const STATS_CACHE_KEY = 'platform:stats';
 const AR_SESSIONS_KEY = 'ar:active_sessions';
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value));
+}
+
+function round(value: number, digits = 4): number {
+  const p = 10 ** digits;
+  return Math.round(value * p) / p;
+}
 
 @Injectable()
 export class AdminService implements OnModuleInit {
@@ -437,6 +463,98 @@ export class AdminService implements OnModuleInit {
       storiesEnabled: vendor.stories_enabled,
       storyRolloutPercent: vendor.story_rollout_percent,
     };
+  }
+
+  async getVendorStoryAnalytics(windowDays = 14): Promise<VendorStoryAnalytics[]> {
+    const safeWindowDays = clamp(Math.round(windowDays || 14), 1, 90);
+    const now = new Date();
+    const since = new Date(now.getTime() - safeWindowDays * 24 * 60 * 60 * 1000);
+
+    const [vendors, eventRows] = await Promise.all([
+      this.prisma.vendor.findMany({
+        select: {
+          id: true,
+          name: true,
+          is_active: true,
+          stories_enabled: true,
+          story_rollout_percent: true,
+          stories: {
+            where: {
+              is_active: true,
+              expires_at: { gt: now },
+            },
+            select: {
+              id: true,
+              created_at: true,
+              expires_at: true,
+            },
+          },
+        },
+        orderBy: { created_at: 'desc' },
+      }),
+      this.prisma.vendorStoryEvent.groupBy({
+        by: ['vendor_id', 'event_type'],
+        where: {
+          created_at: { gte: since },
+          event_type: { in: ['impression', 'click', 'conversion'] },
+        },
+        _count: {
+          _all: true,
+        },
+      }),
+    ]);
+
+    const counts = new Map<string, { impression: number; click: number; conversion: number }>();
+    for (const row of eventRows) {
+      const bucket = counts.get(row.vendor_id) ?? { impression: 0, click: 0, conversion: 0 };
+      if (row.event_type === 'impression') {
+        bucket.impression = row._count._all;
+      } else if (row.event_type === 'click') {
+        bucket.click = row._count._all;
+      } else if (row.event_type === 'conversion') {
+        bucket.conversion = row._count._all;
+      }
+      counts.set(row.vendor_id, bucket);
+    }
+
+    const analytics = vendors.map((vendor) => {
+      const vendorCounts = counts.get(vendor.id) ?? { impression: 0, click: 0, conversion: 0 };
+      const ctr = vendorCounts.impression > 0 ? vendorCounts.click / vendorCounts.impression : 0;
+      const cvr = vendorCounts.click > 0 ? vendorCounts.conversion / vendorCounts.click : 0;
+
+      let freshness = 0;
+      if (vendor.stories.length > 0) {
+        const totalFreshness = vendor.stories.reduce((sum, story) => {
+          const created = story.created_at.getTime();
+          const expires = story.expires_at.getTime();
+          const duration = Math.max(1, expires - created);
+          const remaining = Math.max(0, expires - now.getTime());
+          return sum + clamp(remaining / duration, 0, 1);
+        }, 0);
+        freshness = totalFreshness / vendor.stories.length;
+      }
+
+      const rankScore = freshness * (1 + ctr * 2.2 + cvr * 4.5);
+
+      return {
+        vendorId: vendor.id,
+        vendorName: vendor.name,
+        active: vendor.is_active,
+        storiesEnabled: vendor.stories_enabled,
+        storyRolloutPercent: vendor.story_rollout_percent,
+        activeStories: vendor.stories.length,
+        impressions: vendorCounts.impression,
+        clicks: vendorCounts.click,
+        conversions: vendorCounts.conversion,
+        ctr: round(ctr),
+        cvr: round(cvr),
+        freshness: round(freshness),
+        rankScore: round(rankScore),
+        windowDays: safeWindowDays,
+      };
+    });
+
+    return analytics.sort((a, b) => b.rankScore - a.rankScore);
   }
 
   /**
