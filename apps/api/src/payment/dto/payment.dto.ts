@@ -14,8 +14,8 @@ import {
   IsNumber,
   IsOptional,
   IsString,
-  IsUUID,
   IsUrl,
+  IsUUID,
   Matches,
   Min,
 } from 'class-validator';

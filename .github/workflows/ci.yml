@@ -1,13 +1,13 @@
-﻿# â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+# ═══════════════════════════════════════════════════════════════════════════
 # NextGen Marketplace - Enterprise CI Pipeline
-# â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+# ═══════════════════════════════════════════════════════════════════════════
 # Comprehensive CI pipeline with security scanning using Trivy and Snyk
 # Triggers: push to main/develop, pull requests
-# Stages: lint â†’ security-scan â†’ test â†’ build
+# Stages: lint → security-scan → test → build
 # Requirements: 5.1, 5.2
-# â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+# ═══════════════════════════════════════════════════════════════════════════
 
-name: "ًں”„ CI Pipeline"
+name: "🔄 CI Pipeline"
 
 on:
   push:
@@ -29,22 +29,24 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+  # ═══════════════════════════════════════════════════════════════════════════
   # STAGE 1: Lint & Type Check
-  # â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+  # ═══════════════════════════════════════════════════════════════════════════
   lint:
-    name: "ًں”چ Lint & Type Check"
+    name: "🔍 Lint & Type Check"
     runs-on: ubuntu-latest
     steps:
-      - name: "ًں“¥ Checkout code"
+      - name: "📥 Checkout code"
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: "ًں“¦ Setup pnpm"
+      - name: "📦 Setup pnpm"
         uses: pnpm/action-setup@v2
         with:
           version: ${{ env.PNPM_VERSION }}
 
-      - name: "ًںں¢ Setup Node.js"
+      - name: "🟢 Setup Node.js"
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -60,37 +62,69 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
-      - name: "ًں“¥ Install dependencies"
+      - name: "📥 Install dependencies"
         run: pnpm install --frozen-lockfile
 
-      - name: "ًں”چ Run Biome lint & format check"
+      - name: "🔐 Enforce UTF-8/LF/ASCII text policy"
+        shell: bash
+        run: |
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          if [ -z "$BASE_SHA" ]; then
+            BASE_SHA="${{ github.event.before }}"
+          fi
+          if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ]; then
+            BASE_SHA="$(git rev-parse HEAD~1)"
+          fi
+          CHANGED_FILES="$(git diff --name-only --diff-filter=ACMR "$BASE_SHA"...HEAD | tr '\n' ' ')"
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "No changed files for text governance policy"
+            exit 0
+          fi
+          node scripts/policy/validate-text-governance.mjs --enforce-ascii-scripts $CHANGED_FILES
+
+      - name: "🧭 DB schema drift gate"
+        run: pnpm run db:drift:check
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+
+      - name: "🧪 DB constraints audit"
+        run: pnpm run db:constraints:audit
+
+      - name: "📤 Upload DB audit artifacts"
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: db-audit-artifacts
+          path: artifacts/db-audit/
+          retention-days: 14
+
+      - name: "🔍 Run Biome lint & format check"
         run: pnpm run check
 
-      - name: "ًں“‌ Run TypeScript check"
+      - name: "📝 Run TypeScript check"
         run: pnpm run typecheck
 
-  # â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+  # ═══════════════════════════════════════════════════════════════════════════
   # STAGE 2: Security Scanning (Trivy + Snyk)
   # Requirements: 5.2
-  # â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+  # ═══════════════════════════════════════════════════════════════════════════
   security-scan:
-    if: github.ref == 'refs/heads/main'
-    name: "ًں”’ Security Scan"
+    name: "🔒 Security Scan"
     runs-on: ubuntu-latest
     needs: lint
     permissions:
       contents: read
       security-events: write
     steps:
-      - name: "ًں“¥ Checkout code"
+      - name: "📥 Checkout code"
         uses: actions/checkout@v4
 
-      - name: "ًں“¦ Setup pnpm"
+      - name: "📦 Setup pnpm"
         uses: pnpm/action-setup@v2
         with:
           version: ${{ env.PNPM_VERSION }}
 
-      - name: "ًںں¢ Setup Node.js"
+      - name: "🟢 Setup Node.js"
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -99,13 +133,13 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
-      - name: "ًں“¥ Install dependencies"
+      - name: "📥 Install dependencies"
         run: pnpm install --frozen-lockfile
 
-      # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      # ─────────────────────────────────────────────────────────────────────
       # Trivy Filesystem Scan - Scans for vulnerabilities in dependencies
-      # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-      - name: "ًں›،ï¸ڈ Run Trivy vulnerability scanner (filesystem)"
+      # ─────────────────────────────────────────────────────────────────────
+      - name: "🛡️ Run Trivy vulnerability scanner (filesystem)"
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: "fs"
@@ -116,17 +150,25 @@ jobs:
           exit-code: "1"
           ignore-unfixed: true
 
-      - name: "ًں“¤ Upload Trivy filesystem scan results"
+      - name: "📤 Upload Trivy filesystem scan results"
         uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
           sarif_file: "trivy-fs-results.sarif"
           category: "trivy-filesystem"
 
-      # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      - name: "📦 Artifact Trivy filesystem SARIF"
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: trivy-fs-results
+          path: trivy-fs-results.sarif
+          retention-days: 7
+
+      # ─────────────────────────────────────────────────────────────────────
       # Trivy Config Scan - Scans IaC files (Dockerfile, K8s, Terraform)
-      # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-      - name: "ًں›،ï¸ڈ Run Trivy config scanner (IaC)"
+      # ─────────────────────────────────────────────────────────────────────
+      - name: "🛡️ Run Trivy config scanner (IaC)"
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: "config"
@@ -137,19 +179,36 @@ jobs:
           exit-code: "1"
           ignore-unfixed: true
 
-      - name: "ًں“¤ Upload Trivy config scan results"
+      - name: "🛡️ Ensure Trivy config SARIF exists"
+        if: always()
+        run: |
+          if [ ! -f trivy-config-results.sarif ]; then
+            echo "trivy-config-results.sarif missing, generating fallback (non-blocking)..."
+            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+            trivy config --format sarif -o trivy-config-results.sarif --severity CRITICAL,HIGH,MEDIUM --exit-code 0 .
+          fi
+
+      - name: "📤 Upload Trivy config scan results"
         uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
           sarif_file: "trivy-config-results.sarif"
           category: "trivy-config"
 
-      # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      - name: "📦 Artifact Trivy config SARIF"
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: trivy-config-results
+          path: trivy-config-results.sarif
+          retention-days: 7
+
+      # ─────────────────────────────────────────────────────────────────────
       # Snyk Security Scan - Additional vulnerability scanning
       # Note: Snyk requires SNYK_TOKEN secret. If not configured, step will fail.
-      # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      # ─────────────────────────────────────────────────────────────────────
       # Snyk scan disabled for forked PRs (secrets unavailable). Re-enable on trusted branches:
-      # - name: "ًں”گ Run Snyk to check for vulnerabilities"
+      # - name: "🔐 Run Snyk to check for vulnerabilities"
       #   uses: snyk/actions/node@master
       #   if: ${{ github.event_name == 'push' && secrets.SNYK_TOKEN != '' }}
       #   env:
@@ -157,7 +216,7 @@ jobs:
       #   with:
       #     args: --severity-threshold=high --json-file-output=snyk-results.json
 
-      # - name: "ًں“¤ Upload Snyk results"
+      # - name: "📤 Upload Snyk results"
       #   uses: actions/upload-artifact@v4
       #   if: always()
       #   with:
@@ -165,17 +224,17 @@ jobs:
       #     path: snyk-results.json
       #     retention-days: 30
 
-      # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      # ─────────────────────────────────────────────────────────────────────
       # pnpm Audit - Check for known vulnerabilities in dependencies
-      # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-      - name: "ًں“¦ Run pnpm audit"
+      # ─────────────────────────────────────────────────────────────────────
+      - name: "📦 Run pnpm audit"
         run: pnpm audit --audit-level=high
 
-      - name: "ًں“¤ Upload pnpm audit results"
+      - name: "📤 Upload pnpm audit results"
         if: always()
         run: pnpm audit --audit-level=high --json > pnpm-audit.json || true
 
-      - name: "ًں“¤ Upload pnpm audit artifact"
+      - name: "📤 Upload pnpm audit artifact"
         uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -183,36 +242,33 @@ jobs:
           path: pnpm-audit.json
           retention-days: 30
 
-      # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      # ─────────────────────────────────────────────────────────────────────
       # Secret Scanning - Check for hardcoded secrets (MUST PASS)
-      # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-      - name: "ًں”‘ Run Gitleaks secret scan"
+      # ─────────────────────────────────────────────────────────────────────
+      - name: "🔑 Run Gitleaks secret scan"
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         # No continue-on-error - secrets MUST block the build
 
-  # â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+  # ═══════════════════════════════════════════════════════════════════════════
   # STAGE 3: Unit Tests
   # Requirements: 5.1
-  # â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+  # ═══════════════════════════════════════════════════════════════════════════
   test:
-    name: "ًں§ھ Unit Tests"
-    env:
-      CI_SKIP_AI: "1"
+    name: "🧪 Unit Tests"
     runs-on: ubuntu-latest
     needs: lint
-    continue-on-error: ${{ github.ref != 'refs/heads/main' }}
     steps:
-      - name: "ًں“¥ Checkout code"
+      - name: "📥 Checkout code"
         uses: actions/checkout@v4
 
-      - name: "ًں“¦ Setup pnpm"
+      - name: "📦 Setup pnpm"
         uses: pnpm/action-setup@v2
         with:
           version: ${{ env.PNPM_VERSION }}
 
-      - name: "ًںں¢ Setup Node.js"
+      - name: "🟢 Setup Node.js"
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -221,18 +277,10 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
-      - name: "ًں“¥ Install dependencies"
+      - name: "📥 Install dependencies"
         run: pnpm install --frozen-lockfile
 
-      - name: "?? Prepare AI embedding assets"
-        if: env.CI_SKIP_AI != '1'
-        run: node scripts/prepare-ai-deps.mjs
-        env:
-          EXPECTED_ONNX_SHA256: "994a58868f7abacacbf2192aa0aae8f56da8c4505dbde2740c861b24426ede6b"
-          EXPECTED_TOKENIZER_SHA256: "da0e79933b9ed51798a3ae27893d3c5fa4a201126cef75586296df9b4d2c62a0"
-          EXPECTED_TOKENIZER_CONFIG_SHA256: "715e129705e35dae9a000c6db9710ce01049151a6605c282723171c3af57c44c"
-
-      - name: "ًں§ھ Run unit tests with coverage"
+      - name: "🧪 Run unit tests with coverage"
         run: pnpm run test:unit --coverage
         env:
           COVERAGE_SCOPE: aiar
@@ -240,35 +288,35 @@ jobs:
           JWT_SECRET: test-jwt-secret-for-ci-pipeline-minimum-32-chars
           JWT_REFRESH_SECRET: test-refresh-secret-for-ci-pipeline-32-chars
 
-      - name: "ًں“ٹ Upload coverage to Codecov"
+      - name: "📊 Upload coverage to Codecov"
         uses: codecov/codecov-action@v4
         with:
           files: ./coverage/lcov.info
           fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
 
-      - name: "ًں“¤ Upload coverage report"
+      - name: "📤 Upload coverage report"
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: coverage/
           retention-days: 7
   # STAGE 4: Property-Based Tests
-  # â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+  # ═══════════════════════════════════════════════════════════════════════════
   property-tests:
-    name: "ًںژ² Property-Based Tests"
+    name: "🎲 Property-Based Tests"
     runs-on: ubuntu-latest
     needs: lint
     steps:
-      - name: "ًں“¥ Checkout code"
+      - name: "📥 Checkout code"
         uses: actions/checkout@v4
 
-      - name: "ًں“¦ Setup pnpm"
+      - name: "📦 Setup pnpm"
         uses: pnpm/action-setup@v2
         with:
           version: ${{ env.PNPM_VERSION }}
 
-      - name: "ًںں¢ Setup Node.js"
+      - name: "🟢 Setup Node.js"
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -277,33 +325,56 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
-      - name: "ًں“¥ Install dependencies"
+      - name: "📥 Install dependencies"
         run: pnpm install --frozen-lockfile
 
-      - name: "ًںژ² Run property-based tests"
+      - name: "🎲 Run property-based tests"
         run: pnpm run test:pbt || echo "PBT tests completed"
         env:
           NODE_ENV: test
           JWT_SECRET: test-jwt-secret-for-ci-pipeline-minimum-32-chars
           JWT_REFRESH_SECRET: test-refresh-secret-for-ci-pipeline-32-chars
 
-  # â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+  # ═══════════════════════════════════════════════════════════════════════════
   # STAGE 5: Build
-  # â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+  # ═══════════════════════════════════════════════════════════════════════════
   build:
-    name: "ًںڈ—ï¸ڈ Build"
+    name: "🏗️ Build"
     runs-on: ubuntu-latest
     needs: [test, security-scan]
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: nextgen_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
-      - name: "ًں“¥ Checkout code"
+      - name: "📥 Checkout code"
         uses: actions/checkout@v4
 
-      - name: "ًں“¦ Setup pnpm"
+      - name: "📦 Setup pnpm"
         uses: pnpm/action-setup@v2
         with:
           version: ${{ env.PNPM_VERSION }}
 
-      - name: "ًںں¢ Setup Node.js"
+      - name: "🟢 Setup Node.js"
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -312,24 +383,41 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
-      - name: "ًں“¥ Install dependencies"
+      - name: "📥 Install dependencies"
         run: pnpm install --frozen-lockfile
 
-      - name: "ًں”§ Generate Prisma client"
+      - name: "🔧 Generate Prisma client"
         run: pnpm run db:generate
 
-      - name: "ًںڑ« Check for mock files in build paths"
+      - name: "🗄️ Prepare CI database schema"
+        run: pnpm run db:migrate:deploy
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/nextgen_ci
+
+      - name: "🚫 Check for mock files in build paths"
         run: node scripts/check-mock-files.mjs
 
-      - name: "ًںڈ—ï¸ڈ Build application"
+      - name: "🏗️ Build application"
         run: pnpm run build:ci
         env:
           NODE_ENV: production
 
-      - name: "ًں”چ Verify no mock files in build output"
+      - name: "🚀 API Bootstrap + Observability Guard"
+        run: node ops/scripts/ci-bootstrap-observability-gate.mjs
+        env:
+          API_PORT: "4010"
+          BOOTSTRAP_LOG_PATH: "api.log"
+          DATABASE_URL: postgresql://test:test@localhost:5432/nextgen_ci
+          REDIS_URL: redis://localhost:6379
+          BOOTSTRAP_TIMEOUT_MS: "45000"
+          ERROR_BUDGET_RATIO: "0.005"
+          LATENCY_P95_SLO_SECONDS: "0.4"
+          METRIC_ROUTE_CARDINALITY_MAX: "50"
+
+      - name: "🔍 Verify no mock files in build output"
         run: node scripts/check-mock-files.mjs
 
-      - name: "ًں“¤ Upload build artifacts"
+      - name: "📤 Upload build artifacts"
         uses: actions/upload-artifact@v4
         with:
           name: dist
@@ -344,7 +432,6 @@ jobs:
     name: "UI Governance"
     runs-on: ubuntu-latest
     needs: lint
-    if: github.ref == 'refs/heads/main'
     steps:
       - name: "Checkout code"
         uses: actions/checkout@v4
@@ -369,12 +456,62 @@ jobs:
       - name: "Install Playwright browsers"
         run: pnpm exec playwright install --with-deps
 
+      - name: "Run UI Playwright regression suite"
+        run: pnpm ui:playwright
+
+      - name: "Run UI pa11y accessibility suite"
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm --filter @nextgen/web dev > web-pa11y.log 2>&1 &
+          WEB_PID=$!
+          pnpm --filter @nextgen/admin dev > admin-pa11y.log 2>&1 &
+          ADMIN_PID=$!
+          cleanup() {
+            kill "$WEB_PID" "$ADMIN_PID" || true
+          }
+          trap cleanup EXIT
+          for _ in $(seq 1 60); do
+            if curl -sf http://localhost:3000/livez >/dev/null && curl -sf http://localhost:3003/livez >/dev/null; then
+              break
+            fi
+            sleep 2
+          done
+          pnpm ui:pa11y
+
+      - name: "Run UI drift gate"
+        run: pnpm ui:drift:check
+
+      - name: "Generate Phase 1 migration report"
+        if: always()
+        run: pnpm ui:phase1:report
+
+      - name: "Run product architecture audit"
+        run: pnpm ui:product:audit
+        env:
+          UI_PRODUCT_AUDIT_MIN_COVERAGE: "60"
+
+      - name: "Generate page matrix"
+        run: pnpm ui:page-matrix
+
+      - name: "Generate top-gap backlog"
+        run: pnpm ui:product:backlog
+
       - name: "Run UI governance gates"
-        run: pnpm ui:governance  # â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+        run: pnpm ui:governance
+
+      - name: "Upload UI drift artifacts"
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ui-drift-artifacts
+          path: artifacts/ui-audit/
+          retention-days: 14
+  # ═══════════════════════════════════════════════════════════════════════════
   # STAGE 6: Integration Tests (on PR to main only)
-  # â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+  # ═══════════════════════════════════════════════════════════════════════════
   integration-tests:
-    name: "ًں”— Integration Tests"
+    name: "🔗 Integration Tests"
     runs-on: ubuntu-latest
     needs: build
     if: github.event_name == 'pull_request' && github.base_ref == 'main'
@@ -402,15 +539,15 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-      - name: "ًں“¥ Checkout code"
+      - name: "📥 Checkout code"
         uses: actions/checkout@v4
 
-      - name: "ًں“¦ Setup pnpm"
+      - name: "📦 Setup pnpm"
         uses: pnpm/action-setup@v2
         with:
           version: ${{ env.PNPM_VERSION }}
 
-      - name: "ًںں¢ Setup Node.js"
+      - name: "🟢 Setup Node.js"
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -419,18 +556,23 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
-      - name: "ًں“¥ Install dependencies"
+      - name: "📥 Install dependencies"
         run: pnpm install --frozen-lockfile
 
-      - name: "ًں”§ Generate Prisma client"
+      - name: "🔧 Generate Prisma client"
         run: pnpm run db:generate
 
-      - name: "ًں—„ï¸ڈ Run database migrations"
-        run: pnpm run db:migrate:deploy
+      - name: "🗄️ Run database migrations"
+        run: pnpm run db:migrate:deploy:safe
         env:
           DATABASE_URL: postgresql://test:test@localhost:5432/nextgen_test
 
-      - name: "ًں”— Run integration tests"
+      - name: "🧭 Runtime schema drift gate"
+        run: pnpm run db:drift:runtime
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/nextgen_test
+
+      - name: "🔗 Run integration tests"
         run: pnpm run test:integration
         env:
           NODE_ENV: test
@@ -439,12 +581,11 @@ jobs:
           JWT_SECRET: test-jwt-secret-for-ci-pipeline-minimum-32-chars
           JWT_REFRESH_SECRET: test-refresh-secret-for-ci-pipeline-32-chars
 
-  # â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+  # ═══════════════════════════════════════════════════════════════════════════
   # STAGE 7: CodeQL Analysis
-  # â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+  # ═══════════════════════════════════════════════════════════════════════════
   codeql:
-    if: github.ref == 'refs/heads/main'
-    name: "ًں”¬ CodeQL Analysis"
+    name: "🔬 CodeQL Analysis"
     runs-on: ubuntu-latest
     needs: lint
     permissions:
@@ -452,49 +593,41 @@ jobs:
       contents: read
       security-events: write
     steps:
-      - name: "ًں“¥ Checkout code"
+      - name: "📥 Checkout code"
         uses: actions/checkout@v4
 
-      - name: "ًں”¬ Initialize CodeQL"
+      - name: "🔬 Initialize CodeQL"
         uses: github/codeql-action/init@v3
         with:
           languages: javascript-typescript
           config-file: .github/codeql-config.yml
 
-      - name: "ًں”¬ Perform CodeQL Analysis"
+      - name: "🔬 Perform CodeQL Analysis"
         uses: github/codeql-action/analyze@v3
         with:
           category: "/language:javascript-typescript"
 
-  # â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+  # ═══════════════════════════════════════════════════════════════════════════
   # STAGE 8: CI Summary
-  # â•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گâ•گ
+  # ═══════════════════════════════════════════════════════════════════════════
   ci-summary:
-    name: "ًں“‹ CI Summary"
+    name: "📋 CI Summary"
     runs-on: ubuntu-latest
     needs: [lint, security-scan, test, build, ui-governance]
     if: always()
     steps:
-      - name: "ًں“‹ Generate CI Summary"
+      - name: "📋 Generate CI Summary"
         run: |
-          echo "## ًں”„ CI Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+          echo "## 🔄 CI Pipeline Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Stage | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| ًں”چ Lint | ${{ needs.lint.result == 'success' && 'âœ… Passed' || 'â‌Œ Failed' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| ًں”’ Security | ${{ needs.security-scan.result == 'success' && 'âœ… Passed' || 'âڑ ï¸ڈ Check Results' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| ًں§ھ Tests | ${{ needs.test.result == 'success' && 'âœ… Passed' || 'â‌Œ Failed' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| ًںڈ—ï¸ڈ Build | ${{ needs.build.result == 'success' && 'âœ… Passed' || 'â‌Œ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔍 Lint | ${{ needs.lint.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔒 Security | ${{ needs.security-scan.result == 'success' && '✅ Passed' || '⚠️ Check Results' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🧪 Tests | ${{ needs.test.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🏗️ Build | ${{ needs.build.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| UI Governance | ${{ needs.ui-governance.result == 'success' && 'Passed' || 'Failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Branch:** \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Triggered by:** @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
-
-
-
-
-
-
-
-

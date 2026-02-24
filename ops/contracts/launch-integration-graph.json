@@ -1,0 +1,95 @@
+{
+  "version": "2026-02-23",
+  "name": "nextgen-launch-baseline",
+  "description": "Deterministic launch scope graph with explicit include/exclude modules.",
+  "requiredModules": [
+    {
+      "id": "api.auth",
+      "domain": "api-core",
+      "artifactRoots": ["apps/api/dist", "apps/api/src/auth"],
+      "dependsOn": []
+    },
+    {
+      "id": "api.cart",
+      "domain": "api-core",
+      "artifactRoots": ["apps/api/dist", "apps/api/src/cart"],
+      "dependsOn": ["api.auth"]
+    },
+    {
+      "id": "api.checkout",
+      "domain": "api-core",
+      "artifactRoots": ["apps/api/dist", "apps/api/src/checkout"],
+      "dependsOn": ["api.auth", "api.cart"]
+    },
+    {
+      "id": "api.orders",
+      "domain": "api-core",
+      "artifactRoots": ["apps/api/dist", "apps/api/src/orders"],
+      "dependsOn": ["api.auth", "api.checkout"]
+    },
+    {
+      "id": "api.health",
+      "domain": "api-core",
+      "artifactRoots": ["apps/api/dist", "apps/api/src/health"],
+      "dependsOn": ["api.auth"]
+    },
+    {
+      "id": "ai.model-runtime",
+      "domain": "ai",
+      "artifactRoots": ["libs/ai/dist", "libs/ai/src/runtime"],
+      "dependsOn": []
+    },
+    {
+      "id": "ai.embedding",
+      "domain": "ai",
+      "artifactRoots": ["libs/ai/dist", "libs/ai/src/embeddings"],
+      "dependsOn": ["ai.model-runtime"]
+    },
+    {
+      "id": "ai.ai-search",
+      "domain": "ai",
+      "artifactRoots": ["apps/api/dist", "apps/api/src/search"],
+      "dependsOn": ["ai.embedding", "api.health"]
+    },
+    {
+      "id": "ar.guardrail",
+      "domain": "ar",
+      "artifactRoots": ["libs/ar/dist", "libs/ar/src/runtime"],
+      "dependsOn": []
+    },
+    {
+      "id": "ar.overlay",
+      "domain": "ar",
+      "artifactRoots": ["libs/ar/dist", "libs/ar/src/ARViewer.tsx"],
+      "dependsOn": ["ar.guardrail"]
+    },
+    {
+      "id": "ar.telemetry",
+      "domain": "ar",
+      "artifactRoots": ["apps/api/dist", "apps/api/src/monitoring"],
+      "dependsOn": ["ar.overlay"]
+    },
+    {
+      "id": "web.marketplace-ui",
+      "domain": "web",
+      "artifactRoots": ["apps/web/.next", "apps/web/app", "apps/web/lib"],
+      "dependsOn": ["api.auth", "api.cart", "api.checkout", "api.orders", "ai.ai-search"]
+    },
+    {
+      "id": "web.ar-viewer",
+      "domain": "web",
+      "artifactRoots": ["apps/web/.next", "libs/ar/dist", "libs/ar/src/ARViewer.tsx"],
+      "dependsOn": ["web.marketplace-ui", "ar.overlay", "ar.guardrail", "ar.telemetry"]
+    }
+  ],
+  "excludedModules": [
+    "apps/admin",
+    "apps/vendor-portal",
+    "apps/worker",
+    "apps/api/src/_b2b",
+    "apps/api/src/_marketplace",
+    "libs/moodian",
+    "libs/sc3",
+    "enterprise-serta"
+  ]
+}

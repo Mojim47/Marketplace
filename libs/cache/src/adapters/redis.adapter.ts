@@ -9,6 +9,7 @@ import Redis, { Cluster } from 'ioredis';
 import type {
   CacheGetOptions,
   CacheHealthCheck,
+  CacheProviderType,
   CacheScanOptions,
   CacheScanResult,
   CacheSetOptions,
@@ -16,7 +17,6 @@ import type {
   ICacheProvider,
   RedisCacheConfig,
 } from '../interfaces/cache.interface';
-import type { CacheProviderType } from '../interfaces/cache.interface';
 
 /**
  * Redis cache adapter

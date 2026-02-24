@@ -7,67 +7,60 @@
  * ???????????????????????????????????????????????????????????????????????????
  */
 
-import { Injectable, Logger } from '@nestjs/common';
-
-// Import calculator functions from libs
+import { type PriceChangeTracking, trackPriceChange } from '@libs/audit';
 import {
-  type DealerTier,
-  type PriceCalculationContext,
-  type PriceCalculationInput,
-  type PriceCalculationWithAuditResult,
-  calculatePriceWithAudit,
-} from '@libs/pricing';
-
-import {
-  type CreditCheckForConversion,
-  type PriceFreezeResult,
-  type ProformaStatus,
-  type StockLockResult,
-  canConvertToOrder,
-  checkCreditForConversion,
-  freezePrices,
-  lockStock,
-} from '@libs/proforma';
-
-import {
-  type ChequeStatus,
   applyBouncePenalty,
+  type ChequeStatus,
   calculateBounceImpact,
   calculateNewDebt,
   isValidTransition,
   shouldBlockCredit,
   validateSayadiNumber,
 } from '@libs/cheque';
-
 import {
-  type FinancialEventType,
-  type RiskScoreCalculation,
   adjustRiskScore,
   calculateAvailableCredit,
   calculateRiskScoreFromEvents,
   calculateVouchPenalty,
+  type FinancialEventType,
   isCreditSufficient,
+  type RiskScoreCalculation,
 } from '@libs/credit';
-
-import {
-  type ApprovalAction,
-  type ApprovalRequirement,
-  type WorkflowStatus,
-  determineApprovalRequirement,
-  getRequiredSteps,
-  isWorkflowComplete,
-} from '@libs/workflow';
-
-import { type PriceChangeTracking, trackPriceChange } from '@libs/audit';
-
 import {
   ACCOUNT_NAMES,
   type CreateLedgerEntryDto,
-  type GeneralLedgerEntry,
   createOrderLedgerEntries,
   createPaymentLedgerEntries,
+  type GeneralLedgerEntry,
   validateDoubleEntry,
 } from '@libs/ledger';
+// Import calculator functions from libs
+import {
+  calculatePriceWithAudit,
+  type DealerTier,
+  type PriceCalculationContext,
+  type PriceCalculationInput,
+  type PriceCalculationWithAuditResult,
+} from '@libs/pricing';
+import {
+  type CreditCheckForConversion,
+  canConvertToOrder,
+  checkCreditForConversion,
+  freezePrices,
+  lockStock,
+  type PriceFreezeResult,
+  type ProformaStatus,
+  type StockLockResult,
+} from '@libs/proforma';
+import {
+  type ApprovalAction,
+  type ApprovalRequirement,
+  determineApprovalRequirement,
+  getRequiredSteps,
+  isWorkflowComplete,
+  type WorkflowStatus,
+} from '@libs/workflow';
+import { Injectable, Logger } from '@nestjs/common';
 
 // ???????????????????????????????????????????????????????????????????????????
 // Interfaces

@@ -9,6 +9,66 @@ export interface JWTPayload {
 }
 
 export class JWTManager {
+  private signToken(payload: Record<string, unknown>): string {
+    // Runtime dependency is provided transitively via Nest JWT stack.
+    const jwt = require('jsonwebtoken') as {
+      sign: (payload: Record<string, unknown>, secret: string, options?: Record<string, unknown>) => string;
+      verify: (token: string, secret: string, options?: Record<string, unknown>) => Record<string, unknown>;
+    };
+    const secret = process.env.JWT_SECRET || 'development-jwt-secret-32-chars-minimum';
+    const issuer = process.env.JWT_ISSUER || 'nextgen-marketplace';
+    const audience = process.env.JWT_AUDIENCE || 'nextgen-api';
+
+    return jwt.sign(payload, secret, {
+      algorithm: 'HS256',
+      expiresIn: '1h',
+      issuer,
+      audience,
+    });
+  }
+
+  async initialize(): Promise<void> {
+    return;
+  }
+  async issueTokens(sub: string, claims: Record<string, unknown>) {
+    const accessToken = this.signToken({ sub, ...claims });
+    const refreshToken = this.signToken({ sub, type: 'refresh' });
+    return {
+      accessToken,
+      refreshToken,
+      expiresAt: Math.floor(Date.now() / 1000) + 3600,
+      claims,
+    };
+  }
+  async refreshAccessToken(refreshToken: string) {
+    const jwt = require('jsonwebtoken') as {
+      verify: (token: string, secret: string, options?: Record<string, unknown>) => Record<string, unknown>;
+    };
+    const secret = process.env.JWT_SECRET || 'development-jwt-secret-32-chars-minimum';
+    const issuer = process.env.JWT_ISSUER || 'nextgen-marketplace';
+    const audience = process.env.JWT_AUDIENCE || 'nextgen-api';
+    const payload = jwt.verify(refreshToken, secret, { issuer, audience }) as { sub?: string };
+    const sub = payload.sub || 'mock-user';
+    return {
+      accessToken: this.signToken({ sub }),
+      refreshToken: this.signToken({ sub, type: 'refresh' }),
+      expiresAt: Math.floor(Date.now() / 1000) + 3600,
+    };
+  }
+  async verifyToken(token: string) {
+    try {
+      const jwt = require('jsonwebtoken') as {
+        verify: (token: string, secret: string, options?: Record<string, unknown>) => Record<string, unknown>;
+      };
+      const secret = process.env.JWT_SECRET || 'development-jwt-secret-32-chars-minimum';
+      const issuer = process.env.JWT_ISSUER || 'nextgen-marketplace';
+      const audience = process.env.JWT_AUDIENCE || 'nextgen-api';
+      const payload = jwt.verify(token, secret, { issuer, audience });
+      return { valid: true, payload };
+    } catch (error) {
+      return { valid: false, error: (error as Error).message };
+    }
+  }
   sign(_payload: JWTPayload): string {
     return 'mock-jwt';
   }
@@ -19,6 +79,24 @@ export class JWTManager {
 
 // Brute force protection (stub)
 export class BruteForceProtection {
+  start(): void {
+    return;
+  }
+  stop(): void {
+    return;
+  }
+  isBlocked(_key: string): boolean {
+    return false;
+  }
+  getAttempts(_key: string): { blockedUntil?: number } | null {
+    return null;
+  }
+  getRemainingAttempts(_key: string): number {
+    return 5;
+  }
+  recordAttempt(_key: string, _success: boolean): void {
+    return;
+  }
   async check(_key: string): Promise<void> {
     return;
   }

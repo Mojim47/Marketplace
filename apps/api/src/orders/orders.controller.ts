@@ -1,15 +1,24 @@
-﻿import { Body, Controller, Get, Headers, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Headers,
+  Param,
+  Post,
+  Put,
+  Query,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
-import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
-import type { AuthenticatedUser } from '../common/types/authenticated-user.type';
+import { LaunchJwtAuthGuard } from '../common/guards/launch-jwt-auth.guard';
 import type { CreateOrderDto } from './dto';
-import type { OrdersService } from './orders.service';
+import { OrdersService } from './orders.service';
 
 @ApiTags('orders')
 @Controller({ path: 'orders', version: '1' })
-@UseGuards(JwtAuthGuard)
+@UseGuards(LaunchJwtAuthGuard)
 @ApiBearerAuth()
 export class OrdersController {
   constructor(private readonly service: OrdersService) {}
@@ -18,23 +27,23 @@ export class OrdersController {
   @Throttle({ default: { limit: 20, ttl: 60000 } })
   @ApiOperation({ summary: 'ايجاد سفارش جديد' })
   create(
-    @CurrentUser() user: AuthenticatedUser,
+    @Request() req: any,
     @Body() data: CreateOrderDto,
     @Headers('Idempotency-Key') idempotencyKey?: string
   ) {
-    return this.service.create(user.id, data, idempotencyKey);
+    return this.service.create(req.user.id, data, idempotencyKey);
   }
 
   @Get()
   @ApiOperation({ summary: 'ليست سفارشات من' })
-  findAll(@CurrentUser() user: AuthenticatedUser, @Query() filters: any) {
-    return this.service.findAll(user.id, filters);
+  findAll(@Request() req: any, @Query() filters: any) {
+    return this.service.findAll(req.user.id, filters);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'جزئيات سفارش' })
-  findOne(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
-    return this.service.findOne(id, user.id);
+  findOne(@Param('id') id: string, @Request() req: any) {
+    return this.service.findOne(id, req.user.id);
   }
 
   @Put(':id/status')

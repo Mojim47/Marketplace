@@ -1,4 +1,4 @@
-﻿import { HttpException, HttpStatus } from '@nestjs/common';
+import { HttpException, HttpStatus } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import * as fc from 'fast-check';
 import { describe, expect, it, vi } from 'vitest';
@@ -10,11 +10,11 @@ import {
   runWithCorrelationId,
 } from '../../_middleware/correlation-id.middleware';
 import {
-  AllExceptionsFilter,
-  type SecureErrorResponse,
   __testing,
+  AllExceptionsFilter,
   getCorrelationId,
   isMessageSanitized,
+  type SecureErrorResponse,
 } from './http-exception.filter';
 
 const {

@@ -604,9 +604,8 @@ export class RequestContextMiddleware implements NestMiddleware {
 }
 
 // Export Roles decorator
-export { Roles, ROLES_KEY } from '../../auth/roles.guard';
-
+export { ROLES_KEY, Roles } from '../../auth/roles.guard';
+export { AdminRoleGuard } from './admin-role.guard';
+export { OrderOwnershipGuard } from './order-ownership.guard';
 // Export ownership and role guards
 export { ProductOwnershipGuard } from './product-ownership.guard';
-export { OrderOwnershipGuard } from './order-ownership.guard';
-export { AdminRoleGuard } from './admin-role.guard';

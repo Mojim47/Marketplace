@@ -15,12 +15,12 @@ import {
   Request,
   UseGuards,
 } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import type { CheckoutService } from './checkout.service';
+import { LaunchJwtAuthGuard } from '../common/guards/launch-jwt-auth.guard';
+import { CheckoutService } from './checkout.service';
 import type { PaymentMethod, ShippingAddress } from './checkout.types';
 
 @Controller('checkout')
-@UseGuards(JwtAuthGuard)
+@UseGuards(LaunchJwtAuthGuard)
 export class CheckoutController {
   constructor(private readonly checkoutService: CheckoutService) {}
 

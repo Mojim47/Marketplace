@@ -1,7 +1,8 @@
-﻿import { spawn } from 'child_process';
+import { spawn } from 'child_process';
+import net from 'net';
 
-const WEB_PORT = 3000;
-const ADMIN_PORT = 3003;
+const DEFAULT_WEB_PORT = Number.parseInt(process.env.UI_WEB_PORT ?? '3100', 10);
+const DEFAULT_ADMIN_PORT = Number.parseInt(process.env.UI_ADMIN_PORT ?? '3103', 10);
 
 const baseEnv = {
   ...process.env,
@@ -22,6 +23,40 @@ function run(command, args = [], env = baseEnv) {
       if (code === 0) resolve();
       else reject(new Error(`${command} exited with code ${code}`));
     });
+  });
+}
+
+function reservePort(preferredPort) {
+  return new Promise((resolve, reject) => {
+    const server = net.createServer();
+    server.unref();
+
+    const bind = (port) => {
+      server.listen(port, '127.0.0.1');
+    };
+
+    server.once('error', () => {
+      bind(0);
+    });
+
+    server.once('listening', () => {
+      const address = server.address();
+      if (!address || typeof address === 'string') {
+        server.close(() => reject(new Error('Failed to reserve numeric port')));
+        return;
+      }
+
+      const { port } = address;
+      server.close((error) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve(port);
+      });
+    });
+
+    bind(preferredPort);
   });
 }
 
@@ -51,24 +86,42 @@ async function stopServer(proc) {
 }
 
 async function main() {
+  const webPort = await reservePort(DEFAULT_WEB_PORT);
+  const adminPort = await reservePort(DEFAULT_ADMIN_PORT);
+
   await run('pnpm', ['ui:tokens:check']);
+  await run('pnpm', ['ui:drift:check']);
   await run('pnpm', ['ui:anti-patterns']);
   await run('pnpm', ['ui:events']);
 
   await run('pnpm', ['--filter', '@nextgen/web', 'build']);
   await run('pnpm', ['--filter', '@nextgen/admin', 'build']);
 
-  const webServer = startServer('pnpm', ['--filter', '@nextgen/web', 'start'], { PORT: String(WEB_PORT) });
-  const adminServer = startServer('pnpm', ['--filter', '@nextgen/admin', 'start'], { PORT: String(ADMIN_PORT) });
+  const webServer = startServer(
+    'pnpm',
+    ['--filter', '@nextgen/web', 'exec', 'next', 'start', '--port', String(webPort)],
+    { PORT: String(webPort) }
+  );
+  const adminServer = startServer(
+    'pnpm',
+    ['--filter', '@nextgen/admin', 'exec', 'next', 'start', '--port', String(adminPort)],
+    { PORT: String(adminPort) }
+  );
 
   try {
-    await waitFor(`http://localhost:${WEB_PORT}/livez`);
-    await waitFor(`http://localhost:${ADMIN_PORT}/livez`);
+    await waitFor(`http://localhost:${webPort}/livez`);
+    await waitFor(`http://localhost:${adminPort}/livez`);
 
-    const testEnv = { ...baseEnv, UI_SERVER_ALREADY_RUNNING: 'true' };
+    const testEnv = {
+      ...baseEnv,
+      UI_SERVER_ALREADY_RUNNING: 'true',
+      UI_WEB_PORT: String(webPort),
+      UI_ADMIN_PORT: String(adminPort),
+    };
     await run('pnpm', ['ui:playwright'], testEnv);
     await run('pnpm', ['ui:pa11y'], testEnv);
     await run('pnpm', ['ui:lighthouse'], testEnv);
+    await run('pnpm', ['ui:phase1:report'], testEnv);
   } finally {
     await stopServer(adminServer);
     await stopServer(webServer);

@@ -3,8 +3,10 @@ import path from 'node:path';
 import {
   borderRadius,
   colors,
+  semanticColorTokens,
   shadows,
   spacing,
+  spacingSemantic,
   zIndex,
 } from '../../libs/design-system/src/tokens';
 
@@ -57,7 +59,14 @@ function buildCss(): string {
   const lines: string[] = [];
   lines.push(':root {');
   lines.push(...flattenColors());
+  lines.push(
+    ...Object.entries(semanticColorTokens).flatMap(([token, value]) => [
+      `  --semantic-color-${token}: ${value};`,
+      `  --semantic-color-${token}-rgb: ${hexToRgb(value)};`,
+    ])
+  );
   lines.push(...flattenScale('space', spacing as Record<string, string | number>));
+  lines.push(...flattenScale('space-sem', spacingSemantic as Record<string, string | number>));
   lines.push(...flattenScale('radius', borderRadius as Record<string, string | number>));
   lines.push(...flattenScale('shadow', shadows as Record<string, string | number>));
   lines.push(...flattenScale('z', zIndex as Record<string, string | number>));
@@ -82,10 +91,16 @@ function buildTailwindTokens(): JsonMap {
     }
     colorTokens[group] = groupMap;
   }
+  colorTokens.semantic = Object.fromEntries(
+    Object.keys(semanticColorTokens).map((key) => [key, tailwindColor(`--semantic-color-${key}`)])
+  );
 
   return {
     colors: colorTokens,
     spacing: Object.fromEntries(Object.keys(spacing).map((key) => [key, `var(--space-${key})`])),
+    semanticSpacing: Object.fromEntries(
+      Object.keys(spacingSemantic).map((key) => [key, `var(--space-sem-${key})`])
+    ),
     borderRadius: Object.fromEntries(
       Object.keys(borderRadius).map((key) => [key, `var(--radius-${key})`])
     ),

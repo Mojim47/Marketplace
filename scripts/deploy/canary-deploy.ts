@@ -78,7 +78,7 @@ class CanaryDeployment {
       throw new Error('Integration tests failed');
     }
     try {
-      execSync('pnpm db:migrate:deploy --dry-run', { stdio: 'inherit' });
+      execSync('pnpm prisma migrate status', { stdio: 'inherit' });
     } catch (_error) {
       throw new Error('Database migration check failed');
     }

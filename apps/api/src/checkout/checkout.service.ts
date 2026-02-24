@@ -10,14 +10,30 @@
  * - Multi-step checkout flow
  */
 
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+  Optional,
+} from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
 import { v4 as uuidv4 } from 'uuid';
-import type { CartService } from '../cart/cart.service';
-import type { PrismaService } from '../database/prisma.service';
+import { LoggingService } from '../_observability/logging.service';
+import { CartService } from '../cart/cart.service';
+import { PrismaService } from '../database/prisma.service';
+import { MetricsService } from '../monitoring/metrics.service';
+import { OutboxService } from '../outbox/outbox.service';
+import {
+  assertCheckoutActionAllowed,
+  flowStateFromStep,
+  type CheckoutAction,
+} from './checkout-state-machine';
 import type {
   CheckoutConfig,
   CheckoutSession,
+  CheckoutStep,
   PaymentMethod,
   ShippingAddress,
 } from './checkout.types';
@@ -41,14 +57,17 @@ const DEFAULT_CONFIG: CheckoutConfig = {
 @Injectable()
 export class CheckoutService {
   private config: CheckoutConfig;
+  private readonly context = CheckoutService.name;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly cartService: CartService,
     @Inject('STATE_SERVICE') private readonly stateService: IStateService,
-    config?: Partial<CheckoutConfig>
+    private readonly loggingService: LoggingService,
+    @Optional() private readonly outboxService?: OutboxService,
+    @Optional() private readonly metricsService?: MetricsService
   ) {
-    this.config = { ...DEFAULT_CONFIG, ...config };
+    this.config = DEFAULT_CONFIG;
   }
 
   /**
@@ -70,6 +89,101 @@ export class CheckoutService {
    */
   private getCheckoutLockKey(sessionId: string): string {
     return `checkout:lock:${sessionId}`;
+  }
+
+  private mapStepToFlowState(step: CheckoutStep): string {
+    return flowStateFromStep(step);
+  }
+
+  private logTransition(
+    session: Pick<CheckoutSession, 'id' | 'userId' | 'step'>,
+    nextStep: CheckoutStep,
+    reason: string,
+    details?: Record<string, unknown>
+  ): void {
+    this.loggingService.log('checkout_transition', this.context, {
+      type: 'checkout_transition',
+      sessionId: session.id,
+      userId: session.userId,
+      prev: this.mapStepToFlowState(session.step),
+      next: this.mapStepToFlowState(nextStep),
+      prevState: this.mapStepToFlowState(session.step),
+      nextState: this.mapStepToFlowState(nextStep),
+      reason,
+      guardReason: null,
+      details: details || {},
+    });
+  }
+
+  private logGuardBlocked(
+    session: Pick<CheckoutSession, 'id' | 'userId' | 'step'>,
+    targetStep: CheckoutStep,
+    guard: string,
+    guardReason: string,
+    details?: Record<string, unknown>
+  ): void {
+    this.loggingService.warn('checkout_guard_blocked', this.context, {
+      type: 'checkout_guard_blocked',
+      sessionId: session.id,
+      userId: session.userId,
+      guard,
+      guardReason,
+      prev: this.mapStepToFlowState(session.step),
+      next: this.mapStepToFlowState(targetStep),
+      prevState: this.mapStepToFlowState(session.step),
+      nextState: this.mapStepToFlowState(targetStep),
+      reason: guardReason,
+      details: details || {},
+    });
+    this.metricsService?.checkoutGuardBlockedTotal.inc({
+      guard,
+      guard_reason: guardReason,
+      target_step: targetStep,
+    });
+  }
+
+  private assertStepTransition(
+    session: CheckoutSession,
+    action: CheckoutAction,
+    guard: string
+  ): void {
+    const transition = assertCheckoutActionAllowed(action, session.step);
+    if (transition.allowed) {
+      return;
+    }
+
+    const guardReason = 'guardReason' in transition ? transition.guardReason : 'step_transition_blocked';
+
+    this.logGuardBlocked(session, transition.targetStep, guard, guardReason, {
+      currentStep: session.step,
+      action,
+    });
+
+    throw new BadRequestException('checkout_step_transition_forbidden');
+  }
+
+  private async persistSession(
+    session: CheckoutSession,
+    previousStep: CheckoutStep,
+    reason: string,
+    details?: Record<string, unknown>
+  ): Promise<void> {
+    const sessionKey = this.getSessionKey(session.id);
+    const persisted = await this.stateService.setState(sessionKey, session, {
+      ttlSeconds: this.config.sessionTtlSeconds,
+    });
+
+    if (!persisted) {
+      this.loggingService.error(
+        'checkout_state_persist_failed',
+        undefined,
+        this.context,
+        { sessionId: session.id, userId: session.userId, reason }
+      );
+      throw new InternalServerErrorException('checkout_state_persist_failed');
+    }
+
+    this.logTransition({ ...session, step: previousStep }, session.step, reason, details);
   }
 
   /**
@@ -116,15 +230,39 @@ export class CheckoutService {
 
     // Save session
     const sessionKey = this.getSessionKey(sessionId);
-    await this.stateService.setState(sessionKey, session, {
+    const sessionSaved = await this.stateService.setState(sessionKey, session, {
       ttlSeconds: this.config.sessionTtlSeconds,
     });
+    if (!sessionSaved) {
+      this.loggingService.error(
+        'checkout_init_session_persist_failed',
+        undefined,
+        this.context,
+        { sessionId, userId }
+      );
+      throw new InternalServerErrorException('checkout_init_session_persist_failed');
+    }
 
     // Track user's active checkout
     const userKey = this.getUserCheckoutKey(userId);
-    await this.stateService.setState(userKey, sessionId, {
+    const userKeySaved = await this.stateService.setState(userKey, sessionId, {
       ttlSeconds: this.config.sessionTtlSeconds,
     });
+    if (!userKeySaved) {
+      this.loggingService.error(
+        'checkout_init_user_key_persist_failed',
+        undefined,
+        this.context,
+        { sessionId, userId }
+      );
+      throw new InternalServerErrorException('checkout_init_user_key_persist_failed');
+    }
+
+    this.logTransition(
+      { id: session.id, userId: session.userId, step: 'CART' },
+      session.step,
+      'checkout_init_success'
+    );
 
     return session;
   }
@@ -190,15 +328,14 @@ export class CheckoutService {
 
     try {
       const session = await this.getSession(sessionId, userId);
+      this.assertStepTransition(session, 'set_shipping', 'checkout_step_guard');
 
+      const previousStep = session.step;
       session.shippingAddress = address;
       session.step = 'PAYMENT';
       session.updatedAt = new Date();
 
-      const sessionKey = this.getSessionKey(sessionId);
-      await this.stateService.setState(sessionKey, session, {
-        ttlSeconds: this.config.sessionTtlSeconds,
-      });
+      await this.persistSession(session, previousStep, 'checkout_shipping_set');
 
       return session;
     } finally {
@@ -223,14 +360,13 @@ export class CheckoutService {
 
     try {
       const session = await this.getSession(sessionId, userId);
+      this.assertStepTransition(session, 'set_billing', 'checkout_step_guard');
 
+      const previousStep = session.step;
       session.billingAddress = address;
       session.updatedAt = new Date();
 
-      const sessionKey = this.getSessionKey(sessionId);
-      await this.stateService.setState(sessionKey, session, {
-        ttlSeconds: this.config.sessionTtlSeconds,
-      });
+      await this.persistSession(session, previousStep, 'checkout_billing_set');
 
       return session;
     } finally {
@@ -255,19 +391,35 @@ export class CheckoutService {
 
     try {
       const session = await this.getSession(sessionId, userId);
+      this.assertStepTransition(session, 'set_payment', 'checkout_step_guard');
 
       if (!session.shippingAddress) {
+        this.logGuardBlocked(
+          session,
+          'REVIEW',
+          'checkout_guard',
+          'payment_set_requires_shipping_address'
+        );
         throw new BadRequestException('����� ���� ����� �� ���� ����');
       }
 
+      if (method !== 'ONLINE') {
+        this.logGuardBlocked(
+          session,
+          'REVIEW',
+          'checkout_guard',
+          'unsupported_payment_method',
+          { method }
+        );
+        throw new BadRequestException('only_zarinpal_online_payment_supported');
+      }
+
+      const previousStep = session.step;
       session.paymentMethod = method;
       session.step = 'REVIEW';
       session.updatedAt = new Date();
 
-      const sessionKey = this.getSessionKey(sessionId);
-      await this.stateService.setState(sessionKey, session, {
-        ttlSeconds: this.config.sessionTtlSeconds,
-      });
+      await this.persistSession(session, previousStep, 'checkout_payment_set', { method });
 
       return session;
     } finally {
@@ -291,13 +443,26 @@ export class CheckoutService {
 
     try {
       const session = await this.getSession(sessionId, userId);
+      this.assertStepTransition(session, 'complete', 'checkout_step_guard');
 
       // Validate session is ready
       if (!session.shippingAddress) {
+        this.logGuardBlocked(
+          session,
+          'COMPLETE',
+          'checkout_guard',
+          'complete_requires_shipping_address'
+        );
         throw new BadRequestException('���� ����� ���� ���� ���');
       }
 
       if (!session.paymentMethod) {
+        this.logGuardBlocked(
+          session,
+          'COMPLETE',
+          'checkout_guard',
+          'complete_requires_payment_method'
+        );
         throw new BadRequestException('��� ������ ������ ���� ���');
       }
 
@@ -350,16 +515,74 @@ export class CheckoutService {
           });
         }
 
+        await this.outboxService?.enqueueInTransaction(tx, {
+          aggregateType: 'order',
+          aggregateId: order.id,
+          eventType: 'order.created',
+          dedupKey: `checkout-order-created:${session.id}:${order.id}`,
+          payload: {
+            orderId: order.id,
+            orderNumber: order.orderNumber,
+            userId,
+            sessionId: session.id,
+            itemCount: session.cartSnapshot.items.length,
+            totalAmount: session.cartSnapshot.total,
+            source: 'checkout.complete',
+          },
+        });
+
         return order;
+      });
+
+      if (!order.id || !order.orderNumber) {
+        this.loggingService.error(
+          'checkout_order_identity_missing',
+          undefined,
+          this.context,
+          { sessionId, userId }
+        );
+        throw new InternalServerErrorException('checkout_order_identity_missing');
+      }
+
+      const previousStep = session.step;
+      session.step = 'COMPLETE';
+      session.updatedAt = new Date();
+      await this.persistSession(session, previousStep, 'checkout_order_created', {
+        orderId: order.id,
+        orderNumber: order.orderNumber,
       });
 
       // Clear cart and checkout session
       await this.cartService.clearCart(userId);
+      this.loggingService.log('checkout_side_effect', this.context, {
+        type: 'checkout_side_effect',
+        action: 'cart_cleared',
+        sessionId,
+        userId,
+      });
 
       const sessionKey = this.getSessionKey(sessionId);
       const userKey = this.getUserCheckoutKey(userId);
-      await this.stateService.deleteState(sessionKey);
-      await this.stateService.deleteState(userKey);
+      const sessionDeleted = await this.stateService.deleteState(sessionKey);
+      const userKeyDeleted = await this.stateService.deleteState(userKey);
+
+      if (!sessionDeleted || !userKeyDeleted) {
+        this.metricsService?.checkoutStateCleanupUntrackedTotal.inc({ action: 'complete_checkout' });
+        this.loggingService.error(
+          'checkout_state_cleanup_untracked',
+          undefined,
+          this.context,
+          { sessionId, userId, sessionDeleted, userKeyDeleted }
+        );
+        throw new InternalServerErrorException('checkout_state_cleanup_untracked');
+      }
+
+      this.loggingService.log('checkout_side_effect', this.context, {
+        type: 'checkout_side_effect',
+        action: 'checkout_state_deleted',
+        sessionId,
+        userId,
+      });
 
       return { orderId: order.id, orderNumber: order.orderNumber };
     } finally {
@@ -376,7 +599,25 @@ export class CheckoutService {
     const sessionKey = this.getSessionKey(sessionId);
     const userKey = this.getUserCheckoutKey(userId);
 
-    await this.stateService.deleteState(sessionKey);
-    await this.stateService.deleteState(userKey);
+    const sessionDeleted = await this.stateService.deleteState(sessionKey);
+    const userKeyDeleted = await this.stateService.deleteState(userKey);
+
+    if (!sessionDeleted || !userKeyDeleted) {
+      this.metricsService?.checkoutStateCleanupUntrackedTotal.inc({ action: 'cancel_checkout' });
+      this.loggingService.error(
+        'checkout_cancel_cleanup_untracked',
+        undefined,
+        this.context,
+        { sessionId, userId, sessionDeleted, userKeyDeleted }
+      );
+      throw new InternalServerErrorException('checkout_cancel_cleanup_untracked');
+    }
+
+    this.loggingService.log('checkout_side_effect', this.context, {
+      type: 'checkout_side_effect',
+      action: 'checkout_cancelled',
+      sessionId,
+      userId,
+    });
   }
 }

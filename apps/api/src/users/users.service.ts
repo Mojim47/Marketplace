@@ -1,4 +1,4 @@
-﻿import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import * as argon2 from 'argon2';
 import { Exclude, plainToInstance } from 'class-transformer';
 import type { PrismaService } from '../database/prisma.service';
@@ -9,6 +9,7 @@ export class UserEntity {
   name!: string;
   tenantId!: string;
   roles!: string[];
+  phone?: string | null;
   createdAt!: Date;
   updatedAt!: Date;
 
@@ -61,9 +62,9 @@ export class UsersService {
     const user = await this.prisma.user.create({
       data: {
         email: dto.email,
-        passwordHash: hashedPassword,
-        firstName: dto.name.split(' ')[0],
-        lastName: dto.name.split(' ').slice(1).join(' ') || null,
+        password: hashedPassword,
+        first_name: dto.name.split(' ')[0],
+        last_name: dto.name.split(' ').slice(1).join(' ') || null,
       },
     });
 
@@ -87,10 +88,10 @@ export class UsersService {
       select: {
         id: true,
         email: true,
-        passwordHash: true,
-        firstName: true,
-        lastName: true,
-        role: true,
+        password: true,
+        first_name: true,
+        last_name: true,
+        phone: true,
       },
     });
 
@@ -101,10 +102,10 @@ export class UsersService {
     return {
       id: user.id,
       email: user.email,
-      password: user.passwordHash || '',
-      name: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+      password: user.password || '',
+      name: `${user.first_name || ''} ${user.last_name || ''}`.trim(),
       tenantId: 'default',
-      roles: [user.role],
+      roles: ['user'],
     };
   }
 

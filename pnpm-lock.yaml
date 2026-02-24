@@ -309,6 +309,9 @@ importers:
       '@nestjs/platform-express':
         specifier: ^10.0.0
         version: 10.4.20(@nestjs/common@10.4.20(class-transformer@0.5.1)(class-validator@0.14.3)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.20)
+      '@nestjs/terminus':
+        specifier: ^10.3.0
+        version: 10.3.0(@grpc/grpc-js@1.14.3)(@grpc/proto-loader@0.8.0)(@nestjs/common@10.4.20(class-transformer@0.5.1)(class-validator@0.14.3)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.20)(@prisma/client@5.19.1(prisma@5.19.1))(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/throttler':
         specifier: ^5.0.0
         version: 5.2.0(@nestjs/common@10.4.20(class-transformer@0.5.1)(class-validator@0.14.3)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.20)(reflect-metadata@0.2.2)
@@ -318,6 +321,12 @@ importers:
       '@nextgen/auth':
         specifier: workspace:*
         version: link:../../libs/auth
+      '@nextgen/cache':
+        specifier: workspace:*
+        version: link:../../libs/cache
+      '@nextgen/config':
+        specifier: workspace:*
+        version: link:../../libs/config
       '@nextgen/context':
         specifier: workspace:*
         version: link:../../libs/context
@@ -327,6 +336,9 @@ importers:
       '@nextgen/payment':
         specifier: workspace:*
         version: link:../../libs/payment
+      '@nextgen/prisma':
+        specifier: workspace:*
+        version: link:../../libs/prisma
       '@nextgen/queue':
         specifier: workspace:*
         version: link:../../libs/queue
@@ -337,8 +349,11 @@ importers:
         specifier: workspace:*
         version: link:../../libs/validation
       '@prisma/client':
-        specifier: ^5.0.0
-        version: 5.22.0(prisma@5.19.1)
+        specifier: 5.19.1
+        version: 5.19.1(prisma@5.19.1)
+      '@prisma/client-runtime-utils':
+        specifier: 7.4.0
+        version: 7.4.0
       argon2:
         specifier: ^0.31.0
         version: 0.31.2
@@ -357,6 +372,12 @@ importers:
       passport-jwt:
         specifier: ^4.0.0
         version: 4.0.1
+      prisma:
+        specifier: 5.19.1
+        version: 5.19.1
+      prom-client:
+        specifier: ^15.1.0
+        version: 15.1.3
     devDependencies:
       '@nestjs/cli':
         specifier: ^10.0.0
@@ -373,6 +394,9 @@ importers:
       '@types/passport-jwt':
         specifier: ^4.0.0
         version: 4.0.1
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
@@ -2319,6 +2343,9 @@ packages:
   '@popperjs/core@2.11.8':
     resolution: {integrity: sha512-P1st0aksCrn9sGZhp8GMYwBnQsbvAWsZAX44oXNNvLHGqAOcoVxmjZiohstwQ7SqKnbR47akdNi+uleWD8+g6A==}
 
+  '@prisma/client-runtime-utils@7.4.0':
+    resolution: {integrity: sha512-jTmWAOBGBSCT8n7SMbpjCpHjELgcDW9GNP/CeK6CeqjUFlEL6dn8Cl81t/NBDjJdXDm85XDJmc+PEQqqQee3xw==}
+
   '@prisma/client@5.19.1':
     resolution: {integrity: sha512-x30GFguInsgt+4z5I4WbkZP2CGpotJMUXy+Gl/aaUjHn2o1DnLYNTA+q9XdYmAQZM8fIIkvUiA2NpgosM3fneg==}
     engines: {node: '>=16.13'}
@@ -4151,6 +4178,11 @@ packages:
 
   cron@3.2.1:
     resolution: {integrity: sha512-w2n5l49GMmmkBFEsH9FIDhjZ1n1QgTMOCMGuQtOXs5veNiosZmso6bQGuqOJSYAXXrG84WQFVneNk+Yt0Ua9iw==}
+
+  cross-env@7.0.3:
+    resolution: {integrity: sha512-+/HKd6EgcQCJGh2PSjZuUitQBQynKor4wrFbRg4DtAgS1aWO+gU52xpH7M9ScGgXSYmAVS9bIJ8EzuaGw0oNAw==}
+    engines: {node: '>=10.14', npm: '>=6', yarn: '>=1'}
+    hasBin: true
 
   cross-fetch@3.2.0:
     resolution: {integrity: sha512-Q+xVJLoGOeIMXZmbUK4HYk+69cQH6LudR0Vu/pRm2YlU/hDV9CiS0gKUMaWY5f2NeUH9C1nV3bsTlCo0FsTV1Q==}
@@ -9861,6 +9893,8 @@ snapshots:
 
   '@popperjs/core@2.11.8': {}
 
+  '@prisma/client-runtime-utils@7.4.0': {}
+
   '@prisma/client@5.19.1(prisma@5.19.1)':
     optionalDependencies:
       prisma: 5.19.1
@@ -12008,6 +12042,10 @@ snapshots:
     dependencies:
       '@types/luxon': 3.4.2
       luxon: 3.5.0
+
+  cross-env@7.0.3:
+    dependencies:
+      cross-spawn: 7.0.6
 
   cross-fetch@3.2.0:
     dependencies:

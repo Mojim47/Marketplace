@@ -36,6 +36,50 @@ groups:
           description: "نرخ خطای 5xx برابر {{ $value | humanizePercentage }} است"
           runbook_url: "https://docs.nextgen.ir/runbooks/high-error-rate"
 
+      - alert: High4xxRate
+        expr: rate(nextgen_http_requests_total{status_code=~"4.."}[5m]) / rate(nextgen_http_requests_total[5m]) > 0.2
+        for: 10m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "نرخ خطای 4xx به شکل غیرعادی بالا است"
+          description: "نرخ خطای 4xx برابر {{ $value | humanizePercentage }} است"
+          runbook_url: "https://docs.nextgen.ir/runbooks/high-4xx-rate"
+
+      - alert: ReadinessProbeFailures
+        expr: increase(nextgen_http_requests_total{route="/health/ready",status_code!~"2.."}[5m]) > 0
+        for: 2m
+        labels:
+          severity: critical
+          team: infrastructure
+        annotations:
+          summary: "Readiness probe failure detected"
+          description: "Health readiness endpoint has non-2xx responses in the last 5 minutes"
+          runbook_url: "https://docs.nextgen.ir/runbooks/readiness-failure"
+
+      - alert: CheckoutGuardBlockedSpike
+        expr: increase(checkout_guard_blocked_total[5m]) > 20
+        for: 2m
+        labels:
+          severity: warning
+          team: checkout
+        annotations:
+          summary: "checkout_guard_blocked spike detected"
+          description: "checkout_guard_blocked_total has spiked above threshold in 5 minutes"
+          runbook_url: "https://docs.nextgen.ir/runbooks/checkout-guard-blocked"
+
+      - alert: CheckoutStateCleanupUntracked
+        expr: increase(checkout_state_cleanup_untracked_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          team: checkout
+        annotations:
+          summary: "checkout_state_cleanup_untracked detected"
+          description: "State cleanup failures detected in checkout flow"
+          runbook_url: "https://docs.nextgen.ir/runbooks/checkout-state-cleanup"
+
       - alert: DatabaseSlowQueries
         expr: histogram_quantile(0.95, rate(nextgen_db_query_duration_seconds_bucket[5m])) > 1
         for: 5m
@@ -112,3 +156,47 @@ groups:
           summary: "نرخ شکست ورود بالا است"
           description: "نرخ شکست ورود برابر {{ $value | humanizePercentage }} است - احتمال حمله brute force"
           runbook_url: "https://docs.nextgen.ir/runbooks/login-failures"
+
+      - alert: AIInferenceLatencySLAExceeded
+        expr: histogram_quantile(0.95, rate(ai_inference_latency_seconds_bucket[5m])) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+          team: ai
+        annotations:
+          summary: "AI inference p95 latency breached 50ms SLA"
+          description: "p95 AI inference latency is above 50ms for 2 minutes"
+          runbook_url: "https://docs.nextgen.ir/runbooks/ai-latency-sla"
+
+      - alert: AIShadowDriftDetected
+        expr: increase(ai_shadow_eval_total{outcome="drift"}[5m]) > 3
+        for: 1m
+        labels:
+          severity: critical
+          team: ai
+        annotations:
+          summary: "AI shadow drift detected"
+          description: "Shadow drift detections crossed threshold in the last 5 minutes"
+          runbook_url: "https://docs.nextgen.ir/runbooks/ai-shadow-drift"
+
+      - alert: AIAutoRollbackTriggered
+        expr: increase(ai_auto_rollback_total[10m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          team: ai
+        annotations:
+          summary: "AI auto rollback triggered"
+          description: "Automatic AI rollback occurred due to runtime guardrails"
+          runbook_url: "https://docs.nextgen.ir/runbooks/ai-auto-rollback"
+
+      - alert: AROverlayLatencySLAExceeded
+        expr: histogram_quantile(0.95, rate(ar_overlay_latency_seconds_bucket[5m])) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+          team: ar
+        annotations:
+          summary: "AR overlay latency breached 50ms SLA"
+          description: "AR capture-process-overlay p95 latency exceeded 50ms"
+          runbook_url: "https://docs.nextgen.ir/runbooks/ar-latency-sla"

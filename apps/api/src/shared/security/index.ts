@@ -2,5 +2,5 @@
  * Shared Security Module - Barrel Export
  */
 
-export * from './security.module';
 export * from './guards';
+export * from './security.module';

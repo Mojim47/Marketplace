@@ -2,6 +2,7 @@ import { render } from '@testing-library/react';
 import { jsx as _jsx } from 'react/jsx-runtime';
 import { describe, expect, it, vi } from 'vitest';
 import { OfflineClient } from './offline-client';
+
 describe('OfflineClient', () => {
   it('renders nothing and does not throw when browser APIs absent', () => {
     const { container } = render(_jsx(OfflineClient, {}));

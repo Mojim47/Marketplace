@@ -14,8 +14,8 @@
   },
   "scripts": {
     "build": "tsc -p .",
-    "test": "vitest run --passWithNoTests",
-    "test:watch": "vitest",
+    "test": "node ../../node_modules/vitest/vitest.mjs run --config ../../vitest.package.config.ts --passWithNoTests",
+    "test:watch": "node ../../node_modules/vitest/vitest.mjs",
     "coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit"
   },
@@ -39,5 +39,14 @@
     "@prisma/client": "^5.7.0",
     "@nextgen/errors": "workspace:*"
   },
-  "keywords": ["auth", "authentication", "jwt", "totp", "2fa", "session", "rate-limiting", "nestjs"]
+  "keywords": [
+    "auth",
+    "authentication",
+    "jwt",
+    "totp",
+    "2fa",
+    "session",
+    "rate-limiting",
+    "nestjs"
+  ]
 }

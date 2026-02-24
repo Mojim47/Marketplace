@@ -1,0 +1,25 @@
+{
+  "version": "2026-02-23",
+  "name": "immutable-release-contract",
+  "requirements": {
+    "cleanWorktreeRequired": true,
+    "immutableArtifactRequired": true,
+    "commitOrTagRequired": true,
+    "sha256Required": true,
+    "manifestRequiredFields": [
+      "generatedAt",
+      "commit",
+      "tag",
+      "graphContractPath",
+      "graphDigest",
+      "moduleArtifacts",
+      "releaseDigest",
+      "rollback"
+    ]
+  },
+  "rollbackPolicy": {
+    "mustRecordPreviousRelease": true,
+    "mustRecordRollbackCommand": true,
+    "mustTestRollbackPath": true
+  }
+}

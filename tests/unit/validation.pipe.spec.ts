@@ -8,8 +8,8 @@ import {
   Max,
   Min,
   MinLength,
+  validate,
 } from 'class-validator';
-import { validate } from 'class-validator';
 
 // Test DTOs
 class LoginDto {

@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { Sidebar } from './Sidebar';
 import type { SidebarItem } from './Sidebar';
+import { Sidebar } from './Sidebar';
 
 describe('Sidebar Component', () => {
   const mockIcon = <svg data-testid="mock-icon" />;

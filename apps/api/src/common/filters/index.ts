@@ -6,8 +6,7 @@
  * Barrel export for all common exception filters.
  */
 
-// HTTP Exception Filter (legacy)
-export * from './http-exception.filter';
-
 // Global Exception Filter with Persian messages
 export * from './global-exception.filter';
+// HTTP Exception Filter (legacy)
+export * from './http-exception.filter';

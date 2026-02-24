@@ -1,9 +1,9 @@
 'use client';
 
+import { useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
 import { useTraceId } from '@/hooks/use-trace-id';
 import { emitUiEvent } from '@/lib/ui-telemetry';
-import { useEffect } from 'react';
 
 export default function CartError({ error, reset }: { error: Error; reset: () => void }) {
   const traceId = useTraceId();
@@ -15,11 +15,11 @@ export default function CartError({ error, reset }: { error: Error; reset: () =>
   return (
     <div className="min-h-screen px-6 py-16">
       <div className="glass-card mx-auto max-w-xl rounded-3xl p-8 text-center">
-        <h1 className="section-title text-2xl text-white">خطا در سبد خرید</h1>
-        <p className="mt-3 text-sm text-slate-300">
+        <h1 className="section-title text-2xl text-slate-900">خطا در سبد خرید</h1>
+        <p className="mt-3 text-sm text-slate-600">
           مشکلی در بارگذاری سبد خرید رخ داد. لطفاً دوباره تلاش کنید.
         </p>
-        <p className="mt-2 text-xs text-slate-400">{error.message}</p>
+        <p className="mt-2 text-xs text-slate-500">{error.message}</p>
         <div className="mt-6">
           <Button loading={false} onClick={() => reset()}>
             تلاش مجدد

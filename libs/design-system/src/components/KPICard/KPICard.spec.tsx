@@ -3,26 +3,30 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { KPICard } from './KPICard';
 
 describe('KPICard Component', () => {
-  let _intersectionCallback: IntersectionObserverCallback;
-
   beforeEach(() => {
-    // Mock IntersectionObserver to trigger visibility immediately
-    const mockIntersectionObserver = vi.fn((callback: IntersectionObserverCallback) => {
-      _intersectionCallback = callback;
-      return {
-        observe: vi.fn((element: Element) => {
-          // Trigger intersection immediately
-          callback(
-            [{ isIntersecting: true, target: element } as IntersectionObserverEntry],
-            {} as IntersectionObserver
-          );
-        }),
-        unobserve: vi.fn(),
-        disconnect: vi.fn(),
-      };
-    });
-    window.IntersectionObserver =
-      mockIntersectionObserver as unknown as typeof IntersectionObserver;
+    class MockIntersectionObserver implements IntersectionObserver {
+      readonly root: Element | Document | null = null;
+      readonly rootMargin = '0px';
+      readonly thresholds = [0];
+      private readonly callback: IntersectionObserverCallback;
+
+      constructor(callback: IntersectionObserverCallback) {
+        this.callback = callback;
+      }
+
+      observe = vi.fn((element: Element) => {
+        this.callback(
+          [{ isIntersecting: true, target: element } as IntersectionObserverEntry],
+          this
+        );
+      });
+
+      unobserve = vi.fn();
+      disconnect = vi.fn();
+      takeRecords = vi.fn(() => []);
+    }
+
+    window.IntersectionObserver = MockIntersectionObserver;
 
     // Mock requestAnimationFrame to execute immediately
     vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => {

@@ -61,11 +61,10 @@ describe('Auth E2E', () => {
     await container.stop();
   });
 
-  it('registers a user and prevents duplicate email', async () => {
+  it('registers a user and prevents duplicate mobile', async () => {
     const payload = {
-      email: 'user@nextgen.ir',
       password: 'StrongPassw0rd!1234567890',
-      mobile: '+989100000000',
+      mobile: '09100000000',
       firstName: 'Test',
       lastName: 'User',
     };
@@ -77,7 +76,7 @@ describe('Auth E2E', () => {
     expect(registerResponse.status).toBe(201);
 
     const createdUser = await prisma.user.findFirst({
-      where: { email: payload.email },
+      where: { mobile: payload.mobile },
     });
     expect(createdUser).not.toBeNull();
 
@@ -90,9 +89,8 @@ describe('Auth E2E', () => {
 
   it('logs in with valid credentials and rejects invalid password', async () => {
     const payload = {
-      email: 'login@nextgen.ir',
       password: 'StrongPassw0rd!1234567890',
-      mobile: '+989100000001',
+      mobile: '09100000001',
       firstName: 'Login',
       lastName: 'User',
     };
@@ -100,7 +98,7 @@ describe('Auth E2E', () => {
     await request(app.getHttpServer()).post('/auth/register').send(payload);
 
     const loginResponse = await request(app.getHttpServer()).post('/auth/login').send({
-      email: payload.email,
+      mobile: payload.mobile,
       password: payload.password,
     });
 
@@ -108,7 +106,7 @@ describe('Auth E2E', () => {
     expect(loginResponse.body).toHaveProperty('access_token');
 
     const invalidLoginResponse = await request(app.getHttpServer()).post('/auth/login').send({
-      email: payload.email,
+      mobile: payload.mobile,
       password: 'wrong-password',
     });
 

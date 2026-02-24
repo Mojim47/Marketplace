@@ -1,4 +1,4 @@
-﻿import { createHash } from 'node:crypto';
+import { createHash } from 'node:crypto';
 import {
   BadRequestException,
   ConflictException,
@@ -6,13 +6,15 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  Optional,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import type { DistributedLockService } from '@nextgen/cache';
 import type { Prisma } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
-import type { PrismaService } from '../database/prisma.service';
-import type { MetricsService } from '../monitoring/metrics.service';
+import { PrismaService } from '../database/prisma.service';
+import { MetricsService } from '../monitoring/metrics.service';
+import { OutboxService } from '../outbox/outbox.service';
+import type { LocalDistributedLockService } from './local-distributed-lock.service';
 
 interface IStateService {
   setState<T>(key: string, value: T, options?: { ttlSeconds?: number }): Promise<boolean>;
@@ -77,15 +79,26 @@ const hashOrderRequest = (data: CreateOrderInput): string => {
   return createHash('sha256').update(stableStringify(normalized)).digest('hex');
 };
 
+function isPrismaUniqueViolation(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    String((error as { code?: unknown }).code) === 'P2002'
+  );
+}
+
 @Injectable()
 export class OrdersService {
   private readonly logger = new Logger(OrdersService.name);
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly lockService: DistributedLockService,
+    @Inject('DISTRIBUTED_LOCK_SERVICE')
+    private readonly lockService: LocalDistributedLockService,
     private readonly metrics: MetricsService,
-    @Inject('STATE_SERVICE') private readonly stateService: IStateService
+    @Inject('STATE_SERVICE') private readonly stateService: IStateService,
+    @Optional() private readonly outboxService?: OutboxService
   ) {}
 
   async create(userId: string, data: CreateOrderInput, idempotencyKey?: string) {
@@ -178,10 +191,10 @@ export class OrdersService {
             const taxAmount = subtotal * 0.09;
             const totalAmount = subtotal + taxAmount + (data.shippingCost || 0);
 
-            const order = await tx.order.create({
-              data: {
+            const orderCreateData: Record<string, unknown> = {
                 userId,
                 vendorId: data.vendorId,
+                ...(normalizedIdempotencyKey ? { idempotency_key: normalizedIdempotencyKey } : {}),
                 orderNumber: `ORD-${Date.now()}`,
                 subtotal: new Decimal(subtotal),
                 taxAmount: new Decimal(taxAmount),
@@ -191,7 +204,7 @@ export class OrdersService {
                 paymentStatus: 'PENDING',
                 customerEmail: data.customerEmail,
                 customerPhone: data.customerPhone,
-                shippingAddress: data.shippingAddress,
+                shippingAddress: (data.shippingAddress as Prisma.InputJsonValue | undefined) ?? undefined,
                 items: {
                   create: data.items.map((item) => ({
                     productId: item.productId,
@@ -203,27 +216,50 @@ export class OrdersService {
                     total: new Decimal(item.price * item.quantity),
                   })),
                 },
-              },
-              select: {
-                id: true,
-                orderNumber: true,
-                status: true,
-                paymentStatus: true,
-                totalAmount: true,
-                createdAt: true,
-                items: {
-                  select: {
-                    id: true,
-                    productId: true,
-                    productName: true,
-                    productSku: true,
-                    quantity: true,
-                    price: true,
-                    total: true,
-                  },
+              };
+
+            const orderSelect = {
+              id: true,
+              orderNumber: true,
+              status: true,
+              paymentStatus: true,
+              totalAmount: true,
+              createdAt: true,
+              items: {
+                select: {
+                  id: true,
+                  productId: true,
+                  productName: true,
+                  productSku: true,
+                  quantity: true,
+                  price: true,
+                  total: true,
                 },
               },
-            });
+            } as const;
+
+            let order;
+            try {
+              order = await tx.order.create({
+                data: orderCreateData as any,
+                select: orderSelect,
+              });
+            } catch (error) {
+              if (normalizedIdempotencyKey && isPrismaUniqueViolation(error)) {
+                const existingOrder = await tx.order.findFirst({
+                  where: {
+                    userId,
+                    idempotency_key: normalizedIdempotencyKey,
+                  },
+                  select: orderSelect,
+                } as any);
+
+                if (existingOrder) {
+                  return existingOrder;
+                }
+              }
+              throw error;
+            }
 
             this.metrics.ordersTotal.inc({
               status: order.status,
@@ -233,6 +269,23 @@ export class OrdersService {
               { vendor_id: data.vendorId ?? 'unknown' },
               Number(totalAmount)
             );
+
+            await this.outboxService?.enqueueInTransaction(tx, {
+              aggregateType: 'order',
+              aggregateId: order.id,
+              eventType: 'order.created',
+              dedupKey: `orders-create:${userId}:${normalizedIdempotencyKey ?? order.id}`,
+              payload: {
+                orderId: order.id,
+                orderNumber: order.orderNumber,
+                userId,
+                vendorId: data.vendorId ?? null,
+                itemCount: data.items.length,
+                totalAmount: Number(totalAmount),
+                idempotencyKey: normalizedIdempotencyKey ?? null,
+                source: 'orders.create',
+              },
+            });
 
             if (idempotencyRecordKey && requestHash) {
               try {

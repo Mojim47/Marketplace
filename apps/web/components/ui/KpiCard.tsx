@@ -1,10 +1,10 @@
-﻿import type { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 export function KpiCard({
   label,
   value,
   trend,
-  trendClassName = 'text-emerald-300',
+  trendClassName = 'text-emerald-700',
   className = '',
   children,
 }: {

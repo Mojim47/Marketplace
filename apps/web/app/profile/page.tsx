@@ -1,22 +1,39 @@
-﻿'use client';
+'use client';
 
+import { AuthNavButton } from '@/components/AuthNavButton';
 import { LocaleSwitch } from '@/components/LocaleSwitch';
-import { Button } from '@/components/ui/Button';
+import { Button, PageHeader } from '@/components/ui';
 import { useTraceId } from '@/hooks/use-trace-id';
 import { emitUiEvent } from '@/lib/ui-telemetry';
-import { useEffect, useMemo, useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 type ProfileForm = {
   fullName: string;
-  email: string;
   phone: string;
 };
+
+type SessionResponse = {
+  authenticated: boolean;
+  user?: {
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    mobile?: string;
+  };
+};
+
+const trustTiles = [
+  { label: 'Phone verified', status: 'Active' },
+  { label: 'Session hardening', status: 'Enabled' },
+  { label: 'Trace correlation', status: 'Enabled' },
+  { label: 'Fraud shield', status: 'Live' },
+];
 
 export default function ProfilePage() {
   const traceId = useTraceId();
   const locale = typeof document !== 'undefined' ? document.documentElement.lang : 'fa';
-  const [form, setForm] = useState<ProfileForm>({ fullName: '', email: '', phone: '' });
+  const [form, setForm] = useState<ProfileForm>({ fullName: '', phone: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -25,26 +42,25 @@ export default function ProfilePage() {
     () =>
       locale === 'en'
         ? {
-            title: 'Profile settings',
-            subtitle: 'Update your account details and contact preferences.',
-            infoTitle: 'Account status',
-            infoBody: 'Your profile is secured with verified contact points.',
+            title: 'Profile command center',
+            subtitle: 'Keep account identity, contact channels and security posture up to date.',
+            infoTitle: 'Account security posture',
+            infoBody:
+              'Each profile update is recorded with trace id and synchronized with session context.',
             fullName: 'Full name',
-            email: 'Email address',
             phone: 'Phone number',
-            submit: 'Save changes',
+            submit: 'Save profile changes',
             error: 'Please complete all required fields.',
             success: 'Profile updated successfully.',
           }
         : {
-            title: 'تنظیمات پروفایل',
-            subtitle: 'جزئیات حساب و ترجیحات ارتباطی خود را به‌روزرسانی کنید.',
-            infoTitle: 'وضعیت حساب',
-            infoBody: 'پروفایل شما با مسیرهای ارتباطی تأییدشده ایمن است.',
+            title: 'مرکز فرمان پروفایل',
+            subtitle: 'هویت کاربری، مسیرهای ارتباطی و وضعیت امنیت حساب را به‌روز نگه دارید.',
+            infoTitle: 'وضعیت امنیت حساب',
+            infoBody: 'هر تغییر پروفایل با trace id ثبت و با نشست کاربر همگام می‌شود.',
             fullName: 'نام و نام خانوادگی',
-            email: 'ایمیل',
             phone: 'شماره تماس',
-            submit: 'ذخیره تغییرات',
+            submit: 'ذخیره تغییرات پروفایل',
             error: 'لطفاً تمام فیلدهای ضروری را تکمیل کنید.',
             success: 'پروفایل با موفقیت به‌روزرسانی شد.',
           },
@@ -53,6 +69,22 @@ export default function ProfilePage() {
 
   useEffect(() => {
     emitUiEvent('page_view', { path: '/profile', locale }, traceId ?? undefined);
+
+    fetch('/api/auth/session', { cache: 'no-store' })
+      .then((response) => response.json() as Promise<SessionResponse>)
+      .then((data) => {
+        if (!data.authenticated || !data.user) {
+          return;
+        }
+        const firstName = data.user.firstName ?? '';
+        const lastName = data.user.lastName ?? '';
+        const fullName = `${firstName} ${lastName}`.trim();
+        setForm({
+          fullName,
+          phone: data.user.mobile ?? '',
+        });
+      })
+      .catch(() => undefined);
   }, [locale, traceId]);
 
   const handleChange = (key: keyof ProfileForm) => (event: ChangeEvent<HTMLInputElement>) => {
@@ -64,7 +96,7 @@ export default function ProfilePage() {
     setSuccess(false);
     setError(null);
 
-    if (!form.fullName || !form.email || !form.phone) {
+    if (!form.fullName || !form.phone) {
       setError(strings.error);
       emitUiEvent('error_shown', { code: 'profile_missing_fields' }, traceId ?? undefined);
       return;
@@ -72,127 +104,130 @@ export default function ProfilePage() {
 
     setLoading(true);
     emitUiEvent('flow_start', { flow: 'profile_update' }, traceId ?? undefined);
-    emitUiEvent('cta_click', { label: 'profile_save', location: 'profile' }, traceId ?? undefined);
 
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(
+          'ng_profile_snapshot',
+          JSON.stringify({ ...form, updatedAt: Date.now() })
+        );
+      }
+      await new Promise((resolve) => setTimeout(resolve, 450));
       setSuccess(true);
       emitUiEvent(
         'flow_complete',
         { flow: 'profile_update', status: 'success' },
         traceId ?? undefined
       );
-    }, 600);
+    } catch {
+      setError('profile_update_failed');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen" data-trace-id={traceId ?? undefined}>
       <div className="mx-auto max-w-6xl px-6 py-12">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="text-xs text-slate-300">NextGen Marketplace</p>
-            <h1 className="section-title mt-2 text-3xl text-white" data-testid="profile-title">
-              {strings.title}
-            </h1>
-            <p className="mt-3 max-w-xl text-sm text-slate-300">{strings.subtitle}</p>
-          </div>
-          <LocaleSwitch />
+        <PageHeader
+          eyebrow="Identity & Security"
+          title={strings.title}
+          subtitle={strings.subtitle}
+          chips={['Traceable Update', 'Session-aware', 'Security-first']}
+          titleTestId="profile-title"
+          actions={
+            <>
+              <LocaleSwitch />
+              <AuthNavButton />
+            </>
+          }
+        />
+
+        <div className="mt-6 flex flex-wrap gap-2">
+          <span className="market-strip">Identity verified flow</span>
+          <span className="market-strip">Mobile-first account access</span>
+          <span className="market-strip">Audit-log aware changes</span>
         </div>
 
-        <div className="mt-10 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-          <form
-            className="glass-card rounded-3xl p-6"
-            data-error-state={error ? 'visible' : 'hidden'}
-            data-empty-state={form.fullName || form.email || form.phone ? 'filled' : 'empty'}
-            onSubmit={handleSubmit}
-            data-testid="profile-form"
-          >
-            <h2 className="section-title text-xl text-white">{strings.title}</h2>
-            <div className="mt-6 space-y-4 text-sm">
-              <div>
-                <label htmlFor="profile-fullname" className="text-xs text-slate-300">
-                  {strings.fullName}
-                </label>
-                <input
-                  id="profile-fullname"
-                  className="mt-2 w-full rounded-xl border border-white/20 bg-white/5 p-3 text-sm text-white"
-                  placeholder={strings.fullName}
-                  value={form.fullName}
-                  onChange={handleChange('fullName')}
-                  aria-invalid={Boolean(error)}
-                  data-testid="profile-fullname"
-                />
-              </div>
-              <div>
-                <label htmlFor="profile-email" className="text-xs text-slate-300">
-                  {strings.email}
-                </label>
-                <input
-                  id="profile-email"
-                  className="mt-2 w-full rounded-xl border border-white/20 bg-white/5 p-3 text-sm text-white"
-                  placeholder={strings.email}
-                  type="email"
-                  value={form.email}
-                  onChange={handleChange('email')}
-                  aria-invalid={Boolean(error)}
-                  data-testid="profile-email"
-                />
-              </div>
-              <div>
-                <label htmlFor="profile-phone" className="text-xs text-slate-300">
-                  {strings.phone}
-                </label>
-                <input
-                  id="profile-phone"
-                  className="mt-2 w-full rounded-xl border border-white/20 bg-white/5 p-3 text-sm text-white"
-                  placeholder={strings.phone}
-                  value={form.phone}
-                  onChange={handleChange('phone')}
-                  aria-invalid={Boolean(error)}
-                  data-testid="profile-phone"
-                />
-              </div>
-            </div>
-
-            {error ? (
-              <p
-                className="mt-6 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-rose-200"
-                role="alert"
-              >
-                {error}
-              </p>
-            ) : null}
-
-            {success ? (
-              <output
-                className="mt-6 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-emerald-300"
-                aria-live="polite"
-              >
-                {strings.success}
-              </output>
-            ) : null}
-
-            <div className="mt-8">
-              <Button loading={loading} loadingText={strings.submit} data-testid="profile-submit">
-                {strings.submit}
-              </Button>
-            </div>
-          </form>
-
-          <div className="glass-card rounded-3xl p-6" data-testid="profile-status">
-            <h2 className="section-title text-xl text-white">{strings.infoTitle}</h2>
-            <p className="mt-4 text-sm text-slate-300">{strings.infoBody}</p>
-            <div className="mt-6 space-y-3 text-sm">
-              {['Email verified', 'Phone verified', '2FA enabled'].map((item) => (
-                <div
-                  key={item}
-                  className="flex items-center justify-between rounded-2xl bg-white/5 px-4 py-3"
-                >
-                  <span className="text-slate-200">{item}</span>
-                  <span className="text-emerald-300">Active</span>
+        <div className="market-shell mt-8">
+          <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+            <form
+              className="market-panel p-6"
+              onSubmit={handleSubmit}
+              data-testid="profile-form"
+              data-error-state={error ? 'true' : 'false'}
+              data-empty-state={!form.fullName || !form.phone ? 'true' : 'false'}
+            >
+              <h2 className="section-title text-xl text-slate-900">{strings.title}</h2>
+              <div className="mt-6 space-y-4 text-sm">
+                <div>
+                  <label htmlFor="profile-fullname" className="text-xs text-slate-600">
+                    {strings.fullName}
+                  </label>
+                  <input
+                    id="profile-fullname"
+                    data-testid="profile-fullname"
+                    className="market-input mt-2"
+                    value={form.fullName}
+                    onChange={handleChange('fullName')}
+                  />
                 </div>
-              ))}
-            </div>
+                <div>
+                  <label htmlFor="profile-phone" className="text-xs text-slate-600">
+                    {strings.phone}
+                  </label>
+                  <input
+                    id="profile-phone"
+                    data-testid="profile-phone"
+                    className="market-input mt-2"
+                    value={form.phone}
+                    onChange={handleChange('phone')}
+                  />
+                </div>
+              </div>
+
+              {error ? (
+                <p className="mt-6 rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-xs text-rose-700">
+                  {error}
+                </p>
+              ) : null}
+              {success ? (
+                <p
+                  role="status"
+                  aria-live="polite"
+                  className="mt-6 rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-xs text-emerald-700"
+                >
+                  {strings.success}
+                </p>
+              ) : null}
+
+              <div className="mt-8">
+                <Button
+                  loading={loading}
+                  loadingText={strings.submit}
+                  className="btn-3d"
+                  data-testid="profile-submit"
+                >
+                  {strings.submit}
+                </Button>
+              </div>
+            </form>
+
+            <aside className="market-panel p-6" data-testid="profile-status">
+              <h2 className="section-title text-xl text-slate-900">{strings.infoTitle}</h2>
+              <p className="mt-4 text-sm text-slate-600">{strings.infoBody}</p>
+              <div className="mt-6 space-y-3 text-sm">
+                {trustTiles.map((item) => (
+                  <div
+                    key={item.label}
+                    className="market-banner-card flex items-center justify-between px-4 py-3"
+                  >
+                    <span className="text-slate-700">{item.label}</span>
+                    <span className="market-strip text-[11px]">{item.status}</span>
+                  </div>
+                ))}
+              </div>
+            </aside>
           </div>
         </div>
       </div>

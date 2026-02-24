@@ -130,6 +130,20 @@ repos:
   # ───────────────────────────────────────────────────────────────────────────
   - repo: local
     hooks:
+      - id: secrets-contract-schema-check
+        name: Secrets Contract Schema/Sync Check
+        entry: node scripts/release/verify-secrets-contract-sync.mjs
+        language: system
+        pass_filenames: false
+
+      - id: text-governance-check
+        name: Text Governance (UTF-8/LF/ASCII)
+        entry: node scripts/policy/validate-text-governance.mjs
+        language: system
+        args: ['--enforce-ascii-scripts']
+        pass_filenames: true
+        files: \.(md|txt|yml|yaml|json|sh|mjs|cjs|js|ts|tsx|css|scss|html|toml|ini|env)$
+
       - id: nextgen-secret-check
         name: 🔐 NextGen Secret Patterns
         entry: bash -c

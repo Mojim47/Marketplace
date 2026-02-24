@@ -1,0 +1,596 @@
+{
+  "timestamp": "2026-02-23T04:53:13.414Z",
+  "mockFiles": [],
+  "mockPatterns": [
+    {
+      "file": "apps\\admin\\app\\login\\page.tsx",
+      "line": 147,
+      "content": "placeholder={strings.email}",
+      "pattern": "/TODO.*mock|FIXME.*mock|\\bPLACEHOLDER\\b/i",
+      "severity": "WARNING"
+    },
+    {
+      "file": "apps\\admin\\app\\login\\page.tsx",
+      "line": 163,
+      "content": "placeholder={strings.password}",
+      "pattern": "/TODO.*mock|FIXME.*mock|\\bPLACEHOLDER\\b/i",
+      "severity": "WARNING"
+    },
+    {
+      "file": "apps\\admin\\src\\app\\login\\page.tsx",
+      "line": 147,
+      "content": "placeholder={strings.email}",
+      "pattern": "/TODO.*mock|FIXME.*mock|\\bPLACEHOLDER\\b/i",
+      "severity": "WARNING"
+    },
+    {
+      "file": "apps\\admin\\src\\app\\login\\page.tsx",
+      "line": 163,
+      "content": "placeholder={strings.password}",
+      "pattern": "/TODO.*mock|FIXME.*mock|\\bPLACEHOLDER\\b/i",
+      "severity": "WARNING"
+    },
+    {
+      "file": "apps\\api\\src\\common\\guards\\index.ts",
+      "line": 402,
+      "content": "const requestId = `${now}:${Math.random().toString(36).substring(7)}`;",
+      "pattern": "/Math\\.random\\(\\)/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "apps\\api\\src\\redis\\redis.module.ts",
+      "line": 63,
+      "content": "const token = `${Date.now()}-${Math.random().toString(36).slice(2)}`;",
+      "pattern": "/Math\\.random\\(\\)/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "apps\\api\\src\\redis\\redis.module.ts",
+      "line": 111,
+      "content": "const sessionId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;",
+      "pattern": "/Math\\.random\\(\\)/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "apps\\api\\src\\_hierarchy\\hierarchy.service.ts",
+      "line": 114,
+      "content": "const tempPassword = Math.random().toString(36).slice(-8);",
+      "pattern": "/Math\\.random\\(\\)/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "apps\\api\\src\\_hierarchy\\hierarchy.service.ts",
+      "line": 270,
+      "content": "const tempPassword = Math.random().toString(36).slice(-8);",
+      "pattern": "/Math\\.random\\(\\)/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "apps\\web\\app\\auth\\forgot-password\\page.tsx",
+      "line": 53,
+      "content": "placeholder=\"09123456789\"",
+      "pattern": "/TODO.*mock|FIXME.*mock|\\bPLACEHOLDER\\b/i",
+      "severity": "WARNING"
+    },
+    {
+      "file": "apps\\web\\app\\auth\\login\\page.tsx",
+      "line": 55,
+      "content": "placeholder=\"example@mail.com\"",
+      "pattern": "/TODO.*mock|FIXME.*mock|\\bPLACEHOLDER\\b/i",
+      "severity": "WARNING"
+    },
+    {
+      "file": "apps\\web\\app\\auth\\login\\page.tsx",
+      "line": 69,
+      "content": "placeholder=\"********\"",
+      "pattern": "/TODO.*mock|FIXME.*mock|\\bPLACEHOLDER\\b/i",
+      "severity": "WARNING"
+    },
+    {
+      "file": "apps\\web\\app\\auth\\register\\page.tsx",
+      "line": 63,
+      "content": "placeholder=\"نام\"",
+      "pattern": "/TODO.*mock|FIXME.*mock|\\bPLACEHOLDER\\b/i",
+      "severity": "WARNING"
+    },
+    {
+      "file": "apps\\web\\app\\auth\\register\\page.tsx",
+      "line": 75,
+      "content": "placeholder=\"نام خانوادگی\"",
+      "pattern": "/TODO.*mock|FIXME.*mock|\\bPLACEHOLDER\\b/i",
+      "severity": "WARNING"
+    },
+    {
+      "file": "apps\\web\\app\\auth\\register\\page.tsx",
+      "line": 90,
+      "content": "placeholder=\"example@mail.com\"",
+      "pattern": "/TODO.*mock|FIXME.*mock|\\bPLACEHOLDER\\b/i",
+      "severity": "WARNING"
+    },
+    {
+      "file": "apps\\web\\app\\auth\\register\\page.tsx",
+      "line": 104,
+      "content": "placeholder=\"09123456789\"",
+      "pattern": "/TODO.*mock|FIXME.*mock|\\bPLACEHOLDER\\b/i",
+      "severity": "WARNING"
+    },
+    {
+      "file": "apps\\web\\app\\auth\\register\\page.tsx",
+      "line": 119,
+      "content": "placeholder=\"حداقل 8 کاراکتر\"",
+      "pattern": "/TODO.*mock|FIXME.*mock|\\bPLACEHOLDER\\b/i",
+      "severity": "WARNING"
+    },
+    {
+      "file": "apps\\web\\app\\auth\\reset-password\\page.tsx",
+      "line": 55,
+      "content": "placeholder=\"09123456789\"",
+      "pattern": "/TODO.*mock|FIXME.*mock|\\bPLACEHOLDER\\b/i",
+      "severity": "WARNING"
+    },
+    {
+      "file": "apps\\web\\app\\auth\\reset-password\\page.tsx",
+      "line": 68,
+      "content": "placeholder=\"1234\"",
+      "pattern": "/TODO.*mock|FIXME.*mock|\\bPLACEHOLDER\\b/i",
+      "severity": "WARNING"
+    },
+    {
+      "file": "apps\\web\\app\\auth\\reset-password\\page.tsx",
+      "line": 82,
+      "content": "placeholder=\"حداقل 8 کاراکتر\"",
+      "pattern": "/TODO.*mock|FIXME.*mock|\\bPLACEHOLDER\\b/i",
+      "severity": "WARNING"
+    },
+    {
+      "file": "apps\\web\\app\\profile\\page.tsx",
+      "line": 119,
+      "content": "placeholder={strings.fullName}",
+      "pattern": "/TODO.*mock|FIXME.*mock|\\bPLACEHOLDER\\b/i",
+      "severity": "WARNING"
+    },
+    {
+      "file": "apps\\web\\app\\profile\\page.tsx",
+      "line": 133,
+      "content": "placeholder={strings.email}",
+      "pattern": "/TODO.*mock|FIXME.*mock|\\bPLACEHOLDER\\b/i",
+      "severity": "WARNING"
+    },
+    {
+      "file": "apps\\web\\app\\profile\\page.tsx",
+      "line": 148,
+      "content": "placeholder={strings.phone}",
+      "pattern": "/TODO.*mock|FIXME.*mock|\\bPLACEHOLDER\\b/i",
+      "severity": "WARNING"
+    },
+    {
+      "file": "apps\\web\\components\\hero-card.tsx",
+      "line": 119,
+      "content": "<p className=\"text-center text-lg font-medium\">Real-time AR viewer placeholder</p>",
+      "pattern": "/TODO.*mock|FIXME.*mock|\\bPLACEHOLDER\\b/i",
+      "severity": "WARNING"
+    },
+    {
+      "file": "libs\\auth\\src\\services\\auth.service.ts",
+      "line": 509,
+      "content": "// This is a placeholder - implement email sending",
+      "pattern": "/TODO.*mock|FIXME.*mock|\\bPLACEHOLDER\\b/i",
+      "severity": "WARNING"
+    },
+    {
+      "file": "libs\\auth\\src\\services\\auth.service.ts",
+      "line": 527,
+      "content": "// This is a placeholder",
+      "pattern": "/TODO.*mock|FIXME.*mock|\\bPLACEHOLDER\\b/i",
+      "severity": "WARNING"
+    },
+    {
+      "file": "libs\\auth\\src\\services\\password.service.ts",
+      "line": 284,
+      "content": "password += uppercase[Math.floor(Math.random() * uppercase.length)];",
+      "pattern": "/Math\\.random\\(\\)/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "libs\\auth\\src\\services\\password.service.ts",
+      "line": 285,
+      "content": "password += lowercase[Math.floor(Math.random() * lowercase.length)];",
+      "pattern": "/Math\\.random\\(\\)/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "libs\\auth\\src\\services\\password.service.ts",
+      "line": 286,
+      "content": "password += numbers[Math.floor(Math.random() * numbers.length)];",
+      "pattern": "/Math\\.random\\(\\)/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "libs\\auth\\src\\services\\password.service.ts",
+      "line": 287,
+      "content": "password += special[Math.floor(Math.random() * special.length)];",
+      "pattern": "/Math\\.random\\(\\)/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "libs\\auth\\src\\services\\password.service.ts",
+      "line": 291,
+      "content": "password += all[Math.floor(Math.random() * all.length)];",
+      "pattern": "/Math\\.random\\(\\)/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "libs\\auth\\src\\services\\password.service.ts",
+      "line": 297,
+      "content": ".sort(() => Math.random() - 0.5)",
+      "pattern": "/Math\\.random\\(\\)/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "libs\\auth\\src\\services\\totp.service.ts",
+      "line": 140,
+      "content": "return true; // Placeholder - implement with actual backup code storage",
+      "pattern": "/TODO.*mock|FIXME.*mock|\\bPLACEHOLDER\\b/i",
+      "severity": "WARNING"
+    },
+    {
+      "file": "libs\\cache\\src\\services\\cache.service.ts",
+      "line": 265,
+      "content": "const lockValue = `${Date.now()}:${Math.random().toString(36).slice(2)}`;",
+      "pattern": "/Math\\.random\\(\\)/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "libs\\design-system\\src\\components\\Footer\\Footer.tsx",
+      "line": 49,
+      "content": "placeholder: string;",
+      "pattern": "/TODO.*mock|FIXME.*mock|\\bPLACEHOLDER\\b/i",
+      "severity": "WARNING"
+    },
+    {
+      "file": "libs\\design-system\\src\\components\\Footer\\Footer.tsx",
+      "line": 125,
+      "content": "placeholder={",
+      "pattern": "/TODO.*mock|FIXME.*mock|\\bPLACEHOLDER\\b/i",
+      "severity": "WARNING"
+    },
+    {
+      "file": "libs\\design-system\\src\\components\\Footer\\Footer.tsx",
+      "line": 128,
+      "content": ": newsletter.placeholder",
+      "pattern": "/TODO.*mock|FIXME.*mock|\\bPLACEHOLDER\\b/i",
+      "severity": "WARNING"
+    },
+    {
+      "file": "libs\\design-system\\src\\components\\Footer\\Footer.tsx",
+      "line": 135,
+      "content": "'placeholder:text-[var(--color-text-tertiary)]',",
+      "pattern": "/TODO.*mock|FIXME.*mock|\\bPLACEHOLDER\\b/i",
+      "severity": "WARNING"
+    },
+    {
+      "file": "libs\\design-system\\src\\components\\Header\\Header.tsx",
+      "line": 16,
+      "content": "/** Search placeholder */",
+      "pattern": "/TODO.*mock|FIXME.*mock|\\bPLACEHOLDER\\b/i",
+      "severity": "WARNING"
+    },
+    {
+      "file": "libs\\design-system\\src\\components\\Header\\Header.tsx",
+      "line": 228,
+      "content": "placeholder={searchPlaceholder}",
+      "pattern": "/TODO.*mock|FIXME.*mock|\\bPLACEHOLDER\\b/i",
+      "severity": "WARNING"
+    },
+    {
+      "file": "libs\\design-system\\src\\components\\Header\\Header.tsx",
+      "line": 234,
+      "content": "'placeholder:text-[var(--color-text-tertiary)]',",
+      "pattern": "/TODO.*mock|FIXME.*mock|\\bPLACEHOLDER\\b/i",
+      "severity": "WARNING"
+    },
+    {
+      "file": "libs\\design-system\\src\\components\\Header\\Header.tsx",
+      "line": 474,
+      "content": "placeholder={searchPlaceholder}",
+      "pattern": "/TODO.*mock|FIXME.*mock|\\bPLACEHOLDER\\b/i",
+      "severity": "WARNING"
+    },
+    {
+      "file": "libs\\design-system\\src\\components\\Header\\Header.tsx",
+      "line": 480,
+      "content": "'placeholder:text-[var(--color-text-tertiary)]',",
+      "pattern": "/TODO.*mock|FIXME.*mock|\\bPLACEHOLDER\\b/i",
+      "severity": "WARNING"
+    },
+    {
+      "file": "libs\\design-system\\src\\components\\Notifications\\NotificationProvider.tsx",
+      "line": 89,
+      "content": "return `notif-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;",
+      "pattern": "/Math\\.random\\(\\)/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "libs\\moodian\\src\\moodian-real.service.ts",
+      "line": 150,
+      "content": "return `REQ-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;",
+      "pattern": "/Math\\.random\\(\\)/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "libs\\moodian\\src\\suid-generator.service.ts",
+      "line": 145,
+      "content": "const digits = Array.from({ length: 14 }, () => Math.floor(Math.random() * 10)).join('');",
+      "pattern": "/Math\\.random\\(\\)/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "libs\\payment\\src\\transaction-manager.ts",
+      "line": 689,
+      "content": "export function simulateTransaction(",
+      "pattern": "/function\\s+(simulate|mock|fake|stub|dummy)/i",
+      "severity": "WARNING"
+    },
+    {
+      "file": "libs\\prisma\\src\\read-replica.service.js",
+      "line": 224,
+      "content": "let random = Math.random() * totalWeight;",
+      "pattern": "/Math\\.random\\(\\)/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "libs\\prisma\\src\\read-replica.service.ts",
+      "line": 283,
+      "content": "let random = Math.random() * totalWeight;",
+      "pattern": "/Math\\.random\\(\\)/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "libs\\prisma\\src\\transaction.utils.js",
+      "line": 73,
+      "content": "const jitter = Math.random() * exponentialDelay * 0.1; // 10% jitter",
+      "pattern": "/Math\\.random\\(\\)/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "libs\\prisma\\src\\transaction.utils.ts",
+      "line": 112,
+      "content": "const jitter = Math.random() * exponentialDelay * 0.1; // 10% jitter",
+      "pattern": "/Math\\.random\\(\\)/g",
+      "severity": "WARNING"
+    }
+  ],
+  "placeholderPatterns": [],
+  "localhostReferences": [
+    {
+      "file": "apps\\admin\\src\\lib\\api.ts",
+      "line": 1,
+      "content": "const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:4000';",
+      "pattern": "/localhost|127\\.0\\.0\\.1/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "apps\\api\\src\\app.controller.ts",
+      "line": 117,
+      "content": "process.env.FRONTEND_ORIGIN || process.env.NEXT_PUBLIC_APP_ORIGIN || 'http://localhost:3000';",
+      "pattern": "/localhost|127\\.0\\.0\\.1/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "apps\\api\\src\\app.controller.ts",
+      "line": 117,
+      "content": "process.env.FRONTEND_ORIGIN || process.env.NEXT_PUBLIC_APP_ORIGIN || 'http://localhost:3000';",
+      "pattern": "/http:\\/\\/.*:3000|http:\\/\\/.*:8080/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "apps\\api\\src\\app.module.ts",
+      "line": 98,
+      "content": "'redis://localhost:6379';",
+      "pattern": "/localhost|127\\.0\\.0\\.1/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "apps\\api\\src\\main.ts",
+      "line": 163,
+      "content": "logger.log(`SYSTEM ONLINE: LAUNCH CORE on http://localhost:${port}`);",
+      "pattern": "/localhost|127\\.0\\.0\\.1/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "apps\\api\\src\\shared\\security\\security.module.ts",
+      "line": 253,
+      "content": "whitelistedIPs: ['127.0.0.1', '::1'],",
+      "pattern": "/localhost|127\\.0\\.0\\.1/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "apps\\api\\src\\shared\\security\\security.module.ts",
+      "line": 448,
+      "content": "whitelistedIPs: ['127.0.0.1', '::1'],",
+      "pattern": "/localhost|127\\.0\\.0\\.1/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "apps\\api\\src\\simple-main.ts",
+      "line": 236,
+      "content": "logger.log(`? API Server running on http://localhost:${port}`);",
+      "pattern": "/localhost|127\\.0\\.0\\.1/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "apps\\api\\src\\simple-main.ts",
+      "line": 237,
+      "content": "logger.log(`?? Health: http://localhost:${port}/api/v3/health`);",
+      "pattern": "/localhost|127\\.0\\.0\\.1/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "apps\\api\\test\\payment.e2e-spec.ts",
+      "line": 214,
+      "content": "process.env.APP_URL = 'http://localhost:3001';",
+      "pattern": "/localhost|127\\.0\\.0\\.1/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "apps\\api\\test\\payment.e2e-spec.ts",
+      "line": 320,
+      "content": "callbackUrl: 'http://localhost:3001/payment/verify',",
+      "pattern": "/localhost|127\\.0\\.0\\.1/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "apps\\vendor-portal\\next.config.js",
+      "line": 6,
+      "content": "NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api',",
+      "pattern": "/localhost|127\\.0\\.0\\.1/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "apps\\vendor-portal\\next.config.js",
+      "line": 6,
+      "content": "NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api',",
+      "pattern": "/http:\\/\\/.*:3000|http:\\/\\/.*:8080/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "apps\\web\\lib\\auth-config.ts",
+      "line": 8,
+      "content": "'http://localhost:4000'",
+      "pattern": "/localhost|127\\.0\\.0\\.1/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "apps\\web\\public\\apps\\web\\src\\lib\\env.js",
+      "line": 19,
+      "content": "process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3000'",
+      "pattern": "/localhost|127\\.0\\.0\\.1/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "apps\\web\\public\\apps\\web\\src\\lib\\env.js",
+      "line": 19,
+      "content": "process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3000'",
+      "pattern": "/http:\\/\\/.*:3000|http:\\/\\/.*:8080/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "apps\\worker\\src\\worker.module.ts",
+      "line": 20,
+      "content": "'redis://localhost:6379';",
+      "pattern": "/localhost|127\\.0\\.0\\.1/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "libs\\auth\\src\\services\\rate-limit.service.ts",
+      "line": 28,
+      "content": "host: this.configService.get('REDIS_HOST', 'localhost'),",
+      "pattern": "/localhost|127\\.0\\.0\\.1/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "libs\\auth\\src\\services\\session.service.ts",
+      "line": 58,
+      "content": "host: this.configService.get('REDIS_HOST', 'localhost'),",
+      "pattern": "/localhost|127\\.0\\.0\\.1/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "libs\\auth\\src\\services\\token.service.ts",
+      "line": 51,
+      "content": "host: this.configService.get('REDIS_HOST', 'localhost'),",
+      "pattern": "/localhost|127\\.0\\.0\\.1/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "libs\\cache\\src\\factory\\cache.factory.ts",
+      "line": 98,
+      "content": "host: process.env[`${prefix}_HOST`] || 'localhost',",
+      "pattern": "/localhost|127\\.0\\.0\\.1/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "libs\\cache\\src\\factory\\cache.factory.ts",
+      "line": 112,
+      "content": "servers: (process.env[`${prefix}_SERVERS`] || 'localhost:11211').split(','),",
+      "pattern": "/localhost|127\\.0\\.0\\.1/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "libs\\queue\\src\\queue.config.js",
+      "line": 7,
+      "content": "host: process.env.REDIS_HOST || 'localhost',",
+      "pattern": "/localhost|127\\.0\\.0\\.1/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "libs\\queue\\src\\queue.config.ts",
+      "line": 31,
+      "content": "host: process.env.REDIS_HOST || 'localhost',",
+      "pattern": "/localhost|127\\.0\\.0\\.1/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "libs\\queue\\src\\queue.service.js",
+      "line": 67,
+      "content": "host: this.configService.get('REDIS_HOST', 'localhost'),",
+      "pattern": "/localhost|127\\.0\\.0\\.1/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "libs\\queue\\src\\queue.service.ts",
+      "line": 26,
+      "content": "host: this.configService.get('REDIS_HOST', 'localhost'),",
+      "pattern": "/localhost|127\\.0\\.0\\.1/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "libs\\search\\src\\factory\\search.factory.ts",
+      "line": 76,
+      "content": "node: process.env[`${prefix}_NODE`] || 'http://localhost:9200',",
+      "pattern": "/localhost|127\\.0\\.0\\.1/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "libs\\search\\src\\factory\\search.factory.ts",
+      "line": 92,
+      "content": "host: process.env[`${prefix}_HOST`] || 'http://localhost:7700',",
+      "pattern": "/localhost|127\\.0\\.0\\.1/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "libs\\security\\examples\\app.example.ts",
+      "line": 485,
+      "content": "origin: process.env.CORS_ORIGINS?.split(',') || ['http://localhost:3000'],",
+      "pattern": "/localhost|127\\.0\\.0\\.1/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "libs\\security\\examples\\app.example.ts",
+      "line": 485,
+      "content": "origin: process.env.CORS_ORIGINS?.split(',') || ['http://localhost:3000'],",
+      "pattern": "/http:\\/\\/.*:3000|http:\\/\\/.*:8080/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "libs\\security\\vitest.setup.ts",
+      "line": 5,
+      "content": "process.env.REDIS_HOST = 'localhost';",
+      "pattern": "/localhost|127\\.0\\.0\\.1/g",
+      "severity": "WARNING"
+    },
+    {
+      "file": "libs\\storage\\src\\factory\\storage.factory.ts",
+      "line": 115,
+      "content": "endPoint: process.env[`${prefix}_ENDPOINT`] || 'localhost',",
+      "pattern": "/localhost|127\\.0\\.0\\.1/g",
+      "severity": "WARNING"
+    }
+  ],
+  "summary": {
+    "totalIssues": 2,
+    "criticalIssues": 0,
+    "warnings": 2,
+    "passed": true
+  }
+}

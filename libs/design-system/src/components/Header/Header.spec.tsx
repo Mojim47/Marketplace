@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { Header } from './Header';
 import type { NavItem, SearchSuggestion, UserMenuItem } from './Header';
+import { Header } from './Header';
 
 // Mock useTheme hook
 vi.mock('../../hooks/useTheme', () => ({

@@ -3,6 +3,7 @@ import {
   Controller,
   ForbiddenException,
   Get,
+  Header,
   HttpException,
   HttpStatus,
   Inject,
@@ -14,7 +15,8 @@ import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import type { Request } from 'express';
 import { type HeroAsset, HeroAssetSchema } from '../../../libs/common/src/contracts/hero.contract';
 import { Bulletproof } from '../../../libs/common/src/decorators/bulletproof';
-import { PrismaService } from '../../../libs/prisma/src/prisma.service';
+import { PrismaService } from './database/prisma.service';
+import { renderPrometheusMetrics } from './_observability/metrics.registry';
 
 const TARGET_ASSET_ID = 'cmlfxxjxz0006foldf4gefkav';
 const HERO_CACHE_KEY = 'hero-asset-cache';
@@ -69,7 +71,7 @@ export class AppController {
 
     try {
       const start = Date.now();
-      const asset = await this.prisma.spatialAsset.findUnique({
+      const asset = await (this.prisma as any).spatialAsset.findUnique({
         where: { id: TARGET_ASSET_ID },
       });
 
@@ -167,5 +169,11 @@ export class AppController {
       },
     };
     return payload;
+  }
+
+  @Get('/metrics')
+  @Header('Content-Type', 'text/plain; version=0.0.4; charset=utf-8')
+  async metrics(): Promise<string> {
+    return renderPrometheusMetrics();
   }
 }

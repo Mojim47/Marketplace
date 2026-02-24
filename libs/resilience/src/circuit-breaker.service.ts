@@ -1,6 +1,7 @@
 import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 // @ts-ignore
 import CircuitBreaker from 'opossum';
+
 type CircuitBreakerType = any;
 
 export interface CircuitBreakerOptions {

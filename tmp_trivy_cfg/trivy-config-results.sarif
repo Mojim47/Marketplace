@@ -1,0 +1,3050 @@
+{
+  "version": "2.1.0",
+  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/main/sarif-2.1/schema/sarif-schema-2.1.0.json",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "fullName": "Trivy Vulnerability Scanner",
+          "informationUri": "https://github.com/aquasecurity/trivy",
+          "name": "Trivy",
+          "rules": [
+            {
+              "id": "DS-0002",
+              "name": "Misconfiguration",
+              "shortDescription": {
+                "text": "Image user should not be 'root'"
+              },
+              "fullDescription": {
+                "text": "Running containers with 'root' user can lead to a container escape situation. It is a best practice to run containers as non-root users, which can be done by adding a 'USER' statement to the Dockerfile."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://avd.aquasec.com/misconfig/ds-0002",
+              "help": {
+                "text": "Misconfiguration DS-0002\nType: Dockerfile Security Check\nSeverity: HIGH\nCheck: Image user should not be 'root'\nMessage: Specify at least 1 USER command in Dockerfile with non-root user as argument\nLink: [DS-0002](https://avd.aquasec.com/misconfig/ds-0002)\nRunning containers with 'root' user can lead to a container escape situation. It is a best practice to run containers as non-root users, which can be done by adding a 'USER' statement to the Dockerfile.",
+                "markdown": "**Misconfiguration DS-0002**\n| Type | Severity | Check | Message | Link |\n| --- | --- | --- | --- | --- |\n|Dockerfile Security Check|HIGH|Image user should not be 'root'|Specify at least 1 USER command in Dockerfile with non-root user as argument|[DS-0002](https://avd.aquasec.com/misconfig/ds-0002)|\n\nRunning containers with 'root' user can lead to a container escape situation. It is a best practice to run containers as non-root users, which can be done by adding a 'USER' statement to the Dockerfile."
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "8.0",
+                "tags": [
+                  "misconfiguration",
+                  "security",
+                  "HIGH"
+                ]
+              }
+            },
+            {
+              "id": "KSV-0001",
+              "name": "Misconfiguration",
+              "shortDescription": {
+                "text": "Can elevate its own privileges"
+              },
+              "fullDescription": {
+                "text": "A program inside the container can elevate its own privileges and run as root, which might give the program control over the container and node."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://avd.aquasec.com/misconfig/ksv-0001",
+              "help": {
+                "text": "Misconfiguration KSV-0001\nType: Kubernetes Security Check\nSeverity: MEDIUM\nCheck: Can elevate its own privileges\nMessage: Container 'app' of Deployment 'insecure-app' should set 'securityContext.allowPrivilegeEscalation' to false\nLink: [KSV-0001](https://avd.aquasec.com/misconfig/ksv-0001)\nA program inside the container can elevate its own privileges and run as root, which might give the program control over the container and node.",
+                "markdown": "**Misconfiguration KSV-0001**\n| Type | Severity | Check | Message | Link |\n| --- | --- | --- | --- | --- |\n|Kubernetes Security Check|MEDIUM|Can elevate its own privileges|Container 'app' of Deployment 'insecure-app' should set 'securityContext.allowPrivilegeEscalation' to false|[KSV-0001](https://avd.aquasec.com/misconfig/ksv-0001)|\n\nA program inside the container can elevate its own privileges and run as root, which might give the program control over the container and node."
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "5.5",
+                "tags": [
+                  "misconfiguration",
+                  "security",
+                  "MEDIUM"
+                ]
+              }
+            },
+            {
+              "id": "KSV-0012",
+              "name": "Misconfiguration",
+              "shortDescription": {
+                "text": "Runs as root user"
+              },
+              "fullDescription": {
+                "text": "Force the running image to run as a non-root user to ensure least privileges."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://avd.aquasec.com/misconfig/ksv-0012",
+              "help": {
+                "text": "Misconfiguration KSV-0012\nType: Kubernetes Security Check\nSeverity: MEDIUM\nCheck: Runs as root user\nMessage: Container 'app' of Deployment 'insecure-app' should set 'securityContext.runAsNonRoot' to true\nLink: [KSV-0012](https://avd.aquasec.com/misconfig/ksv-0012)\nForce the running image to run as a non-root user to ensure least privileges.",
+                "markdown": "**Misconfiguration KSV-0012**\n| Type | Severity | Check | Message | Link |\n| --- | --- | --- | --- | --- |\n|Kubernetes Security Check|MEDIUM|Runs as root user|Container 'app' of Deployment 'insecure-app' should set 'securityContext.runAsNonRoot' to true|[KSV-0012](https://avd.aquasec.com/misconfig/ksv-0012)|\n\nForce the running image to run as a non-root user to ensure least privileges."
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "5.5",
+                "tags": [
+                  "misconfiguration",
+                  "security",
+                  "MEDIUM"
+                ]
+              }
+            },
+            {
+              "id": "KSV-0013",
+              "name": "Misconfiguration",
+              "shortDescription": {
+                "text": "Image tag \":latest\" used"
+              },
+              "fullDescription": {
+                "text": "It is best to avoid using the ':latest' image tag when deploying containers in production. Doing so makes it hard to track which version of the image is running, and hard to roll back the version."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://avd.aquasec.com/misconfig/ksv-0013",
+              "help": {
+                "text": "Misconfiguration KSV-0013\nType: Kubernetes Security Check\nSeverity: MEDIUM\nCheck: Image tag \":latest\" used\nMessage: Container 'app' of Deployment 'insecure-app' should specify an image tag\nLink: [KSV-0013](https://avd.aquasec.com/misconfig/ksv-0013)\nIt is best to avoid using the ':latest' image tag when deploying containers in production. Doing so makes it hard to track which version of the image is running, and hard to roll back the version.",
+                "markdown": "**Misconfiguration KSV-0013**\n| Type | Severity | Check | Message | Link |\n| --- | --- | --- | --- | --- |\n|Kubernetes Security Check|MEDIUM|Image tag \":latest\" used|Container 'app' of Deployment 'insecure-app' should specify an image tag|[KSV-0013](https://avd.aquasec.com/misconfig/ksv-0013)|\n\nIt is best to avoid using the ':latest' image tag when deploying containers in production. Doing so makes it hard to track which version of the image is running, and hard to roll back the version."
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "5.5",
+                "tags": [
+                  "misconfiguration",
+                  "security",
+                  "MEDIUM"
+                ]
+              }
+            },
+            {
+              "id": "KSV-0014",
+              "name": "Misconfiguration",
+              "shortDescription": {
+                "text": "Root file system is not read-only"
+              },
+              "fullDescription": {
+                "text": "An immutable root file system prevents applications from writing to their local disk. This can limit intrusions, as attackers will not be able to tamper with the file system or write foreign executables to disk."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://avd.aquasec.com/misconfig/ksv-0014",
+              "help": {
+                "text": "Misconfiguration KSV-0014\nType: Kubernetes Security Check\nSeverity: HIGH\nCheck: Root file system is not read-only\nMessage: Container 'app' of Deployment 'insecure-app' should set 'securityContext.readOnlyRootFilesystem' to true\nLink: [KSV-0014](https://avd.aquasec.com/misconfig/ksv-0014)\nAn immutable root file system prevents applications from writing to their local disk. This can limit intrusions, as attackers will not be able to tamper with the file system or write foreign executables to disk.",
+                "markdown": "**Misconfiguration KSV-0014**\n| Type | Severity | Check | Message | Link |\n| --- | --- | --- | --- | --- |\n|Kubernetes Security Check|HIGH|Root file system is not read-only|Container 'app' of Deployment 'insecure-app' should set 'securityContext.readOnlyRootFilesystem' to true|[KSV-0014](https://avd.aquasec.com/misconfig/ksv-0014)|\n\nAn immutable root file system prevents applications from writing to their local disk. This can limit intrusions, as attackers will not be able to tamper with the file system or write foreign executables to disk."
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "8.0",
+                "tags": [
+                  "misconfiguration",
+                  "security",
+                  "HIGH"
+                ]
+              }
+            },
+            {
+              "id": "KSV-0104",
+              "name": "Misconfiguration",
+              "shortDescription": {
+                "text": "Seccomp policies disabled"
+              },
+              "fullDescription": {
+                "text": "A program inside the container can bypass Seccomp protection policies."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://avd.aquasec.com/misconfig/ksv-0104",
+              "help": {
+                "text": "Misconfiguration KSV-0104\nType: Kubernetes Security Check\nSeverity: MEDIUM\nCheck: Seccomp policies disabled\nMessage: container \"app\" of deployment \"insecure-app\" in \"default\" namespace should specify a seccomp profile\nLink: [KSV-0104](https://avd.aquasec.com/misconfig/ksv-0104)\nA program inside the container can bypass Seccomp protection policies.",
+                "markdown": "**Misconfiguration KSV-0104**\n| Type | Severity | Check | Message | Link |\n| --- | --- | --- | --- | --- |\n|Kubernetes Security Check|MEDIUM|Seccomp policies disabled|container \"app\" of deployment \"insecure-app\" in \"default\" namespace should specify a seccomp profile|[KSV-0104](https://avd.aquasec.com/misconfig/ksv-0104)|\n\nA program inside the container can bypass Seccomp protection policies."
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "5.5",
+                "tags": [
+                  "misconfiguration",
+                  "security",
+                  "MEDIUM"
+                ]
+              }
+            },
+            {
+              "id": "KSV-0118",
+              "name": "Misconfiguration",
+              "shortDescription": {
+                "text": "Default security context configured"
+              },
+              "fullDescription": {
+                "text": "Security context controls the allocation of security parameters for the pod/container/volume, ensuring the appropriate level of protection. Relying on default security context may expose vulnerabilities to potential attacks that rely on privileged access."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://avd.aquasec.com/misconfig/ksv-0118",
+              "help": {
+                "text": "Misconfiguration KSV-0118\nType: Kubernetes Security Check\nSeverity: HIGH\nCheck: Default security context configured\nMessage: deployment insecure-app in default namespace is using the default security context, which allows root privileges\nLink: [KSV-0118](https://avd.aquasec.com/misconfig/ksv-0118)\nSecurity context controls the allocation of security parameters for the pod/container/volume, ensuring the appropriate level of protection. Relying on default security context may expose vulnerabilities to potential attacks that rely on privileged access.",
+                "markdown": "**Misconfiguration KSV-0118**\n| Type | Severity | Check | Message | Link |\n| --- | --- | --- | --- | --- |\n|Kubernetes Security Check|HIGH|Default security context configured|deployment insecure-app in default namespace is using the default security context, which allows root privileges|[KSV-0118](https://avd.aquasec.com/misconfig/ksv-0118)|\n\nSecurity context controls the allocation of security parameters for the pod/container/volume, ensuring the appropriate level of protection. Relying on default security context may expose vulnerabilities to potential attacks that rely on privileged access."
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "8.0",
+                "tags": [
+                  "misconfiguration",
+                  "security",
+                  "HIGH"
+                ]
+              }
+            },
+            {
+              "id": "KSV-0125",
+              "name": "Misconfiguration",
+              "shortDescription": {
+                "text": "Restrict container images to trusted registries"
+              },
+              "fullDescription": {
+                "text": "Ensure that all containers use images only from trusted registry domains."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://avd.aquasec.com/misconfig/ksv-0125",
+              "help": {
+                "text": "Misconfiguration KSV-0125\nType: Kubernetes Security Check\nSeverity: MEDIUM\nCheck: Restrict container images to trusted registries\nMessage: Container otel-collector in daemonset otel-collector (namespace: monitoring) uses an image from an untrusted registry.\nLink: [KSV-0125](https://avd.aquasec.com/misconfig/ksv-0125)\nEnsure that all containers use images only from trusted registry domains.",
+                "markdown": "**Misconfiguration KSV-0125**\n| Type | Severity | Check | Message | Link |\n| --- | --- | --- | --- | --- |\n|Kubernetes Security Check|MEDIUM|Restrict container images to trusted registries|Container otel-collector in daemonset otel-collector (namespace: monitoring) uses an image from an untrusted registry.|[KSV-0125](https://avd.aquasec.com/misconfig/ksv-0125)|\n\nEnsure that all containers use images only from trusted registry domains."
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "5.5",
+                "tags": [
+                  "misconfiguration",
+                  "security",
+                  "MEDIUM"
+                ]
+              }
+            },
+            {
+              "id": "KSV-01010",
+              "name": "Misconfiguration",
+              "shortDescription": {
+                "text": "ConfigMap with sensitive content"
+              },
+              "fullDescription": {
+                "text": "Storing sensitive content such as usernames and email addresses in configMaps is unsafe"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://avd.aquasec.com/misconfig/ksv-01010",
+              "help": {
+                "text": "Misconfiguration KSV-01010\nType: Kubernetes Security Check\nSeverity: MEDIUM\nCheck: ConfigMap with sensitive content\nMessage: ConfigMap 'nextgen-api-config' in 'nextgen-prod' namespace stores sensitive contents in key(s) or value(s) '{\"API_PORT\", \"MINIO_PORT\"}'\nLink: [KSV-01010](https://avd.aquasec.com/misconfig/ksv-01010)\nStoring sensitive content such as usernames and email addresses in configMaps is unsafe",
+                "markdown": "**Misconfiguration KSV-01010**\n| Type | Severity | Check | Message | Link |\n| --- | --- | --- | --- | --- |\n|Kubernetes Security Check|MEDIUM|ConfigMap with sensitive content|ConfigMap 'nextgen-api-config' in 'nextgen-prod' namespace stores sensitive contents in key(s) or value(s) '{\"API_PORT\", \"MINIO_PORT\"}'|[KSV-01010](https://avd.aquasec.com/misconfig/ksv-01010)|\n\nStoring sensitive content such as usernames and email addresses in configMaps is unsafe"
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "5.5",
+                "tags": [
+                  "misconfiguration",
+                  "security",
+                  "MEDIUM"
+                ]
+              }
+            },
+            {
+              "id": "KSV-0022",
+              "name": "Misconfiguration",
+              "shortDescription": {
+                "text": "Specific capabilities added"
+              },
+              "fullDescription": {
+                "text": "According to pod security standard 'Capabilities', capabilities beyond the default set must not be added."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://avd.aquasec.com/misconfig/ksv-0022",
+              "help": {
+                "text": "Misconfiguration KSV-0022\nType: Kubernetes Security Check\nSeverity: MEDIUM\nCheck: Specific capabilities added\nMessage: Container 'api' of Deployment 'nextgen-api' should not set 'securityContext.capabilities.add'\nLink: [KSV-0022](https://avd.aquasec.com/misconfig/ksv-0022)\nAccording to pod security standard 'Capabilities', capabilities beyond the default set must not be added.",
+                "markdown": "**Misconfiguration KSV-0022**\n| Type | Severity | Check | Message | Link |\n| --- | --- | --- | --- | --- |\n|Kubernetes Security Check|MEDIUM|Specific capabilities added|Container 'api' of Deployment 'nextgen-api' should not set 'securityContext.capabilities.add'|[KSV-0022](https://avd.aquasec.com/misconfig/ksv-0022)|\n\nAccording to pod security standard 'Capabilities', capabilities beyond the default set must not be added."
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "5.5",
+                "tags": [
+                  "misconfiguration",
+                  "security",
+                  "MEDIUM"
+                ]
+              }
+            },
+            {
+              "id": "KSV-0113",
+              "name": "Misconfiguration",
+              "shortDescription": {
+                "text": "Manage namespace secrets"
+              },
+              "fullDescription": {
+                "text": "Viewing secrets at the namespace scope can lead to escalation if another service account in that namespace has a higher privileged rolebinding or clusterrolebinding bound."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://avd.aquasec.com/misconfig/ksv-0113",
+              "help": {
+                "text": "Misconfiguration KSV-0113\nType: Kubernetes Security Check\nSeverity: MEDIUM\nCheck: Manage namespace secrets\nMessage: Role 'nextgen-api-role' shouldn't have access to manage secrets in namespace 'nextgen'\nLink: [KSV-0113](https://avd.aquasec.com/misconfig/ksv-0113)\nViewing secrets at the namespace scope can lead to escalation if another service account in that namespace has a higher privileged rolebinding or clusterrolebinding bound.",
+                "markdown": "**Misconfiguration KSV-0113**\n| Type | Severity | Check | Message | Link |\n| --- | --- | --- | --- | --- |\n|Kubernetes Security Check|MEDIUM|Manage namespace secrets|Role 'nextgen-api-role' shouldn't have access to manage secrets in namespace 'nextgen'|[KSV-0113](https://avd.aquasec.com/misconfig/ksv-0113)|\n\nViewing secrets at the namespace scope can lead to escalation if another service account in that namespace has a higher privileged rolebinding or clusterrolebinding bound."
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "5.5",
+                "tags": [
+                  "misconfiguration",
+                  "security",
+                  "MEDIUM"
+                ]
+              }
+            },
+            {
+              "id": "DS-0001",
+              "name": "Misconfiguration",
+              "shortDescription": {
+                "text": "':latest' tag used"
+              },
+              "fullDescription": {
+                "text": "When using a 'FROM' statement you should use a specific tag to avoid uncontrolled behavior when the image is updated."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://avd.aquasec.com/misconfig/ds-0001",
+              "help": {
+                "text": "Misconfiguration DS-0001\nType: Dockerfile Security Check\nSeverity: MEDIUM\nCheck: ':latest' tag used\nMessage: Specify a tag in the 'FROM' statement for image 'ubuntu'\nLink: [DS-0001](https://avd.aquasec.com/misconfig/ds-0001)\nWhen using a 'FROM' statement you should use a specific tag to avoid uncontrolled behavior when the image is updated.",
+                "markdown": "**Misconfiguration DS-0001**\n| Type | Severity | Check | Message | Link |\n| --- | --- | --- | --- | --- |\n|Dockerfile Security Check|MEDIUM|':latest' tag used|Specify a tag in the 'FROM' statement for image 'ubuntu'|[DS-0001](https://avd.aquasec.com/misconfig/ds-0001)|\n\nWhen using a 'FROM' statement you should use a specific tag to avoid uncontrolled behavior when the image is updated."
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "5.5",
+                "tags": [
+                  "misconfiguration",
+                  "security",
+                  "MEDIUM"
+                ]
+              }
+            },
+            {
+              "id": "DS-0029",
+              "name": "Misconfiguration",
+              "shortDescription": {
+                "text": "'apt-get' missing '--no-install-recommends'"
+              },
+              "fullDescription": {
+                "text": "'apt-get' install should use '--no-install-recommends' to minimize image size."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://avd.aquasec.com/misconfig/ds-0029",
+              "help": {
+                "text": "Misconfiguration DS-0029\nType: Dockerfile Security Check\nSeverity: HIGH\nCheck: 'apt-get' missing '--no-install-recommends'\nMessage: '--no-install-recommends' flag is missed: 'apt-get update -qq \u0026\u0026 DEBIAN_FRONTEND=noninteractive apt-get install -yq git wget libssl-dev build-essential  ninja-build python3 pkgconf libglib2.0-dev \u0026\u0026 apt-get clean \u0026\u0026 rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*'\nLink: [DS-0029](https://avd.aquasec.com/misconfig/ds-0029)\n'apt-get' install should use '--no-install-recommends' to minimize image size.",
+                "markdown": "**Misconfiguration DS-0029**\n| Type | Severity | Check | Message | Link |\n| --- | --- | --- | --- | --- |\n|Dockerfile Security Check|HIGH|'apt-get' missing '--no-install-recommends'|'--no-install-recommends' flag is missed: 'apt-get update -qq \u0026\u0026 DEBIAN_FRONTEND=noninteractive apt-get install -yq git wget libssl-dev build-essential  ninja-build python3 pkgconf libglib2.0-dev \u0026\u0026 apt-get clean \u0026\u0026 rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*'|[DS-0029](https://avd.aquasec.com/misconfig/ds-0029)|\n\n'apt-get' install should use '--no-install-recommends' to minimize image size."
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "8.0",
+                "tags": [
+                  "misconfiguration",
+                  "security",
+                  "HIGH"
+                ]
+              }
+            },
+            {
+              "id": "KSV-0017",
+              "name": "Misconfiguration",
+              "shortDescription": {
+                "text": "Privileged"
+              },
+              "fullDescription": {
+                "text": "Privileged containers share namespaces with the host system and do not offer any security. They should be used exclusively for system containers that require high privileges."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "helpUri": "https://avd.aquasec.com/misconfig/ksv-0017",
+              "help": {
+                "text": "Misconfiguration KSV-0017\nType: Kubernetes Security Check\nSeverity: HIGH\nCheck: Privileged\nMessage: Container 'app' of Deployment 'insecure-app' should set 'securityContext.privileged' to false\nLink: [KSV-0017](https://avd.aquasec.com/misconfig/ksv-0017)\nPrivileged containers share namespaces with the host system and do not offer any security. They should be used exclusively for system containers that require high privileges.",
+                "markdown": "**Misconfiguration KSV-0017**\n| Type | Severity | Check | Message | Link |\n| --- | --- | --- | --- | --- |\n|Kubernetes Security Check|HIGH|Privileged|Container 'app' of Deployment 'insecure-app' should set 'securityContext.privileged' to false|[KSV-0017](https://avd.aquasec.com/misconfig/ksv-0017)|\n\nPrivileged containers share namespaces with the host system and do not offer any security. They should be used exclusively for system containers that require high privileges."
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "8.0",
+                "tags": [
+                  "misconfiguration",
+                  "security",
+                  "HIGH"
+                ]
+              }
+            },
+            {
+              "id": "AWS-0010",
+              "name": "Misconfiguration",
+              "shortDescription": {
+                "text": "Cloudfront distribution should have Access Logging configured"
+              },
+              "fullDescription": {
+                "text": "You should configure CloudFront Access Logging to create log files that contain detailed information about every user request that CloudFront receives\n"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "helpUri": "https://avd.aquasec.com/misconfig/aws-0010",
+              "help": {
+                "text": "Misconfiguration AWS-0010\nType: Terraform Security Check\nSeverity: MEDIUM\nCheck: Cloudfront distribution should have Access Logging configured\nMessage: Distribution does not have logging enabled\nLink: [AWS-0010](https://avd.aquasec.com/misconfig/aws-0010)\nYou should configure CloudFront Access Logging to create log files that contain detailed information about every user request that CloudFront receives\n",
+                "markdown": "**Misconfiguration AWS-0010**\n| Type | Severity | Check | Message | Link |\n| --- | --- | --- | --- | --- |\n|Terraform Security Check|MEDIUM|Cloudfront distribution should have Access Logging configured|Distribution does not have logging enabled|[AWS-0010](https://avd.aquasec.com/misconfig/aws-0010)|\n\nYou should configure CloudFront Access Logging to create log files that contain detailed information about every user request that CloudFront receives\n"
+              },
+              "properties": {
+                "precision": "very-high",
+                "security-severity": "5.5",
+                "tags": [
+                  "misconfiguration",
+                  "security",
+                  "MEDIUM"
+                ]
+              }
+            }
+          ],
+          "version": "0.69.1"
+        }
+      },
+      "results": [
+        {
+          "ruleId": "DS-0002",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "Artifact: Dockerfile.bak\nType: dockerfile\nVulnerability DS-0002\nSeverity: HIGH\nMessage: Specify at least 1 USER command in Dockerfile with non-root user as argument\nLink: [DS-0002](https://avd.aquasec.com/misconfig/ds-0002)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "Dockerfile.bak",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 1,
+                  "endLine": 1,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "Dockerfile.bak"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "DS-0002",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "Artifact: Dockerfile.prod\nType: dockerfile\nVulnerability DS-0002\nSeverity: HIGH\nMessage: Specify at least 1 USER command in Dockerfile with non-root user as argument\nLink: [DS-0002](https://avd.aquasec.com/misconfig/ds-0002)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "Dockerfile.prod",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 1,
+                  "endLine": 1,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "Dockerfile.prod"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0001",
+          "ruleIndex": 1,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/alien-engine-deployment.yaml\nType: kubernetes\nVulnerability KSV-0001\nSeverity: MEDIUM\nMessage: Container 'alien-engine' of Deployment 'alien-engine' should set 'securityContext.allowPrivilegeEscalation' to false\nLink: [KSV-0001](https://avd.aquasec.com/misconfig/ksv-0001)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/alien-engine-deployment.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 24,
+                  "startColumn": 1,
+                  "endLine": 55,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/alien-engine-deployment.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0012",
+          "ruleIndex": 2,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/alien-engine-deployment.yaml\nType: kubernetes\nVulnerability KSV-0012\nSeverity: MEDIUM\nMessage: Container 'alien-engine' of Deployment 'alien-engine' should set 'securityContext.runAsNonRoot' to true\nLink: [KSV-0012](https://avd.aquasec.com/misconfig/ksv-0012)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/alien-engine-deployment.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 24,
+                  "startColumn": 1,
+                  "endLine": 55,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/alien-engine-deployment.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0013",
+          "ruleIndex": 3,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/alien-engine-deployment.yaml\nType: kubernetes\nVulnerability KSV-0013\nSeverity: MEDIUM\nMessage: Container 'alien-engine' of Deployment 'alien-engine' should specify an image tag\nLink: [KSV-0013](https://avd.aquasec.com/misconfig/ksv-0013)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/alien-engine-deployment.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 24,
+                  "startColumn": 1,
+                  "endLine": 55,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/alien-engine-deployment.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0014",
+          "ruleIndex": 4,
+          "level": "error",
+          "message": {
+            "text": "Artifact: k8s/alien-engine-deployment.yaml\nType: kubernetes\nVulnerability KSV-0014\nSeverity: HIGH\nMessage: Container 'alien-engine' of Deployment 'alien-engine' should set 'securityContext.readOnlyRootFilesystem' to true\nLink: [KSV-0014](https://avd.aquasec.com/misconfig/ksv-0014)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/alien-engine-deployment.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 24,
+                  "startColumn": 1,
+                  "endLine": 55,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/alien-engine-deployment.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0104",
+          "ruleIndex": 5,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/alien-engine-deployment.yaml\nType: kubernetes\nVulnerability KSV-0104\nSeverity: MEDIUM\nMessage: container \"alien-engine\" of deployment \"alien-engine\" in \"nextgen-marketplace\" namespace should specify a seccomp profile\nLink: [KSV-0104](https://avd.aquasec.com/misconfig/ksv-0104)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/alien-engine-deployment.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 24,
+                  "startColumn": 1,
+                  "endLine": 55,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/alien-engine-deployment.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0118",
+          "ruleIndex": 6,
+          "level": "error",
+          "message": {
+            "text": "Artifact: k8s/alien-engine-deployment.yaml\nType: kubernetes\nVulnerability KSV-0118\nSeverity: HIGH\nMessage: container alien-engine in nextgen-marketplace namespace is using the default security context\nLink: [KSV-0118](https://avd.aquasec.com/misconfig/ksv-0118)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/alien-engine-deployment.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 24,
+                  "startColumn": 1,
+                  "endLine": 55,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/alien-engine-deployment.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0118",
+          "ruleIndex": 6,
+          "level": "error",
+          "message": {
+            "text": "Artifact: k8s/alien-engine-deployment.yaml\nType: kubernetes\nVulnerability KSV-0118\nSeverity: HIGH\nMessage: deployment alien-engine in nextgen-marketplace namespace is using the default security context, which allows root privileges\nLink: [KSV-0118](https://avd.aquasec.com/misconfig/ksv-0118)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/alien-engine-deployment.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 22,
+                  "startColumn": 1,
+                  "endLine": 59,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/alien-engine-deployment.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0125",
+          "ruleIndex": 7,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/alien-engine-deployment.yaml\nType: kubernetes\nVulnerability KSV-0125\nSeverity: MEDIUM\nMessage: Container alien-engine in deployment alien-engine (namespace: nextgen-marketplace) uses an image from an untrusted registry.\nLink: [KSV-0125](https://avd.aquasec.com/misconfig/ksv-0125)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/alien-engine-deployment.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 24,
+                  "startColumn": 1,
+                  "endLine": 55,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/alien-engine-deployment.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0001",
+          "ruleIndex": 1,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/base/7-cronjobs.yml\nType: kubernetes\nVulnerability KSV-0001\nSeverity: MEDIUM\nMessage: Container 'backup' of CronJob 'db-backup' should set 'securityContext.allowPrivilegeEscalation' to false\nLink: [KSV-0001](https://avd.aquasec.com/misconfig/ksv-0001)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/base/7-cronjobs.yml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 14,
+                  "startColumn": 1,
+                  "endLine": 42,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/base/7-cronjobs.yml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0001",
+          "ruleIndex": 1,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/base/7-cronjobs.yml\nType: kubernetes\nVulnerability KSV-0001\nSeverity: MEDIUM\nMessage: Container 'warmup' of CronJob 'cache-warmup' should set 'securityContext.allowPrivilegeEscalation' to false\nLink: [KSV-0001](https://avd.aquasec.com/misconfig/ksv-0001)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/base/7-cronjobs.yml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 59,
+                  "startColumn": 1,
+                  "endLine": 64,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/base/7-cronjobs.yml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0012",
+          "ruleIndex": 2,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/base/7-cronjobs.yml\nType: kubernetes\nVulnerability KSV-0012\nSeverity: MEDIUM\nMessage: Container 'backup' of CronJob 'db-backup' should set 'securityContext.runAsNonRoot' to true\nLink: [KSV-0012](https://avd.aquasec.com/misconfig/ksv-0012)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/base/7-cronjobs.yml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 14,
+                  "startColumn": 1,
+                  "endLine": 42,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/base/7-cronjobs.yml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0012",
+          "ruleIndex": 2,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/base/7-cronjobs.yml\nType: kubernetes\nVulnerability KSV-0012\nSeverity: MEDIUM\nMessage: Container 'warmup' of CronJob 'cache-warmup' should set 'securityContext.runAsNonRoot' to true\nLink: [KSV-0012](https://avd.aquasec.com/misconfig/ksv-0012)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/base/7-cronjobs.yml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 59,
+                  "startColumn": 1,
+                  "endLine": 64,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/base/7-cronjobs.yml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0014",
+          "ruleIndex": 4,
+          "level": "error",
+          "message": {
+            "text": "Artifact: k8s/base/7-cronjobs.yml\nType: kubernetes\nVulnerability KSV-0014\nSeverity: HIGH\nMessage: Container 'backup' of CronJob 'db-backup' should set 'securityContext.readOnlyRootFilesystem' to true\nLink: [KSV-0014](https://avd.aquasec.com/misconfig/ksv-0014)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/base/7-cronjobs.yml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 14,
+                  "startColumn": 1,
+                  "endLine": 42,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/base/7-cronjobs.yml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0014",
+          "ruleIndex": 4,
+          "level": "error",
+          "message": {
+            "text": "Artifact: k8s/base/7-cronjobs.yml\nType: kubernetes\nVulnerability KSV-0014\nSeverity: HIGH\nMessage: Container 'warmup' of CronJob 'cache-warmup' should set 'securityContext.readOnlyRootFilesystem' to true\nLink: [KSV-0014](https://avd.aquasec.com/misconfig/ksv-0014)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/base/7-cronjobs.yml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 59,
+                  "startColumn": 1,
+                  "endLine": 64,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/base/7-cronjobs.yml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0104",
+          "ruleIndex": 5,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/base/7-cronjobs.yml\nType: kubernetes\nVulnerability KSV-0104\nSeverity: MEDIUM\nMessage: container \"backup\" of cronjob \"db-backup\" in \"nextgen\" namespace should specify a seccomp profile\nLink: [KSV-0104](https://avd.aquasec.com/misconfig/ksv-0104)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/base/7-cronjobs.yml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 14,
+                  "startColumn": 1,
+                  "endLine": 42,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/base/7-cronjobs.yml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0104",
+          "ruleIndex": 5,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/base/7-cronjobs.yml\nType: kubernetes\nVulnerability KSV-0104\nSeverity: MEDIUM\nMessage: container \"warmup\" of cronjob \"cache-warmup\" in \"nextgen\" namespace should specify a seccomp profile\nLink: [KSV-0104](https://avd.aquasec.com/misconfig/ksv-0104)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/base/7-cronjobs.yml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 59,
+                  "startColumn": 1,
+                  "endLine": 64,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/base/7-cronjobs.yml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0118",
+          "ruleIndex": 6,
+          "level": "error",
+          "message": {
+            "text": "Artifact: k8s/base/7-cronjobs.yml\nType: kubernetes\nVulnerability KSV-0118\nSeverity: HIGH\nMessage: container cache-warmup in nextgen namespace is using the default security context\nLink: [KSV-0118](https://avd.aquasec.com/misconfig/ksv-0118)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/base/7-cronjobs.yml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 59,
+                  "startColumn": 1,
+                  "endLine": 64,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/base/7-cronjobs.yml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0118",
+          "ruleIndex": 6,
+          "level": "error",
+          "message": {
+            "text": "Artifact: k8s/base/7-cronjobs.yml\nType: kubernetes\nVulnerability KSV-0118\nSeverity: HIGH\nMessage: container db-backup in nextgen namespace is using the default security context\nLink: [KSV-0118](https://avd.aquasec.com/misconfig/ksv-0118)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/base/7-cronjobs.yml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 14,
+                  "startColumn": 1,
+                  "endLine": 42,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/base/7-cronjobs.yml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0118",
+          "ruleIndex": 6,
+          "level": "error",
+          "message": {
+            "text": "Artifact: k8s/base/7-cronjobs.yml\nType: kubernetes\nVulnerability KSV-0118\nSeverity: HIGH\nMessage: cronjob cache-warmup in nextgen namespace is using the default security context, which allows root privileges\nLink: [KSV-0118](https://avd.aquasec.com/misconfig/ksv-0118)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/base/7-cronjobs.yml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 57,
+                  "startColumn": 1,
+                  "endLine": 69,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/base/7-cronjobs.yml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0118",
+          "ruleIndex": 6,
+          "level": "error",
+          "message": {
+            "text": "Artifact: k8s/base/7-cronjobs.yml\nType: kubernetes\nVulnerability KSV-0118\nSeverity: HIGH\nMessage: cronjob db-backup in nextgen namespace is using the default security context, which allows root privileges\nLink: [KSV-0118](https://avd.aquasec.com/misconfig/ksv-0118)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/base/7-cronjobs.yml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 11,
+                  "startColumn": 1,
+                  "endLine": 46,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/base/7-cronjobs.yml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0125",
+          "ruleIndex": 7,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/base/7-cronjobs.yml\nType: kubernetes\nVulnerability KSV-0125\nSeverity: MEDIUM\nMessage: Container warmup in cronjob cache-warmup (namespace: nextgen) uses an image from an untrusted registry.\nLink: [KSV-0125](https://avd.aquasec.com/misconfig/ksv-0125)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/base/7-cronjobs.yml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 59,
+                  "startColumn": 1,
+                  "endLine": 64,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/base/7-cronjobs.yml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0013",
+          "ruleIndex": 3,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/base/admin-stack.yml\nType: kubernetes\nVulnerability KSV-0013\nSeverity: MEDIUM\nMessage: Container 'admin' of Deployment 'admin' should specify an image tag\nLink: [KSV-0013](https://avd.aquasec.com/misconfig/ksv-0013)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/base/admin-stack.yml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 118,
+                  "startColumn": 1,
+                  "endLine": 171,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/base/admin-stack.yml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0125",
+          "ruleIndex": 7,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/base/admin-stack.yml\nType: kubernetes\nVulnerability KSV-0125\nSeverity: MEDIUM\nMessage: Container admin in deployment admin (namespace: nextgen) uses an image from an untrusted registry.\nLink: [KSV-0125](https://avd.aquasec.com/misconfig/ksv-0125)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/base/admin-stack.yml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 118,
+                  "startColumn": 1,
+                  "endLine": 171,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/base/admin-stack.yml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0104",
+          "ruleIndex": 5,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/base/blue-green-deployment.yml\nType: kubernetes\nVulnerability KSV-0104\nSeverity: MEDIUM\nMessage: container \"api\" of deployment \"api-blue\" in \"nextgen\" namespace should specify a seccomp profile\nLink: [KSV-0104](https://avd.aquasec.com/misconfig/ksv-0104)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/base/blue-green-deployment.yml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 74,
+                  "startColumn": 1,
+                  "endLine": 136,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/base/blue-green-deployment.yml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0104",
+          "ruleIndex": 5,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/base/blue-green-deployment.yml\nType: kubernetes\nVulnerability KSV-0104\nSeverity: MEDIUM\nMessage: container \"api\" of deployment \"api-green\" in \"nextgen\" namespace should specify a seccomp profile\nLink: [KSV-0104](https://avd.aquasec.com/misconfig/ksv-0104)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/base/blue-green-deployment.yml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 199,
+                  "startColumn": 1,
+                  "endLine": 261,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/base/blue-green-deployment.yml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0125",
+          "ruleIndex": 7,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/base/blue-green-deployment.yml\nType: kubernetes\nVulnerability KSV-0125\nSeverity: MEDIUM\nMessage: Container api in deployment api-blue (namespace: nextgen) uses an image from an untrusted registry.\nLink: [KSV-0125](https://avd.aquasec.com/misconfig/ksv-0125)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/base/blue-green-deployment.yml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 74,
+                  "startColumn": 1,
+                  "endLine": 136,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/base/blue-green-deployment.yml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0125",
+          "ruleIndex": 7,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/base/blue-green-deployment.yml\nType: kubernetes\nVulnerability KSV-0125\nSeverity: MEDIUM\nMessage: Container api in deployment api-green (namespace: nextgen) uses an image from an untrusted registry.\nLink: [KSV-0125](https://avd.aquasec.com/misconfig/ksv-0125)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/base/blue-green-deployment.yml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 199,
+                  "startColumn": 1,
+                  "endLine": 261,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/base/blue-green-deployment.yml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0014",
+          "ruleIndex": 4,
+          "level": "error",
+          "message": {
+            "text": "Artifact: k8s/base/meilisearch.yml\nType: kubernetes\nVulnerability KSV-0014\nSeverity: HIGH\nMessage: Container 'meilisearch' of StatefulSet 'meilisearch' should set 'securityContext.readOnlyRootFilesystem' to true\nLink: [KSV-0014](https://avd.aquasec.com/misconfig/ksv-0014)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/base/meilisearch.yml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 65,
+                  "startColumn": 1,
+                  "endLine": 116,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/base/meilisearch.yml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-01010",
+          "ruleIndex": 8,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/base/meilisearch.yml\nType: kubernetes\nVulnerability KSV-01010\nSeverity: MEDIUM\nMessage: ConfigMap 'meilisearch-config' in 'nextgen-marketplace' namespace stores sensitive contents in key(s) or value(s) '{\"MEILI_LOG_LEVEL\", \"MEILI_MAX_INDEXING_MEMORY\"}'\nLink: [KSV-01010](https://avd.aquasec.com/misconfig/ksv-01010)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/base/meilisearch.yml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 1,
+                  "endLine": 1,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/base/meilisearch.yml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0125",
+          "ruleIndex": 7,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/base/meilisearch.yml\nType: kubernetes\nVulnerability KSV-0125\nSeverity: MEDIUM\nMessage: Container meilisearch in statefulset meilisearch (namespace: nextgen-marketplace) uses an image from an untrusted registry.\nLink: [KSV-0125](https://avd.aquasec.com/misconfig/ksv-0125)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/base/meilisearch.yml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 65,
+                  "startColumn": 1,
+                  "endLine": 116,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/base/meilisearch.yml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0013",
+          "ruleIndex": 3,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/base/ml-service-stack.yml\nType: kubernetes\nVulnerability KSV-0013\nSeverity: MEDIUM\nMessage: Container 'ml-service' of Deployment 'ml-service' should specify an image tag\nLink: [KSV-0013](https://avd.aquasec.com/misconfig/ksv-0013)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/base/ml-service-stack.yml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 73,
+                  "startColumn": 1,
+                  "endLine": 121,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/base/ml-service-stack.yml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0125",
+          "ruleIndex": 7,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/base/ml-service-stack.yml\nType: kubernetes\nVulnerability KSV-0125\nSeverity: MEDIUM\nMessage: Container ml-service in deployment ml-service (namespace: nextgen) uses an image from an untrusted registry.\nLink: [KSV-0125](https://avd.aquasec.com/misconfig/ksv-0125)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/base/ml-service-stack.yml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 73,
+                  "startColumn": 1,
+                  "endLine": 121,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/base/ml-service-stack.yml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0014",
+          "ruleIndex": 4,
+          "level": "error",
+          "message": {
+            "text": "Artifact: k8s/base/redis-cluster.yml\nType: kubernetes\nVulnerability KSV-0014\nSeverity: HIGH\nMessage: Container 'redis' of StatefulSet 'redis-cluster' should set 'securityContext.readOnlyRootFilesystem' to true\nLink: [KSV-0014](https://avd.aquasec.com/misconfig/ksv-0014)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/base/redis-cluster.yml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 94,
+                  "startColumn": 1,
+                  "endLine": 151,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/base/redis-cluster.yml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0125",
+          "ruleIndex": 7,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/base/redis-cluster.yml\nType: kubernetes\nVulnerability KSV-0125\nSeverity: MEDIUM\nMessage: Container redis-exporter in statefulset redis-cluster (namespace: nextgen-marketplace) uses an image from an untrusted registry.\nLink: [KSV-0125](https://avd.aquasec.com/misconfig/ksv-0125)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/base/redis-cluster.yml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 154,
+                  "startColumn": 1,
+                  "endLine": 173,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/base/redis-cluster.yml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0013",
+          "ruleIndex": 3,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/base/vendor-portal-stack.yml\nType: kubernetes\nVulnerability KSV-0013\nSeverity: MEDIUM\nMessage: Container 'vendor-portal' of Deployment 'vendor-portal' should specify an image tag\nLink: [KSV-0013](https://avd.aquasec.com/misconfig/ksv-0013)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/base/vendor-portal-stack.yml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 118,
+                  "startColumn": 1,
+                  "endLine": 171,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/base/vendor-portal-stack.yml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0125",
+          "ruleIndex": 7,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/base/vendor-portal-stack.yml\nType: kubernetes\nVulnerability KSV-0125\nSeverity: MEDIUM\nMessage: Container vendor-portal in deployment vendor-portal (namespace: nextgen) uses an image from an untrusted registry.\nLink: [KSV-0125](https://avd.aquasec.com/misconfig/ksv-0125)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/base/vendor-portal-stack.yml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 118,
+                  "startColumn": 1,
+                  "endLine": 171,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/base/vendor-portal-stack.yml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0013",
+          "ruleIndex": 3,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/base/web-stack.yml\nType: kubernetes\nVulnerability KSV-0013\nSeverity: MEDIUM\nMessage: Container 'web' of Deployment 'web' should specify an image tag\nLink: [KSV-0013](https://avd.aquasec.com/misconfig/ksv-0013)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/base/web-stack.yml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 122,
+                  "startColumn": 1,
+                  "endLine": 182,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/base/web-stack.yml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0125",
+          "ruleIndex": 7,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/base/web-stack.yml\nType: kubernetes\nVulnerability KSV-0125\nSeverity: MEDIUM\nMessage: Container web in deployment web (namespace: nextgen) uses an image from an untrusted registry.\nLink: [KSV-0125](https://avd.aquasec.com/misconfig/ksv-0125)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/base/web-stack.yml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 122,
+                  "startColumn": 1,
+                  "endLine": 182,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/base/web-stack.yml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0001",
+          "ruleIndex": 1,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/jaeger-deployment.yaml\nType: kubernetes\nVulnerability KSV-0001\nSeverity: MEDIUM\nMessage: Container 'jaeger' of Deployment 'jaeger' should set 'securityContext.allowPrivilegeEscalation' to false\nLink: [KSV-0001](https://avd.aquasec.com/misconfig/ksv-0001)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/jaeger-deployment.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 17,
+                  "startColumn": 1,
+                  "endLine": 37,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/jaeger-deployment.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0012",
+          "ruleIndex": 2,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/jaeger-deployment.yaml\nType: kubernetes\nVulnerability KSV-0012\nSeverity: MEDIUM\nMessage: Container 'jaeger' of Deployment 'jaeger' should set 'securityContext.runAsNonRoot' to true\nLink: [KSV-0012](https://avd.aquasec.com/misconfig/ksv-0012)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/jaeger-deployment.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 17,
+                  "startColumn": 1,
+                  "endLine": 37,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/jaeger-deployment.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0014",
+          "ruleIndex": 4,
+          "level": "error",
+          "message": {
+            "text": "Artifact: k8s/jaeger-deployment.yaml\nType: kubernetes\nVulnerability KSV-0014\nSeverity: HIGH\nMessage: Container 'jaeger' of Deployment 'jaeger' should set 'securityContext.readOnlyRootFilesystem' to true\nLink: [KSV-0014](https://avd.aquasec.com/misconfig/ksv-0014)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/jaeger-deployment.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 17,
+                  "startColumn": 1,
+                  "endLine": 37,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/jaeger-deployment.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0104",
+          "ruleIndex": 5,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/jaeger-deployment.yaml\nType: kubernetes\nVulnerability KSV-0104\nSeverity: MEDIUM\nMessage: container \"jaeger\" of deployment \"jaeger\" in \"monitoring\" namespace should specify a seccomp profile\nLink: [KSV-0104](https://avd.aquasec.com/misconfig/ksv-0104)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/jaeger-deployment.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 17,
+                  "startColumn": 1,
+                  "endLine": 37,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/jaeger-deployment.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0118",
+          "ruleIndex": 6,
+          "level": "error",
+          "message": {
+            "text": "Artifact: k8s/jaeger-deployment.yaml\nType: kubernetes\nVulnerability KSV-0118\nSeverity: HIGH\nMessage: container jaeger in monitoring namespace is using the default security context\nLink: [KSV-0118](https://avd.aquasec.com/misconfig/ksv-0118)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/jaeger-deployment.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 17,
+                  "startColumn": 1,
+                  "endLine": 37,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/jaeger-deployment.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0118",
+          "ruleIndex": 6,
+          "level": "error",
+          "message": {
+            "text": "Artifact: k8s/jaeger-deployment.yaml\nType: kubernetes\nVulnerability KSV-0118\nSeverity: HIGH\nMessage: deployment jaeger in monitoring namespace is using the default security context, which allows root privileges\nLink: [KSV-0118](https://avd.aquasec.com/misconfig/ksv-0118)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/jaeger-deployment.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 15,
+                  "startColumn": 1,
+                  "endLine": 37,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/jaeger-deployment.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0125",
+          "ruleIndex": 7,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/jaeger-deployment.yaml\nType: kubernetes\nVulnerability KSV-0125\nSeverity: MEDIUM\nMessage: Container jaeger in deployment jaeger (namespace: monitoring) uses an image from an untrusted registry.\nLink: [KSV-0125](https://avd.aquasec.com/misconfig/ksv-0125)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/jaeger-deployment.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 17,
+                  "startColumn": 1,
+                  "endLine": 37,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/jaeger-deployment.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0001",
+          "ruleIndex": 1,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/k8s-api.yaml\nType: kubernetes\nVulnerability KSV-0001\nSeverity: MEDIUM\nMessage: Container 'wait-for-db' of Deployment 'nextgen-api' should set 'securityContext.allowPrivilegeEscalation' to false\nLink: [KSV-0001](https://avd.aquasec.com/misconfig/ksv-0001)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/k8s-api.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 155,
+                  "startColumn": 1,
+                  "endLine": 160,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/k8s-api.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0013",
+          "ruleIndex": 3,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/k8s-api.yaml\nType: kubernetes\nVulnerability KSV-0013\nSeverity: MEDIUM\nMessage: Container 'api' of Deployment 'nextgen-api' should specify an image tag\nLink: [KSV-0013](https://avd.aquasec.com/misconfig/ksv-0013)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/k8s-api.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 169,
+                  "startColumn": 1,
+                  "endLine": 280,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/k8s-api.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0013",
+          "ruleIndex": 3,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/k8s-api.yaml\nType: kubernetes\nVulnerability KSV-0013\nSeverity: MEDIUM\nMessage: Container 'wait-for-db' of Deployment 'nextgen-api' should specify an image tag\nLink: [KSV-0013](https://avd.aquasec.com/misconfig/ksv-0013)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/k8s-api.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 155,
+                  "startColumn": 1,
+                  "endLine": 160,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/k8s-api.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0014",
+          "ruleIndex": 4,
+          "level": "error",
+          "message": {
+            "text": "Artifact: k8s/k8s-api.yaml\nType: kubernetes\nVulnerability KSV-0014\nSeverity: HIGH\nMessage: Container 'wait-for-db' of Deployment 'nextgen-api' should set 'securityContext.readOnlyRootFilesystem' to true\nLink: [KSV-0014](https://avd.aquasec.com/misconfig/ksv-0014)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/k8s-api.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 155,
+                  "startColumn": 1,
+                  "endLine": 160,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/k8s-api.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0022",
+          "ruleIndex": 9,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/k8s-api.yaml\nType: kubernetes\nVulnerability KSV-0022\nSeverity: MEDIUM\nMessage: Container 'api' of Deployment 'nextgen-api' should not set 'securityContext.capabilities.add'\nLink: [KSV-0022](https://avd.aquasec.com/misconfig/ksv-0022)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/k8s-api.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 169,
+                  "startColumn": 1,
+                  "endLine": 280,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/k8s-api.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-01010",
+          "ruleIndex": 8,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/k8s-api.yaml\nType: kubernetes\nVulnerability KSV-01010\nSeverity: MEDIUM\nMessage: ConfigMap 'nextgen-api-config' in 'nextgen' namespace stores sensitive contents in key(s) or value(s) '{\"METRICS_PORT\", \"PORT\"}'\nLink: [KSV-01010](https://avd.aquasec.com/misconfig/ksv-01010)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/k8s-api.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 14,
+                  "startColumn": 1,
+                  "endLine": 14,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/k8s-api.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0113",
+          "ruleIndex": 10,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/k8s-api.yaml\nType: kubernetes\nVulnerability KSV-0113\nSeverity: MEDIUM\nMessage: Role 'nextgen-api-role' shouldn't have access to manage secrets in namespace 'nextgen'\nLink: [KSV-0113](https://avd.aquasec.com/misconfig/ksv-0113)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/k8s-api.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 69,
+                  "startColumn": 1,
+                  "endLine": 71,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/k8s-api.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0012",
+          "ruleIndex": 2,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/k8s-production.yaml\nType: kubernetes\nVulnerability KSV-0012\nSeverity: MEDIUM\nMessage: Container 'minio' of Deployment 'minio' should set 'securityContext.runAsNonRoot' to true\nLink: [KSV-0012](https://avd.aquasec.com/misconfig/ksv-0012)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/k8s-production.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 369,
+                  "startColumn": 1,
+                  "endLine": 422,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/k8s-production.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0012",
+          "ruleIndex": 2,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/k8s-production.yaml\nType: kubernetes\nVulnerability KSV-0012\nSeverity: MEDIUM\nMessage: Container 'redis' of Deployment 'redis' should set 'securityContext.runAsNonRoot' to true\nLink: [KSV-0012](https://avd.aquasec.com/misconfig/ksv-0012)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/k8s-production.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 264,
+                  "startColumn": 1,
+                  "endLine": 324,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/k8s-production.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0013",
+          "ruleIndex": 3,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/k8s-production.yaml\nType: kubernetes\nVulnerability KSV-0013\nSeverity: MEDIUM\nMessage: Container 'api' of Deployment 'nextgen-api' should specify an image tag\nLink: [KSV-0013](https://avd.aquasec.com/misconfig/ksv-0013)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/k8s-production.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 486,
+                  "startColumn": 1,
+                  "endLine": 579,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/k8s-production.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0013",
+          "ruleIndex": 3,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/k8s-production.yaml\nType: kubernetes\nVulnerability KSV-0013\nSeverity: MEDIUM\nMessage: Container 'minio' of Deployment 'minio' should specify an image tag\nLink: [KSV-0013](https://avd.aquasec.com/misconfig/ksv-0013)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/k8s-production.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 369,
+                  "startColumn": 1,
+                  "endLine": 422,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/k8s-production.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0013",
+          "ruleIndex": 3,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/k8s-production.yaml\nType: kubernetes\nVulnerability KSV-0013\nSeverity: MEDIUM\nMessage: Container 'worker' of Deployment 'nextgen-worker' should specify an image tag\nLink: [KSV-0013](https://avd.aquasec.com/misconfig/ksv-0013)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/k8s-production.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 651,
+                  "startColumn": 1,
+                  "endLine": 687,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/k8s-production.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0014",
+          "ruleIndex": 4,
+          "level": "error",
+          "message": {
+            "text": "Artifact: k8s/k8s-production.yaml\nType: kubernetes\nVulnerability KSV-0014\nSeverity: HIGH\nMessage: Container 'minio' of Deployment 'minio' should set 'securityContext.readOnlyRootFilesystem' to true\nLink: [KSV-0014](https://avd.aquasec.com/misconfig/ksv-0014)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/k8s-production.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 369,
+                  "startColumn": 1,
+                  "endLine": 422,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/k8s-production.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0022",
+          "ruleIndex": 9,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/k8s-production.yaml\nType: kubernetes\nVulnerability KSV-0022\nSeverity: MEDIUM\nMessage: Container 'api' of Deployment 'nextgen-api' should not set 'securityContext.capabilities.add'\nLink: [KSV-0022](https://avd.aquasec.com/misconfig/ksv-0022)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/k8s-production.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 486,
+                  "startColumn": 1,
+                  "endLine": 579,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/k8s-production.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-01010",
+          "ruleIndex": 8,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/k8s-production.yaml\nType: kubernetes\nVulnerability KSV-01010\nSeverity: MEDIUM\nMessage: ConfigMap 'nextgen-api-config' in 'nextgen-prod' namespace stores sensitive contents in key(s) or value(s) '{\"API_PORT\", \"MINIO_PORT\"}'\nLink: [KSV-01010](https://avd.aquasec.com/misconfig/ksv-01010)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/k8s-production.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 14,
+                  "startColumn": 1,
+                  "endLine": 14,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/k8s-production.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0104",
+          "ruleIndex": 5,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/k8s-production.yaml\nType: kubernetes\nVulnerability KSV-0104\nSeverity: MEDIUM\nMessage: container \"api\" of deployment \"nextgen-api\" in \"nextgen-prod\" namespace should specify a seccomp profile\nLink: [KSV-0104](https://avd.aquasec.com/misconfig/ksv-0104)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/k8s-production.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 486,
+                  "startColumn": 1,
+                  "endLine": 579,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/k8s-production.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0104",
+          "ruleIndex": 5,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/k8s-production.yaml\nType: kubernetes\nVulnerability KSV-0104\nSeverity: MEDIUM\nMessage: container \"minio\" of deployment \"minio\" in \"nextgen-prod\" namespace should specify a seccomp profile\nLink: [KSV-0104](https://avd.aquasec.com/misconfig/ksv-0104)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/k8s-production.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 369,
+                  "startColumn": 1,
+                  "endLine": 422,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/k8s-production.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0104",
+          "ruleIndex": 5,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/k8s-production.yaml\nType: kubernetes\nVulnerability KSV-0104\nSeverity: MEDIUM\nMessage: container \"postgres\" of deployment \"postgres\" in \"nextgen-prod\" namespace should specify a seccomp profile\nLink: [KSV-0104](https://avd.aquasec.com/misconfig/ksv-0104)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/k8s-production.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 168,
+                  "startColumn": 1,
+                  "endLine": 220,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/k8s-production.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0104",
+          "ruleIndex": 5,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/k8s-production.yaml\nType: kubernetes\nVulnerability KSV-0104\nSeverity: MEDIUM\nMessage: container \"redis\" of deployment \"redis\" in \"nextgen-prod\" namespace should specify a seccomp profile\nLink: [KSV-0104](https://avd.aquasec.com/misconfig/ksv-0104)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/k8s-production.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 264,
+                  "startColumn": 1,
+                  "endLine": 324,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/k8s-production.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0104",
+          "ruleIndex": 5,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/k8s-production.yaml\nType: kubernetes\nVulnerability KSV-0104\nSeverity: MEDIUM\nMessage: container \"worker\" of deployment \"nextgen-worker\" in \"nextgen-prod\" namespace should specify a seccomp profile\nLink: [KSV-0104](https://avd.aquasec.com/misconfig/ksv-0104)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/k8s-production.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 651,
+                  "startColumn": 1,
+                  "endLine": 687,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/k8s-production.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0118",
+          "ruleIndex": 6,
+          "level": "error",
+          "message": {
+            "text": "Artifact: k8s/k8s-production.yaml\nType: kubernetes\nVulnerability KSV-0118\nSeverity: HIGH\nMessage: deployment minio in nextgen-prod namespace is using the default security context, which allows root privileges\nLink: [KSV-0118](https://avd.aquasec.com/misconfig/ksv-0118)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/k8s-production.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 367,
+                  "startColumn": 1,
+                  "endLine": 426,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/k8s-production.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0125",
+          "ruleIndex": 7,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/k8s-production.yaml\nType: kubernetes\nVulnerability KSV-0125\nSeverity: MEDIUM\nMessage: Container minio in deployment minio (namespace: nextgen-prod) uses an image from an untrusted registry.\nLink: [KSV-0125](https://avd.aquasec.com/misconfig/ksv-0125)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/k8s-production.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 369,
+                  "startColumn": 1,
+                  "endLine": 422,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/k8s-production.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0001",
+          "ruleIndex": 1,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/otel-collector-daemonset.yaml\nType: kubernetes\nVulnerability KSV-0001\nSeverity: MEDIUM\nMessage: Container 'otel-collector' of DaemonSet 'otel-collector' should set 'securityContext.allowPrivilegeEscalation' to false\nLink: [KSV-0001](https://avd.aquasec.com/misconfig/ksv-0001)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/otel-collector-daemonset.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 16,
+                  "startColumn": 1,
+                  "endLine": 39,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/otel-collector-daemonset.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0012",
+          "ruleIndex": 2,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/otel-collector-daemonset.yaml\nType: kubernetes\nVulnerability KSV-0012\nSeverity: MEDIUM\nMessage: Container 'otel-collector' of DaemonSet 'otel-collector' should set 'securityContext.runAsNonRoot' to true\nLink: [KSV-0012](https://avd.aquasec.com/misconfig/ksv-0012)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/otel-collector-daemonset.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 16,
+                  "startColumn": 1,
+                  "endLine": 39,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/otel-collector-daemonset.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0014",
+          "ruleIndex": 4,
+          "level": "error",
+          "message": {
+            "text": "Artifact: k8s/otel-collector-daemonset.yaml\nType: kubernetes\nVulnerability KSV-0014\nSeverity: HIGH\nMessage: Container 'otel-collector' of DaemonSet 'otel-collector' should set 'securityContext.readOnlyRootFilesystem' to true\nLink: [KSV-0014](https://avd.aquasec.com/misconfig/ksv-0014)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/otel-collector-daemonset.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 16,
+                  "startColumn": 1,
+                  "endLine": 39,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/otel-collector-daemonset.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0104",
+          "ruleIndex": 5,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/otel-collector-daemonset.yaml\nType: kubernetes\nVulnerability KSV-0104\nSeverity: MEDIUM\nMessage: container \"otel-collector\" of daemonset \"otel-collector\" in \"monitoring\" namespace should specify a seccomp profile\nLink: [KSV-0104](https://avd.aquasec.com/misconfig/ksv-0104)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/otel-collector-daemonset.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 16,
+                  "startColumn": 1,
+                  "endLine": 39,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/otel-collector-daemonset.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0118",
+          "ruleIndex": 6,
+          "level": "error",
+          "message": {
+            "text": "Artifact: k8s/otel-collector-daemonset.yaml\nType: kubernetes\nVulnerability KSV-0118\nSeverity: HIGH\nMessage: container otel-collector in monitoring namespace is using the default security context\nLink: [KSV-0118](https://avd.aquasec.com/misconfig/ksv-0118)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/otel-collector-daemonset.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 16,
+                  "startColumn": 1,
+                  "endLine": 39,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/otel-collector-daemonset.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0118",
+          "ruleIndex": 6,
+          "level": "error",
+          "message": {
+            "text": "Artifact: k8s/otel-collector-daemonset.yaml\nType: kubernetes\nVulnerability KSV-0118\nSeverity: HIGH\nMessage: daemonset otel-collector in monitoring namespace is using the default security context, which allows root privileges\nLink: [KSV-0118](https://avd.aquasec.com/misconfig/ksv-0118)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/otel-collector-daemonset.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 14,
+                  "startColumn": 1,
+                  "endLine": 43,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/otel-collector-daemonset.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0125",
+          "ruleIndex": 7,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/otel-collector-daemonset.yaml\nType: kubernetes\nVulnerability KSV-0125\nSeverity: MEDIUM\nMessage: Container otel-collector in daemonset otel-collector (namespace: monitoring) uses an image from an untrusted registry.\nLink: [KSV-0125](https://avd.aquasec.com/misconfig/ksv-0125)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/otel-collector-daemonset.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 16,
+                  "startColumn": 1,
+                  "endLine": 39,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/otel-collector-daemonset.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0013",
+          "ruleIndex": 3,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: k8s/secure-deployment.yaml\nType: kubernetes\nVulnerability KSV-0013\nSeverity: MEDIUM\nMessage: Container 'api' of Deployment 'nextgen-api-secure' should specify an image tag\nLink: [KSV-0013](https://avd.aquasec.com/misconfig/ksv-0013)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "k8s/secure-deployment.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 24,
+                  "startColumn": 1,
+                  "endLine": 61,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "k8s/secure-deployment.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "DS-0002",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "Artifact: node_modules/cpu-features/deps/cpu_features/.github/workflows/Dockerfile\nType: dockerfile\nVulnerability DS-0002\nSeverity: HIGH\nMessage: Specify at least 1 USER command in Dockerfile with non-root user as argument\nLink: [DS-0002](https://avd.aquasec.com/misconfig/ds-0002)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "node_modules/cpu-features/deps/cpu_features/.github/workflows/Dockerfile",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 1,
+                  "endLine": 1,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "node_modules/cpu-features/deps/cpu_features/.github/workflows/Dockerfile"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "DS-0001",
+          "ruleIndex": 11,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: node_modules/cpu-features/deps/cpu_features/cmake/ci/docker/amd64/Dockerfile\nType: dockerfile\nVulnerability DS-0001\nSeverity: MEDIUM\nMessage: Specify a tag in the 'FROM' statement for image 'ubuntu'\nLink: [DS-0001](https://avd.aquasec.com/misconfig/ds-0001)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "node_modules/cpu-features/deps/cpu_features/cmake/ci/docker/amd64/Dockerfile",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 3,
+                  "startColumn": 1,
+                  "endLine": 3,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "node_modules/cpu-features/deps/cpu_features/cmake/ci/docker/amd64/Dockerfile"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "DS-0002",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "Artifact: node_modules/cpu-features/deps/cpu_features/cmake/ci/docker/amd64/Dockerfile\nType: dockerfile\nVulnerability DS-0002\nSeverity: HIGH\nMessage: Specify at least 1 USER command in Dockerfile with non-root user as argument\nLink: [DS-0002](https://avd.aquasec.com/misconfig/ds-0002)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "node_modules/cpu-features/deps/cpu_features/cmake/ci/docker/amd64/Dockerfile",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 1,
+                  "endLine": 1,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "node_modules/cpu-features/deps/cpu_features/cmake/ci/docker/amd64/Dockerfile"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "DS-0029",
+          "ruleIndex": 12,
+          "level": "error",
+          "message": {
+            "text": "Artifact: node_modules/cpu-features/deps/cpu_features/cmake/ci/docker/amd64/Dockerfile\nType: dockerfile\nVulnerability DS-0029\nSeverity: HIGH\nMessage: '--no-install-recommends' flag is missed: 'apt-get update -qq \u0026\u0026 DEBIAN_FRONTEND=noninteractive apt-get install -yq git wget libssl-dev build-essential  ninja-build python3 pkgconf libglib2.0-dev \u0026\u0026 apt-get clean \u0026\u0026 rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*'\nLink: [DS-0029](https://avd.aquasec.com/misconfig/ds-0029)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "node_modules/cpu-features/deps/cpu_features/cmake/ci/docker/amd64/Dockerfile",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 7,
+                  "startColumn": 1,
+                  "endLine": 11,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "node_modules/cpu-features/deps/cpu_features/cmake/ci/docker/amd64/Dockerfile"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "DS-0001",
+          "ruleIndex": 11,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: node_modules/cpu-features/deps/cpu_features/cmake/ci/docker/toolchain/Dockerfile\nType: dockerfile\nVulnerability DS-0001\nSeverity: MEDIUM\nMessage: Specify a tag in the 'FROM' statement for image 'ubuntu'\nLink: [DS-0001](https://avd.aquasec.com/misconfig/ds-0001)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "node_modules/cpu-features/deps/cpu_features/cmake/ci/docker/toolchain/Dockerfile",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 3,
+                  "startColumn": 1,
+                  "endLine": 3,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "node_modules/cpu-features/deps/cpu_features/cmake/ci/docker/toolchain/Dockerfile"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "DS-0002",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "Artifact: node_modules/cpu-features/deps/cpu_features/cmake/ci/docker/toolchain/Dockerfile\nType: dockerfile\nVulnerability DS-0002\nSeverity: HIGH\nMessage: Specify at least 1 USER command in Dockerfile with non-root user as argument\nLink: [DS-0002](https://avd.aquasec.com/misconfig/ds-0002)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "node_modules/cpu-features/deps/cpu_features/cmake/ci/docker/toolchain/Dockerfile",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 1,
+                  "endLine": 1,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "node_modules/cpu-features/deps/cpu_features/cmake/ci/docker/toolchain/Dockerfile"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "DS-0029",
+          "ruleIndex": 12,
+          "level": "error",
+          "message": {
+            "text": "Artifact: node_modules/cpu-features/deps/cpu_features/cmake/ci/docker/toolchain/Dockerfile\nType: dockerfile\nVulnerability DS-0029\nSeverity: HIGH\nMessage: '--no-install-recommends' flag is missed: 'apt-get update -qq \u0026\u0026 DEBIAN_FRONTEND=noninteractive apt-get install -yq git wget libssl-dev build-essential  ninja-build python3 pkgconf libglib2.0-dev \u0026\u0026 apt-get clean \u0026\u0026 rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*'\nLink: [DS-0029](https://avd.aquasec.com/misconfig/ds-0029)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "node_modules/cpu-features/deps/cpu_features/cmake/ci/docker/toolchain/Dockerfile",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 7,
+                  "startColumn": 1,
+                  "endLine": 11,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "node_modules/cpu-features/deps/cpu_features/cmake/ci/docker/toolchain/Dockerfile"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "DS-0002",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "Artifact: ops/compliance/Dockerfile.ar-bundle\nType: dockerfile\nVulnerability DS-0002\nSeverity: HIGH\nMessage: Specify at least 1 USER command in Dockerfile with non-root user as argument\nLink: [DS-0002](https://avd.aquasec.com/misconfig/ds-0002)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "ops/compliance/Dockerfile.ar-bundle",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 1,
+                  "endLine": 1,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "ops/compliance/Dockerfile.ar-bundle"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "DS-0002",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "Artifact: ops/compliance/Dockerfile.mfg-bundle\nType: dockerfile\nVulnerability DS-0002\nSeverity: HIGH\nMessage: Specify at least 1 USER command in Dockerfile with non-root user as argument\nLink: [DS-0002](https://avd.aquasec.com/misconfig/ds-0002)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "ops/compliance/Dockerfile.mfg-bundle",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 1,
+                  "endLine": 1,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "ops/compliance/Dockerfile.mfg-bundle"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0001",
+          "ruleIndex": 1,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: ops/deploy/k8s/deployment.yaml\nType: kubernetes\nVulnerability KSV-0001\nSeverity: MEDIUM\nMessage: Container 'api' of Deployment 'nextgen-api' should set 'securityContext.allowPrivilegeEscalation' to false\nLink: [KSV-0001](https://avd.aquasec.com/misconfig/ksv-0001)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "ops/deploy/k8s/deployment.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 26,
+                  "startColumn": 1,
+                  "endLine": 57,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "ops/deploy/k8s/deployment.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0013",
+          "ruleIndex": 3,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: ops/deploy/k8s/deployment.yaml\nType: kubernetes\nVulnerability KSV-0013\nSeverity: MEDIUM\nMessage: Container 'api' of Deployment 'nextgen-api' should specify an image tag\nLink: [KSV-0013](https://avd.aquasec.com/misconfig/ksv-0013)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "ops/deploy/k8s/deployment.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 26,
+                  "startColumn": 1,
+                  "endLine": 57,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "ops/deploy/k8s/deployment.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0014",
+          "ruleIndex": 4,
+          "level": "error",
+          "message": {
+            "text": "Artifact: ops/deploy/k8s/deployment.yaml\nType: kubernetes\nVulnerability KSV-0014\nSeverity: HIGH\nMessage: Container 'api' of Deployment 'nextgen-api' should set 'securityContext.readOnlyRootFilesystem' to true\nLink: [KSV-0014](https://avd.aquasec.com/misconfig/ksv-0014)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "ops/deploy/k8s/deployment.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 26,
+                  "startColumn": 1,
+                  "endLine": 57,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "ops/deploy/k8s/deployment.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0001",
+          "ruleIndex": 1,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: security/opa/sample-violations.yaml\nType: kubernetes\nVulnerability KSV-0001\nSeverity: MEDIUM\nMessage: Container 'app' of Deployment 'insecure-app' should set 'securityContext.allowPrivilegeEscalation' to false\nLink: [KSV-0001](https://avd.aquasec.com/misconfig/ksv-0001)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "security/opa/sample-violations.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 17,
+                  "startColumn": 1,
+                  "endLine": 26,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "security/opa/sample-violations.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0012",
+          "ruleIndex": 2,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: security/opa/sample-violations.yaml\nType: kubernetes\nVulnerability KSV-0012\nSeverity: MEDIUM\nMessage: Container 'app' of Deployment 'insecure-app' should set 'securityContext.runAsNonRoot' to true\nLink: [KSV-0012](https://avd.aquasec.com/misconfig/ksv-0012)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "security/opa/sample-violations.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 17,
+                  "startColumn": 1,
+                  "endLine": 26,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "security/opa/sample-violations.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0013",
+          "ruleIndex": 3,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: security/opa/sample-violations.yaml\nType: kubernetes\nVulnerability KSV-0013\nSeverity: MEDIUM\nMessage: Container 'app' of Deployment 'insecure-app' should specify an image tag\nLink: [KSV-0013](https://avd.aquasec.com/misconfig/ksv-0013)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "security/opa/sample-violations.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 17,
+                  "startColumn": 1,
+                  "endLine": 26,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "security/opa/sample-violations.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0014",
+          "ruleIndex": 4,
+          "level": "error",
+          "message": {
+            "text": "Artifact: security/opa/sample-violations.yaml\nType: kubernetes\nVulnerability KSV-0014\nSeverity: HIGH\nMessage: Container 'app' of Deployment 'insecure-app' should set 'securityContext.readOnlyRootFilesystem' to true\nLink: [KSV-0014](https://avd.aquasec.com/misconfig/ksv-0014)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "security/opa/sample-violations.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 17,
+                  "startColumn": 1,
+                  "endLine": 26,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "security/opa/sample-violations.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0017",
+          "ruleIndex": 13,
+          "level": "error",
+          "message": {
+            "text": "Artifact: security/opa/sample-violations.yaml\nType: kubernetes\nVulnerability KSV-0017\nSeverity: HIGH\nMessage: Container 'app' of Deployment 'insecure-app' should set 'securityContext.privileged' to false\nLink: [KSV-0017](https://avd.aquasec.com/misconfig/ksv-0017)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "security/opa/sample-violations.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 17,
+                  "startColumn": 1,
+                  "endLine": 26,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "security/opa/sample-violations.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0104",
+          "ruleIndex": 5,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: security/opa/sample-violations.yaml\nType: kubernetes\nVulnerability KSV-0104\nSeverity: MEDIUM\nMessage: container \"app\" of deployment \"insecure-app\" in \"default\" namespace should specify a seccomp profile\nLink: [KSV-0104](https://avd.aquasec.com/misconfig/ksv-0104)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "security/opa/sample-violations.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 17,
+                  "startColumn": 1,
+                  "endLine": 26,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "security/opa/sample-violations.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "KSV-0118",
+          "ruleIndex": 6,
+          "level": "error",
+          "message": {
+            "text": "Artifact: security/opa/sample-violations.yaml\nType: kubernetes\nVulnerability KSV-0118\nSeverity: HIGH\nMessage: deployment insecure-app in default namespace is using the default security context, which allows root privileges\nLink: [KSV-0118](https://avd.aquasec.com/misconfig/ksv-0118)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "security/opa/sample-violations.yaml",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 15,
+                  "startColumn": 1,
+                  "endLine": 26,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "security/opa/sample-violations.yaml"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "AWS-0010",
+          "ruleIndex": 14,
+          "level": "warning",
+          "message": {
+            "text": "Artifact: terraform/aws-waf-swagger-block.tf\nType: terraform\nVulnerability AWS-0010\nSeverity: MEDIUM\nMessage: Distribution does not have logging enabled\nLink: [AWS-0010](https://avd.aquasec.com/misconfig/aws-0010)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "terraform/aws-waf-swagger-block.tf",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 129,
+                  "startColumn": 1,
+                  "endLine": 176,
+                  "endColumn": 1
+                }
+              },
+              "message": {
+                "text": "terraform/aws-waf-swagger-block.tf"
+              }
+            }
+          ]
+        }
+      ],
+      "columnKind": "utf16CodeUnits",
+      "originalUriBaseIds": {
+        "ROOTPATH": {
+          "uri": "file:///"
+        }
+      }
+    }
+  ]
+}

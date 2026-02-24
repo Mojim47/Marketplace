@@ -2,10 +2,10 @@ import type { Response } from 'express';
 import * as fc from 'fast-check';
 import { describe, expect, it, vi } from 'vitest';
 import {
-  type SecurityHeadersConfig,
-  SecurityHeadersInterceptor,
   __testing,
   applySecurityHeaders,
+  type SecurityHeadersConfig,
+  SecurityHeadersInterceptor,
 } from './security-headers.interceptor';
 
 const {

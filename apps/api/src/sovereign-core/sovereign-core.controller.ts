@@ -272,10 +272,7 @@ export class SovereignCoreController {
   @Post('risk/process-default')
   async processDefault(
     @Body()
-    body: {
-      voucheeOrganizationId: string;
-      defaultAmount: number;
-    }
+    body: { voucheeOrganizationId: string; defaultAmount: number }
   ) {
     const result = await this.riskEngine.processVoucheeDefault(
       body.voucheeOrganizationId,

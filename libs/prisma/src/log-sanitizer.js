@@ -15,6 +15,7 @@
  * ═══════════════════════════════════════════════════════════════════════════
  */
 import { Logger } from '@nestjs/common';
+
 /**
  * Default sensitive field names (case-insensitive)
  */

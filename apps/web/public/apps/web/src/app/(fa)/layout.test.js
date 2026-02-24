@@ -2,6 +2,7 @@ import { render } from '@testing-library/react';
 import { jsx as _jsx } from 'react/jsx-runtime';
 import { describe, expect, it, vi } from 'vitest';
 import RootLayout from './layout';
+
 describe('fa layout', () => {
   it('renders RTL and Vazir font', () => {
     const { getByTestId, container } = render(

@@ -1,7 +1,7 @@
-﻿'use client';
+'use client';
 
-import { Button, Container, GlassCard, Pill, SectionTitle } from '@/components/ui';
 import { useState } from 'react';
+import { Button, Container, GlassCard, Pill, SectionTitle } from '@/components/ui';
 
 export default function AIDemandPage() {
   const [history, setHistory] = useState('1200000,1500000,1800000,2100000');
@@ -59,41 +59,41 @@ export default function AIDemandPage() {
       <GlassCard className="rounded-3xl p-8">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="text-xs text-slate-300">AI Demand Studio</p>
-            <SectionTitle className="text-3xl text-white">پیش‌بینی تقاضا با مدل ترکیبی</SectionTitle>
+            <p className="text-xs text-slate-500">AI Demand Studio</p>
+            <SectionTitle className="text-3xl text-slate-900">پیش‌بینی تقاضا با مدل ترکیبی</SectionTitle>
           </div>
           <Pill>AI Verified</Pill>
         </div>
-        <p className="mt-4 text-sm text-slate-300">
+        <p className="mt-4 text-sm text-slate-600">
           این محاسبه با پردازش امن و کنترل‌شده انجام می‌شود و خروجی قابل اتکا برای تصمیم‌گیری فروشنده
           ارائه می‌دهد.
         </p>
       </GlassCard>
 
       <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-        <GlassCard className="rounded-3xl p-6 space-y-5">
-          <label className="block text-sm text-slate-200">
+        <GlassCard className="space-y-5 rounded-3xl p-6">
+          <label className="block text-sm text-slate-700">
             تاریخچه فروش (ریال، جداشده با کاما)
             <input
-              className="mt-2 w-full rounded-xl border border-white/20 bg-slate-900/60 p-3 text-sm text-white"
+              className="mt-2 w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm text-slate-900"
               value={history}
               onChange={(e) => setHistory(e.target.value)}
             />
           </label>
 
-          <label className="block text-sm text-slate-200">
+          <label className="block text-sm text-slate-700">
             شاخص واردات (اختیاری)
             <input
-              className="mt-2 w-full rounded-xl border border-white/20 bg-slate-900/60 p-3 text-sm text-white"
+              className="mt-2 w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm text-slate-900"
               value={importIndex}
               onChange={(e) => setImportIndex(e.target.value)}
             />
           </label>
 
-          <label className="block text-sm text-slate-200">
+          <label className="block text-sm text-slate-700">
             نرخ تورم (مثلاً 0.45)
             <input
-              className="mt-2 w-full rounded-xl border border-white/20 bg-slate-900/60 p-3 text-sm text-white"
+              className="mt-2 w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm text-slate-900"
               value={inflation}
               onChange={(e) => setInflation(e.target.value)}
             />
@@ -103,13 +103,13 @@ export default function AIDemandPage() {
             محاسبه هوشمند
           </Button>
 
-          {error ? <div className="text-sm text-red-300">{error}</div> : null}
+          {error ? <div className="text-sm text-red-600">{error}</div> : null}
         </GlassCard>
 
         <GlassCard className="rounded-3xl p-6">
-          <SectionTitle className="text-xl text-white">خروجی مدل</SectionTitle>
-          <p className="mt-2 text-xs text-slate-400">تحلیل لحظه‌ای با فیلترهای اقتصادی</p>
-          <div className="mt-4 rounded-2xl bg-slate-900/60 p-4 text-sm text-slate-100">
+          <SectionTitle className="text-xl text-slate-900">خروجی مدل</SectionTitle>
+          <p className="mt-2 text-xs text-slate-500">تحلیل لحظه‌ای با فیلترهای اقتصادی</p>
+          <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
             {output ? (
               <pre className="whitespace-pre-wrap">{output}</pre>
             ) : (

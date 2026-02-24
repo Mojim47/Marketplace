@@ -13,11 +13,10 @@
  */
 
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { Decimal } from '@prisma/client/runtime/library';
-import { PrismaService } from '../database/prisma.service';
-
 // Use Prisma's FinancialEventType enum directly
 import { FinancialEventType } from '@prisma/client';
+import { Decimal } from '@prisma/client/runtime/library';
+import { PrismaService } from '../database/prisma.service';
 
 interface FinancialEventInput {
   organizationId: string;

@@ -2,11 +2,11 @@ import type { Response } from 'express';
 import * as fc from 'fast-check';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  __testing,
   type DependencyHealth,
   HealthController,
   HealthStatus,
   type SystemMetrics,
-  __testing,
 } from './health.controller';
 
 const {
@@ -271,7 +271,7 @@ describe('Health Check', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          alive: true,
+          status: 'ok',
           timestamp: expect.any(String),
         })
       );

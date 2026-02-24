@@ -14,8 +14,8 @@
   },
   "scripts": {
     "build": "tsc -p .",
-    "test": "vitest run --passWithNoTests",
-    "test:watch": "vitest",
+    "test": "node ../../node_modules/vitest/vitest.mjs run --config vitest.config.ts --passWithNoTests",
+    "test:watch": "node ../../node_modules/vitest/vitest.mjs",
     "coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit"
   },
@@ -31,5 +31,10 @@
   "peerDependencies": {
     "react": "^18.0.0"
   },
-  "keywords": ["ar", "augmented-reality", "webxr", "model-viewer"]
+  "keywords": [
+    "ar",
+    "augmented-reality",
+    "webxr",
+    "model-viewer"
+  ]
 }

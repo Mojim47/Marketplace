@@ -15,7 +15,14 @@ const testInclude =
         'libs/ar/src/**/*.{test,spec}.{ts,tsx}',
         'apps/api/src/search/**/*.{test,spec}.{ts,tsx}',
       ]
-    : [
+    : coverageScope === 'launch'
+      ? [
+          'apps/api/src/auth/auth.service.spec.ts',
+          'apps/api/src/cart/cart.service.spec.ts',
+          'apps/api/src/checkout/checkout.service.spec.ts',
+          'apps/api/src/orders/orders.service.spec.ts',
+        ]
+      : [
         'libs/**/src/**/*.{test,spec}.{ts,tsx}',
         'libs/**/test/**/*.{test,spec}.{ts,tsx}',
         'apps/**/src/**/*.{test,spec}.{ts,tsx}',
@@ -29,7 +36,14 @@ const coverageInclude =
         'libs/ar/src/ARViewer.tsx',
         'apps/api/src/search/ai-search.service.ts',
       ]
-    : ['libs/**/src/**/*.{ts,tsx}', 'apps/**/src/**/*.{ts,tsx}'];
+    : coverageScope === 'launch'
+      ? [
+          'apps/api/src/auth/auth.service.ts',
+          'apps/api/src/cart/cart.service.ts',
+          'apps/api/src/checkout/checkout.service.ts',
+          'apps/api/src/orders/orders.service.ts',
+        ]
+      : ['libs/**/src/**/*.{ts,tsx}', 'apps/**/src/**/*.{ts,tsx}'];
 
 export default defineConfig({
   resolve: {
@@ -37,7 +51,15 @@ export default defineConfig({
       '@nextgen/ui': path.resolve(__dirname, 'libs/ui/src'),
       '@nextgen/types': path.resolve(__dirname, 'libs/types/src'),
       '@nextgen/auth': path.resolve(__dirname, 'libs/auth/src'),
-      '@nextgen/security': path.resolve(__dirname, 'libs/security/src'),
+      '@nextgen/security': path.resolve(__dirname, 'libs/security/src/index.ts'),
+      '@nextgen/config': path.resolve(__dirname, 'libs/config/src'),
+      '@nextgen/waf': path.resolve(__dirname, 'libs/waf/src'),
+      '@nextgen/prisma': path.resolve(__dirname, 'libs/prisma/src'),
+      '@nextgen/context': path.resolve(__dirname, 'libs/context/src'),
+      '@nextgen/common': path.resolve(__dirname, 'libs/common/src'),
+      '@nextgen/validation': path.resolve(__dirname, 'libs/validation/src'),
+      '@nextgen/moodian': path.resolve(__dirname, 'libs/moodian/src'),
+      '@nextgen/resilience': path.resolve(__dirname, 'libs/resilience/src'),
       '@nextgen/admin-core': path.resolve(__dirname, 'libs/admin-core/src'),
       '@nextgen/invoice': path.resolve(__dirname, 'libs/invoice/src'),
       '@nextgen/payment': path.resolve(__dirname, 'libs/payment/src'),
@@ -56,6 +78,7 @@ export default defineConfig({
       '@nextgen/cache': path.resolve(__dirname, 'libs/cache/src'),
       '@nextgen/design-system': path.resolve(__dirname, 'libs/design-system/src'),
       '@nextgen/sc3': path.resolve(__dirname, 'libs/sc3/src'),
+      '@prisma/client': path.resolve(__dirname, 'node_modules/@prisma/client'),
       '@': path.resolve(__dirname, 'src'),
     },
   },
@@ -116,6 +139,8 @@ export default defineConfig({
         'ops/**',
         'scripts/**',
         'check-ready.js',
+        // Native binding wrapper (onnxruntime) is validated via integration; exclude from unit coverage aggregation.
+        'libs/ai/src/embeddings/onnx-embedder.ts',
       ],
 
       // When RELAX_COVERAGE=true, disable "all" instrumentation and thresholds.

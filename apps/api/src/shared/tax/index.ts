@@ -16,7 +16,7 @@
  * Requirements: 9.1, 9.2, 9.3
  */
 
-export * from './tax.module';
-export * from './tax.controller';
-export * from './tax.service';
 export * from './dto';
+export * from './tax.controller';
+export * from './tax.module';
+export * from './tax.service';

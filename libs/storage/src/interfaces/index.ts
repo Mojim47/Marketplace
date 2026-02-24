@@ -2,26 +2,25 @@
 // Storage Interfaces - Barrel Export
 // ═══════════════════════════════════════════════════════════════════════════
 
-export { StorageProviderType } from './storage.interface';
-
 export type {
-  IStorageProvider,
-  FileMetadata,
-  UploadOptions,
+  CopyOptions,
   DownloadOptions,
+  FileMetadata,
+  IStorageProvider,
   ListOptions,
   ListResult,
-  SignedUrlOptions,
-  CopyOptions,
-  MultipartUpload,
-  UploadedPart,
-  StorageHealthCheck,
-  StorageConfigBase,
   LocalStorageConfig,
-  S3StorageConfig,
   MinioStorageConfig,
+  MultipartUpload,
+  S3StorageConfig,
+  SignedUrlOptions,
   StorageConfig,
+  StorageConfigBase,
+  StorageHealthCheck,
+  UploadedPart,
+  UploadOptions,
 } from './storage.interface';
+export { StorageProviderType } from './storage.interface';
 
 export interface UploadFile {
   buffer: Buffer;

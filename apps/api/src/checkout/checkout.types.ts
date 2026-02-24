@@ -52,7 +52,7 @@ export interface BillingAddress {
   economicCode?: string;
 }
 
-export type PaymentMethod = 'ONLINE' | 'CARD_TO_CARD' | 'CREDIT' | 'CHEQUE';
+export type PaymentMethod = 'ONLINE';
 
 export type CheckoutStep = 'CART' | 'SHIPPING' | 'PAYMENT' | 'REVIEW' | 'COMPLETE';
 

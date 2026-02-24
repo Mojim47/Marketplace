@@ -1,6 +1,7 @@
 node_modules/
 dist/
 .env
+.env.production
 *.log
 .prisma/
 prisma/dev.db
@@ -11,10 +12,17 @@ out/
 test-results/
 .lighthouseci/
 *.tsbuildinfo
+.vscode/
+artifacts/
+trivy-local.json
 apps/web/.next/
 apps/admin/.next/
 public/models/
 apps/web/public/models/
 models/
+!ops/assets/ai/models/
+!ops/assets/ai/models/tokenizer.json
+!ops/assets/ai/models/tokenizer_config.json
+ops/assets/ai/models/*.registry.json
 coverage/
 *.lcov

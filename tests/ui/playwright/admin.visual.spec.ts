@@ -1,4 +1,4 @@
-﻿import { expect, test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 const authCookie = {
   name: 'admin-token',
@@ -17,7 +17,14 @@ test.describe('admin visual', () => {
   test('dashboard page', async ({ page }) => {
     await page.context().addCookies([authCookie]);
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: /پنل/ })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /مرکز فرماندهی ادمین/ })).toBeVisible();
     await expect(page).toHaveScreenshot('admin-dashboard.png', { fullPage: true });
+  });
+
+  test('management reports page', async ({ page }) => {
+    await page.context().addCookies([authCookie]);
+    await page.goto('/reports');
+    await expect(page.getByRole('heading', { name: /Management Strategy Panel/i })).toBeVisible();
+    await expect(page).toHaveScreenshot('admin-reports.png', { fullPage: true });
   });
 });

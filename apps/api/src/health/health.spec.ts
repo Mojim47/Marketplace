@@ -1,7 +1,8 @@
-﻿import type { Response } from 'express';
+import type { Response } from 'express';
 import * as fc from 'fast-check';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  __testing,
   DatabaseHealthChecker,
   type DependencyHealth,
   HealthController,
@@ -9,7 +10,6 @@ import {
   RedisHealthChecker,
   StorageHealthChecker,
   type SystemMetrics,
-  __testing,
 } from './health.controller';
 
 const { getSystemMetrics, determineOverallStatus, checkWithTimeout, DEFAULT_CONFIG } = __testing;
@@ -450,7 +450,7 @@ describe('Health Check', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          alive: true,
+          status: 'ok',
           timestamp: expect.any(String),
         })
       );
@@ -508,17 +508,18 @@ describe('Health Check', () => {
 
     it('should return 503 when unhealthy', async () => {
       // Create mock checkers that return unhealthy
-      const mockDbChecker = {
-        name: 'database',
-        check: vi.fn().mockResolvedValue({
+      const unhealthyController = new HealthController();
+      (unhealthyController as any).dependencyCheckers = [
+        {
           name: 'database',
-          status: HealthStatus.UNHEALTHY,
-          message: 'Service unavailable',
-          lastChecked: new Date().toISOString(),
-        }),
-      } as unknown as DatabaseHealthChecker;
-
-      const unhealthyController = new HealthController(mockDbChecker);
+          check: vi.fn().mockResolvedValue({
+            name: 'database',
+            status: HealthStatus.UNHEALTHY,
+            message: 'Service unavailable',
+            lastChecked: new Date().toISOString(),
+          }),
+        },
+      ];
 
       const mockResponse = {
         status: vi.fn().mockReturnThis(),

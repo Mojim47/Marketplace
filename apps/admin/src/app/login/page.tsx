@@ -1,8 +1,8 @@
-﻿'use client';
+'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { LocaleSwitch } from '../../components/LocaleSwitch';
 import { Button } from '../../components/ui/button';
 import { useTraceId } from '../../hooks/use-trace-id';

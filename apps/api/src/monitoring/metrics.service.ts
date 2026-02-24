@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Counter, Gauge, Histogram, Registry, collectDefaultMetrics } from 'prom-client';
+import { Counter, collectDefaultMetrics, Gauge, Histogram, Registry } from 'prom-client';
 
 /**
  * Prometheus Metrics Service
@@ -29,6 +29,19 @@ export class MetricsService {
   public readonly orderLockConflicts: Counter;
   public readonly orderLockInfraErrors: Counter;
   public readonly orderSlaBreaches: Counter;
+  public readonly dependencyGuardrailEventsTotal: Counter;
+  public readonly dependencyCallDuration: Histogram;
+  public readonly dependencyCircuitState: Gauge;
+  public readonly adaptiveThrottleEventsTotal: Counter;
+  public readonly checkoutGuardBlockedTotal: Counter;
+  public readonly checkoutStateCleanupUntrackedTotal: Counter;
+  public readonly aiInferenceTotal: Counter;
+  public readonly aiInferenceLatency: Histogram;
+  public readonly aiShadowEvalTotal: Counter;
+  public readonly aiDriftScore: Histogram;
+  public readonly aiAutoRollbackTotal: Counter;
+  public readonly arOverlayLatency: Histogram;
+  public readonly arOverlayGuardEventsTotal: Counter;
 
   constructor() {
     this.registry = new Registry();
@@ -130,6 +143,101 @@ export class MetricsService {
       name: 'order_sla_breaches_total',
       help: 'Total number of order SLA breaches',
       labelNames: ['vendor_id'],
+      registers: [this.registry],
+    });
+
+    this.dependencyGuardrailEventsTotal = new Counter({
+      name: 'dependency_guardrail_events_total',
+      help: 'Total dependency guardrail events',
+      labelNames: ['dependency', 'event'],
+      registers: [this.registry],
+    });
+
+    this.dependencyCallDuration = new Histogram({
+      name: 'dependency_call_duration_seconds',
+      help: 'Dependency call duration in seconds',
+      labelNames: ['dependency', 'outcome'],
+      buckets: [0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5],
+      registers: [this.registry],
+    });
+
+    this.dependencyCircuitState = new Gauge({
+      name: 'dependency_circuit_state',
+      help: 'Dependency circuit state (0=CLOSED,1=HALF_OPEN,2=OPEN)',
+      labelNames: ['dependency'],
+      registers: [this.registry],
+    });
+
+    this.adaptiveThrottleEventsTotal = new Counter({
+      name: 'adaptive_throttle_events_total',
+      help: 'Adaptive throttle events by module/runtime state',
+      labelNames: ['module', 'runtime_state', 'event'],
+      registers: [this.registry],
+    });
+
+    this.checkoutGuardBlockedTotal = new Counter({
+      name: 'checkout_guard_blocked_total',
+      help: 'Total checkout guard-blocked transitions',
+      labelNames: ['guard', 'guard_reason', 'target_step'],
+      registers: [this.registry],
+    });
+
+    this.checkoutStateCleanupUntrackedTotal = new Counter({
+      name: 'checkout_state_cleanup_untracked_total',
+      help: 'Total checkout state cleanup failures',
+      labelNames: ['action'],
+      registers: [this.registry],
+    });
+
+    this.aiInferenceTotal = new Counter({
+      name: 'ai_inference_total',
+      help: 'Total number of AI inference requests',
+      labelNames: ['model_version', 'outcome', 'cache'],
+      registers: [this.registry],
+    });
+
+    this.aiInferenceLatency = new Histogram({
+      name: 'ai_inference_latency_seconds',
+      help: 'Latency of AI inference requests in seconds',
+      labelNames: ['model_version', 'cache'],
+      buckets: [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2],
+      registers: [this.registry],
+    });
+
+    this.aiShadowEvalTotal = new Counter({
+      name: 'ai_shadow_eval_total',
+      help: 'Total shadow evaluations for AI inference',
+      labelNames: ['model_version', 'shadow_model_version', 'outcome'],
+      registers: [this.registry],
+    });
+
+    this.aiDriftScore = new Histogram({
+      name: 'ai_drift_score',
+      help: 'Observed AI drift score from shadow evaluation',
+      labelNames: ['model_version', 'shadow_model_version'],
+      buckets: [0.01, 0.05, 0.1, 0.2, 0.35, 0.5, 0.75, 1],
+      registers: [this.registry],
+    });
+
+    this.aiAutoRollbackTotal = new Counter({
+      name: 'ai_auto_rollback_total',
+      help: 'Total automatic rollbacks triggered by AI guards',
+      labelNames: ['model_version', 'reason'],
+      registers: [this.registry],
+    });
+
+    this.arOverlayLatency = new Histogram({
+      name: 'ar_overlay_latency_seconds',
+      help: 'End-to-end AR overlay latency in seconds',
+      labelNames: ['stage', 'outcome'],
+      buckets: [0.005, 0.01, 0.02, 0.03, 0.05, 0.075, 0.1, 0.2],
+      registers: [this.registry],
+    });
+
+    this.arOverlayGuardEventsTotal = new Counter({
+      name: 'ar_overlay_guard_events_total',
+      help: 'AR overlay guard events',
+      labelNames: ['reason', 'action'],
       registers: [this.registry],
     });
   }

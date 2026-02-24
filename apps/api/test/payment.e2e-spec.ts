@@ -1,9 +1,9 @@
-import { randomUUID } from 'crypto';
 import type { CanActivate, ExecutionContext, INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { PrismaClient } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { PostgreSqlContainer } from '@testcontainers/postgresql';
+import { randomUUID } from 'crypto';
 import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
