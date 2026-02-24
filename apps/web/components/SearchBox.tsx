@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Search } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import type { FormEvent } from 'react';
 import { l1Categories } from '@/lib/aimarket-taxonomy';
 
 type SuggestionItem = {
@@ -15,6 +16,7 @@ type SuggestionItem = {
 
 type SearchBoxProps = {
   compact?: boolean;
+  mega?: boolean;
 };
 
 function toSearchHref(text: string, categoryScope: string) {
@@ -24,7 +26,7 @@ function toSearchHref(text: string, categoryScope: string) {
     : `/categories?q=${query}&group=${encodeURIComponent(categoryScope)}`;
 }
 
-export function SearchBox({ compact = false }: SearchBoxProps) {
+export function SearchBox({ compact = false, mega = false }: SearchBoxProps) {
   const [query, setQuery] = useState('');
   const [categoryScope, setCategoryScope] = useState('all');
   const [open, setOpen] = useState(false);
@@ -89,7 +91,7 @@ export function SearchBox({ compact = false }: SearchBoxProps) {
     [compact, suggestions]
   );
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     if (!query.trim()) {
       event.preventDefault();
       return;
@@ -113,15 +115,19 @@ export function SearchBox({ compact = false }: SearchBoxProps) {
     <div ref={containerRef} className="relative">
       <form
         action="/categories"
-        className="flex items-center gap-2 rounded-2xl border border-white/20 bg-white/5 px-3 py-2"
+        className={`flex items-center gap-2 rounded-2xl border border-slate-200 bg-white shadow-sm ${
+          mega ? 'px-4 py-3' : 'px-3 py-2'
+        }`}
         method="get"
         onSubmit={handleSubmit}
         data-error-state="false"
         data-empty-state={query.trim().length === 0 ? 'true' : 'false'}
       >
-        <Search size={16} className="text-slate-300" />
+        <Search size={16} className="text-slate-500" />
         <input
-          className="w-full rounded-lg bg-slate-900/85 px-2 py-1.5 text-sm text-slate-100 outline-none placeholder:text-slate-300"
+          className={`w-full rounded-lg bg-white px-2 text-slate-900 outline-none placeholder:text-slate-400 ${
+            mega ? 'py-2 text-base' : 'py-1.5 text-sm'
+          }`}
           name="q"
           placeholder="جست‌وجوی محصول، برند، فروشنده یا کد دسته‌بندی..."
           type="search"
@@ -135,7 +141,7 @@ export function SearchBox({ compact = false }: SearchBoxProps) {
         />
         <select
           aria-label="محدوده دسته بندی"
-          className="rounded-lg border border-white/10 bg-slate-900 px-2 py-1 text-xs text-slate-100"
+          className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-700"
           name="group"
           value={categoryScope}
           onChange={(event) => setCategoryScope(event.target.value)}
@@ -150,12 +156,12 @@ export function SearchBox({ compact = false }: SearchBoxProps) {
       </form>
 
       {!compact && trendingChips.length > 0 ? (
-        <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-slate-300">
+        <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-slate-500">
           {trendingChips.map((keyword) => (
             <Link
               key={`${keyword.label}-${keyword.categorySlug ?? 'all'}`}
               href={toSearchHref(keyword.value, keyword.categorySlug ?? categoryScope)}
-              className="rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 transition hover:border-cyan-300/40 hover:text-cyan-200"
+              className="rounded-full border border-slate-200 bg-white px-2.5 py-1 transition hover:border-orange-300 hover:text-orange-600"
             >
               {keyword.label}
             </Link>
@@ -164,22 +170,22 @@ export function SearchBox({ compact = false }: SearchBoxProps) {
       ) : null}
 
       {open && (isLoading || suggestions.length > 0) ? (
-        <div className="absolute inset-x-0 z-50 mt-2 overflow-hidden rounded-2xl border border-white/10 bg-slate-950/95 p-2 shadow-2xl backdrop-blur">
-          {isLoading ? <p className="px-2 py-2 text-xs text-slate-300">در حال پیشنهاد...</p> : null}
+        <div className="absolute inset-x-0 z-50 mt-2 overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
+          {isLoading ? <p className="px-2 py-2 text-xs text-slate-500">در حال پیشنهاد...</p> : null}
 
           <ul className="space-y-1">
             {suggestions.map((item) => (
               <li key={`${item.type}-${item.value}-${item.categorySlug ?? 'all'}`}>
                 <Link
                   href={toSearchHref(item.value, item.categorySlug ?? categoryScope)}
-                  className="flex items-center justify-between rounded-xl px-2 py-2 text-xs text-slate-100 transition hover:bg-white/5"
+                  className="flex items-center justify-between rounded-xl px-2 py-2 text-xs text-slate-800 transition hover:bg-slate-50"
                   onClick={() => {
                     setQuery(item.value);
                     setOpen(false);
                   }}
                 >
                   <span>{item.label}</span>
-                  <span className="rounded-full border border-white/10 px-2 py-0.5 text-[10px] text-slate-300">
+                  <span className="rounded-full border border-slate-200 px-2 py-0.5 text-[10px] text-slate-500">
                     {item.type === 'history' ? 'History' : item.type === 'trending' ? 'Trending' : 'Category'}
                   </span>
                 </Link>

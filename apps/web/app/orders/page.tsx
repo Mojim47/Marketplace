@@ -32,7 +32,7 @@ const statusMap: Record<string, { label: string; cls: string }> = {
   PAID: { label: 'پرداخت‌شده', cls: 'text-emerald-300 border-emerald-300/30 bg-emerald-500/10' },
   PENDING: { label: 'در انتظار', cls: 'text-amber-300 border-amber-300/30 bg-amber-500/10' },
   FAILED: { label: 'ناموفق', cls: 'text-rose-300 border-rose-300/30 bg-rose-500/10' },
-  SHIPPED: { label: 'ارسال‌شده', cls: 'text-cyan-300 border-cyan-300/30 bg-cyan-500/10' },
+  SHIPPED: { label: 'ارسال‌شده', cls: 'text-orange-600 border-orange-300 bg-orange-50' },
 };
 
 export default function OrdersPage() {
@@ -129,8 +129,8 @@ export default function OrdersPage() {
               key={status}
               className={`rounded-full border px-3 py-1 text-xs ${
                 statusFilter === status
-                  ? 'border-cyan-300/40 bg-cyan-500/15 text-cyan-200'
-                  : 'border-white/15 bg-white/5 text-slate-200'
+                  ? 'border-orange-300 bg-orange-50 text-orange-700'
+                  : 'border-slate-200 bg-slate-50 text-slate-700'
               }`}
               onClick={() => setStatusFilter(status)}
               type="button"
@@ -151,24 +151,24 @@ export default function OrdersPage() {
           {filteredOrders.map((order) => {
             const badge = statusMap[order.status] || {
               label: order.status,
-              cls: 'text-slate-200 border-white/20 bg-white/5',
+              cls: 'text-slate-700 border-slate-300 bg-slate-50',
             };
             return (
               <GlassCard key={order.id} className="rounded-3xl p-6">
                 <div className="grid gap-4 md:grid-cols-[1fr_auto_auto] md:items-center">
                   <div>
-                    <p className="text-xs text-slate-400">{order.orderNumber || order.id}</p>
-                    <p className="mt-2 text-sm text-slate-200">
+                    <p className="text-xs text-slate-500">{order.orderNumber || order.id}</p>
+                    <p className="mt-2 text-sm text-slate-700">
                       {new Date(order.createdAt).toLocaleString('fa-IR')}
                     </p>
-                    <p className="mt-2 text-xs text-slate-400">
+                    <p className="mt-2 text-xs text-slate-500">
                       {strings.items}: {formatter.format(order.items?.length || 0)}
                     </p>
                   </div>
 
-                  <div className="text-sm text-slate-200 md:text-end">
-                    <p className="text-xs text-slate-400">{strings.total}</p>
-                    <p className="mt-1 text-lg font-semibold text-white">
+                  <div className="text-sm text-slate-700 md:text-end">
+                    <p className="text-xs text-slate-500">{strings.total}</p>
+                    <p className="mt-1 text-lg font-semibold text-slate-900">
                       {formatter.format(Number(order.totalAmount || 0))}
                     </p>
                   </div>
@@ -190,7 +190,7 @@ export default function OrdersPage() {
           })}
 
           {!error && filteredOrders.length === 0 ? (
-            <GlassCard className="rounded-3xl p-6 text-sm text-slate-300">{strings.empty}</GlassCard>
+            <GlassCard className="rounded-3xl p-6 text-sm text-slate-600">{strings.empty}</GlassCard>
           ) : null}
         </div>
       </div>

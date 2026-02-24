@@ -1,5 +1,7 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Container, GlassCard, Pill, SectionTitle } from '@/components/ui';
+import { CATALOG_PRODUCTS } from '@/lib/catalog-data';
 import { listCategoryTree } from '@/lib/categories';
 
 type CategoriesPageProps = {
@@ -41,6 +43,8 @@ export default async function CategoriesPage({ searchParams }: CategoriesPagePro
   });
 
   const cards = flatten(tree).filter((item) => item.level === 1 || item.level === 2);
+  const products = CATALOG_PRODUCTS.filter((item) => (group ? item.category === group : true)).slice(0, 12);
+  const money = new Intl.NumberFormat('fa-IR');
 
   return (
     <Container className="py-12">
@@ -104,6 +108,25 @@ export default async function CategoriesPage({ searchParams }: CategoriesPagePro
             </Link>
           </GlassCard>
         ))}
+      </section>
+
+      <section className="mt-10">
+        <div className="mb-4 flex items-center justify-between">
+          <SectionTitle className="text-2xl text-slate-900">محصولات این دسته</SectionTitle>
+          <span className="text-xs text-slate-600">{products.length.toLocaleString('fa-IR')} محصول</span>
+        </div>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+          {products.map((product) => (
+            <Link key={product.id} href={`/product/${product.slug}`} className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm transition hover:-translate-y-0.5">
+              <div className="relative h-32 overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+                <Image src={product.image} alt={product.name} fill className="object-cover" sizes="(min-width:1024px) 20vw, 40vw" />
+              </div>
+              <p className="mt-2 line-clamp-1 text-xs font-semibold text-slate-900">{product.name}</p>
+              <p className="mt-1 text-[11px] text-slate-500">{product.seller}</p>
+              <p className="mt-2 text-xs font-semibold text-slate-800">{money.format(product.priceIrr)} تومان</p>
+            </Link>
+          ))}
+        </div>
       </section>
     </Container>
   );

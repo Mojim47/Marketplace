@@ -1,10 +1,11 @@
 import './design-tokens.css';
 import './globals.css';
 import type { Metadata } from 'next';
-import { Fraunces, Vazirmatn } from 'next/font/google';
+import { Readex_Pro, Vazirmatn } from 'next/font/google';
 import { cookies } from 'next/headers';
 import type { ReactNode } from 'react';
 import { AuthProvider } from '@/components/AuthProvider';
+import { RuntimeThemeAgent } from '@/components/RuntimeThemeAgent';
 import { SiteShell } from '@/components/SiteShell';
 
 const vazirmatn = Vazirmatn({
@@ -13,10 +14,10 @@ const vazirmatn = Vazirmatn({
   variable: '--font-vazirmatn',
 });
 
-const fraunces = Fraunces({
-  subsets: ['latin'],
+const readex = Readex_Pro({
+  subsets: ['latin', 'arabic'],
   display: 'swap',
-  variable: '--font-fraunces',
+  variable: '--font-readex',
 });
 
 export const metadata: Metadata = {
@@ -30,8 +31,9 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   const isRtl = locale.startsWith('fa');
   return (
     <html lang={isRtl ? 'fa' : 'en'} dir={isRtl ? 'rtl' : 'ltr'} data-locale={locale}>
-      <body className={`${vazirmatn.variable} ${fraunces.variable} antialiased`}>
+      <body className={`${vazirmatn.variable} ${readex.variable} antialiased`}>
         <AuthProvider>
+          <RuntimeThemeAgent />
           <SiteShell>{children}</SiteShell>
         </AuthProvider>
       </body>

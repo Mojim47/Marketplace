@@ -136,24 +136,24 @@ export default function ProfilePage() {
             data-error-state={error ? 'true' : 'false'}
             data-empty-state={!form.fullName || !form.phone ? 'true' : 'false'}
           >
-            <h2 className="section-title text-xl text-white">{strings.title}</h2>
+            <h2 className="section-title text-xl text-slate-900">{strings.title}</h2>
             <div className="mt-6 space-y-4 text-sm">
               <div>
-                <label htmlFor="profile-fullname" className="text-xs text-slate-300">{strings.fullName}</label>
+                <label htmlFor="profile-fullname" className="text-xs text-slate-600">{strings.fullName}</label>
                 <input
                   id="profile-fullname"
                   data-testid="profile-fullname"
-                  className="mt-2 w-full rounded-xl border border-white/20 bg-white/5 p-3 text-sm text-white"
+                  className="mt-2 w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm text-slate-900"
                   value={form.fullName}
                   onChange={handleChange('fullName')}
                 />
               </div>
               <div>
-                <label htmlFor="profile-phone" className="text-xs text-slate-300">{strings.phone}</label>
+                <label htmlFor="profile-phone" className="text-xs text-slate-600">{strings.phone}</label>
                 <input
                   id="profile-phone"
                   data-testid="profile-phone"
-                  className="mt-2 w-full rounded-xl border border-white/20 bg-white/5 p-3 text-sm text-white"
+                  className="mt-2 w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm text-slate-900"
                   value={form.phone}
                   onChange={handleChange('phone')}
                 />
@@ -179,16 +179,16 @@ export default function ProfilePage() {
           </form>
 
           <GlassCard className="rounded-3xl p-6" data-testid="profile-status">
-            <h2 className="section-title text-xl text-white">{strings.infoTitle}</h2>
-            <p className="mt-4 text-sm text-slate-300">{strings.infoBody}</p>
+            <h2 className="section-title text-xl text-slate-900">{strings.infoTitle}</h2>
+            <p className="mt-4 text-sm text-slate-600">{strings.infoBody}</p>
             <div className="mt-6 space-y-3 text-sm">
               {[
                 { label: 'Phone verified', status: 'Active' },
                 { label: 'Session hardening', status: 'Enabled' },
                 { label: 'Trace correlation', status: 'Enabled' },
               ].map((item) => (
-                <div key={item.label} className="flex items-center justify-between rounded-2xl bg-white/5 px-4 py-3">
-                  <span className="text-slate-200">{item.label}</span>
+                <div key={item.label} className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
+                  <span className="text-slate-700">{item.label}</span>
                   <span className="text-emerald-300">{item.status}</span>
                 </div>
               ))}

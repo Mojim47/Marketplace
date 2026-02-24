@@ -57,16 +57,16 @@ export default function CheckoutSuccessPage() {
           </div>
 
           {(orderNumber || orderId) ? (
-            <div className="mt-6 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200">
+            <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
               {orderNumber ? <p>شماره سفارش: {orderNumber}</p> : null}
               {orderId ? <p>شناسه سفارش: {orderId}</p> : null}
             </div>
           ) : null}
 
           {paymentStatus ? (
-            <div className="mt-4 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200">
+            <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
               <p>وضعیت پرداخت: {paymentLabel}</p>
-              {paymentMessage ? <p className="mt-2 text-xs text-slate-300">{paymentMessage}</p> : null}
+              {paymentMessage ? <p className="mt-2 text-xs text-slate-600">{paymentMessage}</p> : null}
             </div>
           ) : null}
 

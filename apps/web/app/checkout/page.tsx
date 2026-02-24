@@ -293,11 +293,11 @@ export default function CheckoutPage() {
           }
         />
 
-        <div className="mt-6 grid gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4 sm:grid-cols-4">
+        <div className="mt-6 grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:grid-cols-4">
           {steps.map((step) => (
-            <div key={step.title} className="rounded-xl border border-white/10 px-3 py-2 text-xs text-slate-200">
+            <div key={step.title} className="rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-700">
               <p>{step.title}</p>
-              <p className="mt-1 text-[11px] text-slate-400">{step.status}</p>
+              <p className="mt-1 text-[11px] text-slate-500">{step.status}</p>
             </div>
           ))}
         </div>
@@ -310,38 +310,38 @@ export default function CheckoutPage() {
             data-error-state={error ? 'true' : 'false'}
             data-empty-state={validateForm() ? 'false' : 'true'}
           >
-            <h2 className="section-title text-xl text-white">{strings.customer}</h2>
+            <h2 className="section-title text-xl text-slate-900">{strings.customer}</h2>
             <div className="mt-6 space-y-4 text-sm">
               <div>
-                <label htmlFor="checkout-fullname" className="text-xs text-slate-300">{strings.fullName}</label>
-                <input id="checkout-fullname" className="mt-2 w-full rounded-xl border border-white/20 bg-white/5 p-3 text-sm text-white" value={form.fullName} onChange={handleChange('fullName')} />
+                <label htmlFor="checkout-fullname" className="text-xs text-slate-600">{strings.fullName}</label>
+                <input id="checkout-fullname" className="mt-2 w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm text-slate-900" value={form.fullName} onChange={handleChange('fullName')} />
               </div>
               <div>
-                <label htmlFor="checkout-phone" className="text-xs text-slate-300">{strings.phone}</label>
-                <input id="checkout-phone" className="mt-2 w-full rounded-xl border border-white/20 bg-white/5 p-3 text-sm text-white" value={form.phone} onChange={handleChange('phone')} />
+                <label htmlFor="checkout-phone" className="text-xs text-slate-600">{strings.phone}</label>
+                <input id="checkout-phone" className="mt-2 w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm text-slate-900" value={form.phone} onChange={handleChange('phone')} />
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label htmlFor="checkout-province" className="text-xs text-slate-300">{strings.province}</label>
-                  <input id="checkout-province" className="mt-2 w-full rounded-xl border border-white/20 bg-white/5 p-3 text-sm text-white" value={form.province} onChange={handleChange('province')} />
+                  <label htmlFor="checkout-province" className="text-xs text-slate-600">{strings.province}</label>
+                  <input id="checkout-province" className="mt-2 w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm text-slate-900" value={form.province} onChange={handleChange('province')} />
                 </div>
                 <div>
-                  <label htmlFor="checkout-city" className="text-xs text-slate-300">{strings.city}</label>
-                  <input id="checkout-city" className="mt-2 w-full rounded-xl border border-white/20 bg-white/5 p-3 text-sm text-white" value={form.city} onChange={handleChange('city')} />
+                  <label htmlFor="checkout-city" className="text-xs text-slate-600">{strings.city}</label>
+                  <input id="checkout-city" className="mt-2 w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm text-slate-900" value={form.city} onChange={handleChange('city')} />
                 </div>
               </div>
               <div>
-                <label htmlFor="checkout-address" className="text-xs text-slate-300">{strings.address}</label>
-                <textarea id="checkout-address" className="mt-2 w-full rounded-xl border border-white/20 bg-white/5 p-3 text-sm text-white" value={form.address} onChange={handleChange('address')} rows={3} />
+                <label htmlFor="checkout-address" className="text-xs text-slate-600">{strings.address}</label>
+                <textarea id="checkout-address" className="mt-2 w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm text-slate-900" value={form.address} onChange={handleChange('address')} rows={3} />
               </div>
               <div>
-                <label htmlFor="checkout-postal" className="text-xs text-slate-300">{strings.postalCode}</label>
-                <input id="checkout-postal" className="mt-2 w-full rounded-xl border border-white/20 bg-white/5 p-3 text-sm text-white" value={form.postalCode} onChange={handleChange('postalCode')} />
+                <label htmlFor="checkout-postal" className="text-xs text-slate-600">{strings.postalCode}</label>
+                <input id="checkout-postal" className="mt-2 w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm text-slate-900" value={form.postalCode} onChange={handleChange('postalCode')} />
               </div>
             </div>
 
             <div className="mt-8">
-              <h3 className="text-sm text-slate-300">{strings.payment}</h3>
+              <h3 className="text-sm text-slate-600">{strings.payment}</h3>
               <div className="mt-3 grid gap-3">
                 <div className="flex items-center justify-between rounded-2xl border border-emerald-300/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
                   <span>{strings.card}</span>
@@ -361,30 +361,30 @@ export default function CheckoutPage() {
           </form>
 
           <GlassCard className="sticky top-32 h-fit rounded-3xl p-6" data-testid="checkout-summary">
-            <h2 className="section-title text-xl text-white">{strings.summary}</h2>
+            <h2 className="section-title text-xl text-slate-900">{strings.summary}</h2>
             <div className="mt-6 space-y-4 text-sm">
               {(cart?.items || []).map((item) => (
-                <div key={item.productId} className="flex items-center justify-between text-slate-200">
+                <div key={item.productId} className="flex items-center justify-between text-slate-700">
                   <span>{item.productName}</span>
                   <span>{formatter.format(item.price * item.quantity)}</span>
                 </div>
               ))}
-              <div className="flex items-center justify-between text-slate-300">
+              <div className="flex items-center justify-between text-slate-600">
                 <span>جمع جزئی</span>
                 <span>{formatter.format(cart?.subtotal || 0)}</span>
               </div>
-              <div className="flex items-center justify-between text-slate-300">
+              <div className="flex items-center justify-between text-slate-600">
                 <span>مالیات</span>
                 <span>{formatter.format(cart?.taxAmount || 0)}</span>
               </div>
-              <div className="border-t border-white/10 pt-4 text-white">
+              <div className="border-t border-slate-200 pt-4 text-slate-900">
                 <div className="flex items-center justify-between">
                   <span>{strings.total}</span>
                   <span className="text-lg font-semibold">{formatter.format(cart?.total || 0)}</span>
                 </div>
               </div>
             </div>
-            <div className="mt-6 rounded-2xl border border-dashed border-white/20 p-4 text-xs text-slate-300">
+            <div className="mt-6 rounded-2xl border border-dashed border-slate-300 p-4 text-xs text-slate-600">
               اعتبارسنجی سمت سرور برای موجودی، قیمت و پرداخت در هر مرحله انجام می‌شود.
             </div>
           </GlassCard>

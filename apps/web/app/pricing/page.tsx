@@ -6,7 +6,7 @@ export default function PricingPage() {
       <PageHeader eyebrow="Pricing" title="پلن‌های قیمت‌گذاری" subtitle="مدل قیمت‌گذاری شفاف برای رشد مرحله‌ای محصول." />
       <div className="mt-8 grid gap-4 md:grid-cols-3">
         {['Starter', 'Growth', 'Enterprise'].map((plan) => (
-          <GlassCard key={plan} className="rounded-3xl p-6 text-sm text-slate-200">{plan}</GlassCard>
+          <GlassCard key={plan} className="rounded-3xl p-6 text-sm text-slate-700">{plan}</GlassCard>
         ))}
       </div>
     </Container>

@@ -8,7 +8,7 @@ export default function VerifyEmailPage() {
         title="تایید ایمیل"
         subtitle="برای فعال‌سازی کامل حساب، لینک تایید ارسال‌شده به ایمیل را بررسی کنید."
       />
-      <GlassCard className="mt-8 rounded-3xl p-6 text-sm text-slate-200">
+      <GlassCard className="mt-8 rounded-3xl p-6 text-sm text-slate-700">
         پس از تایید ایمیل، دسترسی به مسیرهای حساس حساب فعال می‌شود.
       </GlassCard>
     </Container>

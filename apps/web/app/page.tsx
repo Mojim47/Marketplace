@@ -1,7 +1,9 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { ArrowUpLeft, Boxes, Brain, Gauge, Layers3, ShieldCheck, Sparkles } from 'lucide-react';
 import { CampaignCarousel } from '@/components/campaign-carousel';
 import { HeroCard } from '@/components/hero-card';
+import { CATALOG_PRODUCTS } from '@/lib/catalog-data';
 import { l1Categories } from '@/lib/aimarket-taxonomy';
 import {
   BentoFeatureGrid,
@@ -16,32 +18,8 @@ import {
   SectionTitle,
 } from '@/components/ui';
 
-const spotlightProducts = [
-  {
-    id: 'x1-ultra',
-    title: 'X1 Ultra Vision',
-    subtitle: 'پرچم دار تصویربرداری + پردازش AI روی دستگاه',
-    price: '۶۹,۹۰۰,۰۰۰',
-    eta: 'تحویل ۲۴ ساعته',
-    score: 96,
-  },
-  {
-    id: 'sound-pro',
-    title: 'Sound Pro Max',
-    subtitle: 'هدفون حرفه ای با نویزکنسلینگ تطبیقی',
-    price: '۱۸,۴۰۰,۰۰۰',
-    eta: 'تحویل امروز',
-    score: 92,
-  },
-  {
-    id: 'home-kit',
-    title: 'Home Neural Kit',
-    subtitle: 'پکیج خانه هوشمند با اتوماسیون کامل',
-    price: '۳۲,۵۰۰,۰۰۰',
-    eta: 'تحویل ۴۸ ساعته',
-    score: 89,
-  },
-];
+const spotlightProducts = CATALOG_PRODUCTS;
+const money = new Intl.NumberFormat('fa-IR');
 
 const workflow = [
   {
@@ -99,23 +77,23 @@ const experienceMetrics = [
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-slate-100 text-slate-900">
       <Container className="py-14 lg:py-20">
         <header className="space-y-8">
           <div className="flex flex-wrap gap-3">
+            <Pill>Alibaba-style Layout</Pill>
             <Pill>نسخه 2026</Pill>
-            <Pill>AI + AR Production</Pill>
-            <Pill>مسیر خرید بدون اصطکاک</Pill>
+            <Pill>جستجوی اولویت‌دار</Pill>
           </div>
 
-          <section className="grid gap-4 rounded-3xl border border-white/10 bg-slate-900/45 p-4 lg:grid-cols-[0.8fr_1.5fr_0.9fr]">
-            <div className="rounded-2xl border border-white/10 bg-black/20 p-4" aria-label="دسته‌بندی‌ها">
-              <p className="text-xs text-cyan-200">دسته‌بندی‌ها</p>
-              <h2 className="section-title mt-2 text-xl text-white">کشف سریع L1/L2/L3</h2>
+          <section className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm lg:grid-cols-[0.9fr_1.55fr_0.85fr]">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4" aria-label="دسته‌بندی‌ها">
+              <p className="text-xs text-orange-600">Categories</p>
+              <h2 className="section-title mt-2 text-xl text-slate-900">کشف سریع L1/L2/L3</h2>
               <div className="mt-4 space-y-2">
                 {l1Categories.slice(0, 4).map((category) => (
-                  <div key={category.slug} className="rounded-xl border border-white/10 bg-white/5 p-3">
-                    <Link href={`/categories?group=${encodeURIComponent(category.slug)}`} className="text-sm text-white hover:text-cyan-200">
+                  <div key={category.slug} className="rounded-xl border border-slate-200 bg-white p-3">
+                    <Link href={`/categories?group=${encodeURIComponent(category.slug)}`} className="text-sm text-slate-800 hover:text-orange-600">
                       {category.name}
                     </Link>
                     <div className="mt-2 flex flex-wrap gap-1">
@@ -123,7 +101,7 @@ export default function HomePage() {
                         <Link
                           key={sub.slug}
                           href={`/categories?group=${encodeURIComponent(category.slug)}&level=${encodeURIComponent(sub.slug)}`}
-                          className="rounded-full border border-white/10 px-2 py-0.5 text-[11px] text-slate-300 hover:text-white"
+                          className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] text-slate-600 hover:text-orange-600"
                         >
                           {sub.name}
                         </Link>
@@ -134,31 +112,31 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-cyan-500/10 via-transparent to-amber-500/10 p-5">
-              <p className="text-xs text-amber-200">Campaign Control Center</p>
-              <h2 className="section-title mt-2 text-3xl text-white">Hero سه‌ستونه AIMarket</h2>
-              <p className="mt-2 text-sm text-slate-300">دسته‌بندی، کمپین و وضعیت کاربر در یک قاب برای تصمیم سریع خرید.</p>
+            <div className="rounded-2xl border border-orange-200 bg-gradient-to-br from-orange-50 via-white to-amber-50 p-5">
+              <p className="text-xs text-orange-600">Campaign Control Center</p>
+              <h2 className="section-title mt-2 text-3xl text-slate-900">Hero سه‌ستونه AIMarket</h2>
+              <p className="mt-2 text-sm text-slate-600">چیدمان شبیه Alibaba: دسته‌بندی + کمپین + پنل کاربر در بالای صفحه.</p>
               <div className="mt-5 grid gap-3 sm:grid-cols-3">
                 {heroCampaigns.map((campaign) => (
-                  <Link key={campaign.title} href={campaign.href} className="rounded-2xl border border-white/10 bg-black/25 p-3 transition hover:-translate-y-1 hover:border-cyan-300/30">
-                    <p className="text-xs text-cyan-200">{campaign.title}</p>
-                    <p className="mt-2 text-xs text-slate-300">{campaign.subtitle}</p>
+                  <Link key={campaign.title} href={campaign.href} className="rounded-2xl border border-orange-200 bg-white p-3 transition hover:-translate-y-1 hover:border-orange-400">
+                    <p className="text-xs text-orange-700">{campaign.title}</p>
+                    <p className="mt-2 text-xs text-slate-600">{campaign.subtitle}</p>
                   </Link>
                 ))}
               </div>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-black/20 p-4" aria-label="پنل کاربر">
-              <p className="text-xs text-emerald-200">پنل کاربر</p>
-              <h2 className="section-title mt-2 text-xl text-white">وضعیت لحظه‌ای حساب</h2>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4" aria-label="پنل کاربر">
+              <p className="text-xs text-orange-600">پنل کاربر</p>
+              <h2 className="section-title mt-2 text-xl text-slate-900">وضعیت لحظه‌ای حساب</h2>
               <div className="mt-4 space-y-3">
                 {userPanelItems.map((item) => (
-                  <div key={item.label} className="rounded-xl border border-white/10 bg-white/5 p-3">
+                  <div key={item.label} className="rounded-xl border border-slate-200 bg-white p-3">
                     <div className="flex items-center justify-between gap-2">
-                      <p className="text-xs text-slate-300">{item.label}</p>
-                      <strong className="text-white">{item.value}</strong>
+                      <p className="text-xs text-slate-600">{item.label}</p>
+                      <strong className="text-slate-900">{item.value}</strong>
                     </div>
-                    <p className="mt-1 text-[11px] text-slate-400">{item.hint}</p>
+                    <p className="mt-1 text-[11px] text-slate-500">{item.hint}</p>
                   </div>
                 ))}
               </div>
@@ -171,7 +149,7 @@ export default function HomePage() {
 
           <div className="grid gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:items-start">
             <div className="space-y-6">
-              <h1 className="section-title text-4xl leading-tight text-white sm:text-5xl lg:text-6xl">
+              <h1 className="section-title text-4xl leading-tight text-slate-900 sm:text-5xl lg:text-6xl">
                 بازار خرید هوشمند
                 <br />
                 برای مشتری حرفه ای و فروشنده جدی
@@ -320,38 +298,43 @@ export default function HomePage() {
 
         <section className="mt-16">
           <div className="mb-6 flex items-center justify-between gap-4">
-            <SectionTitle className="text-3xl text-white">محصولات منتخب امروز</SectionTitle>
-            <Link href="/categories" className="text-sm text-cyan-300 hover:text-cyan-200">
+            <SectionTitle className="text-3xl text-slate-900">Dense Product Grid</SectionTitle>
+            <Link href="/categories" className="text-sm text-orange-600 hover:text-orange-700">
               مشاهده همه محصولات
             </Link>
           </div>
 
-          <div className="grid gap-5 lg:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
             {spotlightProducts.map((product) => (
-              <GlassCard key={product.id} className="rounded-3xl p-6">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h3 className="section-title text-2xl text-white">{product.title}</h3>
-                    <p className="mt-2 text-sm leading-6 text-slate-300">{product.subtitle}</p>
+              <GlassCard key={product.id} className="rounded-2xl border border-slate-200 bg-white p-4">
+                <Link href={`/product/${product.slug}`} className="block">
+                  <div className="relative mb-3 h-36 overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+                    <Image src={product.image} alt={product.name} fill className="object-cover" sizes="(min-width: 1024px) 18vw, 45vw" />
                   </div>
-                  <span className="rounded-full border border-cyan-300/30 bg-cyan-400/10 px-3 py-1 text-xs text-cyan-200">
-                    Match {product.score}%
+                </Link>
+                <div className="flex items-start justify-between gap-2">
+                  <h3 className="line-clamp-1 text-sm font-semibold text-slate-900">{product.name}</h3>
+                  <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] text-emerald-700">
+                    {product.rating.toFixed(1)}
                   </span>
                 </div>
+                <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-600">{product.summary}</p>
+                <p className="mt-2 text-[11px] text-slate-500">Seller: {product.seller}</p>
+                <p className="text-[11px] text-slate-500">MOQ: {product.minOrderQty} عدد</p>
 
-                <div className="mt-5 rounded-2xl border border-white/10 bg-black/20 p-4">
-                  <p className="text-xs text-slate-400">قیمت نهایی</p>
-                  <p className="mt-1 text-2xl font-semibold text-white">{product.price} تومان</p>
-                  <p className="mt-2 text-xs text-emerald-300">{product.eta}</p>
+                <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-2.5">
+                  <p className="text-[11px] text-slate-500">قیمت</p>
+                  <p className="text-sm font-semibold text-slate-900">{money.format(product.priceIrr)} تومان</p>
+                  <p className="mt-1 text-[11px] text-emerald-700">{product.eta}</p>
                 </div>
 
-                <div className="mt-4 flex gap-2">
-                  <Link href="/checkout" className="btn btn-primary inline-flex flex-1 items-center justify-center">
+                <div className="mt-3 flex gap-2">
+                  <Link href="/checkout" className="btn btn-primary inline-flex flex-1 items-center justify-center !px-2 !py-2 !text-xs">
                     خرید سریع
                   </Link>
                   <Link
-                    href={`/categories?q=${encodeURIComponent(product.title)}`}
-                    className="btn btn-outline inline-flex items-center justify-center"
+                    href={`/categories?q=${encodeURIComponent(product.name)}`}
+                    className="btn btn-outline inline-flex items-center justify-center !px-2 !py-2 !text-xs"
                   >
                     مقایسه
                   </Link>
@@ -374,32 +357,32 @@ export default function HomePage() {
         </section>
 
         <section className="mt-16 grid gap-5 lg:grid-cols-4">
-          <GlassCard className="rounded-3xl p-6 lg:col-span-2">
-            <SectionTitle className="text-2xl text-white">اعتماد در خرید</SectionTitle>
-            <p className="mt-3 text-sm leading-7 text-slate-300">
-              امنیت تراکنش، ضمانت بازگشت و پشتیبانی 24/7 به صورت یکپارچه در مسیر خرید فعال هستند.
+          <GlassCard className="rounded-3xl border border-slate-200 bg-white p-6 lg:col-span-2">
+            <SectionTitle className="text-2xl text-slate-900">Seller Trust Block</SectionTitle>
+            <p className="mt-3 text-sm leading-7 text-slate-600">
+              این بخش دقیقاً برای تصمیم سریع خرید B2B/B2C طراحی شده: تایید هویت، زمان پاسخ، و تضمین ارسال.
             </p>
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-3 text-xs text-slate-200">Buyer Protection</div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-3 text-xs text-slate-200">Secure Payment</div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-3 text-xs text-slate-200">Seller Verification</div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-3 text-xs text-slate-200">24/7 Support</div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">Verified Supplier</div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">Trade Assurance</div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">On-time Delivery</div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">Response SLA &lt; 10m</div>
             </div>
           </GlassCard>
 
-          <GlassCard className="rounded-3xl p-6 lg:col-span-2">
-            <SectionTitle className="text-2xl text-white">فروشندگان منتخب</SectionTitle>
+          <GlassCard className="rounded-3xl border border-slate-200 bg-white p-6 lg:col-span-2">
+            <SectionTitle className="text-2xl text-slate-900">فروشندگان منتخب</SectionTitle>
             <div className="mt-5 space-y-3">
               {featuredSellers.map((seller) => (
-                <div key={seller.name} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <div key={seller.name} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm text-white">{seller.name}</p>
-                    <span className="rounded-full border border-emerald-300/30 bg-emerald-500/10 px-2 py-0.5 text-xs text-emerald-200">
+                    <p className="text-sm text-slate-900">{seller.name}</p>
+                    <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700">
                       {seller.badge}
                     </span>
                   </div>
-                  <p className="mt-2 text-xs text-slate-300">Rating {seller.rating} • پاسخ گویی {seller.response}</p>
-                  <Link href={`/categories?seller=${encodeURIComponent(seller.name)}`} className="mt-3 inline-flex text-xs text-cyan-300 hover:text-cyan-200">
+                  <p className="mt-2 text-xs text-slate-600">Rating {seller.rating} • پاسخ گویی {seller.response}</p>
+                  <Link href={`/categories?seller=${encodeURIComponent(seller.name)}`} className="mt-3 inline-flex text-xs text-orange-600 hover:text-orange-700">
                     مشاهده محصولات فروشنده
                   </Link>
                 </div>

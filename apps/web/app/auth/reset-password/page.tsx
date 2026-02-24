@@ -46,7 +46,7 @@ export default function ResetPasswordPage() {
         />
 
         <GlassCard className="mt-8 rounded-3xl p-8">
-          <SectionTitle className="text-2xl text-white">بازنشانی رمز عبور</SectionTitle>
+          <SectionTitle className="text-2xl text-slate-900">بازنشانی رمز عبور</SectionTitle>
 
           <form
             className="mt-6 space-y-4"
@@ -55,10 +55,10 @@ export default function ResetPasswordPage() {
             data-empty-state={!mobile || !code || !newPassword ? 'true' : 'false'}
           >
             <div>
-              <label htmlFor="reset-mobile" className="text-xs text-slate-300">شماره موبایل</label>
+              <label htmlFor="reset-mobile" className="text-xs text-slate-600">شماره موبایل</label>
               <input
                 id="reset-mobile"
-                className="mt-2 w-full rounded-xl border border-white/20 bg-white/5 p-3 text-sm text-white"
+                className="mt-2 w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm text-slate-900"
                 placeholder="09123456789"
                 value={mobile}
                 onChange={(event) => setMobile(event.target.value)}
@@ -66,10 +66,10 @@ export default function ResetPasswordPage() {
               />
             </div>
             <div>
-              <label htmlFor="reset-code" className="text-xs text-slate-300">کد پیامکی</label>
+              <label htmlFor="reset-code" className="text-xs text-slate-600">کد پیامکی</label>
               <input
                 id="reset-code"
-                className="mt-2 w-full rounded-xl border border-white/20 bg-white/5 p-3 text-sm text-white"
+                className="mt-2 w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm text-slate-900"
                 placeholder="1234"
                 value={code}
                 onChange={(event) => setCode(event.target.value)}
@@ -77,11 +77,11 @@ export default function ResetPasswordPage() {
               />
             </div>
             <div>
-              <label htmlFor="reset-password" className="text-xs text-slate-300">رمز عبور جدید</label>
+              <label htmlFor="reset-password" className="text-xs text-slate-600">رمز عبور جدید</label>
               <input
                 id="reset-password"
                 type="password"
-                className="mt-2 w-full rounded-xl border border-white/20 bg-white/5 p-3 text-sm text-white"
+                className="mt-2 w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm text-slate-900"
                 placeholder="حداقل 8 کاراکتر"
                 value={newPassword}
                 onChange={(event) => setNewPassword(event.target.value)}
@@ -99,7 +99,7 @@ export default function ResetPasswordPage() {
           </form>
 
           <div className="mt-6 text-sm">
-            <Link href="/auth/login" className="text-slate-300 transition hover:text-white">بازگشت به صفحه ورود</Link>
+            <Link href="/auth/login" className="text-slate-600 transition hover:text-orange-700">بازگشت به صفحه ورود</Link>
           </div>
         </GlassCard>
       </div>

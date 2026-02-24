@@ -89,12 +89,12 @@ export function SiteShell({ children }: { children: ReactNode }) {
 
   return (
     <>
-      <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/85 backdrop-blur-xl">
-        <div className="border-b border-white/10 bg-white/[0.03]">
-          <Container className="flex flex-wrap items-center gap-3 py-2 text-xs text-slate-300">
+      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur-xl">
+        <div className="border-b border-orange-100 bg-orange-50">
+          <Container className="flex flex-wrap items-center gap-3 py-2 text-xs text-slate-600">
             {statusItems.map((item) => (
-              <span key={item.label} className="rounded-full border border-white/10 px-3 py-1">
-                <strong className="text-white">{item.value}</strong>
+              <span key={item.label} className="rounded-full border border-orange-200 bg-white px-3 py-1">
+                <strong className="text-slate-900">{item.value}</strong>
                 <span className="mx-1">•</span>
                 <span>{item.label}</span>
               </span>
@@ -114,17 +114,17 @@ export function SiteShell({ children }: { children: ReactNode }) {
               {mobileOpen ? <X size={18} /> : <Menu size={18} />}
             </button>
 
-            <Link href="/" className="section-title text-lg text-white sm:text-xl">
+            <Link href="/" className="section-title text-lg text-slate-900 sm:text-xl">
               AIMarket
             </Link>
 
-            <span className="hidden rounded-full border border-amber-300/40 bg-amber-400/10 px-3 py-1 text-[11px] text-amber-200 sm:inline-flex">
+            <span className="hidden rounded-full border border-orange-300 bg-orange-100 px-3 py-1 text-[11px] text-orange-700 sm:inline-flex">
               AIMarket 2026
             </span>
           </div>
 
           <div className="hidden flex-1 lg:block">
-            <SearchBox />
+            <SearchBox mega />
           </div>
 
           <div className="flex items-center gap-2">
@@ -141,7 +141,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
           >
             <button
               type="button"
-              className="inline-flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1.5 text-sm text-slate-200 transition hover:border-white/25 hover:bg-white/5"
+              className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 transition hover:border-orange-300 hover:bg-orange-50"
               aria-expanded={megaOpen}
               aria-haspopup="menu"
             >
@@ -150,18 +150,18 @@ export function SiteShell({ children }: { children: ReactNode }) {
             </button>
 
             {megaOpen ? (
-              <div className="absolute right-0 top-11 z-50 w-[760px] rounded-3xl border border-white/10 bg-slate-950/95 p-5 shadow-2xl backdrop-blur-xl">
+              <div className="absolute right-0 top-11 z-50 w-[760px] rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl">
                 <div className="grid grid-cols-4 gap-3">
                   {megaCategories.map((group) => (
-                    <div key={group.id} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                      <Link href={group.href} className="inline-flex items-center gap-2 text-sm text-white">
-                        <group.icon size={16} className="text-cyan-300" />
+                    <div key={group.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                      <Link href={group.href} className="inline-flex items-center gap-2 text-sm text-slate-900">
+                        <group.icon size={16} className="text-orange-500" />
                         {group.title}
                       </Link>
-                      <ul className="mt-3 space-y-2 text-xs text-slate-300">
+                      <ul className="mt-3 space-y-2 text-xs text-slate-600">
                         {group.items.map((item) => (
                           <li key={item.href}>
-                            <Link href={item.href} className="transition hover:text-cyan-200">
+                            <Link href={item.href} className="transition hover:text-orange-600">
                               {item.label}
                             </Link>
                           </li>
@@ -170,27 +170,27 @@ export function SiteShell({ children }: { children: ReactNode }) {
                     </div>
                   ))}
                 </div>
-                <div className="mt-4 rounded-2xl border border-amber-300/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
+                <div className="mt-4 rounded-2xl border border-orange-200 bg-orange-50 px-3 py-2 text-xs text-orange-700">
                   Promotion: دسته‌های منتخب این هفته با اولویت نمایش بالا فعال هستند.
                 </div>
               </div>
             ) : null}
           </div>
 
-          <nav aria-label="main navigation" className="flex flex-wrap gap-2 text-sm text-slate-200" data-keyboard-nav="true">
+          <nav aria-label="main navigation" className="flex flex-wrap gap-2 text-sm text-slate-700" data-keyboard-nav="true">
             {topNav.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className="rounded-full border border-white/10 px-3 py-1.5 transition hover:border-white/25 hover:bg-white/5"
+                className="rounded-full border border-slate-200 px-3 py-1.5 transition hover:border-orange-300 hover:bg-orange-50"
               >
                 {item.label}
               </Link>
             ))}
           </nav>
 
-          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs text-slate-200">
-            <Sparkles size={14} className="text-amber-300" />
+          <div className="flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs text-slate-700">
+            <Sparkles size={14} className="text-orange-500" />
             <span>AIMarket Search-First + AI Recommender فعال است</span>
           </div>
         </Container>
@@ -206,7 +206,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="rounded-xl border border-white/10 px-3 py-2 text-sm text-slate-100"
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700"
                   onClick={() => setMobileOpen(false)}
                 >
                   {item.label}
@@ -214,12 +214,12 @@ export function SiteShell({ children }: { children: ReactNode }) {
               ))}
             </nav>
 
-            <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-300">
+            <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-600">
               {heroCategories.map((category) => (
                 <Link
                   key={category.slug}
                   href={`/categories?group=${encodeURIComponent(category.slug)}`}
-                  className="rounded-xl border border-white/10 px-3 py-2"
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-2"
                   onClick={() => setMobileOpen(false)}
                 >
                   {category.name}
@@ -232,19 +232,19 @@ export function SiteShell({ children }: { children: ReactNode }) {
 
       <main className="min-h-[calc(100vh-260px)]">{children}</main>
 
-      <footer className="mt-20 border-t border-white/10 bg-slate-950/90">
+      <footer className="mt-20 border-t border-slate-200 bg-white">
         <Container className="grid gap-8 py-10 md:grid-cols-4">
           <div className="md:col-span-1">
-            <h2 className="section-title text-xl text-white">AIMarket</h2>
-            <p className="mt-3 text-sm leading-6 text-slate-300">
+            <h2 className="section-title text-xl text-slate-900">AIMarket</h2>
+            <p className="mt-3 text-sm leading-6 text-slate-600">
               زیرساخت تجارت نسل بعد برای خرید هوشمند، تجربه AR و عملیات پایدار در مقیاس سازمانی.
             </p>
-            <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-300">
+            <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-600">
               {quickLinks.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="rounded-full border border-white/10 px-3 py-1"
+                  className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1"
                 >
                   {item.label}
                 </Link>
@@ -254,11 +254,11 @@ export function SiteShell({ children }: { children: ReactNode }) {
 
           {footerGroups.map((group) => (
             <div key={group.title}>
-              <h3 className="text-sm font-semibold text-white">{group.title}</h3>
-              <ul className="mt-3 space-y-2 text-sm text-slate-300">
+              <h3 className="text-sm font-semibold text-slate-900">{group.title}</h3>
+              <ul className="mt-3 space-y-2 text-sm text-slate-600">
                 {group.items.map((item) => (
                   <li key={item.href}>
-                    <Link className="transition hover:text-white" href={item.href}>
+                    <Link className="transition hover:text-orange-600" href={item.href}>
                       {item.label}
                     </Link>
                   </li>

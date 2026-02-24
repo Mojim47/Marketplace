@@ -56,7 +56,7 @@ export default function LoginPage() {
 
         <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_0.9fr]">
           <GlassCard className="rounded-3xl p-8">
-            <SectionTitle className="text-2xl text-white">فرم ورود</SectionTitle>
+            <SectionTitle className="text-2xl text-slate-900">فرم ورود</SectionTitle>
 
             <form
               className="mt-6 space-y-4"
@@ -65,11 +65,11 @@ export default function LoginPage() {
               data-empty-state={!mobile || !password ? 'true' : 'false'}
             >
               <div>
-                <label htmlFor="login-identifier" className="text-xs text-slate-300">شماره موبایل</label>
+                <label htmlFor="login-identifier" className="text-xs text-slate-600">شماره موبایل</label>
                 <input
                   id="login-identifier"
                   type="tel"
-                  className="mt-2 w-full rounded-xl border border-white/20 bg-white/5 p-3 text-sm text-white"
+                  className="mt-2 w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm text-slate-900"
                   placeholder="09123456789"
                   value={mobile}
                   onChange={(event) => setMobile(event.target.value)}
@@ -79,11 +79,11 @@ export default function LoginPage() {
               </div>
 
               <div>
-                <label htmlFor="login-password" className="text-xs text-slate-300">رمز عبور</label>
+                <label htmlFor="login-password" className="text-xs text-slate-600">رمز عبور</label>
                 <input
                   id="login-password"
                   type="password"
-                  className="mt-2 w-full rounded-xl border border-white/20 bg-white/5 p-3 text-sm text-white"
+                  className="mt-2 w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm text-slate-900"
                   placeholder="********"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
@@ -101,21 +101,21 @@ export default function LoginPage() {
             </form>
 
             <div className="mt-6 flex flex-wrap items-center justify-between gap-3 text-sm">
-              <Link href="/auth/forgot-password" className="text-slate-300 transition hover:text-white">
+              <Link href="/auth/forgot-password" className="text-slate-600 transition hover:text-orange-700">
                 فراموشی رمز عبور
               </Link>
-              <Link href="/auth/register" className="text-slate-300 transition hover:text-white">
+              <Link href="/auth/register" className="text-slate-600 transition hover:text-orange-700">
                 حساب ندارید؟ ثبت‌نام
               </Link>
             </div>
           </GlassCard>
 
           <GlassCard className="rounded-3xl p-8">
-            <SectionTitle className="text-2xl text-white">چرا ورود امن مهم است؟</SectionTitle>
-            <ul className="mt-5 space-y-3 text-sm text-slate-300">
-              <li className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">حفظ سبد خرید و تاریخچه سفارش بین نشست‌ها</li>
-              <li className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">تشخیص 401 و ریکاوری خودکار نشست</li>
-              <li className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">اتصال مستقیم به checkout و مسیر پرداخت</li>
+            <SectionTitle className="text-2xl text-slate-900">چرا ورود امن مهم است؟</SectionTitle>
+            <ul className="mt-5 space-y-3 text-sm text-slate-600">
+              <li className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">حفظ سبد خرید و تاریخچه سفارش بین نشست‌ها</li>
+              <li className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">تشخیص 401 و ریکاوری خودکار نشست</li>
+              <li className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">اتصال مستقیم به checkout و مسیر پرداخت</li>
             </ul>
           </GlassCard>
         </div>

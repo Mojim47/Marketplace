@@ -188,15 +188,15 @@ export default function CartPage() {
     return (
       <div className="min-h-screen">
         <div className="mx-auto max-w-4xl px-6 py-12 text-center">
-          <h1 className="section-title text-3xl text-white" data-testid="cart-title">
+          <h1 className="section-title text-3xl text-slate-900" data-testid="cart-title">
             {strings.title}
           </h1>
-          <p className="text-sm text-slate-200">{strings.loginRequired}</p>
+          <p className="text-sm text-slate-700">{strings.loginRequired}</p>
           <div className="mt-6 grid gap-4">
-            <div data-testid="cart-items" className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-xs text-slate-300">
+            <div data-testid="cart-items" className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600">
               برای مشاهده جزئیات سبد خرید وارد حساب شوید.
             </div>
-            <div data-testid="cart-summary" className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-xs text-slate-300">
+            <div data-testid="cart-summary" className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600">
               خلاصه مالی بعد از ورود نمایش داده می‌شود.
             </div>
           </div>
@@ -236,14 +236,14 @@ export default function CartPage() {
         <div className="mt-10 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
           <GlassCard className="rounded-3xl p-6" data-testid="cart-items">
             <div className="flex items-center justify-between">
-              <h2 className="section-title text-xl text-white">{strings.items}</h2>
-              <span className="rounded-full border border-white/15 px-3 py-1 text-xs text-slate-200">
+              <h2 className="section-title text-xl text-slate-900">{strings.items}</h2>
+              <span className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-700">
                 {cart?.items?.length || 0}
               </span>
             </div>
 
             {isEmpty ? (
-              <div className="mt-6 rounded-2xl border border-dashed border-white/20 bg-white/[0.03] p-5 text-sm text-slate-300">
+              <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-600">
                 {strings.empty}
               </div>
             ) : (
@@ -251,18 +251,18 @@ export default function CartPage() {
                 {(cart?.items || []).map((item) => (
                   <div
                     key={item.productId}
-                    className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3"
+                    className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
                   >
                     <div className="space-y-1">
-                      <p className="text-sm text-white">{item.productName}</p>
-                      <p className="text-xs text-slate-300">{item.productSku}</p>
+                      <p className="text-sm text-slate-900">{item.productName}</p>
+                      <p className="text-xs text-slate-600">{item.productSku}</p>
                     </div>
-                    <div className="text-end text-sm text-slate-200">
+                    <div className="text-end text-sm text-slate-700">
                       <p>{formatter.format(item.price)}</p>
                       <div className="mt-2 flex items-center justify-end gap-2">
                         <button
                           type="button"
-                          className="rounded-lg border border-white/20 px-2 py-1 text-xs"
+                          className="rounded-lg border border-slate-300 px-2 py-1 text-xs"
                           onClick={() => updateQuantity(item.productId, Math.max(1, item.quantity - 1))}
                           disabled={busy}
                           aria-busy={busy}
@@ -272,7 +272,7 @@ export default function CartPage() {
                         <span className="text-xs">{item.quantity}</span>
                         <button
                           type="button"
-                          className="rounded-lg border border-white/20 px-2 py-1 text-xs"
+                          className="rounded-lg border border-slate-300 px-2 py-1 text-xs"
                           onClick={() => updateQuantity(item.productId, item.quantity + 1)}
                           disabled={busy}
                           aria-busy={busy}
@@ -295,16 +295,16 @@ export default function CartPage() {
               </div>
             )}
 
-            <div className="mt-8 border-t border-white/10 pt-5">
-              <h3 className="text-sm text-slate-200">{strings.quickAdd}</h3>
+            <div className="mt-8 border-t border-slate-200 pt-5">
+              <h3 className="text-sm text-slate-700">{strings.quickAdd}</h3>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 {catalog.map((product) => (
-                  <div key={product.id} className="rounded-xl border border-white/10 bg-white/5 p-3">
-                    <p className="text-sm text-white">{product.name}</p>
-                    <p className="mt-1 text-xs text-slate-300">{formatter.format(product.price)}</p>
+                  <div key={product.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                    <p className="text-sm text-slate-900">{product.name}</p>
+                    <p className="mt-1 text-xs text-slate-600">{formatter.format(product.price)}</p>
                     <button
                       type="button"
-                      className="mt-3 rounded-full border border-white/20 px-3 py-1 text-xs"
+                      className="mt-3 rounded-full border border-slate-300 px-3 py-1 text-xs"
                       onClick={() => addToCart(product.id)}
                       disabled={busy}
                       aria-busy={busy}
@@ -318,8 +318,8 @@ export default function CartPage() {
           </GlassCard>
 
           <GlassCard className="sticky top-32 rounded-3xl p-6 h-fit" data-testid="cart-summary">
-            <h2 className="section-title text-xl text-white">{strings.summary}</h2>
-            <div className="mt-6 space-y-3 text-sm text-slate-200">
+            <h2 className="section-title text-xl text-slate-900">{strings.summary}</h2>
+            <div className="mt-6 space-y-3 text-sm text-slate-700">
               <div className="flex items-center justify-between">
                 <span>جمع کالاها</span>
                 <span>{formatter.format(cart?.subtotal || 0)}</span>
@@ -336,7 +336,7 @@ export default function CartPage() {
                 <span>ارسال</span>
                 <span>{formatter.format(cart?.shippingCost || 0)}</span>
               </div>
-              <div className="border-t border-white/10 pt-4 text-white">
+              <div className="border-t border-slate-200 pt-4 text-slate-900">
                 <div className="flex items-center justify-between">
                   <span>{strings.total}</span>
                   <span className="text-lg font-semibold">{formatter.format(cart?.total || 0)}</span>

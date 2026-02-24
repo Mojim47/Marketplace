@@ -52,7 +52,7 @@ export default function RegisterPage() {
 
         <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_0.9fr]">
           <GlassCard className="rounded-3xl p-8">
-            <SectionTitle className="text-2xl text-white">فرم ثبت‌نام</SectionTitle>
+            <SectionTitle className="text-2xl text-slate-900">فرم ثبت‌نام</SectionTitle>
 
             <form
               className="mt-6 grid gap-4"
@@ -62,20 +62,20 @@ export default function RegisterPage() {
             >
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label htmlFor="register-first-name" className="text-xs text-slate-300">نام</label>
+                  <label htmlFor="register-first-name" className="text-xs text-slate-600">نام</label>
                   <input
                     id="register-first-name"
-                    className="mt-2 w-full rounded-xl border border-white/20 bg-white/5 p-3 text-sm text-white"
+                    className="mt-2 w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm text-slate-900"
                     placeholder="نام"
                     value={firstName}
                     onChange={(event) => setFirstName(event.target.value)}
                   />
                 </div>
                 <div>
-                  <label htmlFor="register-last-name" className="text-xs text-slate-300">نام خانوادگی</label>
+                  <label htmlFor="register-last-name" className="text-xs text-slate-600">نام خانوادگی</label>
                   <input
                     id="register-last-name"
-                    className="mt-2 w-full rounded-xl border border-white/20 bg-white/5 p-3 text-sm text-white"
+                    className="mt-2 w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm text-slate-900"
                     placeholder="نام خانوادگی"
                     value={lastName}
                     onChange={(event) => setLastName(event.target.value)}
@@ -84,11 +84,11 @@ export default function RegisterPage() {
               </div>
 
               <div>
-                <label htmlFor="register-mobile" className="text-xs text-slate-300">شماره موبایل</label>
+                <label htmlFor="register-mobile" className="text-xs text-slate-600">شماره موبایل</label>
                 <input
                   id="register-mobile"
                   type="tel"
-                  className="mt-2 w-full rounded-xl border border-white/20 bg-white/5 p-3 text-sm text-white"
+                  className="mt-2 w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm text-slate-900"
                   placeholder="09123456789"
                   value={mobile}
                   onChange={(event) => setMobile(event.target.value)}
@@ -98,11 +98,11 @@ export default function RegisterPage() {
               </div>
 
               <div>
-                <label htmlFor="register-password" className="text-xs text-slate-300">رمز عبور</label>
+                <label htmlFor="register-password" className="text-xs text-slate-600">رمز عبور</label>
                 <input
                   id="register-password"
                   type="password"
-                  className="mt-2 w-full rounded-xl border border-white/20 bg-white/5 p-3 text-sm text-white"
+                  className="mt-2 w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm text-slate-900"
                   placeholder="حداقل 8 کاراکتر"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
@@ -121,18 +121,18 @@ export default function RegisterPage() {
             </form>
 
             <div className="mt-6 text-sm">
-              <Link href="/auth/login" className="text-slate-300 transition hover:text-white">
+              <Link href="/auth/login" className="text-slate-600 transition hover:text-orange-700">
                 حساب دارید؟ ورود
               </Link>
             </div>
           </GlassCard>
 
           <GlassCard className="rounded-3xl p-8">
-            <SectionTitle className="text-2xl text-white">مزایای حساب کاربری</SectionTitle>
-            <ul className="mt-5 space-y-3 text-sm text-slate-300">
-              <li className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">ردیابی سفارش و اعلان لحظه‌ای وضعیت</li>
-              <li className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">تسویه سریع با اطلاعات ذخیره‌شده</li>
-              <li className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">پیشنهادهای شخصی‌سازی‌شده مبتنی بر رفتار خرید</li>
+            <SectionTitle className="text-2xl text-slate-900">مزایای حساب کاربری</SectionTitle>
+            <ul className="mt-5 space-y-3 text-sm text-slate-600">
+              <li className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">ردیابی سفارش و اعلان لحظه‌ای وضعیت</li>
+              <li className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">تسویه سریع با اطلاعات ذخیره‌شده</li>
+              <li className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">پیشنهادهای شخصی‌سازی‌شده مبتنی بر رفتار خرید</li>
             </ul>
           </GlassCard>
         </div>

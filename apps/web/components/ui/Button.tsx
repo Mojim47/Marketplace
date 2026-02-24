@@ -21,11 +21,11 @@ const variantClasses: Record<ButtonVariant, string> = {
   outline: 'btn btn-outline',
   ghost: 'btn btn-ghost',
   secondary: 'btn btn-secondary',
-  danger: 'btn border border-rose-400/40 bg-rose-500/20 text-rose-100 hover:bg-rose-500/30',
-  subtle: 'btn border border-white/10 bg-white/5 text-slate-100 hover:bg-white/10',
-  icon: 'btn h-10 w-10 rounded-full border border-white/15 bg-white/5 p-0 text-slate-100 hover:bg-white/10',
+  danger: 'btn border border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100',
+  subtle: 'btn border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100',
+  icon: 'btn h-10 w-10 rounded-full border border-slate-200 bg-white p-0 text-slate-700 hover:bg-slate-100',
   floating:
-    'btn fixed bottom-6 right-6 z-40 h-14 w-14 rounded-full border border-cyan-300/40 bg-cyan-500/25 p-0 text-cyan-100 shadow-2xl hover:bg-cyan-500/35',
+    'btn fixed bottom-6 right-6 z-40 h-14 w-14 rounded-full border border-emerald-300 bg-emerald-500 p-0 text-white shadow-2xl hover:bg-emerald-600',
 };
 
 export function Button({
@@ -38,7 +38,7 @@ export function Button({
   ...props
 }: ButtonProps) {
   const interactiveStates =
-    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/80 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 active:scale-[0.98] transition-transform';
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/80 focus-visible:ring-offset-2 focus-visible:ring-offset-white active:scale-[0.98] transition-transform';
   const classes = `${variantClasses[variant]} ${interactiveStates} ${className}`.trim();
   return (
     <button
