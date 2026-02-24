@@ -3,7 +3,9 @@ import { defineConfig } from '@playwright/test';
 const reuseExistingServer = Boolean(process.env.UI_SERVER_ALREADY_RUNNING);
 const webPort = process.env.UI_WEB_PORT ?? '3000';
 const adminPort = process.env.UI_ADMIN_PORT ?? '3003';
+const vendorPort = process.env.UI_VENDOR_PORT ?? '3002';
 const webBaseUrl = `http://localhost:${webPort}`;
+const vendorBaseUrl = `http://localhost:${vendorPort}`;
 const webStorageState = {
   cookies: [
     {
@@ -50,6 +52,19 @@ const webServer = reuseExistingServer
           CSP_ANALYTICS_DOMAIN: process.env.CSP_ANALYTICS_DOMAIN ?? 'analytics.example.com',
         },
       },
+      {
+        command: 'pnpm --filter @nextgen/vendor-portal dev',
+        url: `${vendorBaseUrl}/livez`,
+        reuseExistingServer,
+        timeout: 120000,
+        env: {
+          ...process.env,
+          PORT: vendorPort,
+          CSP_API_DOMAIN: process.env.CSP_API_DOMAIN ?? 'api.example.com',
+          CSP_CDN_DOMAIN: process.env.CSP_CDN_DOMAIN ?? 'cdn.example.com',
+          CSP_ANALYTICS_DOMAIN: process.env.CSP_ANALYTICS_DOMAIN ?? 'analytics.example.com',
+        },
+      },
     ];
 
 export default defineConfig({
@@ -85,6 +100,13 @@ export default defineConfig({
       testMatch: /.*admin\..*\.spec\.ts/,
       use: {
         baseURL: `http://localhost:${adminPort}`,
+      },
+    },
+    {
+      name: 'vendor',
+      testMatch: /.*vendor\..*\.spec\.ts/,
+      use: {
+        baseURL: vendorBaseUrl,
       },
     },
   ],
