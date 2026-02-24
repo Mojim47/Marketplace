@@ -40,7 +40,8 @@ export class MetricsController {
     const stage = body.stage || 'capture_process_overlay';
     const budgetMs = Number(body.budgetMs ?? 50);
     const latencyMs = Number(body.latencyMs);
-    const outcome = Number.isFinite(latencyMs) && latencyMs <= budgetMs ? 'within_sla' : 'sla_breach';
+    const outcome =
+      Number.isFinite(latencyMs) && latencyMs <= budgetMs ? 'within_sla' : 'sla_breach';
 
     if (Number.isFinite(latencyMs) && latencyMs >= 0) {
       this.metricsService.arOverlayLatency.observe({ stage, outcome }, latencyMs / 1000);

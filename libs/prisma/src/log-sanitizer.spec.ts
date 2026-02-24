@@ -14,7 +14,7 @@
 
 import * as fc from 'fast-check';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { getLogSanitizer, LogSanitizer, sanitizeForLog } from './log-sanitizer';
+import { LogSanitizer, getLogSanitizer, sanitizeForLog } from './log-sanitizer';
 
 // Helper to generate digit strings
 const digitArbitrary = (length: number) =>

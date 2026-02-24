@@ -9,17 +9,17 @@
  * - Cache invalidation on product updates
  */
 
-import fs from 'node:fs';
 import { execFileSync } from 'node:child_process';
+import fs from 'node:fs';
 import path from 'node:path';
 import {
   BadRequestException,
   Injectable,
   Logger,
-  Optional,
-  ServiceUnavailableException,
   type OnModuleDestroy,
   type OnModuleInit,
+  Optional,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { OnnxEmbedder, sha256Hex, verifyModelContract } from '@nextgen/ai';
 import { getCurrentCorrelationContext } from '../_middleware/correlation-id.middleware';
@@ -338,11 +338,21 @@ export class AISearchService implements OnModuleInit, OnModuleDestroy {
     const shadowModelVersion = useCanary ? this.modelVersion : this.canaryModelVersion;
 
     const rankedHits = primaryEmbedder
-      ? await this.rankByEmbedding(cleanedQuery, searchResult.hits, primaryEmbedder, primaryModelVersion)
+      ? await this.rankByEmbedding(
+          cleanedQuery,
+          searchResult.hits,
+          primaryEmbedder,
+          primaryModelVersion
+        )
       : searchResult.hits;
 
     const shadowHits = shadowEmbedder
-      ? await this.rankByEmbedding(cleanedQuery, searchResult.hits, shadowEmbedder, shadowModelVersion)
+      ? await this.rankByEmbedding(
+          cleanedQuery,
+          searchResult.hits,
+          shadowEmbedder,
+          shadowModelVersion
+        )
       : searchResult.hits;
     const shadowEvaluation = this.evaluateShadowDrift(rankedHits, shadowHits, shadowModelVersion);
     this.updateShadowDriftWindow(shadowEvaluation.driftScore);
@@ -684,7 +694,8 @@ export class AISearchService implements OnModuleInit, OnModuleDestroy {
     this.canaryTrafficPercent = 0;
 
     const rollbackScript =
-      process.env.AI_AUTO_ROLLBACK_SCRIPT_PATH || path.join('scripts', 'ai', 'auto-rollback-model.mjs');
+      process.env.AI_AUTO_ROLLBACK_SCRIPT_PATH ||
+      path.join('scripts', 'ai', 'auto-rollback-model.mjs');
     try {
       execFileSync('node', [rollbackScript], {
         stdio: 'pipe',
@@ -748,8 +759,13 @@ export class AISearchService implements OnModuleInit, OnModuleDestroy {
         path.join('public', 'models', 'ai', 'tokenizer.json'),
       tokenizerConfigPath:
         process.env.AI_CANARY_EMBEDDING_TOKENIZER_CONFIG_PATH ??
-        path.join(path.dirname(verified.tokenizerPath ?? verified.artifactPath), 'tokenizer_config.json'),
-      maxLength: Number(process.env.AI_CANARY_EMBEDDING_MAX_LEN ?? process.env.AI_EMBEDDING_MAX_LEN ?? 128),
+        path.join(
+          path.dirname(verified.tokenizerPath ?? verified.artifactPath),
+          'tokenizer_config.json'
+        ),
+      maxLength: Number(
+        process.env.AI_CANARY_EMBEDDING_MAX_LEN ?? process.env.AI_EMBEDDING_MAX_LEN ?? 128
+      ),
       normalize: true,
     });
     await canary.ready();

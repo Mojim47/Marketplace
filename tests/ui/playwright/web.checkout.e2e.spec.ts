@@ -155,7 +155,9 @@ test.describe('web critical e2e', () => {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-          items: [{ productId: 'p1', productName: 'Galaxy Ultra 5G', quantity: 1, price: 45000000 }],
+          items: [
+            { productId: 'p1', productName: 'Galaxy Ultra 5G', quantity: 1, price: 45000000 },
+          ],
           subtotal: 45000000,
           discount: 0,
           shippingCost: 0,
@@ -166,15 +168,27 @@ test.describe('web critical e2e', () => {
     });
 
     await page.route('**/api/backend/checkout/init', async (route) => {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ id: 'sess-1' }) });
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ id: 'sess-1' }),
+      });
     });
 
     await page.route('**/api/backend/checkout/sess-1/shipping', async (route) => {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true }) });
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ok: true }),
+      });
     });
 
     await page.route('**/api/backend/checkout/sess-1/payment', async (route) => {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true }) });
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ok: true }),
+      });
     });
 
     await page.route('**/api/backend/checkout/sess-1/complete', async (route) => {
@@ -213,13 +227,18 @@ test.describe('web critical e2e', () => {
       expect.arrayContaining([
         { prev: 'S5_CART_ACTIVE', next: 'S6_CHECKOUT_INIT', details: expect.any(Object) },
         { prev: 'S6_CHECKOUT_INIT', next: 'S7_CHECKOUT_SHIPPING_SET', details: expect.any(Object) },
-        { prev: 'S7_CHECKOUT_SHIPPING_SET', next: 'S8_CHECKOUT_PAYMENT_SET', details: expect.any(Object) },
+        {
+          prev: 'S7_CHECKOUT_SHIPPING_SET',
+          next: 'S8_CHECKOUT_PAYMENT_SET',
+          details: expect.any(Object),
+        },
         { prev: 'S8_CHECKOUT_PAYMENT_SET', next: 'S9_ORDER_CREATED', details: expect.any(Object) },
       ])
     );
 
     const hasForbiddenDirectTransition = transitions.some(
-      (transition) => transition.prev === 'S6_CHECKOUT_INIT' && transition.next === 'S8_CHECKOUT_PAYMENT_SET'
+      (transition) =>
+        transition.prev === 'S6_CHECKOUT_INIT' && transition.next === 'S8_CHECKOUT_PAYMENT_SET'
     );
     expect(hasForbiddenDirectTransition).toBeFalsy();
 
@@ -248,14 +267,19 @@ test.describe('web critical e2e', () => {
     const reachedCheckoutState = events.some(
       (event) =>
         event.name === 'flow_transition' &&
-        ['S6_CHECKOUT_INIT', 'S7_CHECKOUT_SHIPPING_SET', 'S8_CHECKOUT_PAYMENT_SET', 'S9_ORDER_CREATED'].includes(
-          String(event.payload.next)
-        )
+        [
+          'S6_CHECKOUT_INIT',
+          'S7_CHECKOUT_SHIPPING_SET',
+          'S8_CHECKOUT_PAYMENT_SET',
+          'S9_ORDER_CREATED',
+        ].includes(String(event.payload.next))
     );
     expect(reachedCheckoutState).toBeFalsy();
   });
 
-  test('401 during checkout transitions to S2 and does not transition to S_ERR', async ({ browser }) => {
+  test('401 during checkout transitions to S2 and does not transition to S_ERR', async ({
+    browser,
+  }) => {
     const context = await browser.newContext();
     await context.addCookies([
       {
@@ -296,7 +320,9 @@ test.describe('web critical e2e', () => {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-          items: [{ productId: 'p1', productName: 'Galaxy Ultra 5G', quantity: 1, price: 45000000 }],
+          items: [
+            { productId: 'p1', productName: 'Galaxy Ultra 5G', quantity: 1, price: 45000000 },
+          ],
           subtotal: 45000000,
           discount: 0,
           shippingCost: 0,
@@ -307,7 +333,11 @@ test.describe('web critical e2e', () => {
     });
 
     await page.route('**/api/backend/checkout/init', async (route) => {
-      await route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ message: '401 unauthorized' }) });
+      await route.fulfill({
+        status: 401,
+        contentType: 'application/json',
+        body: JSON.stringify({ message: '401 unauthorized' }),
+      });
     });
 
     await page.goto('/checkout');
@@ -331,7 +361,9 @@ test.describe('web critical e2e', () => {
     );
     expect(hasTokenExpiredTransition).toBeTruthy();
 
-    const hasErrorTransition = transitionLogs.some((event) => event.type === 'flow_transition' && event.next === 'S_ERR');
+    const hasErrorTransition = transitionLogs.some(
+      (event) => event.type === 'flow_transition' && event.next === 'S_ERR'
+    );
     expect(hasErrorTransition).toBeFalsy();
 
     await context.close();
@@ -377,7 +409,9 @@ test.describe('web critical e2e', () => {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-          items: [{ productId: 'p1', productName: 'Galaxy Ultra 5G', quantity: 1, price: 45000000 }],
+          items: [
+            { productId: 'p1', productName: 'Galaxy Ultra 5G', quantity: 1, price: 45000000 },
+          ],
           subtotal: 45000000,
           discount: 0,
           shippingCost: 0,
@@ -388,13 +422,25 @@ test.describe('web critical e2e', () => {
     });
 
     await page.route('**/api/backend/checkout/init', async (route) => {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ id: 'sess-1' }) });
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ id: 'sess-1' }),
+      });
     });
     await page.route('**/api/backend/checkout/sess-1/shipping', async (route) => {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true }) });
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ok: true }),
+      });
     });
     await page.route('**/api/backend/checkout/sess-1/payment', async (route) => {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true }) });
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ok: true }),
+      });
     });
     await page.route('**/api/backend/checkout/sess-1/complete', async (route) => {
       await route.fulfill({

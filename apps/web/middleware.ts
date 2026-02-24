@@ -4,7 +4,9 @@ import { NextResponse } from 'next/server';
 const protectedPrefixes = ['/cart', '/checkout', '/orders', '/profile'];
 
 function isProtectedPath(pathname: string) {
-  return protectedPrefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+  return protectedPrefixes.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+  );
 }
 
 export function middleware(request: NextRequest) {

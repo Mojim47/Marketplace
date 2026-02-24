@@ -20,20 +20,22 @@ type DependencyGuardrailState = {
 
 type GuardrailOptions = Partial<GuardrailPolicy>;
 
-export type GuardrailResult<T> = {
-  ok: true;
-  value: T;
-  attempt: number;
-  durationMs: number;
-  circuitState: CircuitState;
-} | {
-  ok: false;
-  errorCode: string;
-  reason: string;
-  attempt: number;
-  durationMs: number;
-  circuitState: CircuitState;
-};
+export type GuardrailResult<T> =
+  | {
+      ok: true;
+      value: T;
+      attempt: number;
+      durationMs: number;
+      circuitState: CircuitState;
+    }
+  | {
+      ok: false;
+      errorCode: string;
+      reason: string;
+      attempt: number;
+      durationMs: number;
+      circuitState: CircuitState;
+    };
 
 const DEFAULT_POLICY: GuardrailPolicy = {
   timeoutMs: 1200,

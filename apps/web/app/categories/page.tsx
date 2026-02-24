@@ -1,8 +1,8 @@
-import Link from 'next/link';
-import Image from 'next/image';
 import { Container, GlassCard, Pill, SectionTitle } from '@/components/ui';
 import { CATALOG_PRODUCTS } from '@/lib/catalog-data';
 import { listCategoryTree } from '@/lib/categories';
+import Image from 'next/image';
+import Link from 'next/link';
 
 type CategoriesPageProps = {
   searchParams?: Promise<{
@@ -14,7 +14,9 @@ type CategoriesPageProps = {
 
 export const dynamic = 'force-dynamic';
 
-function flatten(nodes: Awaited<ReturnType<typeof listCategoryTree>>): Awaited<ReturnType<typeof listCategoryTree>> {
+function flatten(
+  nodes: Awaited<ReturnType<typeof listCategoryTree>>
+): Awaited<ReturnType<typeof listCategoryTree>> {
   const out: Awaited<ReturnType<typeof listCategoryTree>> = [];
 
   const walk = (items: typeof nodes) => {
@@ -43,7 +45,9 @@ export default async function CategoriesPage({ searchParams }: CategoriesPagePro
   });
 
   const cards = flatten(tree).filter((item) => item.level === 1 || item.level === 2);
-  const products = CATALOG_PRODUCTS.filter((item) => (group ? item.category === group : true)).slice(0, 12);
+  const products = CATALOG_PRODUCTS.filter((item) =>
+    group ? item.category === group : true
+  ).slice(0, 12);
   const money = new Intl.NumberFormat('fa-IR');
 
   return (
@@ -59,7 +63,8 @@ export default async function CategoriesPage({ searchParams }: CategoriesPagePro
         <h1 className="sr-only">دسته‌بندی‌های AIMarket</h1>
 
         <p className="max-w-2xl text-sm text-slate-600">
-          داده‌ها مستقیم از دیتابیس خوانده می‌شوند. scope جست‌وجو (`group`, `level`, `q`) روی همین route اعمال می‌شود.
+          داده‌ها مستقیم از دیتابیس خوانده می‌شوند. scope جست‌وجو (`group`, `level`, `q`) روی همین
+          route اعمال می‌شود.
         </p>
       </header>
 
@@ -84,19 +89,26 @@ export default async function CategoriesPage({ searchParams }: CategoriesPagePro
           <GlassCard key={category.id} className="rounded-3xl p-6">
             <div className="flex items-center justify-between gap-2">
               <h2 className="section-title text-xl text-slate-900">{category.name}</h2>
-              <span className="rounded-full border border-slate-200 px-2 py-0.5 text-[10px] text-slate-600">L{category.level}</span>
+              <span className="rounded-full border border-slate-200 px-2 py-0.5 text-[10px] text-slate-600">
+                L{category.level}
+              </span>
             </div>
             <p className="mt-2 text-xs text-slate-500">slug: {category.slug}</p>
             <p className="mt-4 text-sm text-slate-600">{category.description ?? 'بدون توضیح'}</p>
 
             <div className="mt-4 flex flex-wrap gap-2">
               {category.children.slice(0, 3).map((child) => (
-                <span key={child.id} className="rounded-full border border-slate-200 px-2 py-1 text-xs text-slate-700">
+                <span
+                  key={child.id}
+                  className="rounded-full border border-slate-200 px-2 py-1 text-xs text-slate-700"
+                >
                   {child.name}
                 </span>
               ))}
               {category.children.length === 0 ? (
-                <span className="rounded-full border border-slate-200 px-2 py-1 text-xs text-slate-500">بدون زیرگروه</span>
+                <span className="rounded-full border border-slate-200 px-2 py-1 text-xs text-slate-500">
+                  بدون زیرگروه
+                </span>
               ) : null}
             </div>
 
@@ -113,17 +125,33 @@ export default async function CategoriesPage({ searchParams }: CategoriesPagePro
       <section className="mt-10">
         <div className="mb-4 flex items-center justify-between">
           <SectionTitle className="text-2xl text-slate-900">محصولات این دسته</SectionTitle>
-          <span className="text-xs text-slate-600">{products.length.toLocaleString('fa-IR')} محصول</span>
+          <span className="text-xs text-slate-600">
+            {products.length.toLocaleString('fa-IR')} محصول
+          </span>
         </div>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
           {products.map((product) => (
-            <Link key={product.id} href={`/product/${product.slug}`} className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm transition hover:-translate-y-0.5">
+            <Link
+              key={product.id}
+              href={`/product/${product.slug}`}
+              className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm transition hover:-translate-y-0.5"
+            >
               <div className="relative h-32 overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
-                <Image src={product.image} alt={product.name} fill className="object-cover" sizes="(min-width:1024px) 20vw, 40vw" />
+                <Image
+                  src={product.image}
+                  alt={product.name}
+                  fill
+                  className="object-cover"
+                  sizes="(min-width:1024px) 20vw, 40vw"
+                />
               </div>
-              <p className="mt-2 line-clamp-1 text-xs font-semibold text-slate-900">{product.name}</p>
+              <p className="mt-2 line-clamp-1 text-xs font-semibold text-slate-900">
+                {product.name}
+              </p>
               <p className="mt-1 text-[11px] text-slate-500">{product.seller}</p>
-              <p className="mt-2 text-xs font-semibold text-slate-800">{money.format(product.priceIrr)} تومان</p>
+              <p className="mt-2 text-xs font-semibold text-slate-800">
+                {money.format(product.priceIrr)} تومان
+              </p>
             </Link>
           ))}
         </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { trackUiEvent, type UiEventName } from '@nextgen/observability/src/ui';
+import { type UiEventName, trackUiEvent } from '@nextgen/observability/src/ui';
 
 export function emitUiEvent(name: UiEventName, payload: Record<string, unknown>, traceId?: string) {
   const event = trackUiEvent(name, payload, { traceId });

@@ -90,7 +90,10 @@ export default function SellerDashboardPage() {
             <SectionTitle className="text-xl text-slate-900">بينش‌هاي هوشمند</SectionTitle>
             <div className="mt-4 space-y-3">
               {insights.map((item) => (
-                <div key={item.title} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div
+                  key={item.title}
+                  className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                >
                   <p className="text-sm font-semibold text-slate-900">{item.title}</p>
                   <p className="mt-2 text-xs text-slate-600">{item.body}</p>
                 </div>

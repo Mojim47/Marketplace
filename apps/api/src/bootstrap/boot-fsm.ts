@@ -115,7 +115,9 @@ async function runStepWithBudget(
 
 function assertRequiredConfig(): void {
   const required = ['DATABASE_URL', 'REDIS_URL'];
-  const missing = required.filter((key) => !process.env[key] || process.env[key]?.trim().length === 0);
+  const missing = required.filter(
+    (key) => !process.env[key] || process.env[key]?.trim().length === 0
+  );
   const hasJwtSecret = Boolean(process.env.JWT_SECRET && process.env.JWT_SECRET.length >= 32);
   const hasRsaKeys = Boolean(process.env.JWT_PRIVATE_KEY && process.env.JWT_PUBLIC_KEY);
 

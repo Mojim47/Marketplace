@@ -99,7 +99,10 @@ export function HeroCard() {
 
       <div className="relative grid gap-6 lg:grid-cols-5 [perspective:1400px]">
         <div
-          className={clsx(glass, 'bg-semantic-surface-default/80 lg:col-span-3 p-8 motion-reduce:transform-none')}
+          className={clsx(
+            glass,
+            'bg-semantic-surface-default/80 lg:col-span-3 p-8 motion-reduce:transform-none'
+          )}
           style={
             reducedMotion
               ? undefined
@@ -118,8 +121,8 @@ export function HeroCard() {
           </h2>
 
           <p className="max-w-2xl leading-relaxed text-semantic-text-secondary">
-            ویترین AR محصول با کیفیت عملیاتی: پیش‌نمایش فضایی، ارزیابی ایمنی تجربه، و آمادگی
-            مستقیم برای مسیر خرید.
+            ویترین AR محصول با کیفیت عملیاتی: پیش‌نمایش فضایی، ارزیابی ایمنی تجربه، و آمادگی مستقیم
+            برای مسیر خرید.
           </p>
 
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
@@ -164,7 +167,10 @@ export function HeroCard() {
         </div>
 
         <div
-          className={clsx(glass, 'bg-semantic-surface-default/80 lg:col-span-2 motion-reduce:transform-none')}
+          className={clsx(
+            glass,
+            'bg-semantic-surface-default/80 lg:col-span-2 motion-reduce:transform-none'
+          )}
           style={
             reducedMotion
               ? undefined

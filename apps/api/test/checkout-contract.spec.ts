@@ -1,23 +1,23 @@
 import { randomUUID } from 'node:crypto';
 import {
+  ArgumentsHost,
   Body,
   CanActivate,
   Controller,
   ExceptionFilter,
-  ArgumentsHost,
+  type ExecutionContext,
   Get,
   Global,
+  HttpException,
+  type INestApplication,
   Inject,
   Module,
   Param,
   Post,
   Put,
   Req,
-  UseGuards,
-  HttpException,
-  type ExecutionContext,
-  type INestApplication,
   UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
@@ -251,9 +251,9 @@ class DeterministicHttpExceptionFilter implements ExceptionFilter {
     if (exception instanceof HttpException) {
       const status = exception.getStatus();
       const body = exception.getResponse();
-      response.status(status).json(
-        typeof body === 'string' ? { statusCode: status, message: body } : body
-      );
+      response
+        .status(status)
+        .json(typeof body === 'string' ? { statusCode: status, message: body } : body);
       return;
     }
 
@@ -277,7 +277,10 @@ class TestRedisModule {
   }
 }
 
-const waitForRedisReady = async (redisClient: { ping: () => Promise<unknown> }, timeoutMs: number) => {
+const waitForRedisReady = async (
+  redisClient: { ping: () => Promise<unknown> },
+  timeoutMs: number
+) => {
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
     try {
@@ -388,16 +391,12 @@ describe('Checkout HTTP Contract E2E', () => {
     const secret = process.env.JWT_SECRET || 'development-jwt-secret-32-chars-minimum';
     const issuer = process.env.JWT_ISSUER || 'nextgen-marketplace';
     const audience = process.env.JWT_AUDIENCE || 'nextgen-api';
-    return jwt.sign(
-      { sub: userId, email, role: 'USER' },
-      secret,
-      {
-        algorithm: 'HS256',
-        issuer,
-        audience,
-        expiresIn: '1h',
-      }
-    );
+    return jwt.sign({ sub: userId, email, role: 'USER' }, secret, {
+      algorithm: 'HS256',
+      issuer,
+      audience,
+      expiresIn: '1h',
+    });
   };
 
   beforeAll(async () => {
@@ -417,7 +416,9 @@ describe('Checkout HTTP Contract E2E', () => {
     const { CartService } = await import('../src/cart/cart.service');
     const { CheckoutService } = await import('../src/checkout/checkout.service');
     const { PrismaService } = await import('../src/database/prisma.service');
-    const { CorrelationIdMiddleware } = await import('../src/_middleware/correlation-id.middleware');
+    const { CorrelationIdMiddleware } = await import(
+      '../src/_middleware/correlation-id.middleware'
+    );
 
     prisma = new InMemoryPrismaService();
     redisClient = new RedisMock();
@@ -444,7 +445,12 @@ describe('Checkout HTTP Contract E2E', () => {
             traceId: getCurrentCorrelationContext()?.traceId,
           })
         ),
-      error: (message: string, _stack?: string, _context?: string, metadata?: Record<string, unknown>) =>
+      error: (
+        message: string,
+        _stack?: string,
+        _context?: string,
+        metadata?: Record<string, unknown>
+      ) =>
         console.error(
           JSON.stringify({
             level: 'error',
@@ -479,15 +485,13 @@ describe('Checkout HTTP Contract E2E', () => {
         { provide: 'ORDERS_SERVICE', useValue: ordersServiceInstance },
         { provide: PrismaService, useValue: prisma },
       ],
-    })
-      .compile();
+    }).compile();
 
     app = moduleRef.createNestApplication();
     const correlation = new CorrelationIdMiddleware();
     app.use((req: any, res: any, next: any) => correlation.use(req, res, next));
     app.useGlobalFilters(new DeterministicHttpExceptionFilter());
     await app.init();
-
   }, 180000);
 
   afterAll(async () => {
@@ -615,7 +619,9 @@ describe('Checkout HTTP Contract E2E', () => {
     expect(paymentBeforeShipping.status).toBe(400);
     expect(paymentBeforeShipping.body.message).toBe('checkout_step_transition_forbidden');
 
-    const warnLogs = readJsonLogs(warnSpy).filter((entry) => entry.message === 'checkout_guard_blocked');
+    const warnLogs = readJsonLogs(warnSpy).filter(
+      (entry) => entry.message === 'checkout_guard_blocked'
+    );
     const guardLog = warnLogs.at(-1);
     expect(guardLog).toBeTruthy();
     expect(guardLog?.traceId).toBe(traceId);
@@ -693,16 +699,22 @@ describe('Checkout HTTP Contract E2E', () => {
     expect(Array.isArray(orders.body)).toBe(true);
     expect(orders.body.some((order: any) => order.id === complete.body.orderId)).toBe(true);
 
-    const transitionLogs = readJsonLogs(logSpy).filter((entry) => entry.message === 'checkout_transition');
+    const transitionLogs = readJsonLogs(logSpy).filter(
+      (entry) => entry.message === 'checkout_transition'
+    );
     const checkoutLogs = transitionLogs.filter((entry) => entry.traceId === traceId);
 
-    expect(
-      checkoutLogs.map((entry) => entry.metadata).filter(Boolean)
-    ).toEqual(
+    expect(checkoutLogs.map((entry) => entry.metadata).filter(Boolean)).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ prevState: 'S5_CART_ACTIVE', nextState: 'S6_CHECKOUT_INIT' }),
-        expect.objectContaining({ prevState: 'S6_CHECKOUT_INIT', nextState: 'S7_CHECKOUT_SHIPPING_SET' }),
-        expect.objectContaining({ prevState: 'S7_CHECKOUT_SHIPPING_SET', nextState: 'S8_CHECKOUT_PAYMENT_SET' }),
+        expect.objectContaining({
+          prevState: 'S6_CHECKOUT_INIT',
+          nextState: 'S7_CHECKOUT_SHIPPING_SET',
+        }),
+        expect.objectContaining({
+          prevState: 'S7_CHECKOUT_SHIPPING_SET',
+          nextState: 'S8_CHECKOUT_PAYMENT_SET',
+        }),
         expect.objectContaining({
           prevState: 'S8_CHECKOUT_PAYMENT_SET',
           nextState: 'S9_ORDER_CREATED',

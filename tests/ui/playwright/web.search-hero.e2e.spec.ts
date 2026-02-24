@@ -37,7 +37,10 @@ test.describe('web search + hero flow', () => {
     await page.setViewportSize({ width: 1280, height: 720 });
     await page.goto('/');
 
-    const heroSection = page.locator('section').filter({ hasText: 'Hero سه‌ستونه AIMarket' }).first();
+    const heroSection = page
+      .locator('section')
+      .filter({ hasText: 'Hero سه‌ستونه AIMarket' })
+      .first();
     await expect(heroSection).toBeVisible();
     await expect(heroSection.getByText('کشف سریع L1/L2/L3')).toBeVisible();
     await expect(heroSection.getByText('Campaign Control Center')).toBeVisible();

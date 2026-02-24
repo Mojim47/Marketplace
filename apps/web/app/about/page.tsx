@@ -1,5 +1,5 @@
-import Link from 'next/link';
 import { Container, GlassCard, Pill, SectionTitle } from '@/components/ui';
+import Link from 'next/link';
 
 const values = [
   {
@@ -28,8 +28,8 @@ export default function AboutPage() {
       <header className="mt-6 rounded-3xl border border-slate-200 bg-white p-8">
         <SectionTitle className="text-3xl text-slate-900">داستان AIMarket</SectionTitle>
         <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-600">
-          ما یک مارکت‌پلیس نسل جدید ساخته ایم که همزمان نیاز مشتری، فروشنده و تیم عملیات را پوشش می دهد.
-          هدف ما ایجاد یک پلتفرم سریع، امن و قابل توسعه برای تجارت مدرن است.
+          ما یک مارکت‌پلیس نسل جدید ساخته ایم که همزمان نیاز مشتری، فروشنده و تیم عملیات را پوشش می
+          دهد. هدف ما ایجاد یک پلتفرم سریع، امن و قابل توسعه برای تجارت مدرن است.
         </p>
         <div className="mt-6">
           <Link

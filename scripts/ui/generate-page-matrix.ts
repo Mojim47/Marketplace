@@ -44,17 +44,48 @@ function toRoute(file: string): string | null {
 
 function ownerFor(route: string): string {
   if (route.startsWith('/auth')) return 'identity-team';
-  if (route.startsWith('/checkout') || route.startsWith('/cart') || route.startsWith('/orders')) return 'commerce-team';
-  if (route.startsWith('/profile') || route.startsWith('/billing') || route.startsWith('/notifications')) return 'account-team';
-  if (route === '/' || route.startsWith('/pricing') || route.startsWith('/docs') || route.startsWith('/blog') || route.startsWith('/about')) return 'growth-team';
-  if (route.startsWith('/maintenance') || route.startsWith('/403') || route.startsWith('/empty-state')) return 'platform-team';
+  if (route.startsWith('/checkout') || route.startsWith('/cart') || route.startsWith('/orders'))
+    return 'commerce-team';
+  if (
+    route.startsWith('/profile') ||
+    route.startsWith('/billing') ||
+    route.startsWith('/notifications')
+  )
+    return 'account-team';
+  if (
+    route === '/' ||
+    route.startsWith('/pricing') ||
+    route.startsWith('/docs') ||
+    route.startsWith('/blog') ||
+    route.startsWith('/about')
+  )
+    return 'growth-team';
+  if (
+    route.startsWith('/maintenance') ||
+    route.startsWith('/403') ||
+    route.startsWith('/empty-state')
+  )
+    return 'platform-team';
   return 'web-platform';
 }
 
 function layerFor(route: string): string {
-  if (route === '/' || route.startsWith('/pricing') || route.startsWith('/docs') || route.startsWith('/blog') || route.startsWith('/about')) return 'marketing';
+  if (
+    route === '/' ||
+    route.startsWith('/pricing') ||
+    route.startsWith('/docs') ||
+    route.startsWith('/blog') ||
+    route.startsWith('/about')
+  )
+    return 'marketing';
   if (route.startsWith('/auth')) return 'auth';
-  if (route.startsWith('/maintenance') || route.startsWith('/empty-state') || route.startsWith('/403') || route.startsWith('/offline')) return 'state';
+  if (
+    route.startsWith('/maintenance') ||
+    route.startsWith('/empty-state') ||
+    route.startsWith('/403') ||
+    route.startsWith('/offline')
+  )
+    return 'state';
   return 'app-core';
 }
 
@@ -75,7 +106,11 @@ function main() {
   rows.sort((a, b) => a.route.localeCompare(b.route));
 
   fs.mkdirSync(outDir, { recursive: true });
-  fs.writeFileSync(outJson, JSON.stringify({ generatedAt: new Date().toISOString(), rows }, null, 2), 'utf8');
+  fs.writeFileSync(
+    outJson,
+    JSON.stringify({ generatedAt: new Date().toISOString(), rows }, null, 2),
+    'utf8'
+  );
 
   const lines = [
     '# Page Matrix',

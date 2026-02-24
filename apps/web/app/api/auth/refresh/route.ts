@@ -1,6 +1,6 @@
+import { AUTH_COOKIE_NAME, getApiBaseUrl } from '@/lib/auth-config';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { AUTH_COOKIE_NAME, getApiBaseUrl } from '@/lib/auth-config';
 
 const refreshCookie = 'refresh_token';
 

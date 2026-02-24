@@ -1,12 +1,36 @@
-import { Activity, Cpu, ShieldAlert, Users } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { AdminPanelShell } from '@/components/AdminPanelShell';
+import { Button } from '@/components/ui/button';
+import { Activity, Cpu, ShieldAlert, Users } from 'lucide-react';
 
 const stats = [
-  { label: 'درخواست دقیقه‌ای', value: '18,240', delta: '+9.4%', tone: 'text-emerald-300', spark: [20, 24, 18, 28, 31, 26, 34] },
-  { label: 'کاربران فعال', value: '6,382', delta: '+3.1%', tone: 'text-emerald-300', spark: [16, 17, 19, 22, 21, 24, 23] },
-  { label: 'هشدارهای امنیتی', value: '12', delta: '-2', tone: 'text-amber-300', spark: [13, 14, 12, 11, 12, 12, 10] },
-  { label: 'خطای بحرانی', value: '1', delta: 'stable', tone: 'text-rose-300', spark: [1, 1, 1, 2, 1, 1, 1] },
+  {
+    label: 'درخواست دقیقه‌ای',
+    value: '18,240',
+    delta: '+9.4%',
+    tone: 'text-emerald-300',
+    spark: [20, 24, 18, 28, 31, 26, 34],
+  },
+  {
+    label: 'کاربران فعال',
+    value: '6,382',
+    delta: '+3.1%',
+    tone: 'text-emerald-300',
+    spark: [16, 17, 19, 22, 21, 24, 23],
+  },
+  {
+    label: 'هشدارهای امنیتی',
+    value: '12',
+    delta: '-2',
+    tone: 'text-amber-300',
+    spark: [13, 14, 12, 11, 12, 12, 10],
+  },
+  {
+    label: 'خطای بحرانی',
+    value: '1',
+    delta: 'stable',
+    tone: 'text-rose-300',
+    spark: [1, 1, 1, 2, 1, 1, 1],
+  },
 ];
 
 const liveLog = [
@@ -44,7 +68,9 @@ export default function AdminHomePage() {
       <section className="mt-6 grid gap-6 lg:grid-cols-[1.4fr_0.6fr]">
         <div className="admin-card rounded-3xl p-6">
           <h2 className="admin-title text-xl text-white">نقشه حرارتی تعاملات زنده</h2>
-          <p className="mt-2 text-sm text-slate-300">نقاط داغ تراکنش و رفتار کاربران در 60 ثانیه اخیر.</p>
+          <p className="mt-2 text-sm text-slate-300">
+            نقاط داغ تراکنش و رفتار کاربران در 60 ثانیه اخیر.
+          </p>
           <div className="mt-5 grid grid-cols-8 gap-2 rounded-2xl bg-black/20 p-3">
             {Array.from({ length: 64 }).map((_, idx) => {
               const intensity = (idx * 17) % 100;
@@ -66,7 +92,10 @@ export default function AdminHomePage() {
               { icon: Cpu, label: 'AI Workers', value: '14' },
               { icon: ShieldAlert, label: 'Risk Guards', value: 'Enabled' },
             ].map((item) => (
-              <div key={item.label} className="rounded-xl border border-white/10 bg-white/5 px-3 py-3">
+              <div
+                key={item.label}
+                className="rounded-xl border border-white/10 bg-white/5 px-3 py-3"
+              >
                 <p className="inline-flex items-center gap-2 text-xs text-slate-300">
                   <item.icon size={14} />
                   {item.label}
@@ -100,7 +129,10 @@ export default function AdminHomePage() {
             <h2 className="admin-title text-xl text-white">لاگ زنده سیستم</h2>
             <div className="mt-4 space-y-2 text-xs">
               {liveLog.map((row) => (
-                <div key={`${row.at}-${row.line}`} className="rounded-lg border border-white/10 bg-black/20 p-2">
+                <div
+                  key={`${row.at}-${row.line}`}
+                  className="rounded-lg border border-white/10 bg-black/20 p-2"
+                >
                   <p className="text-slate-400">{row.at}</p>
                   <p
                     className={

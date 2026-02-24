@@ -1,12 +1,12 @@
 import './design-tokens.css';
 import './globals.css';
+import { AuthProvider } from '@/components/AuthProvider';
+import { RuntimeThemeAgent } from '@/components/RuntimeThemeAgent';
+import { SiteShell } from '@/components/SiteShell';
 import type { Metadata } from 'next';
 import { Readex_Pro, Vazirmatn } from 'next/font/google';
 import { cookies } from 'next/headers';
 import type { ReactNode } from 'react';
-import { AuthProvider } from '@/components/AuthProvider';
-import { RuntimeThemeAgent } from '@/components/RuntimeThemeAgent';
-import { SiteShell } from '@/components/SiteShell';
 
 const vazirmatn = Vazirmatn({
   subsets: ['latin', 'arabic'],

@@ -1,8 +1,8 @@
 'use client';
 
+import { useAuth } from '@/components/AuthProvider';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/components/AuthProvider';
 
 export function AuthNavButton() {
   const router = useRouter();

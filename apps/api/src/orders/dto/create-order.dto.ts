@@ -3,8 +3,8 @@ import { Type } from 'class-transformer';
 import {
   IsArray,
   IsEmail,
-  IsNumber,
   IsInt,
+  IsNumber,
   IsOptional,
   IsPhoneNumber,
   IsString,

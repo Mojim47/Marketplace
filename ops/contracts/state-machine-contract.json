@@ -86,10 +86,7 @@
         "RENDERING": ["TRACKING", "DISABLED"],
         "DISABLED": ["CALIBRATING"]
       },
-      "forbiddenTransitions": [
-        ["CALIBRATING", "RENDERING"],
-        ["DISABLED", "RENDERING"]
-      ]
+      "forbiddenTransitions": [["CALIBRATING", "RENDERING"], ["DISABLED", "RENDERING"]]
     }
   ],
   "runtimeReconciliation": {

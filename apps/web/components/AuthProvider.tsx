@@ -1,7 +1,7 @@
 'use client';
 
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { initializeFlowState, transitionFlow } from '@/lib/marketplace-state-machine';
+import { type ReactNode, createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 type AuthUser = {
   id: string;
@@ -59,7 +59,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     transitionFlow('S2_TOKEN_EXPIRED', { reason: 'session_invalid_or_expired' });
     const refreshResponse = await fetch('/api/auth/refresh', { method: 'POST' });
     if (!refreshResponse.ok) {
-      transitionFlow('S3_SESSION_INVALID', { reason: 'refresh_failed', guard: 'auth_refresh_guard' });
+      transitionFlow('S3_SESSION_INVALID', {
+        reason: 'refresh_failed',
+        guard: 'auth_refresh_guard',
+      });
       transitionFlow('S13_LOGGED_OUT', { reason: 'force_logout_after_refresh_fail' });
       setUser(null);
       return;
@@ -88,9 +91,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const id = window.setInterval(() => {
-      refresh().catch(() => undefined);
-    }, 10 * 60 * 1000);
+    const id = window.setInterval(
+      () => {
+        refresh().catch(() => undefined);
+      },
+      10 * 60 * 1000
+    );
 
     return () => window.clearInterval(id);
   }, [user]);
@@ -116,7 +122,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const data = await parseApiResponse(response);
 
     if (!response.ok) {
-      transitionFlow('S_ERR', { reason: 'login_failed', guard: 'login_guard', details: { status: response.status } });
+      transitionFlow('S_ERR', {
+        reason: 'login_failed',
+        guard: 'login_guard',
+        details: { status: response.status },
+      });
       return { ok: false, error: String(data.error ?? 'ورود ناموفق بود'), code: 'login_failed' };
     }
 
@@ -135,7 +145,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const data = await parseApiResponse(response);
 
     if (!response.ok) {
-      transitionFlow('S_ERR', { reason: 'register_failed', guard: 'register_guard', details: { status: response.status } });
+      transitionFlow('S_ERR', {
+        reason: 'register_failed',
+        guard: 'register_guard',
+        details: { status: response.status },
+      });
       return { ok: false, error: String(data.error ?? 'ثبت نام ناموفق بود') };
     }
 

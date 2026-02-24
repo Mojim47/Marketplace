@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { Inject, Injectable, type OnModuleDestroy, type OnModuleInit } from '@nestjs/common';
-import { PrismaService } from '../database/prisma.service';
-import { LoggingService } from '../_observability/logging.service';
-import { DependencyGuardrailsService } from './dependency-guardrails.service';
 import type Redis from 'ioredis';
+import { LoggingService } from '../_observability/logging.service';
+import { PrismaService } from '../database/prisma.service';
+import { DependencyGuardrailsService } from './dependency-guardrails.service';
 
 export enum RuntimeState {
   INIT = 'INIT',
@@ -81,7 +81,9 @@ export class RuntimeReconciliationService implements OnModuleInit, OnModuleDestr
     }
   }
 
-  async reconcileNow(trigger: 'periodic' | 'readiness_probe' | 'startup_probe'): Promise<RuntimeSnapshot> {
+  async reconcileNow(
+    trigger: 'periodic' | 'readiness_probe' | 'startup_probe'
+  ): Promise<RuntimeSnapshot> {
     const traceId = `reconcile-${randomUUID()}`;
     const previousState = this.state;
     const previousReady = this.ready;
@@ -208,7 +210,13 @@ export class RuntimeReconciliationService implements OnModuleInit, OnModuleDestr
             circuitState: result.circuitState,
             lastCheckedAt: new Date().toISOString(),
           });
-          this.applyState(RuntimeState.DEGRADED, false, `${step.name}:${failureReason}`, traceId, trigger);
+          this.applyState(
+            RuntimeState.DEGRADED,
+            false,
+            `${step.name}:${failureReason}`,
+            traceId,
+            trigger
+          );
           return this.snapshot();
         }
 

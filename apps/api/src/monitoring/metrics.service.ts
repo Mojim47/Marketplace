@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Counter, collectDefaultMetrics, Gauge, Histogram, Registry } from 'prom-client';
+import { Counter, Gauge, Histogram, Registry, collectDefaultMetrics } from 'prom-client';
 
 /**
  * Prometheus Metrics Service

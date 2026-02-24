@@ -25,4 +25,3 @@ test.describe('vendor visual', () => {
     await expect(page).toHaveScreenshot('vendor-analytics.png', { fullPage: true });
   });
 });
-

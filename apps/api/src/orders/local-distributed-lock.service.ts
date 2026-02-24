@@ -48,7 +48,12 @@ export class LocalDistributedLockService {
   }
 
   isLockConflict(error: unknown): boolean {
-    return typeof error === 'object' && error !== null && 'code' in error && (error as any).code === 'LOCK_CONFLICT';
+    return (
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      (error as any).code === 'LOCK_CONFLICT'
+    );
   }
 
   isLockInfrastructureError(_error: unknown): boolean {

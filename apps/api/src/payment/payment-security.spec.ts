@@ -1,7 +1,7 @@
 import { createHmac } from 'crypto';
 import * as fc from 'fast-check';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { __testing, PaymentCallbackData, PaymentSecurityService } from './payment-security.service';
+import { PaymentCallbackData, PaymentSecurityService, __testing } from './payment-security.service';
 
 const {
   maskCardNumber,

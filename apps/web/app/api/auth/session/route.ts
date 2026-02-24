@@ -1,6 +1,6 @@
+import { AUTH_COOKIE_NAME } from '@/lib/auth-config';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { AUTH_COOKIE_NAME } from '@/lib/auth-config';
 
 type JwtPayload = {
   sub?: string;
@@ -25,7 +25,9 @@ function parseJwt(token: string): JwtPayload | null {
 }
 
 function isMockMode() {
-  return (process.env.AUTH_MODE || '').toLowerCase() === 'mock' || process.env.ALLOW_AUTH_MOCK === 'true';
+  return (
+    (process.env.AUTH_MODE || '').toLowerCase() === 'mock' || process.env.ALLOW_AUTH_MOCK === 'true'
+  );
 }
 
 export async function GET() {

@@ -21,7 +21,14 @@ export function MetricRing({ value, label, hint, tone = 'orange' }: MetricRingPr
     <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
       <div className="relative mx-auto h-28 w-28">
         <svg viewBox="0 0 100 100" className="-rotate-90 h-full w-full">
-          <circle cx="50" cy="50" r={radius} stroke="rgba(100,116,139,0.22)" strokeWidth="8" fill="none" />
+          <circle
+            cx="50"
+            cy="50"
+            r={radius}
+            stroke="rgba(100,116,139,0.22)"
+            strokeWidth="8"
+            fill="none"
+          />
           <circle
             cx="50"
             cy="50"

@@ -19,8 +19,22 @@
           "sort_order": 11,
           "is_featured": true,
           "children": [
-            { "id": "android-flagship", "slug": "android-flagship", "level": 3, "parent_id": "mobile-flagship", "sort_order": 1, "is_featured": true },
-            { "id": "ios-flagship", "slug": "ios-flagship", "level": 3, "parent_id": "mobile-flagship", "sort_order": 2, "is_featured": true }
+            {
+              "id": "android-flagship",
+              "slug": "android-flagship",
+              "level": 3,
+              "parent_id": "mobile-flagship",
+              "sort_order": 1,
+              "is_featured": true
+            },
+            {
+              "id": "ios-flagship",
+              "slug": "ios-flagship",
+              "level": 3,
+              "parent_id": "mobile-flagship",
+              "sort_order": 2,
+              "is_featured": true
+            }
           ]
         },
         {
@@ -31,8 +45,22 @@
           "sort_order": 12,
           "is_featured": false,
           "children": [
-            { "id": "charger-cable", "slug": "charger-cable", "level": 3, "parent_id": "mobile-accessories", "sort_order": 1, "is_featured": false },
-            { "id": "case-protection", "slug": "case-protection", "level": 3, "parent_id": "mobile-accessories", "sort_order": 2, "is_featured": false }
+            {
+              "id": "charger-cable",
+              "slug": "charger-cable",
+              "level": 3,
+              "parent_id": "mobile-accessories",
+              "sort_order": 1,
+              "is_featured": false
+            },
+            {
+              "id": "case-protection",
+              "slug": "case-protection",
+              "level": 3,
+              "parent_id": "mobile-accessories",
+              "sort_order": 2,
+              "is_featured": false
+            }
           ]
         }
       ]
@@ -53,8 +81,22 @@
           "sort_order": 21,
           "is_featured": true,
           "children": [
-            { "id": "camera", "slug": "camera", "level": 3, "parent_id": "smart-home-security", "sort_order": 1, "is_featured": true },
-            { "id": "sensor", "slug": "sensor", "level": 3, "parent_id": "smart-home-security", "sort_order": 2, "is_featured": true }
+            {
+              "id": "camera",
+              "slug": "camera",
+              "level": 3,
+              "parent_id": "smart-home-security",
+              "sort_order": 1,
+              "is_featured": true
+            },
+            {
+              "id": "sensor",
+              "slug": "sensor",
+              "level": 3,
+              "parent_id": "smart-home-security",
+              "sort_order": 2,
+              "is_featured": true
+            }
           ]
         }
       ]
@@ -75,12 +117,25 @@
           "sort_order": 31,
           "is_featured": true,
           "children": [
-            { "id": "gaming-laptop", "slug": "gaming", "level": 3, "parent_id": "compute-laptop", "sort_order": 1, "is_featured": true },
-            { "id": "creator-laptop", "slug": "creator", "level": 3, "parent_id": "compute-laptop", "sort_order": 2, "is_featured": true }
+            {
+              "id": "gaming-laptop",
+              "slug": "gaming",
+              "level": 3,
+              "parent_id": "compute-laptop",
+              "sort_order": 1,
+              "is_featured": true
+            },
+            {
+              "id": "creator-laptop",
+              "slug": "creator",
+              "level": 3,
+              "parent_id": "compute-laptop",
+              "sort_order": 2,
+              "is_featured": true
+            }
           ]
         }
       ]
     }
   ]
 }
-

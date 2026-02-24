@@ -5,7 +5,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { generateCSSVariables, getTheme, type ThemeColors, type ThemeMode } from '../themes';
+import { type ThemeColors, type ThemeMode, generateCSSVariables, getTheme } from '../themes';
 
 const THEME_STORAGE_KEY = 'nextgen-theme-mode';
 

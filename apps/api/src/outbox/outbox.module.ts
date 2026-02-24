@@ -10,4 +10,3 @@ import { OutboxService } from './outbox.service';
   exports: [OutboxService],
 })
 export class OutboxModule {}
-

@@ -23,12 +23,12 @@ const testInclude =
           'apps/api/src/orders/orders.service.spec.ts',
         ]
       : [
-        'libs/**/src/**/*.{test,spec}.{ts,tsx}',
-        'libs/**/test/**/*.{test,spec}.{ts,tsx}',
-        'apps/**/src/**/*.{test,spec}.{ts,tsx}',
-        'apps/**/test/**/*.{test,spec}.{ts,tsx}',
-        'tests/**/*.{test,spec}.{ts,tsx}',
-      ];
+          'libs/**/src/**/*.{test,spec}.{ts,tsx}',
+          'libs/**/test/**/*.{test,spec}.{ts,tsx}',
+          'apps/**/src/**/*.{test,spec}.{ts,tsx}',
+          'apps/**/test/**/*.{test,spec}.{ts,tsx}',
+          'tests/**/*.{test,spec}.{ts,tsx}',
+        ];
 const coverageInclude =
   coverageScope === 'aiar'
     ? [

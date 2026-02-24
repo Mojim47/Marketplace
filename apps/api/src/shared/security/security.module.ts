@@ -24,11 +24,11 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 // Import security services from libs/security
 import {
   BruteForceProtection,
+  JWTManager,
   createCSRFManager,
   createDevelopmentSecurityHeaders,
   createProductionSecurityHeaders,
   createRateLimiter,
-  JWTManager,
 } from '@nextgen/security';
 // Import WAF service from libs/waf
 import { WAFService } from '@nextgen/waf';

@@ -13,10 +13,18 @@ import {
 import { LaunchAppModule } from './app.launch.module';
 import { asBootFailure, runDeterministicStartupBarrier } from './bootstrap/boot-fsm';
 
-function classifyRuntimeError(error: unknown): { kind: 'operational' | 'programmer'; code?: string } {
-  const code = typeof error === 'object' && error && 'code' in error ? String((error as any).code) : undefined;
+function classifyRuntimeError(error: unknown): {
+  kind: 'operational' | 'programmer';
+  code?: string;
+} {
+  const code =
+    typeof error === 'object' && error && 'code' in error ? String((error as any).code) : undefined;
   const message =
-    error instanceof Error ? error.message.toLowerCase() : typeof error === 'string' ? error.toLowerCase() : '';
+    error instanceof Error
+      ? error.message.toLowerCase()
+      : typeof error === 'string'
+        ? error.toLowerCase()
+        : '';
 
   if (
     code === 'EADDRINUSE' ||
@@ -33,7 +41,11 @@ function classifyRuntimeError(error: unknown): { kind: 'operational' | 'programm
   return { kind: 'programmer', code };
 }
 
-function emitStructuredLog(level: 'info' | 'warn' | 'error', message: string, details?: Record<string, unknown>) {
+function emitStructuredLog(
+  level: 'info' | 'warn' | 'error',
+  message: string,
+  details?: Record<string, unknown>
+) {
   const payload = {
     timestamp: new Date().toISOString(),
     level,
@@ -168,7 +180,9 @@ async function bootstrap() {
       code: bootFailure.code,
       failedState: bootFailure.state,
     });
-    logger.error(`CORE BOOT FAILURE: ${bootFailure.code} ${bootFailure.state} ${bootFailure.reason}`);
+    logger.error(
+      `CORE BOOT FAILURE: ${bootFailure.code} ${bootFailure.state} ${bootFailure.reason}`
+    );
     process.exitCode = 1;
     throw error;
   }

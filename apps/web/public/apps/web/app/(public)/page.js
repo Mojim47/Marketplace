@@ -1,5 +1,5 @@
-import { jsx as _jsx, jsxs as _jsxs } from 'react/jsx-runtime';
 import { generateMetadata } from '@/lib/seo';
+import { jsx as _jsx, jsxs as _jsxs } from 'react/jsx-runtime';
 export const metadata = generateMetadata({
   title: 'خانه — مارکت‌پلیس شما',
   description: 'اولین مارکت‌پلیس هوشمند ایران با قابلیت‌های AR و AI.',

@@ -11,8 +11,8 @@
 import { AnalyticsService } from '../libs/analytics/src/analytics.service';
 import { AnalyticsHybridSearchService } from '../libs/search/src/analytics-hybrid-search.service';
 import { HybridSearchService } from '../libs/search/src/hybrid-search.service';
-import { SearchService } from '../libs/search/src/search.service';
 import { SearchMigrationService } from '../libs/search/src/search-migration.service';
+import { SearchService } from '../libs/search/src/search.service';
 import { TypesenseService } from '../libs/typesense/src/typesense.service';
 
 // Test configuration

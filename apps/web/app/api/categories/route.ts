@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { getCategoryBySlug, listCategoryTree } from '@/lib/categories';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
   try {

@@ -6,7 +6,9 @@ export default function TermsPage() {
       <Container className="py-16">
         <GlassCard className="rounded-3xl p-8">
           <p className="text-xs text-slate-500">Terms of Service</p>
-          <SectionTitle className="mt-2 text-3xl text-slate-900">شرایط و مقررات استفاده</SectionTitle>
+          <SectionTitle className="mt-2 text-3xl text-slate-900">
+            شرایط و مقررات استفاده
+          </SectionTitle>
           <p className="mt-3 text-sm text-slate-600">
             استفاده از خدمات AIMarket به معنی پذیرش کامل این شرایط است.
           </p>

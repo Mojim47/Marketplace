@@ -1,5 +1,5 @@
-import { Global, type MiddlewareConsumer, Module, type NestModule } from '@nestjs/common';
 import { CacheModule } from '@nestjs/cache-manager';
+import { Global, type MiddlewareConsumer, Module, type NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
@@ -15,8 +15,8 @@ import { LaunchJwtAuthGuard } from './common/guards/launch-jwt-auth.guard';
 import { DatabaseModule } from './database/database.module';
 import { HealthModule } from './health/health.module';
 import { MonitoringModule } from './monitoring/monitoring.module';
-import { OutboxModule } from './outbox/outbox.module';
 import { OrdersModule } from './orders/orders.module';
+import { OutboxModule } from './outbox/outbox.module';
 import { RedisModule } from './redis/redis.module';
 import { RuntimeModule } from './runtime/runtime.module';
 

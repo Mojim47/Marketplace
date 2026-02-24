@@ -13,9 +13,15 @@ export default function VendorProductsPage() {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="vendor-muted">Bulk Actions</p>
           <div className="flex gap-2">
-            <button type="button" className="vendor-status info">به‌روزرسانی قیمت</button>
-            <button type="button" className="vendor-status warning">کاهش موجودی</button>
-            <button type="button" className="vendor-status success">انتشار دسته‌ای</button>
+            <button type="button" className="vendor-status info">
+              به‌روزرسانی قیمت
+            </button>
+            <button type="button" className="vendor-status warning">
+              کاهش موجودی
+            </button>
+            <button type="button" className="vendor-status success">
+              انتشار دسته‌ای
+            </button>
           </div>
         </div>
       </section>
@@ -31,8 +37,12 @@ export default function VendorProductsPage() {
             <p className="vendor-muted mt-2">موجودی (ویرایش درجا): {product.stock}</p>
             <p className="vendor-muted">قیمت (ویرایش درجا): {product.price} ریال</p>
             <div className="mt-3 flex gap-2">
-              <button type="button" className="vendor-status info">ویرایش</button>
-              <button type="button" className="vendor-status success">انتشار</button>
+              <button type="button" className="vendor-status info">
+                ویرایش
+              </button>
+              <button type="button" className="vendor-status success">
+                انتشار
+              </button>
             </div>
           </article>
         ))}

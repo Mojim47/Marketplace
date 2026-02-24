@@ -16,7 +16,7 @@
  */
 
 import { ArgumentMetadata, BadRequestException, Injectable, PipeTransform } from '@nestjs/common';
-import { persianValidators, ValidationResult } from '@nextgen/localization';
+import { ValidationResult, persianValidators } from '@nextgen/localization';
 
 /**
  * Base class for Persian validation pipes

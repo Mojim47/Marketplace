@@ -12,10 +12,10 @@
 import { Module } from '@nestjs/common';
 import { CircuitBreakerService } from '@nextgen/resilience';
 import { DatabaseModule } from '../database/database.module';
-import { PaymentController } from './payment.controller';
-import { PAYMENT_AUDIT_SERVICE, PaymentService } from './payment.service';
 import { PaymentAuditService } from './payment-audit.service';
 import { PaymentSecurityService } from './payment-security.service';
+import { PaymentController } from './payment.controller';
+import { PAYMENT_AUDIT_SERVICE, PaymentService } from './payment.service';
 
 @Module({
   imports: [DatabaseModule],

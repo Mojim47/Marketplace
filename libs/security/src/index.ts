@@ -12,8 +12,16 @@ export class JWTManager {
   private signToken(payload: Record<string, unknown>): string {
     // Runtime dependency is provided transitively via Nest JWT stack.
     const jwt = require('jsonwebtoken') as {
-      sign: (payload: Record<string, unknown>, secret: string, options?: Record<string, unknown>) => string;
-      verify: (token: string, secret: string, options?: Record<string, unknown>) => Record<string, unknown>;
+      sign: (
+        payload: Record<string, unknown>,
+        secret: string,
+        options?: Record<string, unknown>
+      ) => string;
+      verify: (
+        token: string,
+        secret: string,
+        options?: Record<string, unknown>
+      ) => Record<string, unknown>;
     };
     const secret = process.env.JWT_SECRET || 'development-jwt-secret-32-chars-minimum';
     const issuer = process.env.JWT_ISSUER || 'nextgen-marketplace';
@@ -42,7 +50,11 @@ export class JWTManager {
   }
   async refreshAccessToken(refreshToken: string) {
     const jwt = require('jsonwebtoken') as {
-      verify: (token: string, secret: string, options?: Record<string, unknown>) => Record<string, unknown>;
+      verify: (
+        token: string,
+        secret: string,
+        options?: Record<string, unknown>
+      ) => Record<string, unknown>;
     };
     const secret = process.env.JWT_SECRET || 'development-jwt-secret-32-chars-minimum';
     const issuer = process.env.JWT_ISSUER || 'nextgen-marketplace';
@@ -58,7 +70,11 @@ export class JWTManager {
   async verifyToken(token: string) {
     try {
       const jwt = require('jsonwebtoken') as {
-        verify: (token: string, secret: string, options?: Record<string, unknown>) => Record<string, unknown>;
+        verify: (
+          token: string,
+          secret: string,
+          options?: Record<string, unknown>
+        ) => Record<string, unknown>;
       };
       const secret = process.env.JWT_SECRET || 'development-jwt-secret-32-chars-minimum';
       const issuer = process.env.JWT_ISSUER || 'nextgen-marketplace';

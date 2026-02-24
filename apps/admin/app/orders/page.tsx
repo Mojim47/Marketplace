@@ -8,11 +8,17 @@ const orders = [
 
 export default function AdminOrdersPage() {
   return (
-    <AdminPanelShell title="مدیریت سفارش ها" subtitle="رصد وضعیت سفارش، پرداخت و ارسال در یک نمای یکپارچه.">
+    <AdminPanelShell
+      title="مدیریت سفارش ها"
+      subtitle="رصد وضعیت سفارش، پرداخت و ارسال در یک نمای یکپارچه."
+    >
       <div className="admin-card rounded-3xl p-6">
         <div className="space-y-3">
           {orders.map((order) => (
-            <div key={order.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white/5 px-4 py-3">
+            <div
+              key={order.id}
+              className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white/5 px-4 py-3"
+            >
               <div>
                 <p className="text-sm text-white">{order.id}</p>
                 <p className="text-xs text-slate-400">{order.buyer}</p>

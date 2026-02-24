@@ -37,7 +37,9 @@ export function BentoFeatureGrid() {
             idx === 0 ? 'sm:col-span-2' : ''
           }`}
         >
-          <div className={`inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 ${card.accent}`}>
+          <div
+            className={`inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 ${card.accent}`}
+          >
             <card.icon size={18} />
           </div>
           <h3 className="mt-4 section-title text-2xl text-slate-900">{card.title}</h3>

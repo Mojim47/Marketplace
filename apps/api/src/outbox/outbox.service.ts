@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
+import { Injectable } from '@nestjs/common';
 import { getCurrentCorrelationContext } from '../_middleware/correlation-id.middleware';
 import { LoggingService } from '../_observability/logging.service';
 
@@ -77,4 +77,3 @@ export class OutboxService {
     return created;
   }
 }
-

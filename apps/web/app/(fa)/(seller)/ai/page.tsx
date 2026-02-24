@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
 import { Button, Container, GlassCard, Pill, SectionTitle } from '@/components/ui';
+import { useState } from 'react';
 
 export default function AIDemandPage() {
   const [history, setHistory] = useState('1200000,1500000,1800000,2100000');
@@ -60,7 +60,9 @@ export default function AIDemandPage() {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-xs text-slate-500">AI Demand Studio</p>
-            <SectionTitle className="text-3xl text-slate-900">پیش‌بینی تقاضا با مدل ترکیبی</SectionTitle>
+            <SectionTitle className="text-3xl text-slate-900">
+              پیش‌بینی تقاضا با مدل ترکیبی
+            </SectionTitle>
           </div>
           <Pill>AI Verified</Pill>
         </div>

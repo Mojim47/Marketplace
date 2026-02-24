@@ -2,7 +2,10 @@ import { AdminPanelShell } from '@/components/AdminPanelShell';
 
 export default function AdminSettingsPage() {
   return (
-    <AdminPanelShell title="تنظیمات سیستم" subtitle="مدیریت تنظیمات محیط، امنیت و اعلان های سازمانی.">
+    <AdminPanelShell
+      title="تنظیمات سیستم"
+      subtitle="مدیریت تنظیمات محیط، امنیت و اعلان های سازمانی."
+    >
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="admin-card rounded-3xl p-6">
           <h2 className="admin-title text-xl text-white">تنظیمات عمومی</h2>

@@ -8,11 +8,17 @@ const users = [
 
 export default function AdminUsersPage() {
   return (
-    <AdminPanelShell title="مدیریت کاربران" subtitle="لیست کاربران، وضعیت دسترسی و کنترل عملیات حساب.">
+    <AdminPanelShell
+      title="مدیریت کاربران"
+      subtitle="لیست کاربران، وضعیت دسترسی و کنترل عملیات حساب."
+    >
       <div className="admin-card rounded-3xl p-6">
         <div className="space-y-3">
           {users.map((user) => (
-            <div key={user.email} className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white/5 px-4 py-3">
+            <div
+              key={user.email}
+              className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white/5 px-4 py-3"
+            >
               <div>
                 <p className="text-sm text-white">{user.name}</p>
                 <p className="text-xs text-slate-400">{user.email}</p>

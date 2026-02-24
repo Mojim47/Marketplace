@@ -104,10 +104,7 @@
           "defaults": {
             "thresholds": {
               "mode": "absolute",
-              "steps": [
-                { "color": "green", "value": null },
-                { "color": "red", "value": 1 }
-              ]
+              "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }]
             }
           }
         },

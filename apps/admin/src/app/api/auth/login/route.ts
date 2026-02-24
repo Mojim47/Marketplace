@@ -7,7 +7,8 @@ const loginSchema = z.object({
 });
 
 const AUTH_COOKIE_NAME = 'admin-token';
-const isMockAuthMode = (process.env.AUTH_MODE || '').toLowerCase() === 'mock' || process.env.ALLOW_AUTH_MOCK === 'true';
+const isMockAuthMode =
+  (process.env.AUTH_MODE || '').toLowerCase() === 'mock' || process.env.ALLOW_AUTH_MOCK === 'true';
 const AUTH_COOKIE_OPTIONS = {
   httpOnly: true,
   sameSite: 'lax' as const,

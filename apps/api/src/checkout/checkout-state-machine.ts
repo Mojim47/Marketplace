@@ -67,7 +67,9 @@ export function resolveTargetStep(action: CheckoutAction, currentStep: CheckoutS
 export function assertCheckoutActionAllowed(
   action: CheckoutAction,
   currentStep: CheckoutStep
-): { allowed: true; targetStep: CheckoutStep } | { allowed: false; targetStep: CheckoutStep; guardReason: CheckoutGuardReason } {
+):
+  | { allowed: true; targetStep: CheckoutStep }
+  | { allowed: false; targetStep: CheckoutStep; guardReason: CheckoutGuardReason } {
   const contract = ACTION_CONTRACT[action];
   const targetStep = resolveTargetStep(action, currentStep);
 

@@ -1,6 +1,6 @@
+import { AUTH_COOKIE_NAME, type WebAuthResponse, getApiBaseUrl } from '@/lib/auth-config';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { AUTH_COOKIE_NAME, getApiBaseUrl, type WebAuthResponse } from '@/lib/auth-config';
 
 const registerSchema = z.object({
   password: z.string().min(8),

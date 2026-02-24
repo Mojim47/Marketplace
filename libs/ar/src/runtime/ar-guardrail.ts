@@ -12,7 +12,13 @@ export interface ARGuardrailInput {
 
 export interface ARGuardrailResult {
   enabled: boolean;
-  guardReason: 'none' | 'low_confidence' | 'drift_exceeded' | 'latency_budget_exceeded' | 'calibration_missing' | 'sensor_fusion_invalid';
+  guardReason:
+    | 'none'
+    | 'low_confidence'
+    | 'drift_exceeded'
+    | 'latency_budget_exceeded'
+    | 'calibration_missing'
+    | 'sensor_fusion_invalid';
 }
 
 export function evaluateARGuardrail(input: ARGuardrailInput): ARGuardrailResult {
@@ -31,7 +37,10 @@ export function evaluateARGuardrail(input: ARGuardrailInput): ARGuardrailResult 
   ) {
     return { enabled: false, guardReason: 'low_confidence' };
   }
-  if (Number.isFinite(input.anchorDriftCm) && (input.anchorDriftCm as number) > input.maxAnchorDriftCm) {
+  if (
+    Number.isFinite(input.anchorDriftCm) &&
+    (input.anchorDriftCm as number) > input.maxAnchorDriftCm
+  ) {
     return { enabled: false, guardReason: 'drift_exceeded' };
   }
   if (

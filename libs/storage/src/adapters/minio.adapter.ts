@@ -18,8 +18,8 @@ import type {
   MultipartUpload,
   SignedUrlOptions,
   StorageHealthCheck,
-  UploadedPart,
   UploadOptions,
+  UploadedPart,
 } from '../interfaces/storage.interface';
 import { StorageProviderType } from '../interfaces/storage.interface';
 

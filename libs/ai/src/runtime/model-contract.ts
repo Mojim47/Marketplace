@@ -59,7 +59,9 @@ export function verifyModelContract(
   if (parsed.tokenizerPath) {
     tokenizerPath = resolveFrom(contractPath, parsed.tokenizerPath);
     if (!parsed.tokenizerSha256) {
-      throw new Error('Model contract invalid: tokenizerSha256 is required when tokenizerPath exists');
+      throw new Error(
+        'Model contract invalid: tokenizerSha256 is required when tokenizerPath exists'
+      );
     }
     assertSha256File(tokenizerPath, parsed.tokenizerSha256, 'tokenizer artifact');
   }
@@ -153,7 +155,9 @@ function verifySignature(params: {
 
   if (!publicKeyPem) {
     if (strictSignature) {
-      throw new Error('MODEL_CONTRACT_PUBLIC_KEY_PEM is required for strict signature verification');
+      throw new Error(
+        'MODEL_CONTRACT_PUBLIC_KEY_PEM is required for strict signature verification'
+      );
     }
     return;
   }

@@ -1,10 +1,14 @@
 'use client';
 
-import { useEffect } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
+import { useEffect } from 'react';
 
 function resolveIntent(pathname: string, query: string): 'high' | 'normal' {
-  if (pathname.startsWith('/checkout') || pathname.startsWith('/cart') || pathname.startsWith('/orders')) {
+  if (
+    pathname.startsWith('/checkout') ||
+    pathname.startsWith('/cart') ||
+    pathname.startsWith('/orders')
+  ) {
     return 'high';
   }
   if (query.trim().length >= 3) {

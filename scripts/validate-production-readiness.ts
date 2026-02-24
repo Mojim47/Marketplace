@@ -361,7 +361,10 @@ class ProductionReadinessValidator {
         message: 'Database connection successful',
       });
     } catch (error) {
-      this.failOrWarn('Database Connection', `Database connection failed: ${this.getErrorMessage(error)}`);
+      this.failOrWarn(
+        'Database Connection',
+        `Database connection failed: ${this.getErrorMessage(error)}`
+      );
     }
   }
 
@@ -402,7 +405,10 @@ class ProductionReadinessValidator {
 
       await this.redis.del('health-check');
     } catch (error) {
-      this.failOrWarn('Redis Connection', `Redis connection failed: ${this.getErrorMessage(error)}`);
+      this.failOrWarn(
+        'Redis Connection',
+        `Redis connection failed: ${this.getErrorMessage(error)}`
+      );
     } finally {
       if (this.redis) {
         try {
@@ -436,10 +442,16 @@ class ProductionReadinessValidator {
           message: 'ClickHouse connection successful',
         });
       } else {
-        this.failOrWarn('ClickHouse Connection', `ClickHouse ping failed with status ${response.status}`);
+        this.failOrWarn(
+          'ClickHouse Connection',
+          `ClickHouse ping failed with status ${response.status}`
+        );
       }
     } catch (error) {
-      this.failOrWarn('ClickHouse Connection', `ClickHouse connection failed: ${this.getErrorMessage(error)}`);
+      this.failOrWarn(
+        'ClickHouse Connection',
+        `ClickHouse connection failed: ${this.getErrorMessage(error)}`
+      );
     }
   }
 
@@ -482,7 +494,10 @@ class ProductionReadinessValidator {
         message: `ZarinPal API accessible (${isSandbox ? 'sandbox' : 'production'})`,
       });
     } catch (error) {
-      this.failOrWarn('ZarinPal API', `ZarinPal API connection failed: ${this.getErrorMessage(error)}`);
+      this.failOrWarn(
+        'ZarinPal API',
+        `ZarinPal API connection failed: ${this.getErrorMessage(error)}`
+      );
     }
   }
 

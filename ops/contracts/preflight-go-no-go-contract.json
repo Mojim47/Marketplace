@@ -21,7 +21,11 @@
       "status": "pnpm exec prisma migrate status --schema prisma/schema.prisma"
     },
     "aiCanaryShadowReadiness": {
-      "requiredEnv": ["AI_CANARY_MODEL_VERSION", "AI_MODEL_CANARY_PERCENT", "AI_SHADOW_EVAL_REPORT_PATH"]
+      "requiredEnv": [
+        "AI_CANARY_MODEL_VERSION",
+        "AI_MODEL_CANARY_PERCENT",
+        "AI_SHADOW_EVAL_REPORT_PATH"
+      ]
     },
     "arTelemetryMetrics": [
       "ar_overlay_latency_seconds_bucket",

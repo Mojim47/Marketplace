@@ -23,23 +23,26 @@ declare module '@google/model-viewer' {
 
 declare namespace JSX {
   interface IntrinsicElements {
-    'model-viewer': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement> & {
-      src?: string;
-      poster?: string;
-      alt?: string;
-      ar?: boolean | 'true' | 'false';
-      'ar-modes'?: string;
-      'camera-controls'?: boolean | 'true' | 'false';
-      exposure?: number | string;
-      'environment-image'?: string;
-      loading?: 'eager' | 'lazy';
-      'auto-rotate'?: boolean | 'true' | 'false';
-      'rotation-per-second'?: string;
-      'shadow-intensity'?: number | string;
-      'shadow-softness'?: number | string;
-      onLoad?: React.ReactEventHandler<HTMLElement>;
-      onError?: React.ReactEventHandler<HTMLElement>;
-      onArStatusChange?: React.ReactEventHandler<HTMLElement>;
-    }, HTMLElement>;
+    'model-viewer': React.DetailedHTMLProps<
+      React.HTMLAttributes<HTMLElement> & {
+        src?: string;
+        poster?: string;
+        alt?: string;
+        ar?: boolean | 'true' | 'false';
+        'ar-modes'?: string;
+        'camera-controls'?: boolean | 'true' | 'false';
+        exposure?: number | string;
+        'environment-image'?: string;
+        loading?: 'eager' | 'lazy';
+        'auto-rotate'?: boolean | 'true' | 'false';
+        'rotation-per-second'?: string;
+        'shadow-intensity'?: number | string;
+        'shadow-softness'?: number | string;
+        onLoad?: React.ReactEventHandler<HTMLElement>;
+        onError?: React.ReactEventHandler<HTMLElement>;
+        onArStatusChange?: React.ReactEventHandler<HTMLElement>;
+      },
+      HTMLElement
+    >;
   }
 }

@@ -1,7 +1,7 @@
 import { Inject, Injectable, type OnModuleDestroy, type OnModuleInit } from '@nestjs/common';
 import type Redis from 'ioredis';
-import { PrismaService } from '../database/prisma.service';
 import { LoggingService } from '../_observability/logging.service';
+import { PrismaService } from '../database/prisma.service';
 
 type OutboxRow = {
   id: string;
@@ -177,7 +177,12 @@ export class OutboxDispatcherService implements OnModuleInit, OnModuleDestroy {
     };
 
     if (dead) {
-      this.logging.error('outbox_dispatch_failed', undefined, OutboxDispatcherService.name, metadata);
+      this.logging.error(
+        'outbox_dispatch_failed',
+        undefined,
+        OutboxDispatcherService.name,
+        metadata
+      );
       return;
     }
 

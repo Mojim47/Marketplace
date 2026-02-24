@@ -32,7 +32,9 @@ describe('ARViewer', () => {
   });
 
   it('fails closed when confidence is below guard threshold', () => {
-    render(<ARViewer modelId="sample-model" trackingConfidence={0.5} minConfidenceThreshold={0.75} />);
+    render(
+      <ARViewer modelId="sample-model" trackingConfidence={0.5} minConfidenceThreshold={0.75} />
+    );
     expect(screen.getByText(/AR overlay disabled/i)).toBeTruthy();
   });
 
@@ -115,11 +117,7 @@ describe('ARViewer', () => {
     });
 
     const { container } = render(
-      <ARViewer
-        modelId="sample-model"
-        pipelineLatencyMs={40}
-        telemetryEndpoint="/telemetry/ar"
-      />
+      <ARViewer modelId="sample-model" pipelineLatencyMs={40} telemetryEndpoint="/telemetry/ar" />
     );
 
     const viewer = container.querySelector('model-viewer');

@@ -6,10 +6,7 @@ const RETRY_DELAY_MS = 500;
 const SLOW_QUERY_MS = 100;
 
 @Injectable()
-export class PrismaService
-  extends PrismaClient
-  implements OnModuleInit, OnModuleDestroy
-{
+export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PrismaService.name);
   private degraded = false;
   private cache = new Map<string, any[]>();

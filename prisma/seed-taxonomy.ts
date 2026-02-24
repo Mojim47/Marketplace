@@ -212,7 +212,10 @@ const taxonomy: TaxonomyNode[] = [
 
 const prisma = new PrismaClient();
 
-function flatten(nodes: TaxonomyNode[], parentKey: string | null = null): Array<TaxonomyNode & { parentKey: string | null }> {
+function flatten(
+  nodes: TaxonomyNode[],
+  parentKey: string | null = null
+): Array<TaxonomyNode & { parentKey: string | null }> {
   const result: Array<TaxonomyNode & { parentKey: string | null }> = [];
   for (const node of nodes) {
     result.push({ ...node, parentKey });

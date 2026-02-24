@@ -174,4 +174,3 @@ export function findProductBySlug(slug: string) {
 export function findProductById(id: string) {
   return CATALOG_PRODUCTS.find((item) => item.id === id || item.slug === id) ?? null;
 }
-

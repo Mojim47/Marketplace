@@ -166,7 +166,11 @@ function analyzeFile(filePath: string): FileAudit {
     classTokens.filter((token) => /^(p|m|gap|space-[xy])([trblxy])?-\d+(\.\d+)?$/.test(token))
   );
   const radiusClasses = unique(classTokens.filter((token) => token.startsWith('rounded')));
-  const fontWeightClasses = unique(classTokens.filter((token) => /^font-(thin|extralight|light|normal|medium|semibold|bold|extrabold|black)$/.test(token)));
+  const fontWeightClasses = unique(
+    classTokens.filter((token) =>
+      /^font-(thin|extralight|light|normal|medium|semibold|bold|extrabold|black)$/.test(token)
+    )
+  );
   const componentTags = unique([...raw.matchAll(/<([A-Z][A-Za-z0-9]*)\b/g)].map((m) => m[1]));
   const variantNames = unique(
     [...raw.matchAll(/\bvariant\s*=\s*["'`]([a-zA-Z0-9_-]+)["'`]/g)].map((m) => m[1])
@@ -329,12 +333,17 @@ function main(): void {
   const layoutFiles = audits.filter((x) => x.routeType === 'layout').map((x) => x.file);
   const loadingFiles = audits.filter((x) => x.routeType === 'loading').map((x) => x.file);
   const errorFiles = audits
-    .filter((x) => x.routeType === 'error' || x.routeType === 'global-error' || x.routeType === 'not-found')
+    .filter(
+      (x) =>
+        x.routeType === 'error' || x.routeType === 'global-error' || x.routeType === 'not-found'
+    )
     .map((x) => x.file);
   const overlayFiles = audits.filter((x) => x.hasOverlayPattern).map((x) => x.file);
 
   const hardcodedStyleFiles = audits
-    .filter((x) => x.hasInlineStyle || x.hardcodedHex.length > 0 || x.hardcodedColorClasses.length > 0)
+    .filter(
+      (x) => x.hasInlineStyle || x.hardcodedHex.length > 0 || x.hardcodedColorClasses.length > 0
+    )
     .map((x) => x.file);
   const arbitraryClassFiles = audits
     .filter((x) => x.arbitraryClassTokens.length > 0)
@@ -348,7 +357,9 @@ function main(): void {
     return !SPACING_ALLOWLIST.has(match[1]);
   });
 
-  const lowStateCoverageFiles = audits.filter((x) => x.routeType === 'page' && x.stateNames.length <= 1).length;
+  const lowStateCoverageFiles = audits.filter(
+    (x) => x.routeType === 'page' && x.stateNames.length <= 1
+  ).length;
   const componentDensityFiles = audits.filter((x) => x.componentTags.length >= 12).length;
 
   const report: AuditReport = {

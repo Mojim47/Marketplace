@@ -78,7 +78,8 @@ function main(): void {
         inlineStyles: after.inlineStyles - before.inlineStyles,
         driftScore: after.driftScore - before.driftScore,
       },
-      migrated: hasSemanticClasses && after.hardcodedColorClasses === 0 && after.arbitraryClassTokens === 0,
+      migrated:
+        hasSemanticClasses && after.hardcodedColorClasses === 0 && after.arbitraryClassTokens === 0,
       migrationSignals: {
         hasSemanticClasses,
         zeroHardcodedColorClasses: after.hardcodedColorClasses === 0,

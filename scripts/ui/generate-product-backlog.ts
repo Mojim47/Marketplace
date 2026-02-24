@@ -22,7 +22,8 @@ const outMd = path.join(outDir, 'product-gap-backlog.md');
 
 function priorityFor(gap: string): 'P0' | 'P1' | 'P2' {
   const g = gap.toLowerCase();
-  if (g.includes('auth layer') || g.includes('permission denied') || g.includes('error')) return 'P0';
+  if (g.includes('auth layer') || g.includes('permission denied') || g.includes('error'))
+    return 'P0';
   if (g.includes('app core') || g.includes('checkout') || g.includes('button variant')) return 'P1';
   return 'P2';
 }
@@ -57,7 +58,11 @@ function main() {
   items.sort((a, b) => a.priority.localeCompare(b.priority) || a.id.localeCompare(b.id));
 
   fs.mkdirSync(outDir, { recursive: true });
-  fs.writeFileSync(outJson, JSON.stringify({ generatedAt: new Date().toISOString(), items }, null, 2), 'utf8');
+  fs.writeFileSync(
+    outJson,
+    JSON.stringify({ generatedAt: new Date().toISOString(), items }, null, 2),
+    'utf8'
+  );
 
   const lines = [
     '# UI Gap Backlog',

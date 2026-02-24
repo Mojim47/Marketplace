@@ -13,10 +13,7 @@ function createTempDir(): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'model-contract-'));
 }
 
-function signContractPayload(
-  payload: Record<string, unknown>,
-  privateKeyPem: string
-): string {
+function signContractPayload(payload: Record<string, unknown>, privateKeyPem: string): string {
   const canonical = JSON.stringify({ ...payload, signatureBase64: undefined });
   const signer = crypto.createSign('sha256');
   signer.update(canonical);
@@ -47,7 +44,10 @@ describe('verifyModelContract', () => {
       modelName: 'nextgen-ai',
       modelVersion: '2026.1.0',
       artifactPath: './model.onnx',
-      artifactSha256: crypto.createHash('sha256').update(fs.readFileSync(artifactPath)).digest('hex'),
+      artifactSha256: crypto
+        .createHash('sha256')
+        .update(fs.readFileSync(artifactPath))
+        .digest('hex'),
       tokenizerPath: './tokenizer.json',
       tokenizerSha256: crypto
         .createHash('sha256')
@@ -109,7 +109,10 @@ describe('verifyModelContract', () => {
       modelName: 'nextgen-ai',
       modelVersion: '2026.1.0',
       artifactPath: './model.onnx',
-      artifactSha256: crypto.createHash('sha256').update(fs.readFileSync(artifactPath)).digest('hex'),
+      artifactSha256: crypto
+        .createHash('sha256')
+        .update(fs.readFileSync(artifactPath))
+        .digest('hex'),
       tokenizerPath: './tokenizer.json',
       datasetHash: sha256Hex('dataset-v1'),
       metrics: {
@@ -167,7 +170,10 @@ describe('verifyModelContract', () => {
       modelName: 'nextgen-ai',
       modelVersion: '2026.1.0',
       artifactPath: './model.onnx',
-      artifactSha256: crypto.createHash('sha256').update(fs.readFileSync(artifactPath)).digest('hex'),
+      artifactSha256: crypto
+        .createHash('sha256')
+        .update(fs.readFileSync(artifactPath))
+        .digest('hex'),
       datasetHash: sha256Hex('dataset-v1'),
       metrics: {
         evaluationMetric: 'f1',
@@ -210,7 +216,10 @@ describe('verifyModelContract', () => {
       modelName: 'nextgen-ai',
       modelVersion: '2026.1.0',
       artifactPath: './model.onnx',
-      artifactSha256: crypto.createHash('sha256').update(fs.readFileSync(artifactPath)).digest('hex'),
+      artifactSha256: crypto
+        .createHash('sha256')
+        .update(fs.readFileSync(artifactPath))
+        .digest('hex'),
       datasetHash: sha256Hex('dataset-v1'),
       metrics: {
         evaluationMetric: 'f1',
@@ -247,7 +256,10 @@ describe('verifyModelContract', () => {
       })
     ).toThrow(/invalid signatureBase64/);
 
-    writeJson(contractPath, { ...payload, signatureBase64: Buffer.from('invalid').toString('base64') });
+    writeJson(contractPath, {
+      ...payload,
+      signatureBase64: Buffer.from('invalid').toString('base64'),
+    });
     expect(() =>
       verifyModelContract({
         contractPath,

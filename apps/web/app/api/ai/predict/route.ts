@@ -1,6 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import path from 'node:path';
-import { AIService, IranDemandPredictionStrategy, sha256Hex, verifyModelContract } from '@nextgen/ai';
+import {
+  AIService,
+  IranDemandPredictionStrategy,
+  sha256Hex,
+  verifyModelContract,
+} from '@nextgen/ai';
 import { NextResponse } from 'next/server';
 
 let verifiedModelVersion = process.env.AI_DEMAND_MODEL_VERSION || 'demand-v1';

@@ -1,11 +1,11 @@
 'use client';
 
+import { l1Categories } from '@/lib/aimarket-taxonomy';
+import { Search } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Search } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
-import { l1Categories } from '@/lib/aimarket-taxonomy';
 
 type SuggestionItem = {
   type: 'history' | 'trending' | 'category';
@@ -22,7 +22,13 @@ type SearchBoxProps = {
 
 const SEARCH_HISTORY_KEY = 'ng_search_history_v1';
 const MAX_HISTORY = 8;
-const FALLBACK_TRENDING = ['گوشی پرچمدار', 'لپ‌تاپ سبک', 'روشنایی هوشمند', 'هدفون نویزکنسلینگ', 'سنسور امنیتی'];
+const FALLBACK_TRENDING = [
+  'گوشی پرچمدار',
+  'لپ‌تاپ سبک',
+  'روشنایی هوشمند',
+  'هدفون نویزکنسلینگ',
+  'سنسور امنیتی',
+];
 
 function toSearchHref(text: string, categoryScope: string) {
   const query = encodeURIComponent(text);
@@ -47,7 +53,10 @@ export function SearchBox({ compact = false, mega = false }: SearchBoxProps) {
     if (normalized.length < 2 || typeof window === 'undefined') {
       return;
     }
-    const next = [normalized, ...historyItems.filter((item) => item !== normalized)].slice(0, MAX_HISTORY);
+    const next = [normalized, ...historyItems.filter((item) => item !== normalized)].slice(
+      0,
+      MAX_HISTORY
+    );
     setHistoryItems(next);
     window.localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(next));
   };
@@ -63,7 +72,9 @@ export function SearchBox({ compact = false, mega = false }: SearchBoxProps) {
       }
       const parsed = JSON.parse(raw) as string[];
       if (Array.isArray(parsed)) {
-        setHistoryItems(parsed.filter((item) => typeof item === 'string' && item.length > 1).slice(0, MAX_HISTORY));
+        setHistoryItems(
+          parsed.filter((item) => typeof item === 'string' && item.length > 1).slice(0, MAX_HISTORY)
+        );
       }
     } catch {
       // Ignore malformed local history.
@@ -135,7 +146,9 @@ export function SearchBox({ compact = false, mega = false }: SearchBoxProps) {
         categorySlug: categoryScope === 'all' ? null : categoryScope,
       }));
 
-    const trending = FALLBACK_TRENDING.filter((item) => (normalized ? item.toLowerCase().includes(normalized) : true))
+    const trending = FALLBACK_TRENDING.filter((item) =>
+      normalized ? item.toLowerCase().includes(normalized) : true
+    )
       .slice(0, 4)
       .map((item, index) => ({
         type: 'trending' as const,
@@ -172,10 +185,7 @@ export function SearchBox({ compact = false, mega = false }: SearchBoxProps) {
   }, [offlineSuggestions, suggestions]);
 
   const trendingChips = useMemo(
-    () =>
-      visibleSuggestions
-        .filter((item) => item.type === 'trending')
-        .slice(0, compact ? 3 : 5),
+    () => visibleSuggestions.filter((item) => item.type === 'trending').slice(0, compact ? 3 : 5),
     [compact, visibleSuggestions]
   );
 
@@ -304,7 +314,11 @@ export function SearchBox({ compact = false, mega = false }: SearchBoxProps) {
                 >
                   <span>{item.label}</span>
                   <span className="rounded-full border border-slate-200 px-2 py-0.5 text-[10px] text-slate-500">
-                    {item.type === 'history' ? 'History' : item.type === 'trending' ? 'Trending' : 'Category'}
+                    {item.type === 'history'
+                      ? 'History'
+                      : item.type === 'trending'
+                        ? 'Trending'
+                        : 'Category'}
                   </span>
                 </Link>
               </li>

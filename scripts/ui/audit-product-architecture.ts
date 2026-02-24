@@ -34,13 +34,21 @@ const required = {
     { key: 'login', label: 'Login', patterns: ['/auth/login/page.tsx'] },
     { key: 'register', label: 'Register', patterns: ['/auth/register/page.tsx'] },
     { key: 'reset_password', label: 'Reset Password', patterns: ['/auth/reset-password/page.tsx'] },
-    { key: 'verify_email', label: 'Verify Email', patterns: ['/auth/verify', '/verify-email/page.tsx'] },
+    {
+      key: 'verify_email',
+      label: 'Verify Email',
+      patterns: ['/auth/verify', '/verify-email/page.tsx'],
+    },
     { key: 'two_factor', label: '2FA', patterns: ['/auth/2fa', '/2fa'] },
   ],
   appCore: [
     { key: 'dashboard', label: 'Dashboard', patterns: ['/dashboard/page.tsx'] },
     { key: 'workflow', label: 'Main Workflow', patterns: ['/checkout/page.tsx', '/cart/page.tsx'] },
-    { key: 'detail', label: 'Detail Page', patterns: ['/product/[id]/page.tsx', '/categories/[slug]/page.tsx'] },
+    {
+      key: 'detail',
+      label: 'Detail Page',
+      patterns: ['/product/[id]/page.tsx', '/categories/[slug]/page.tsx'],
+    },
     { key: 'settings', label: 'Settings', patterns: ['/settings/page.tsx', '/profile/page.tsx'] },
     { key: 'profile', label: 'Profile', patterns: ['/profile/page.tsx'] },
     { key: 'billing', label: 'Billing', patterns: ['/billing/page.tsx'] },
@@ -51,7 +59,11 @@ const required = {
     { key: 'empty_state', label: 'Empty State', patterns: ['/empty-state/page.tsx'] },
     { key: 'error_state', label: 'Error State', patterns: ['/error.tsx', 'global-error.tsx'] },
     { key: 'loading_state', label: 'Loading State', patterns: ['/loading.tsx'] },
-    { key: 'permission_denied', label: 'Permission Denied', patterns: ['/403/page.tsx', '/permission-denied/page.tsx'] },
+    {
+      key: 'permission_denied',
+      label: 'Permission Denied',
+      patterns: ['/403/page.tsx', '/permission-denied/page.tsx'],
+    },
     { key: 'not_found', label: '404 Not Found', patterns: ['/not-found.tsx'] },
     { key: 'maintenance', label: 'Maintenance', patterns: ['/maintenance'] },
   ],
@@ -172,7 +184,9 @@ function main() {
   const categoryAvg = Math.round(
     categories.reduce((sum, c) => sum + c.coverage, 0) / (categories.length || 1)
   );
-  const overallCoverage = Math.round((categoryAvg + buttonAudit.variantCoverage + buttonAudit.stateCoverage) / 3);
+  const overallCoverage = Math.round(
+    (categoryAvg + buttonAudit.variantCoverage + buttonAudit.stateCoverage) / 3
+  );
 
   const missing = categories.flatMap((c) =>
     c.items.filter((i) => !i.found).map((i) => `${c.name}: ${i.label}`)

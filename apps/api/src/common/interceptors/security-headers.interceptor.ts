@@ -28,9 +28,9 @@ import {
   Optional,
 } from '@nestjs/common';
 import {
+  type SecurityHeadersManager,
   createDevelopmentSecurityHeaders,
   createProductionSecurityHeaders,
-  type SecurityHeadersManager,
 } from '@nextgen/security';
 import type { Response } from 'express';
 import type { Observable } from 'rxjs';

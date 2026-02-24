@@ -15,8 +15,8 @@ import type { AuthResponse, AuthService, LoginDto, RegisterDto } from './auth.se
 import {
   type ForgotPasswordDto,
   type ResetPasswordDto,
-  type SendVerificationCodeDto,
   SMSResponseDto,
+  type SendVerificationCodeDto,
   type VerifySMSCodeDto,
 } from './dto/sms.dto';
 import {

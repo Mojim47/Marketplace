@@ -24,9 +24,9 @@ import type {
   VerifyPaymentDto,
 } from './dto/payment.dto';
 import {
+  type PaymentSecurityService,
   generateIdempotencyKey,
   generateRequestHash,
-  type PaymentSecurityService,
 } from './payment-security.service';
 
 // Audit service interface for dependency injection

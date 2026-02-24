@@ -16,9 +16,9 @@ import {
   MemoryHealthIndicator,
   PrismaHealthIndicator,
 } from '@nestjs/terminus';
-import { PrismaService } from '../database/prisma.service';
 import type Redis from 'ioredis';
 import * as Minio from 'minio';
+import { PrismaService } from '../database/prisma.service';
 import { RuntimeReconciliationService } from '../runtime/runtime-reconciliation.service';
 
 interface Response {
@@ -274,7 +274,9 @@ export class SchemaHealthChecker implements DependencyChecker {
     const expectedSchemaVersion = process.env.APP_SCHEMA_VERSION;
 
     try {
-      const rows = await this.prisma.$queryRawUnsafe<Array<{ migration_name: string; finished_at: Date | null }>>(
+      const rows = await this.prisma.$queryRawUnsafe<
+        Array<{ migration_name: string; finished_at: Date | null }>
+      >(
         'SELECT migration_name, finished_at FROM "_prisma_migrations" ORDER BY finished_at DESC NULLS LAST LIMIT 1'
       );
 
@@ -685,7 +687,8 @@ export class HealthController {
         message: dependency.reason,
         lastChecked: dependency.lastCheckedAt,
         details: {
-          error: dependency.circuitState !== 'CLOSED' ? `circuit=${dependency.circuitState}` : undefined,
+          error:
+            dependency.circuitState !== 'CLOSED' ? `circuit=${dependency.circuitState}` : undefined,
         },
       }));
       const response: ReadinessResponse = {
@@ -924,4 +927,3 @@ export const __testing = {
   RedisHealthChecker,
   StorageHealthChecker,
 };
-

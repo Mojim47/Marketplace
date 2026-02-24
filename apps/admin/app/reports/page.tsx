@@ -15,13 +15,20 @@ const vendors = [
 
 export default function AdminReportsPage() {
   return (
-    <AdminPanelShell title="Management Strategy Panel" subtitle="تصمیم‌گیری استراتژیک با KPI کلان، پیش‌بینی AI و عملکرد تیم فروشندگان.">
+    <AdminPanelShell
+      title="Management Strategy Panel"
+      subtitle="تصمیم‌گیری استراتژیک با KPI کلان، پیش‌بینی AI و عملکرد تیم فروشندگان."
+    >
       <section className="grid gap-4 md:grid-cols-4">
         {kpis.map((item) => (
           <article key={item.title} className="admin-kpi rounded-2xl p-5">
             <p className="text-xs text-slate-400">{item.title}</p>
             <p className="mt-2 text-2xl font-semibold text-white">{item.value}</p>
-            <p className={`mt-1 text-xs ${item.trend.startsWith('-') ? 'text-rose-300' : 'text-emerald-300'}`}>{item.trend}</p>
+            <p
+              className={`mt-1 text-xs ${item.trend.startsWith('-') ? 'text-rose-300' : 'text-emerald-300'}`}
+            >
+              {item.trend}
+            </p>
           </article>
         ))}
       </section>
@@ -29,20 +36,42 @@ export default function AdminReportsPage() {
       <section className="mt-6 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
         <div className="admin-card rounded-3xl p-6">
           <h2 className="admin-title text-xl text-white">Forecast vs Actual (30d + 7d)</h2>
-          <p className="mt-2 text-sm text-slate-300">خط پررنگ: داده واقعی • خط چین: پیش‌بینی AI • ناحیه روشن: فاصله اطمینان</p>
+          <p className="mt-2 text-sm text-slate-300">
+            خط پررنگ: داده واقعی • خط چین: پیش‌بینی AI • ناحیه روشن: فاصله اطمینان
+          </p>
           <svg viewBox="0 0 640 220" className="mt-4 w-full rounded-2xl bg-black/20 p-2">
-            <polyline fill="none" stroke="#22c55e" strokeWidth="3" points="0,170 80,150 140,132 220,118 300,96 380,105 460,87 540,72 620,64" />
-            <polyline fill="none" stroke="#8b5cf6" strokeDasharray="6 6" strokeWidth="3" points="460,87 500,80 540,76 580,70 620,66" />
-            <polygon points="460,75 500,66 540,64 580,60 620,58 620,76 580,82 540,89 500,95 460,101" fill="rgba(139,92,246,0.18)" />
+            <polyline
+              fill="none"
+              stroke="#22c55e"
+              strokeWidth="3"
+              points="0,170 80,150 140,132 220,118 300,96 380,105 460,87 540,72 620,64"
+            />
+            <polyline
+              fill="none"
+              stroke="#8b5cf6"
+              strokeDasharray="6 6"
+              strokeWidth="3"
+              points="460,87 500,80 540,76 580,70 620,66"
+            />
+            <polygon
+              points="460,75 500,66 540,64 580,60 620,58 620,76 580,82 540,89 500,95 460,101"
+              fill="rgba(139,92,246,0.18)"
+            />
           </svg>
         </div>
 
         <div className="admin-card rounded-3xl p-6">
           <h2 className="admin-title text-xl text-white">Financial Pulse</h2>
           <div className="mt-4 space-y-3 text-sm">
-            <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-slate-200">Revenue: 421B</div>
-            <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-slate-200">Cost: 188B</div>
-            <div className="rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-emerald-300">Profit: 233B</div>
+            <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-slate-200">
+              Revenue: 421B
+            </div>
+            <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-slate-200">
+              Cost: 188B
+            </div>
+            <div className="rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-emerald-300">
+              Profit: 233B
+            </div>
           </div>
         </div>
       </section>
