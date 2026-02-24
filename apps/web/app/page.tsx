@@ -51,6 +51,13 @@ const userPanelItems = [
   { label: 'پیام پشتیبانی', value: '1', hint: 'پاسخ کمتر از 10 دقیقه' },
 ];
 
+const categoryBanners = [
+  { title: 'موبایل و گجت', tag: 'Up to 18% OFF', image: '/images/products/smartphone-ultra.jpg' },
+  { title: 'خانه هوشمند', tag: 'Smart Living', image: '/images/products/smart-home-hub.jpg' },
+  { title: 'محصولات پردازشی', tag: 'AI Hardware', image: '/images/products/laptop-pro.jpg' },
+  { title: 'صوت و تصویر', tag: 'Cinema & Audio', image: '/images/products/smart-tv-oled.jpg' },
+];
+
 const intelligence = [
   { label: 'دقت پیش بینی تقاضا', value: 88, meta: 'هفته جاری' },
   { label: 'پایداری موجودی', value: 81, meta: 'در 12 انبار' },
@@ -101,28 +108,26 @@ export default function HomePage() {
             <Pill>جستجوی اولویت‌دار</Pill>
           </div>
 
-          <section className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm lg:grid-cols-[0.9fr_1.55fr_0.85fr]">
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4" aria-label="دسته‌بندی‌ها">
-              <p className="text-xs text-orange-600">Categories</p>
-              <h2 className="section-title mt-2 text-xl text-slate-900">کشف سریع L1/L2/L3</h2>
-              <div className="mt-4 space-y-2">
-                {l1Categories.slice(0, 4).map((category) => (
-                  <div key={category.slug} className="rounded-xl border border-slate-200 bg-white p-3">
-                    <Link href={`/categories?group=${encodeURIComponent(category.slug)}`} className="text-sm text-slate-800 hover:text-orange-600">
-                      {category.name}
-                    </Link>
-                    <div className="mt-2 flex flex-wrap gap-1">
-                      {(category.children ?? []).slice(0, 2).map((sub) => (
-                        <Link
-                          key={sub.slug}
-                          href={`/categories?group=${encodeURIComponent(category.slug)}&level=${encodeURIComponent(sub.slug)}`}
-                          className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] text-slate-600 hover:text-orange-600"
-                        >
-                          {sub.name}
-                        </Link>
-                      ))}
+          <section className="grid gap-4 rounded-3xl border border-slate-200/80 bg-white/90 p-4 shadow-sm lg:grid-cols-[0.9fr_1.55fr_0.85fr]">
+            <div className="rounded-2xl bg-gradient-to-b from-orange-50 to-amber-50 p-4" aria-label="دسته‌بندی‌ها">
+              <p className="text-xs text-orange-600">Category Showcase</p>
+              <h2 className="section-title mt-2 text-xl text-slate-900">L1/L2/L3 به‌صورت بنری</h2>
+              <div className="mt-4 space-y-3">
+                {categoryBanners.map((banner, idx) => (
+                  <Link
+                    key={banner.title}
+                    href={`/categories?group=${encodeURIComponent(l1Categories[idx]?.slug ?? '')}`}
+                    className="group relative block overflow-hidden rounded-2xl"
+                  >
+                    <div className="relative h-24">
+                      <Image src={banner.image} alt={banner.title} fill className="object-cover transition duration-500 group-hover:scale-105" sizes="(min-width:1024px) 24vw, 90vw" />
+                      <div className="absolute inset-0 bg-gradient-to-r from-black/55 via-black/20 to-transparent" />
+                      <div className="absolute inset-y-0 left-0 flex flex-col justify-center px-4 text-white">
+                        <p className="text-xs text-orange-200">{banner.tag}</p>
+                        <p className="text-sm font-semibold">{banner.title}</p>
+                      </div>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </div>

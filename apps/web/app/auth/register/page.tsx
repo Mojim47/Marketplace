@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useState } from 'react';
+import { AuthExperiencePanel } from '@/components/AuthExperiencePanel';
 import { useAuth } from '@/components/AuthProvider';
 import { Button, Container, GlassCard, PageHeader, SectionTitle } from '@/components/ui';
 
@@ -111,11 +112,9 @@ export default function RegisterPage() {
                 />
               </div>
 
-              {error ? (
-                <p className="rounded-xl border border-rose-300/30 bg-rose-500/10 px-4 py-3 text-xs text-rose-200">{error}</p>
-              ) : null}
+              {error ? <p className="rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-xs text-rose-700">{error}</p> : null}
 
-              <Button loading={loading} loadingText="در حال ثبت‌نام..." type="submit">
+              <Button loading={loading} loadingText="در حال ثبت‌نام..." type="submit" className="btn-3d">
                 ایجاد حساب
               </Button>
             </form>
@@ -127,14 +126,7 @@ export default function RegisterPage() {
             </div>
           </GlassCard>
 
-          <GlassCard className="rounded-3xl p-8">
-            <SectionTitle className="text-2xl text-slate-900">مزایای حساب کاربری</SectionTitle>
-            <ul className="mt-5 space-y-3 text-sm text-slate-600">
-              <li className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">ردیابی سفارش و اعلان لحظه‌ای وضعیت</li>
-              <li className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">تسویه سریع با اطلاعات ذخیره‌شده</li>
-              <li className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">پیشنهادهای شخصی‌سازی‌شده مبتنی بر رفتار خرید</li>
-            </ul>
-          </GlassCard>
+          <AuthExperiencePanel heading="ثبت‌نام سریع با بنرهای کمپینی" />
         </div>
       </div>
     </Container>

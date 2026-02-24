@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FormEvent, useState } from 'react';
+import { AuthExperiencePanel } from '@/components/AuthExperiencePanel';
 import { useAuth } from '@/components/AuthProvider';
 import { Button, Container, GlassCard, PageHeader, SectionTitle } from '@/components/ui';
 
@@ -91,11 +92,9 @@ export default function LoginPage() {
                 />
               </div>
 
-              {error ? (
-                <p className="rounded-xl border border-rose-300/30 bg-rose-500/10 px-4 py-3 text-xs text-rose-200">{error}</p>
-              ) : null}
+              {error ? <p className="rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-xs text-rose-700">{error}</p> : null}
 
-              <Button loading={submitting} loadingText="در حال ورود..." type="submit">
+              <Button loading={submitting} loadingText="در حال ورود..." type="submit" className="btn-3d">
                 ورود
               </Button>
             </form>
@@ -110,14 +109,7 @@ export default function LoginPage() {
             </div>
           </GlassCard>
 
-          <GlassCard className="rounded-3xl p-8">
-            <SectionTitle className="text-2xl text-slate-900">چرا ورود امن مهم است؟</SectionTitle>
-            <ul className="mt-5 space-y-3 text-sm text-slate-600">
-              <li className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">حفظ سبد خرید و تاریخچه سفارش بین نشست‌ها</li>
-              <li className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">تشخیص 401 و ریکاوری خودکار نشست</li>
-              <li className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">اتصال مستقیم به checkout و مسیر پرداخت</li>
-            </ul>
-          </GlassCard>
+          <AuthExperiencePanel heading="ورود حرفه‌ای با تجربه ویترینی" />
         </div>
       </div>
     </Container>

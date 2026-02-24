@@ -131,6 +131,71 @@ body::after {
   box-shadow: 0 18px 38px color-mix(in srgb, var(--color-action-primary) 38%, transparent 62%);
 }
 
+.btn-3d {
+  border: 1px solid color-mix(in srgb, var(--color-action-primary) 30%, #0f172a 70%);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-action-primary) 76%, #ffffff 24%), var(--color-action-primary));
+  color: #fff;
+  box-shadow: 0 10px 0 color-mix(in srgb, var(--color-action-primary) 72%, #0b3d2e 28%), 0 16px 30px rgb(15 23 42 / 0.18);
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+
+.btn-3d:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 0 color-mix(in srgb, var(--color-action-primary) 72%, #0b3d2e 28%), 0 20px 36px rgb(15 23 42 / 0.2);
+}
+
+.btn-3d:active {
+  transform: translateY(4px);
+  box-shadow: 0 6px 0 color-mix(in srgb, var(--color-action-primary) 72%, #0b3d2e 28%), 0 10px 22px rgb(15 23 42 / 0.14);
+}
+
+.auth-hero-shell {
+  border-radius: 24px;
+  padding: 20px;
+  border: 1px solid color-mix(in srgb, var(--color-action-primary) 26%, var(--border) 74%);
+  background: linear-gradient(145deg, rgb(255 255 255 / 0.9), rgb(255 247 237 / 0.75));
+  box-shadow: 0 18px 38px rgb(15 23 42 / 0.1);
+}
+
+.auth-banner-tile {
+  border-radius: 18px;
+  padding: 14px;
+  border: 1px solid rgb(251 191 36 / 0.4);
+  background: linear-gradient(120deg, rgb(255 255 255 / 0.96), rgb(255 237 213 / 0.7));
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.auth-banner-tile:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 28px rgb(245 158 11 / 0.18);
+}
+
+.auth-marquee {
+  overflow: hidden;
+  border-radius: 999px;
+  border: 1px solid rgb(251 191 36 / 0.45);
+  background: rgb(255 255 255 / 0.7);
+}
+
+.auth-marquee-track {
+  display: inline-flex;
+  gap: 18px;
+  padding: 8px 14px;
+  white-space: nowrap;
+  animation: auth-marquee 14s linear infinite;
+  font-size: 11px;
+  color: #475569;
+}
+
+@keyframes auth-marquee {
+  from {
+    transform: translateX(20%);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
 .btn-secondary {
   background: #f59e0b;
   color: #111827;

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { FormEvent, useState } from 'react';
+import { AuthExperiencePanel } from '@/components/AuthExperiencePanel';
 import { Button, Container, GlassCard, PageHeader, SectionTitle } from '@/components/ui';
 
 export default function ResetPasswordPage() {
@@ -37,7 +38,7 @@ export default function ResetPasswordPage() {
 
   return (
     <Container className="py-12">
-      <div className="mx-auto max-w-3xl">
+      <div className="mx-auto max-w-5xl">
         <PageHeader
           eyebrow="Credential Recovery"
           title="ثبت رمز جدید"
@@ -45,15 +46,16 @@ export default function ResetPasswordPage() {
           chips={['Code Verification', 'Password Policy', 'Account Recovery']}
         />
 
-        <GlassCard className="mt-8 rounded-3xl p-8">
-          <SectionTitle className="text-2xl text-slate-900">بازنشانی رمز عبور</SectionTitle>
+        <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_0.9fr]">
+          <GlassCard className="rounded-3xl p-8">
+            <SectionTitle className="text-2xl text-slate-900">بازنشانی رمز عبور</SectionTitle>
 
-          <form
-            className="mt-6 space-y-4"
-            onSubmit={onSubmit}
-            data-error-state={error ? 'true' : 'false'}
-            data-empty-state={!mobile || !code || !newPassword ? 'true' : 'false'}
-          >
+            <form
+              className="mt-6 space-y-4"
+              onSubmit={onSubmit}
+              data-error-state={error ? 'true' : 'false'}
+              data-empty-state={!mobile || !code || !newPassword ? 'true' : 'false'}
+            >
             <div>
               <label htmlFor="reset-mobile" className="text-xs text-slate-600">شماره موبایل</label>
               <input
@@ -90,18 +92,22 @@ export default function ResetPasswordPage() {
               />
             </div>
 
-            {error ? <p className="rounded-xl border border-rose-300/30 bg-rose-500/10 px-4 py-3 text-xs text-rose-200">{error}</p> : null}
-            {message ? <p className="rounded-xl border border-emerald-300/30 bg-emerald-500/10 px-4 py-3 text-xs text-emerald-200">{message}</p> : null}
+            {error ? <p className="rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-xs text-rose-700">{error}</p> : null}
+            {message ? <p className="rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-xs text-emerald-700">{message}</p> : null}
 
-            <Button loading={loading} loadingText="در حال ثبت..." type="submit">
+            <Button loading={loading} loadingText="در حال ثبت..." type="submit" className="btn-3d">
               ثبت رمز جدید
             </Button>
-          </form>
+            </form>
 
-          <div className="mt-6 text-sm">
-            <Link href="/auth/login" className="text-slate-600 transition hover:text-orange-700">بازگشت به صفحه ورود</Link>
+            <div className="mt-6 text-sm">
+              <Link href="/auth/login" className="text-slate-600 transition hover:text-orange-700">بازگشت به صفحه ورود</Link>
+            </div>
+          </GlassCard>
+          <div>
+            <AuthExperiencePanel heading="ثبت رمز جدید با مسیر امن و کوتاه" />
           </div>
-        </GlassCard>
+        </div>
       </div>
     </Container>
   );
