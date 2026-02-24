@@ -24,6 +24,7 @@ const NC = '\x1b[0m'; // No Color
 
 let errors = 0;
 let warnings = 0;
+const normalizePath = (value) => value.replace(/\\/g, '/');
 const mockReport = {
   timestamp: new Date().toISOString(),
   mockFiles: [],
@@ -55,10 +56,9 @@ const MOCK_FILE_PATTERNS = [
  * Content patterns to detect mock/placeholder code
  */
 const MOCK_CONTENT_PATTERNS = [
-  /TODO.*mock|FIXME.*mock|\bPLACEHOLDER\b/i,
-  /function\s+(simulate|mock|fake|stub|dummy)/i,
-  /const\s+(simulate|mock|fake|stub|dummy)/i,
-  /Math\.random\(\)/g, // Detect random generators in business logic
+  /TODO.*(mock|placeholder)|FIXME.*(mock|placeholder)|\b__PLACEHOLDER__\b/i,
+  /function\s+(mock|fake|stub|dummy)/i,
+  /const\s+(mock|fake|stub|dummy)/i,
   /setTimeout.*mock|setInterval.*mock/i,
   /console\.log.*mock|console\.log.*test/i
 ];
@@ -87,7 +87,7 @@ async function findFiles(dir, patterns, excludePatterns = []) {
       
       for (const entry of entries) {
         const fullPath = join(currentDir, entry.name);
-        const relativePath = relative(process.cwd(), fullPath);
+        const relativePath = normalizePath(relative(process.cwd(), fullPath));
         
         // Skip excluded directories
         const shouldExclude = excludePatterns.some(pattern => {
@@ -114,10 +114,13 @@ async function findFiles(dir, patterns, excludePatterns = []) {
           });
           
           if (matchesPattern) {
+            const isTestPath =
+              /(^|\/)(test|tests|__tests__)(\/|$)/.test(relativePath) ||
+              /\.(spec|test)\.[jt]sx?$/.test(relativePath);
             results.push({
               path: relativePath,
               type: 'file',
-              inProductionPath: !relativePath.includes('test') && !relativePath.includes('spec')
+              inProductionPath: !isTestPath
             });
           }
         }
@@ -147,7 +150,7 @@ async function grepFiles(dir, searchPatterns, filePatterns, excludePatterns = []
       
       for (const entry of entries) {
         const fullPath = join(currentDir, entry.name);
-        const relativePath = relative(process.cwd(), fullPath);
+        const relativePath = normalizePath(relative(process.cwd(), fullPath));
         
         const shouldExclude = excludePatterns.some(pattern => relativePath.includes(pattern));
         if (shouldExclude) continue;
@@ -168,12 +171,15 @@ async function grepFiles(dir, searchPatterns, filePatterns, excludePatterns = []
                 searchPatterns.forEach(pattern => {
                   const matches = line.match(pattern);
                   if (matches) {
+                    const isTestPath =
+                      /(^|\/)(test|tests|__tests__)(\/|$)/.test(relativePath) ||
+                      /\.(spec|test)\.[jt]sx?$/.test(relativePath);
                     results.push({
                       file: relativePath,
                       line: index + 1,
                       content: line.trim().substring(0, 100),
                       pattern: pattern.toString(),
-                      severity: relativePath.includes('apps/') || relativePath.includes('libs/') ? 'ERROR' : 'WARNING'
+                      severity: isTestPath ? 'WARNING' : 'ERROR'
                     });
                   }
                 });

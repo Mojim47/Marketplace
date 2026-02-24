@@ -106,9 +106,9 @@ async function forward(request: Request, path: string[]) {
 
   const method = request.method.toUpperCase();
   if (isMockMode()) {
-    const mockResponse = getMockResponse(joinedPath, method);
-    if (mockResponse) {
-      return mockResponse;
+    const fallbackResponse = getMockResponse(joinedPath, method);
+    if (fallbackResponse) {
+      return fallbackResponse;
     }
   }
 

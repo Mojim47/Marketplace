@@ -10,6 +10,7 @@
 
 import { type DynamicModule, Global, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { randomUUID } from 'crypto';
 import Redis from 'ioredis';
 
 export interface RedisModuleOptions {
@@ -60,7 +61,7 @@ class RedisStateService {
     options?: { ttlMs?: number; retryAttempts?: number; retryDelayMs?: number }
   ): Promise<{ key: string; token: string } | null> {
     const lockKey = this.getLockKey(key);
-    const token = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const token = `${Date.now()}-${randomUUID()}`;
     const ttlMs = options?.ttlMs ?? 10000;
     const retryAttempts = options?.retryAttempts ?? 3;
     const retryDelayMs = options?.retryDelayMs ?? 200;
@@ -108,7 +109,7 @@ class RedisSessionService {
     metadata: { userAgent?: string; ipAddress?: string },
     options?: { ttlSeconds?: number }
   ): Promise<string> {
-    const sessionId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const sessionId = `${Date.now()}-${randomUUID()}`;
     const ttl = options?.ttlSeconds ?? 86400;
     const now = new Date();
 

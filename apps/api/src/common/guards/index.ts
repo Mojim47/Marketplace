@@ -399,7 +399,7 @@ export class RateLimitGuard implements CanActivate {
     try {
       // Use Redis sorted set for sliding window
       // Score = timestamp, Member = unique request ID
-      const requestId = `${now}:${Math.random().toString(36).substring(7)}`;
+      const requestId = `${now}:${uuidv4()}`;
 
       // Execute atomic operations
       const pipeline = this.redis.pipeline();

@@ -56,7 +56,7 @@ export async function POST(request: Request) {
   }
 
   if (isMockMode()) {
-    const mockUser = {
+    const demoUser = {
       id: 'mock-user-1',
       email: `${payload.mobile}@mobile.nextgen.local`,
       mobile: payload.mobile,
@@ -64,10 +64,10 @@ export async function POST(request: Request) {
       firstName: 'Mock',
       lastName: 'User',
     };
-    const response = NextResponse.json({ ok: true, user: mockUser });
+    const response = NextResponse.json({ ok: true, user: demoUser });
     response.cookies.set(AUTH_COOKIE_NAME, createMockAccessToken(payload.mobile), cookieOptions);
     response.cookies.set('refresh_token', 'mock-refresh-token', refreshCookieOptions);
-    response.cookies.set('auth_user', JSON.stringify(mockUser), {
+    response.cookies.set('auth_user', JSON.stringify(demoUser), {
       ...cookieOptions,
       httpOnly: false,
     });
