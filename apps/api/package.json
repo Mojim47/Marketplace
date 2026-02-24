@@ -31,7 +31,7 @@
     "@nextgen/validation": "workspace:*",
     "@prisma/client": "5.19.1",
     "@prisma/client-runtime-utils": "7.4.0",
-    "argon2": "^0.31.0",
+    "argon2": "^0.44.0",
     "compression": "^1.7.4",
     "express": "^4.18.0",
     "helmet": "^7.0.0",

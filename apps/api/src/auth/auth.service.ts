@@ -37,6 +37,12 @@ const ARGON2_CONFIG: argon2.Options = {
   hashLength: 32, // 256-bit hash output
 };
 
+const ARGON2_REHASH_CONFIG = {
+  memoryCost: ARGON2_CONFIG.memoryCost,
+  timeCost: ARGON2_CONFIG.timeCost,
+  parallelism: ARGON2_CONFIG.parallelism,
+};
+
 export interface LoginDto {
   mobile?: string;
   email?: string;
@@ -285,7 +291,7 @@ export class AuthService {
    */
   async needsRehash(hash: string): Promise<boolean> {
     try {
-      return argon2.needsRehash(hash, ARGON2_CONFIG);
+      return argon2.needsRehash(hash, ARGON2_REHASH_CONFIG);
     } catch {
       return true; // If we can't check, assume it needs rehashing
     }

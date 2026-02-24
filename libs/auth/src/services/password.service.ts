@@ -116,7 +116,6 @@ export class PasswordService {
    */
   async needsRehash(hash: string): Promise<boolean> {
     return argon2.needsRehash(hash, {
-      type: argon2.argon2id,
       memoryCost: 65536,
       timeCost: 3,
       parallelism: 4,

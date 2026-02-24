@@ -14,9 +14,31 @@ env:
   MOODIAN_PUBLIC_KEY: ${{ secrets.MOODIAN_PUBLIC_KEY }}
 
 jobs:
+  precheck:
+    name: "Moodian Secret Gate"
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.gate.outputs.should_run }}
+    steps:
+      - id: gate
+        name: "Evaluate secret availability"
+        shell: bash
+        run: |
+          if [ -n "$MOODIAN_PRIVATE_KEY" ] && [ -n "$MOODIAN_PUBLIC_KEY" ]; then
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+            echo "Moodian keys detected."
+          else
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+            echo "Moodian keys missing; e2e job will be skipped."
+          fi
+        env:
+          MOODIAN_PRIVATE_KEY: ${{ secrets.MOODIAN_PRIVATE_KEY }}
+          MOODIAN_PUBLIC_KEY: ${{ secrets.MOODIAN_PUBLIC_KEY }}
+
   moodian-e2e:
-    # Only run when signing keys are available (skip for forks/PRs without secrets)
-    if: ${{ secrets.MOODIAN_PRIVATE_KEY != '' && secrets.MOODIAN_PUBLIC_KEY != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false) }}
+    needs: precheck
+    # Run only on trusted contexts when keys are available.
+    if: ${{ needs.precheck.outputs.should_run == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false) }}
     runs-on: ubuntu-latest
     services:
       postgres:
