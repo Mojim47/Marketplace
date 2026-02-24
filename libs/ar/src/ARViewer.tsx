@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { evaluateARGuardrail } from './runtime/ar-guardrail';
 
 export interface ARViewerProps {
@@ -184,17 +184,19 @@ export function ARViewer({
 
   if (hasError) {
     return (
-      <div style={{
-        width: '100%',
-        height: 420,
-        background: backgroundColor,
-        borderRadius: 12,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: '#ef4444',
-        ...style,
-      }}>
+      <div
+        style={{
+          width: '100%',
+          height: 420,
+          background: backgroundColor,
+          borderRadius: 12,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: '#ef4444',
+          ...style,
+        }}
+      >
         خطا در بارگذاری مدل
       </div>
     );
@@ -212,14 +214,16 @@ export function ARViewer({
       }}
     >
       {isLoading && (
-        <div style={{
-          width: '100%',
-          height: 420,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: '#64748b',
-        }}>
+        <div
+          style={{
+            width: '100%',
+            height: 420,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#64748b',
+          }}
+        >
           در حال بارگذاری...
         </div>
       )}
