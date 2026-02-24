@@ -38,6 +38,7 @@ interface BanUserDto {
 
 interface ToggleVendorStoryDto {
   enabled: boolean;
+  rolloutPercent?: number;
 }
 
 interface AuthenticatedRequest {
@@ -194,16 +195,23 @@ export class AdminController {
   async setVendorStoryCapability(
     @Param('id') vendorId: string,
     @Body() body: ToggleVendorStoryDto
-  ): Promise<{ message: string; vendorId: string; storiesEnabled: boolean }> {
+  ): Promise<{
+    message: string;
+    vendorId: string;
+    storiesEnabled: boolean;
+    storyRolloutPercent: number;
+  }> {
     this.logger.log(`Updating story capability for vendor ${vendorId}`, body);
     const result = await this.adminService.setVendorStoryCapability(
       vendorId,
-      Boolean(body.enabled)
+      Boolean(body.enabled),
+      body.rolloutPercent
     );
     return {
       message: 'Vendor story capability updated',
       vendorId: result.vendorId,
       storiesEnabled: result.storiesEnabled,
+      storyRolloutPercent: result.storyRolloutPercent,
     };
   }
 }

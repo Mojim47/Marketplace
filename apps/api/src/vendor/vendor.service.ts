@@ -340,10 +340,10 @@ export class VendorService {
 
   async getStoryCapability(
     vendorId: string
-  ): Promise<{ vendorId: string; storiesEnabled: boolean }> {
+  ): Promise<{ vendorId: string; storiesEnabled: boolean; storyRolloutPercent: number }> {
     const vendor = await this.prisma.vendor.findUnique({
       where: { id: vendorId },
-      select: { id: true, stories_enabled: true },
+      select: { id: true, stories_enabled: true, story_rollout_percent: true },
     });
 
     if (!vendor) {
@@ -353,22 +353,33 @@ export class VendorService {
     return {
       vendorId: vendor.id,
       storiesEnabled: vendor.stories_enabled,
+      storyRolloutPercent: vendor.story_rollout_percent,
     };
   }
 
   async setStoryCapability(
     vendorId: string,
-    storiesEnabled: boolean
-  ): Promise<{ vendorId: string; storiesEnabled: boolean }> {
+    storiesEnabled: boolean,
+    storyRolloutPercent?: number
+  ): Promise<{ vendorId: string; storiesEnabled: boolean; storyRolloutPercent: number }> {
+    const safeRollout =
+      typeof storyRolloutPercent === 'number'
+        ? Math.max(0, Math.min(100, Math.round(storyRolloutPercent)))
+        : undefined;
+
     const vendor = await this.prisma.vendor.update({
       where: { id: vendorId },
-      data: { stories_enabled: storiesEnabled },
-      select: { id: true, stories_enabled: true },
+      data: {
+        stories_enabled: storiesEnabled,
+        ...(safeRollout === undefined ? {} : { story_rollout_percent: safeRollout }),
+      },
+      select: { id: true, stories_enabled: true, story_rollout_percent: true },
     });
 
     return {
       vendorId: vendor.id,
       storiesEnabled: vendor.stories_enabled,
+      storyRolloutPercent: vendor.story_rollout_percent,
     };
   }
 

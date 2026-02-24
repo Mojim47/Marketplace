@@ -30,6 +30,7 @@ interface VendorStoryCapability {
   vendorName: string;
   active: boolean;
   storiesEnabled: boolean;
+  storyRolloutPercent: number;
   createdAt: Date;
 }
 
@@ -396,6 +397,7 @@ export class AdminService implements OnModuleInit {
         name: true,
         is_active: true,
         stories_enabled: true,
+        story_rollout_percent: true,
         created_at: true,
       },
       orderBy: { created_at: 'desc' },
@@ -406,23 +408,34 @@ export class AdminService implements OnModuleInit {
       vendorName: vendor.name,
       active: vendor.is_active,
       storiesEnabled: vendor.stories_enabled,
+      storyRolloutPercent: vendor.story_rollout_percent,
       createdAt: vendor.created_at,
     }));
   }
 
   async setVendorStoryCapability(
     vendorId: string,
-    storiesEnabled: boolean
-  ): Promise<{ vendorId: string; storiesEnabled: boolean }> {
+    storiesEnabled: boolean,
+    storyRolloutPercent?: number
+  ): Promise<{ vendorId: string; storiesEnabled: boolean; storyRolloutPercent: number }> {
+    const safeRollout =
+      typeof storyRolloutPercent === 'number'
+        ? Math.max(0, Math.min(100, Math.round(storyRolloutPercent)))
+        : undefined;
+
     const vendor = await this.prisma.vendor.update({
       where: { id: vendorId },
-      data: { stories_enabled: storiesEnabled },
-      select: { id: true, stories_enabled: true },
+      data: {
+        stories_enabled: storiesEnabled,
+        ...(safeRollout === undefined ? {} : { story_rollout_percent: safeRollout }),
+      },
+      select: { id: true, stories_enabled: true, story_rollout_percent: true },
     });
 
     return {
       vendorId: vendor.id,
       storiesEnabled: vendor.stories_enabled,
+      storyRolloutPercent: vendor.story_rollout_percent,
     };
   }
 

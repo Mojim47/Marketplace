@@ -79,10 +79,12 @@ model Vendor {
   commission_rate Decimal @default(10) @db.Decimal(5, 2)
   is_active Boolean  @default(true)
   stories_enabled Boolean @default(true)
+  story_rollout_percent Int @default(100)
   created_at DateTime @default(now())
 
   products  Product[]
   stories   VendorStory[]
+  story_events VendorStoryEvent[]
 
   @@map("vendors")
 }
@@ -101,9 +103,29 @@ model VendorStory {
   updated_at  DateTime @updatedAt
 
   vendor      Vendor   @relation(fields: [vendor_id], references: [id], onDelete: Cascade)
+  events      VendorStoryEvent[]
 
   @@index([vendor_id, is_active, expires_at])
   @@map("vendor_stories")
+}
+
+model VendorStoryEvent {
+  id          String   @id @default(cuid())
+  story_id    String
+  vendor_id   String
+  event_type  String   @db.VarChar(20)
+  session_id  String   @db.VarChar(80)
+  trace_id    String?  @db.VarChar(120)
+  meta        Json?
+  created_at  DateTime @default(now())
+
+  story       VendorStory @relation(fields: [story_id], references: [id], onDelete: Cascade)
+  vendor      Vendor      @relation(fields: [vendor_id], references: [id], onDelete: Cascade)
+
+  @@index([story_id, event_type, created_at])
+  @@index([vendor_id, event_type, created_at])
+  @@index([session_id, created_at])
+  @@map("vendor_story_events")
 }
 
 model Product {

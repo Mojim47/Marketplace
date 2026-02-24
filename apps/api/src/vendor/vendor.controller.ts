@@ -155,7 +155,7 @@ export class VendorController {
   @Get(':id/story-capability')
   async getStoryCapability(
     @Param('id') id: string
-  ): Promise<{ vendorId: string; storiesEnabled: boolean }> {
+  ): Promise<{ vendorId: string; storiesEnabled: boolean; storyRolloutPercent: number }> {
     return this.vendorService.getStoryCapability(id);
   }
 

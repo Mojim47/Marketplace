@@ -9,6 +9,7 @@ type VendorStoryCapability = {
   vendorName: string;
   active: boolean;
   storiesEnabled: boolean;
+  storyRolloutPercent: number;
   createdAt: string;
 };
 
@@ -18,6 +19,7 @@ const fallbackVendors: VendorStoryCapability[] = [
     vendorName: 'TechHub',
     active: true,
     storiesEnabled: true,
+    storyRolloutPercent: 100,
     createdAt: new Date().toISOString(),
   },
   {
@@ -25,6 +27,7 @@ const fallbackVendors: VendorStoryCapability[] = [
     vendorName: 'SmartHomeX',
     active: true,
     storiesEnabled: false,
+    storyRolloutPercent: 40,
     createdAt: new Date().toISOString(),
   },
   {
@@ -32,6 +35,7 @@ const fallbackVendors: VendorStoryCapability[] = [
     vendorName: 'AudioPro',
     active: false,
     storiesEnabled: false,
+    storyRolloutPercent: 0,
     createdAt: new Date().toISOString(),
   },
 ];
@@ -86,12 +90,18 @@ export default function AdminVendorsPage() {
     [vendors]
   );
 
-  async function toggleVendor(vendorId: string, nextValue: boolean) {
+  async function saveVendorCapability(
+    vendorId: string,
+    nextValue: boolean,
+    rolloutPercent: number
+  ) {
     const previous = vendors;
     setSaving((prev) => ({ ...prev, [vendorId]: true }));
     setVendors((prev) =>
       prev.map((vendor) =>
-        vendor.vendorId === vendorId ? { ...vendor, storiesEnabled: nextValue } : vendor
+        vendor.vendorId === vendorId
+          ? { ...vendor, storiesEnabled: nextValue, storyRolloutPercent: rolloutPercent }
+          : vendor
       )
     );
 
@@ -100,7 +110,7 @@ export default function AdminVendorsPage() {
         method: 'PATCH',
         credentials: 'include',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ enabled: nextValue }),
+        body: JSON.stringify({ enabled: nextValue, rolloutPercent }),
       });
 
       if (!response.ok) {
@@ -112,6 +122,11 @@ export default function AdminVendorsPage() {
     } finally {
       setSaving((prev) => ({ ...prev, [vendorId]: false }));
     }
+  }
+
+  async function toggleVendor(vendorId: string, nextValue: boolean) {
+    const current = vendors.find((item) => item.vendorId === vendorId);
+    await saveVendorCapability(vendorId, nextValue, current?.storyRolloutPercent ?? 100);
   }
 
   return (
@@ -174,6 +189,47 @@ export default function AdminVendorsPage() {
                   />
                   Story
                 </label>
+              </div>
+              <div className="mt-4 rounded-xl border border-white/10 bg-black/10 p-3">
+                <div className="mb-2 flex items-center justify-between text-xs text-slate-300">
+                  <span>Rollout درصدی Story</span>
+                  <span>{vendor.storyRolloutPercent}%</span>
+                </div>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  step={5}
+                  value={vendor.storyRolloutPercent}
+                  disabled={isSaving}
+                  onChange={(event) => {
+                    const nextPercent = Number(event.target.value);
+                    setVendors((prev) =>
+                      prev.map((item) =>
+                        item.vendorId === vendor.vendorId
+                          ? { ...item, storyRolloutPercent: nextPercent }
+                          : item
+                      )
+                    );
+                  }}
+                  onMouseUp={(event) => {
+                    const nextPercent = Number((event.target as HTMLInputElement).value);
+                    void saveVendorCapability(
+                      vendor.vendorId,
+                      vendor.storiesEnabled,
+                      nextPercent
+                    );
+                  }}
+                  onTouchEnd={(event) => {
+                    const nextPercent = Number((event.target as HTMLInputElement).value);
+                    void saveVendorCapability(
+                      vendor.vendorId,
+                      vendor.storiesEnabled,
+                      nextPercent
+                    );
+                  }}
+                  className="w-full"
+                />
               </div>
               <p className="mt-4 text-xs text-slate-400">
                 {vendor.storiesEnabled
