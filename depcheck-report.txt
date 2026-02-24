@@ -1,0 +1,64 @@
+npm info using npm@10.8.2
+npm info using node@v20.19.5
+npm http fetch GET 200 https://registry.npmjs.org/depcheck 3862ms (cache revalidated)
+Unused dependencies
+* @nestjs/bullmq
+* @nestjs/cache-manager
+* @nestjs/jwt
+* @nestjs/passport
+* @nestjs/platform-fastify
+* @nestjs/schedule
+* @nestjs/swagger
+* @nestjs/terminus
+* @nestjs/throttler
+* @willsoto/nestjs-prometheus
+* argon2
+* bullmq
+* cache-manager
+* cache-manager-ioredis-yet
+* compression
+* cookie-parser
+* helmet
+* opossum
+* passport
+* passport-jwt
+* prom-client
+* validator
+* xss
+Unused devDependencies
+* @huggingface/tokenizers
+* dompurify
+* onnxruntime-node
+* @faker-js/faker
+* @fast-check/vitest
+* @nestjs/cli
+* @nestjs/schematics
+* @tailwindcss/aspect-ratio
+* @tailwindcss/forms
+* @tailwindcss/typography
+* @testcontainers/postgresql
+* @testing-library/jest-dom
+* @types/compression
+* @types/cookie-parser
+* @types/dompurify
+* @types/express
+* @types/jsdom
+* @types/passport-jwt
+* @types/validator
+* @vitest/coverage-v8
+* autoprefixer
+* detect-secrets
+* postcss
+* rimraf
+* tailwindcss
+Missing dependencies
+* @types/jest: .\tsconfig.test.json
+* jest: .\tests\jest-e2e.config.ts
+* k6: .\tests\k6-rate-limit.js
+* yaml: .\tests\integration\api-documentation.property.test.ts
+* @nextgen/cache: .\tests\integration\orders-lock.integration.test.ts
+* bcryptjs: .\tests\e2e-scenarios\scenario-engine.ts
+* sharp: .\scripts\generate-icons.js
+* @clickhouse/client: .\scripts\health-check-complete.ts
+* ajv: .\scripts\release\verify-secrets-contract-sync.mjs
+* next: .\pages\api\mfa.ts
