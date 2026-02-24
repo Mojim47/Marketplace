@@ -2,7 +2,6 @@
 
 generator client {
   provider = "prisma-client-js"
-  engineType = "library"
 }
 
 datasource db {
@@ -63,53 +62,13 @@ model Category {
   slug      String   @unique @db.VarChar(100)
   description String?
   parent_id String?
-  level     Int      @default(1)
-  sort_order Int     @default(0)
-  is_featured Boolean @default(false)
   created_at DateTime @default(now())
 
   parent    Category?  @relation("CategoryHierarchy", fields: [parent_id], references: [id])
   children  Category[] @relation("CategoryHierarchy")
   products  Product[]
-  search_history SearchSuggestionHistory[]
-  search_trends  SearchSuggestionTrend[]
 
-  @@index([parent_id, level, sort_order])
   @@map("categories")
-}
-
-model SearchSuggestionHistory {
-  id               String   @id @default(cuid())
-  visitor_id       String   @db.VarChar(64)
-  query            String   @db.VarChar(120)
-  normalized_query String   @db.VarChar(120)
-  category_id      String?
-  searched_at      DateTime @default(now())
-
-  category         Category? @relation(fields: [category_id], references: [id], onDelete: SetNull)
-
-  @@index([visitor_id, searched_at])
-  @@index([normalized_query])
-  @@index([category_id])
-  @@map("search_suggestion_history")
-}
-
-model SearchSuggestionTrend {
-  id               String   @id @default(cuid())
-  query            String   @db.VarChar(120)
-  normalized_query String   @db.VarChar(120)
-  category_id      String?
-  hits             Int      @default(1)
-  last_seen_at     DateTime @default(now())
-  created_at       DateTime @default(now())
-  updated_at       DateTime @updatedAt
-
-  category         Category? @relation(fields: [category_id], references: [id], onDelete: SetNull)
-
-  @@unique([normalized_query, category_id])
-  @@index([hits, last_seen_at])
-  @@index([category_id, last_seen_at])
-  @@map("search_suggestion_trends")
 }
 
 model Vendor {
@@ -202,7 +161,6 @@ model Wishlist {
 model Order {
   id        String   @id @default(cuid())
   user_id   String
-  idempotency_key String? @db.VarChar(128)
   order_number String @unique @db.VarChar(20)
   status    String   @default("PENDING") // PENDING, PAID, PROCESSING, SHIPPED, DELIVERED, COMPLETED
   total_amount Decimal @db.Decimal(10, 2)
@@ -214,7 +172,6 @@ model Order {
   payment   Payment?
 
   @@index([user_id])
-  @@unique([user_id, idempotency_key])
   @@index([status])
   @@index([created_at])
   @@map("orders")
@@ -269,26 +226,4 @@ model Review {
   @@unique([product_id, user_id])
   @@index([product_id])
   @@map("reviews")
-}
-
-model OutboxMessage {
-  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  aggregateType String   @map("aggregate_type")
-  aggregateId   String   @map("aggregate_id")
-  eventType     String   @map("event_type")
-  payload       Json
-  dedupKey      String   @unique @map("dedup_key") @db.VarChar(191)
-  traceId       String   @map("trace_id") @db.VarChar(128)
-  status        String   @default("pending") @db.VarChar(20)
-  retryCount    Int      @default(0) @map("retry_count")
-  maxRetries    Int      @default(5) @map("max_retries")
-  availableAt   DateTime @default(now()) @map("available_at") @db.Timestamptz(6)
-  processedAt   DateTime? @map("processed_at") @db.Timestamptz(6)
-  lastError     String?  @map("last_error")
-  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt     DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
-
-  @@index([status, availableAt])
-  @@index([traceId])
-  @@map("outbox_messages")
 }
