@@ -26,9 +26,9 @@ import { PrismaService } from '../database/prisma.service';
 import { MetricsService } from '../monitoring/metrics.service';
 import { OutboxService } from '../outbox/outbox.service';
 import {
+  type CheckoutAction,
   assertCheckoutActionAllowed,
   flowStateFromStep,
-  type CheckoutAction,
 } from './checkout-state-machine';
 import type {
   CheckoutConfig,
@@ -152,7 +152,8 @@ export class CheckoutService {
       return;
     }
 
-    const guardReason = 'guardReason' in transition ? transition.guardReason : 'step_transition_blocked';
+    const guardReason =
+      'guardReason' in transition ? transition.guardReason : 'step_transition_blocked';
 
     this.logGuardBlocked(session, transition.targetStep, guard, guardReason, {
       currentStep: session.step,
@@ -174,12 +175,11 @@ export class CheckoutService {
     });
 
     if (!persisted) {
-      this.loggingService.error(
-        'checkout_state_persist_failed',
-        undefined,
-        this.context,
-        { sessionId: session.id, userId: session.userId, reason }
-      );
+      this.loggingService.error('checkout_state_persist_failed', undefined, this.context, {
+        sessionId: session.id,
+        userId: session.userId,
+        reason,
+      });
       throw new InternalServerErrorException('checkout_state_persist_failed');
     }
 
@@ -234,12 +234,10 @@ export class CheckoutService {
       ttlSeconds: this.config.sessionTtlSeconds,
     });
     if (!sessionSaved) {
-      this.loggingService.error(
-        'checkout_init_session_persist_failed',
-        undefined,
-        this.context,
-        { sessionId, userId }
-      );
+      this.loggingService.error('checkout_init_session_persist_failed', undefined, this.context, {
+        sessionId,
+        userId,
+      });
       throw new InternalServerErrorException('checkout_init_session_persist_failed');
     }
 
@@ -249,12 +247,10 @@ export class CheckoutService {
       ttlSeconds: this.config.sessionTtlSeconds,
     });
     if (!userKeySaved) {
-      this.loggingService.error(
-        'checkout_init_user_key_persist_failed',
-        undefined,
-        this.context,
-        { sessionId, userId }
-      );
+      this.loggingService.error('checkout_init_user_key_persist_failed', undefined, this.context, {
+        sessionId,
+        userId,
+      });
       throw new InternalServerErrorException('checkout_init_user_key_persist_failed');
     }
 
@@ -404,13 +400,9 @@ export class CheckoutService {
       }
 
       if (method !== 'ONLINE') {
-        this.logGuardBlocked(
-          session,
-          'REVIEW',
-          'checkout_guard',
-          'unsupported_payment_method',
-          { method }
-        );
+        this.logGuardBlocked(session, 'REVIEW', 'checkout_guard', 'unsupported_payment_method', {
+          method,
+        });
         throw new BadRequestException('only_zarinpal_online_payment_supported');
       }
 
@@ -483,28 +475,20 @@ export class CheckoutService {
         // Create order
         const order = await tx.order.create({
           data: {
-            userId,
-            orderNumber: `ORD-${Date.now()}`,
-            subtotal: new Decimal(session.cartSnapshot.subtotal),
-            taxAmount: new Decimal(session.cartSnapshot.taxAmount),
-            shippingCost: new Decimal(session.cartSnapshot.shippingCost),
-            totalAmount: new Decimal(session.cartSnapshot.total),
+            user_id: userId,
+            order_number: `ORD-${Date.now()}`,
+            total_amount: new Decimal(session.cartSnapshot.total),
             status: 'PENDING',
-            paymentStatus: 'PENDING',
-            shippingAddress: session.shippingAddress as any,
             items: {
               create: session.cartSnapshot.items.map((item) => ({
-                productId: item.productId,
-                variantId: item.variantId,
-                productName: item.productName,
-                productSku: `SKU-${item.productId.slice(0, 8)}`,
+                product_id: item.productId,
                 quantity: item.quantity,
-                price: new Decimal(item.price),
-                total: new Decimal(item.price * item.quantity),
-                product: { connect: { id: item.productId } },
+                unit_price: new Decimal(item.price),
+                total_price: new Decimal(item.price * item.quantity),
               })),
             },
           },
+          select: { id: true, order_number: true },
         });
 
         // Decrement stock
@@ -522,7 +506,7 @@ export class CheckoutService {
           dedupKey: `checkout-order-created:${session.id}:${order.id}`,
           payload: {
             orderId: order.id,
-            orderNumber: order.orderNumber,
+            orderNumber: order.order_number,
             userId,
             sessionId: session.id,
             itemCount: session.cartSnapshot.items.length,
@@ -534,13 +518,11 @@ export class CheckoutService {
         return order;
       });
 
-      if (!order.id || !order.orderNumber) {
-        this.loggingService.error(
-          'checkout_order_identity_missing',
-          undefined,
-          this.context,
-          { sessionId, userId }
-        );
+      if (!order.id || !order.order_number) {
+        this.loggingService.error('checkout_order_identity_missing', undefined, this.context, {
+          sessionId,
+          userId,
+        });
         throw new InternalServerErrorException('checkout_order_identity_missing');
       }
 
@@ -549,7 +531,7 @@ export class CheckoutService {
       session.updatedAt = new Date();
       await this.persistSession(session, previousStep, 'checkout_order_created', {
         orderId: order.id,
-        orderNumber: order.orderNumber,
+        orderNumber: order.order_number,
       });
 
       // Clear cart and checkout session
@@ -567,13 +549,15 @@ export class CheckoutService {
       const userKeyDeleted = await this.stateService.deleteState(userKey);
 
       if (!sessionDeleted || !userKeyDeleted) {
-        this.metricsService?.checkoutStateCleanupUntrackedTotal.inc({ action: 'complete_checkout' });
-        this.loggingService.error(
-          'checkout_state_cleanup_untracked',
-          undefined,
-          this.context,
-          { sessionId, userId, sessionDeleted, userKeyDeleted }
-        );
+        this.metricsService?.checkoutStateCleanupUntrackedTotal.inc({
+          action: 'complete_checkout',
+        });
+        this.loggingService.error('checkout_state_cleanup_untracked', undefined, this.context, {
+          sessionId,
+          userId,
+          sessionDeleted,
+          userKeyDeleted,
+        });
         throw new InternalServerErrorException('checkout_state_cleanup_untracked');
       }
 
@@ -584,7 +568,7 @@ export class CheckoutService {
         userId,
       });
 
-      return { orderId: order.id, orderNumber: order.orderNumber };
+      return { orderId: order.id, orderNumber: order.order_number };
     } finally {
       await this.stateService.releaseLock(lock);
     }
@@ -604,12 +588,12 @@ export class CheckoutService {
 
     if (!sessionDeleted || !userKeyDeleted) {
       this.metricsService?.checkoutStateCleanupUntrackedTotal.inc({ action: 'cancel_checkout' });
-      this.loggingService.error(
-        'checkout_cancel_cleanup_untracked',
-        undefined,
-        this.context,
-        { sessionId, userId, sessionDeleted, userKeyDeleted }
-      );
+      this.loggingService.error('checkout_cancel_cleanup_untracked', undefined, this.context, {
+        sessionId,
+        userId,
+        sessionDeleted,
+        userKeyDeleted,
+      });
       throw new InternalServerErrorException('checkout_cancel_cleanup_untracked');
     }
 

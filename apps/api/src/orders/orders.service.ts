@@ -79,15 +79,6 @@ const hashOrderRequest = (data: CreateOrderInput): string => {
   return createHash('sha256').update(stableStringify(normalized)).digest('hex');
 };
 
-function isPrismaUniqueViolation(error: unknown): boolean {
-  return (
-    typeof error === 'object' &&
-    error !== null &&
-    'code' in error &&
-    String((error as { code?: unknown }).code) === 'P2002'
-  );
-}
-
 @Injectable()
 export class OrdersService {
   private readonly logger = new Logger(OrdersService.name);
@@ -191,75 +182,38 @@ export class OrdersService {
             const taxAmount = subtotal * 0.09;
             const totalAmount = subtotal + taxAmount + (data.shippingCost || 0);
 
-            const orderCreateData: Record<string, unknown> = {
-                userId,
-                vendorId: data.vendorId,
-                ...(normalizedIdempotencyKey ? { idempotency_key: normalizedIdempotencyKey } : {}),
-                orderNumber: `ORD-${Date.now()}`,
-                subtotal: new Decimal(subtotal),
-                taxAmount: new Decimal(taxAmount),
-                shippingCost: new Decimal(data.shippingCost || 0),
-                totalAmount: new Decimal(totalAmount),
+            const order = await tx.order.create({
+              data: {
+                user_id: userId,
+                order_number: `ORD-${Date.now()}`,
                 status: 'PENDING',
-                paymentStatus: 'PENDING',
-                customerEmail: data.customerEmail,
-                customerPhone: data.customerPhone,
-                shippingAddress: (data.shippingAddress as Prisma.InputJsonValue | undefined) ?? undefined,
+                total_amount: new Decimal(totalAmount),
                 items: {
                   create: data.items.map((item) => ({
-                    productId: item.productId,
-                    variantId: item.variantId,
-                    productName: item.productName,
-                    productSku: item.productSku,
+                    product_id: item.productId,
                     quantity: item.quantity,
-                    price: new Decimal(item.price),
-                    total: new Decimal(item.price * item.quantity),
+                    unit_price: new Decimal(item.price),
+                    total_price: new Decimal(item.price * item.quantity),
                   })),
                 },
-              };
-
-            const orderSelect = {
-              id: true,
-              orderNumber: true,
-              status: true,
-              paymentStatus: true,
-              totalAmount: true,
-              createdAt: true,
-              items: {
-                select: {
-                  id: true,
-                  productId: true,
-                  productName: true,
-                  productSku: true,
-                  quantity: true,
-                  price: true,
-                  total: true,
+              },
+              select: {
+                id: true,
+                order_number: true,
+                status: true,
+                total_amount: true,
+                created_at: true,
+                items: {
+                  select: {
+                    id: true,
+                    product_id: true,
+                    quantity: true,
+                    unit_price: true,
+                    total_price: true,
+                  },
                 },
               },
-            } as const;
-
-            let order;
-            try {
-              order = await tx.order.create({
-                data: orderCreateData as any,
-                select: orderSelect,
-              });
-            } catch (error) {
-              if (normalizedIdempotencyKey && isPrismaUniqueViolation(error)) {
-                const existingOrder = await tx.order.findFirst({
-                  where: {
-                    userId,
-                    idempotency_key: normalizedIdempotencyKey,
-                  },
-                  select: orderSelect,
-                } as any);
-
-                if (existingOrder) {
-                  return existingOrder;
-                }
-              }
-              throw error;
-            }
+            });
 
             this.metrics.ordersTotal.inc({
               status: order.status,
@@ -267,8 +221,23 @@ export class OrdersService {
             });
             this.metrics.orderValue.observe(
               { vendor_id: data.vendorId ?? 'unknown' },
-              Number(totalAmount)
+              Number(order.total_amount)
             );
+
+            const normalizedOrder = {
+              id: order.id,
+              orderNumber: order.order_number,
+              status: order.status,
+              totalAmount: Number(order.total_amount),
+              createdAt: order.created_at,
+              items: order.items.map((item) => ({
+                id: item.id,
+                productId: item.product_id,
+                quantity: item.quantity,
+                unitPrice: Number(item.unit_price),
+                totalPrice: Number(item.total_price),
+              })),
+            };
 
             await this.outboxService?.enqueueInTransaction(tx, {
               aggregateType: 'order',
@@ -277,7 +246,7 @@ export class OrdersService {
               dedupKey: `orders-create:${userId}:${normalizedIdempotencyKey ?? order.id}`,
               payload: {
                 orderId: order.id,
-                orderNumber: order.orderNumber,
+                orderNumber: order.order_number,
                 userId,
                 vendorId: data.vendorId ?? null,
                 itemCount: data.items.length,
@@ -295,7 +264,7 @@ export class OrdersService {
                   idempotencyRecordKey,
                   {
                     requestHash,
-                    response: order,
+                    response: normalizedOrder,
                     createdAt: now.toISOString(),
                     expiresAt: expiresAt.toISOString(),
                   },
@@ -309,7 +278,7 @@ export class OrdersService {
               }
             }
 
-            return order;
+            return normalizedOrder;
           });
         },
         lockSettings
@@ -352,67 +321,109 @@ export class OrdersService {
     const limit = Math.min(Math.max(Number(filters?.limit ?? 20), 1), 100);
     const offset = Math.max(Number(filters?.offset ?? 0), 0);
     const where: Prisma.OrderWhereInput = {
-      userId,
+      user_id: userId,
       ...(filters?.status ? { status: filters.status as Prisma.OrderWhereInput['status'] } : {}),
     };
 
-    return this.prisma.order.findMany({
+    const orders = await this.prisma.order.findMany({
       where,
       take: limit,
       skip: offset,
       select: {
         id: true,
-        orderNumber: true,
+        order_number: true,
         status: true,
-        paymentStatus: true,
-        totalAmount: true,
-        createdAt: true,
+        total_amount: true,
+        created_at: true,
         items: {
           select: {
             id: true,
-            productId: true,
-            productName: true,
-            productSku: true,
+            product_id: true,
             quantity: true,
-            total: true,
-            product: { select: { name: true, images: true } },
+            total_price: true,
+            unit_price: true,
+            product: { select: { name: true } },
           },
         },
-        vendor: { select: { businessName: true } },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { created_at: 'desc' },
     });
+
+    return orders.map((order) => ({
+      id: order.id,
+      orderNumber: order.order_number,
+      status: order.status,
+      totalAmount: Number(order.total_amount),
+      createdAt: order.created_at,
+      items: order.items.map((item) => ({
+        id: item.id,
+        productId: item.product_id,
+        productName: item.product.name,
+        quantity: item.quantity,
+        unitPrice: Number(item.unit_price),
+        totalPrice: Number(item.total_price),
+      })),
+    }));
   }
 
   async findOne(id: string, userId: string) {
     const order = await this.prisma.order.findFirst({
-      where: { id, userId },
+      where: { id, user_id: userId },
       select: {
         id: true,
-        orderNumber: true,
+        order_number: true,
         status: true,
-        paymentStatus: true,
-        totalAmount: true,
-        createdAt: true,
+        total_amount: true,
+        created_at: true,
         items: {
           select: {
             id: true,
-            productId: true,
-            productName: true,
-            productSku: true,
+            product_id: true,
             quantity: true,
-            total: true,
+            unit_price: true,
+            total_price: true,
+            product: { select: { name: true } },
           },
         },
-        vendor: { select: { businessName: true } },
-        invoice: true,
+        payment: {
+          select: {
+            id: true,
+            status: true,
+            gateway: true,
+            transaction_id: true,
+            amount: true,
+          },
+        },
       },
     });
 
     if (!order) {
       throw new NotFoundException('سفارش يافت نشد');
     }
-    return order;
+    return {
+      id: order.id,
+      orderNumber: order.order_number,
+      status: order.status,
+      totalAmount: Number(order.total_amount),
+      createdAt: order.created_at,
+      items: order.items.map((item) => ({
+        id: item.id,
+        productId: item.product_id,
+        productName: item.product.name,
+        quantity: item.quantity,
+        unitPrice: Number(item.unit_price),
+        totalPrice: Number(item.total_price),
+      })),
+      payment: order.payment
+        ? {
+            id: order.payment.id,
+            status: order.payment.status,
+            gateway: order.payment.gateway,
+            transactionId: order.payment.transaction_id,
+            amount: Number(order.payment.amount),
+          }
+        : null,
+    };
   }
 
   async updateStatus(id: string, status: any) {

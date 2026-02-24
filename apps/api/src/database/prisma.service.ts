@@ -20,6 +20,25 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       errorFormat: 'pretty',
     });
 
+    this.$use(async (params, next) => {
+      const startedAt = Date.now();
+      const result = await next(params);
+      const durationMs = Date.now() - startedAt;
+      if (durationMs >= this.slowQueryThresholdMs) {
+        this.logger.warn(
+          JSON.stringify({
+            type: 'slow_query_detected',
+            durationMs,
+            thresholdMs: this.slowQueryThresholdMs,
+            model: params.model ?? 'unknown',
+            action: params.action,
+            timestamp: new Date().toISOString(),
+          })
+        );
+      }
+      return result;
+    });
+
     if (requestedEngine && requestedEngine !== 'library') {
       this.logger.warn(
         `Overriding PRISMA_CLIENT_ENGINE_TYPE=${requestedEngine} to library for deterministic runtime startup.`
@@ -30,7 +49,6 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   async onModuleInit() {
     try {
       await this.$connect();
-      this.registerQueryObservers();
       this.logger.log('? Database connected successfully');
     } catch (error) {
       this.logger.error('? Database connection failed', error);
@@ -50,25 +68,5 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     } catch {
       return false;
     }
-  }
-
-  private registerQueryObservers() {
-    this.$on('query', (event) => {
-      const duration = Number(event.duration ?? 0);
-      if (duration < this.slowQueryThresholdMs) {
-        return;
-      }
-
-      this.logger.warn(
-        JSON.stringify({
-          type: 'slow_query_detected',
-          durationMs: duration,
-          thresholdMs: this.slowQueryThresholdMs,
-          target: event.target,
-          query: event.query?.slice(0, 240),
-          timestamp: new Date().toISOString(),
-        })
-      );
-    });
   }
 }

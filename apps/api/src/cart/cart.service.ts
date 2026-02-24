@@ -32,14 +32,6 @@ const DEFAULT_CONFIG: CartConfig = {
   taxRate: 0.09, // 9% VAT
 };
 
-function extractFirstImage(images: unknown): string | undefined {
-  if (!Array.isArray(images) || images.length === 0) {
-    return undefined;
-  }
-  const first = images[0];
-  return typeof first === 'string' ? first : undefined;
-}
-
 @Injectable()
 export class CartService {
   private config: CartConfig;
@@ -141,7 +133,7 @@ export class CartService {
       // Validate product exists and has stock
       const product = await this.prisma.product.findUnique({
         where: { id: dto.productId },
-        select: { id: true, name: true, sku: true, price: true, stock: true, images: true },
+        select: { id: true, name: true, sku: true, price: true, stock: true },
       });
 
       if (!product) {
@@ -181,7 +173,6 @@ export class CartService {
           productSku: product.sku ?? '',
           quantity: dto.quantity,
           price: Number(product.price),
-          imageUrl: extractFirstImage(product.images),
         };
         cart.items.push(newItem);
       }
