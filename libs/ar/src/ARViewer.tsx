@@ -228,12 +228,12 @@ export function ARViewer({
         ref={viewerRef}
         src={resolvedModel}
         poster={posterUrl}
-        ar={effectiveArEnabled}
+        {...(effectiveArEnabled ? { ar: true } : {})}
         ar-modes="webxr scene-viewer quick-look"
         camera-controls={cameraControls}
         auto-rotate={autoRotate}
         exposure={exposure}
-        shadow-intensity={0.7}  // ✅ number
+        shadow-intensity={0.7}
         style={{
           width: '100%',
           height: 420,
