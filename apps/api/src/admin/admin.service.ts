@@ -25,6 +25,14 @@ interface PlatformSettings {
   supportPhone?: string;
 }
 
+interface VendorStoryCapability {
+  vendorId: string;
+  vendorName: string;
+  active: boolean;
+  storiesEnabled: boolean;
+  createdAt: Date;
+}
+
 const SETTINGS_CACHE_KEY = 'platform:settings';
 const STATS_CACHE_KEY = 'platform:stats';
 const AR_SESSIONS_KEY = 'ar:active_sessions';
@@ -378,6 +386,43 @@ export class AdminService implements OnModuleInit {
         total,
         totalPages: Math.ceil(total / limit),
       },
+    };
+  }
+
+  async getVendorStoryCapabilities(): Promise<VendorStoryCapability[]> {
+    const vendors = await this.prisma.vendor.findMany({
+      select: {
+        id: true,
+        name: true,
+        is_active: true,
+        stories_enabled: true,
+        created_at: true,
+      },
+      orderBy: { created_at: 'desc' },
+    });
+
+    return vendors.map((vendor) => ({
+      vendorId: vendor.id,
+      vendorName: vendor.name,
+      active: vendor.is_active,
+      storiesEnabled: vendor.stories_enabled,
+      createdAt: vendor.created_at,
+    }));
+  }
+
+  async setVendorStoryCapability(
+    vendorId: string,
+    storiesEnabled: boolean
+  ): Promise<{ vendorId: string; storiesEnabled: boolean }> {
+    const vendor = await this.prisma.vendor.update({
+      where: { id: vendorId },
+      data: { stories_enabled: storiesEnabled },
+      select: { id: true, stories_enabled: true },
+    });
+
+    return {
+      vendorId: vendor.id,
+      storiesEnabled: vendor.stories_enabled,
     };
   }
 

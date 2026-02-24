@@ -78,11 +78,32 @@ model Vendor {
   phone     String?  @db.VarChar(20)
   commission_rate Decimal @default(10) @db.Decimal(5, 2)
   is_active Boolean  @default(true)
+  stories_enabled Boolean @default(true)
   created_at DateTime @default(now())
 
   products  Product[]
+  stories   VendorStory[]
 
   @@map("vendors")
+}
+
+model VendorStory {
+  id          String   @id @default(cuid())
+  vendor_id   String
+  title       String   @db.VarChar(120)
+  media_url   String   @db.VarChar(512)
+  caption     String?
+  cta_label   String?  @db.VarChar(60)
+  cta_url     String?  @db.VarChar(512)
+  is_active   Boolean  @default(true)
+  expires_at  DateTime
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  vendor      Vendor   @relation(fields: [vendor_id], references: [id], onDelete: Cascade)
+
+  @@index([vendor_id, is_active, expires_at])
+  @@map("vendor_stories")
 }
 
 model Product {

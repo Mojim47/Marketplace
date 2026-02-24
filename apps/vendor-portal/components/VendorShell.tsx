@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 
 const nav = [
   { href: '/dashboard', label: 'داشبورد' },
+  { href: '/stories', label: 'استوری ها' },
   { href: '/products', label: 'محصولات' },
   { href: '/orders', label: 'سفارش ها' },
   { href: '/wallet', label: 'کیف پول' },

@@ -36,6 +36,10 @@ interface BanUserDto {
   reason: string;
 }
 
+interface ToggleVendorStoryDto {
+  enabled: boolean;
+}
+
 interface AuthenticatedRequest {
   user?: { id: string; [key: string]: any };
 }
@@ -169,5 +173,37 @@ export class AdminController {
     const adminId = req.user?.id || 'system';
     await this.adminService.rejectVendor(vendorId, data.reason, adminId);
     return { message: 'Vendor rejected successfully' };
+  }
+
+  /**
+   * List story capability status for all vendors
+   * GET /admin/vendors/story-capabilities
+   */
+  @Get('vendors/story-capabilities')
+  async getVendorStoryCapabilities() {
+    this.logger.log('Fetching vendor story capabilities');
+    return this.adminService.getVendorStoryCapabilities();
+  }
+
+  /**
+   * Toggle story capability for one vendor
+   * PATCH /admin/vendors/:id/story-capability
+   */
+  @Patch('vendors/:id/story-capability')
+  @HttpCode(HttpStatus.OK)
+  async setVendorStoryCapability(
+    @Param('id') vendorId: string,
+    @Body() body: ToggleVendorStoryDto
+  ): Promise<{ message: string; vendorId: string; storiesEnabled: boolean }> {
+    this.logger.log(`Updating story capability for vendor ${vendorId}`, body);
+    const result = await this.adminService.setVendorStoryCapability(
+      vendorId,
+      Boolean(body.enabled)
+    );
+    return {
+      message: 'Vendor story capability updated',
+      vendorId: result.vendorId,
+      storiesEnabled: result.storiesEnabled,
+    };
   }
 }
