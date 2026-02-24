@@ -4,7 +4,7 @@ export function KpiCard({
   label,
   value,
   trend,
-  trendClassName = 'text-emerald-300',
+  trendClassName = 'text-emerald-700',
   className = '',
   children,
 }: {

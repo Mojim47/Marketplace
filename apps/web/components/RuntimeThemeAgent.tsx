@@ -42,6 +42,32 @@ export function RuntimeThemeAgent() {
     root.setAttribute('data-accent', accent);
   }, [pathname, searchParams]);
 
+  useEffect(() => {
+    const root = document.documentElement;
+    let frame = 0;
+
+    const onPointerMove = (event: PointerEvent) => {
+      if (frame) {
+        cancelAnimationFrame(frame);
+      }
+      frame = requestAnimationFrame(() => {
+        const x = (event.clientX / window.innerWidth) * 100;
+        const y = (event.clientY / window.innerHeight) * 100;
+        root.style.setProperty('--mx', `${x.toFixed(2)}%`);
+        root.style.setProperty('--my', `${y.toFixed(2)}%`);
+      });
+    };
+
+    root.style.setProperty('--mx', '72%');
+    root.style.setProperty('--my', '18%');
+    window.addEventListener('pointermove', onPointerMove, { passive: true });
+    return () => {
+      window.removeEventListener('pointermove', onPointerMove);
+      if (frame) {
+        cancelAnimationFrame(frame);
+      }
+    };
+  }, []);
+
   return null;
 }
-

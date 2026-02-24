@@ -69,6 +69,21 @@ const featuredSellers = [
   { name: 'Pulse Market', rating: '4.7', response: '< 12m', badge: 'Trusted' },
 ];
 
+const productRhythm = [
+  'lg:col-span-2 lg:row-span-2',
+  'lg:col-span-1',
+  'lg:col-span-1',
+  'lg:col-span-2',
+  'lg:col-span-1',
+  'lg:col-span-1',
+  'lg:col-span-2',
+  'lg:col-span-1',
+  'lg:col-span-1',
+  'lg:col-span-2',
+  'lg:col-span-1',
+  'lg:col-span-1',
+];
+
 const experienceMetrics = [
   { label: 'A11y Compliance', value: 98, hint: 'WCAG AA + Keyboard', tone: 'emerald' as const },
   { label: 'UI Response Health', value: 94, hint: 'Interaction < 200ms', tone: 'orange' as const },
@@ -304,11 +319,26 @@ export default function HomePage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
-            {spotlightProducts.map((product) => (
-              <GlassCard key={product.id} className="rounded-2xl border border-slate-200 bg-white p-4">
+          <div className="mb-4 rounded-3xl border border-orange-200 bg-gradient-to-r from-orange-50 via-white to-amber-50 p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-xs text-orange-700">AI Gadget Week</p>
+                <p className="mt-1 text-sm text-slate-700">پیشنهاد پویا براساس رفتار خرید و موجودی لحظه‌ای</p>
+              </div>
+              <div className="rounded-full border border-orange-300 bg-white px-3 py-1 text-xs text-orange-700">
+                02:14:59 تا پایان موج قیمت
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6 lg:auto-rows-[230px]">
+            {spotlightProducts.slice(0, 12).map((product, index) => (
+              <GlassCard
+                key={product.id}
+                className={`rounded-2xl border border-slate-200 bg-white p-4 ${productRhythm[index] ?? 'lg:col-span-1'}`}
+              >
                 <Link href={`/product/${product.slug}`} className="block">
-                  <div className="relative mb-3 h-36 overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+                  <div className="relative mb-3 h-28 overflow-hidden rounded-xl border border-slate-200 bg-slate-100 lg:h-32">
                     <Image src={product.image} alt={product.name} fill className="object-cover" sizes="(min-width: 1024px) 18vw, 45vw" />
                   </div>
                 </Link>
@@ -324,7 +354,7 @@ export default function HomePage() {
 
                 <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-2.5">
                   <p className="text-[11px] text-slate-500">قیمت</p>
-                  <p className="text-sm font-semibold text-slate-900">{money.format(product.priceIrr)} تومان</p>
+                  <p className="text-sm font-semibold text-slate-900 font-mono">{money.format(product.priceIrr)} تومان</p>
                   <p className="mt-1 text-[11px] text-emerald-700">{product.eta}</p>
                 </div>
 
