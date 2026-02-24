@@ -1,5 +1,6 @@
 import { CampaignCarousel } from '@/components/campaign-carousel';
 import { HeroCard } from '@/components/hero-card';
+import { StoryDiscoveryRail } from '@/components/story-discovery-rail';
 import {
   BentoFeatureGrid,
   Button,
@@ -286,6 +287,8 @@ export default function HomePage() {
             </GlassCard>
           </div>
         </header>
+
+        <StoryDiscoveryRail />
 
         <section className="mt-12">
           <HeroCard />

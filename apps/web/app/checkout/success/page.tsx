@@ -1,11 +1,11 @@
 'use client';
 
-import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
-import { useEffect, useMemo } from 'react';
 import { Button, GlassCard, PageHeader } from '@/components/ui';
 import { useTraceId } from '@/hooks/use-trace-id';
 import { emitUiEvent } from '@/lib/ui-telemetry';
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { useEffect, useMemo, useRef } from 'react';
 
 export default function CheckoutSuccessPage() {
   const traceId = useTraceId();
@@ -15,6 +15,8 @@ export default function CheckoutSuccessPage() {
   const orderNumber = search.get('orderNumber');
   const paymentStatus = search.get('paymentStatus');
   const paymentMessage = search.get('paymentMessage');
+  const storyId = search.get('storyId');
+  const conversionSent = useRef(false);
 
   const strings = useMemo(
     () =>
@@ -37,6 +39,28 @@ export default function CheckoutSuccessPage() {
     emitUiEvent('flow_complete', { flow: 'checkout', status: 'success' }, traceId ?? undefined);
   }, [locale, traceId]);
 
+  useEffect(() => {
+    if (conversionSent.current || paymentStatus !== 'success') {
+      return;
+    }
+    conversionSent.current = true;
+    fetch('/api/stories/events', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      keepalive: true,
+      body: JSON.stringify({
+        type: 'conversion',
+        storyId: storyId || undefined,
+        traceId: traceId || undefined,
+        meta: {
+          path: '/checkout/success',
+          orderId: orderId || null,
+          orderNumber: orderNumber || null,
+        },
+      }),
+    }).catch(() => undefined);
+  }, [orderId, orderNumber, paymentStatus, storyId, traceId]);
+
   const paymentLabel =
     paymentStatus === 'success' ? 'موفق' : paymentStatus === 'failed' ? 'ناموفق' : 'در انتظار';
 
@@ -56,7 +80,7 @@ export default function CheckoutSuccessPage() {
             ✓
           </div>
 
-          {(orderNumber || orderId) ? (
+          {orderNumber || orderId ? (
             <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
               {orderNumber ? <p>شماره سفارش: {orderNumber}</p> : null}
               {orderId ? <p>شناسه سفارش: {orderId}</p> : null}
@@ -66,13 +90,17 @@ export default function CheckoutSuccessPage() {
           {paymentStatus ? (
             <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
               <p>وضعیت پرداخت: {paymentLabel}</p>
-              {paymentMessage ? <p className="mt-2 text-xs text-slate-600">{paymentMessage}</p> : null}
+              {paymentMessage ? (
+                <p className="mt-2 text-xs text-slate-600">{paymentMessage}</p>
+              ) : null}
             </div>
           ) : null}
 
           <div className="mt-8 flex justify-center gap-3">
             <Link href="/orders">
-              <Button loading={false} variant="outline">مشاهده سفارش‌ها</Button>
+              <Button loading={false} variant="outline">
+                مشاهده سفارش‌ها
+              </Button>
             </Link>
             <Link href="/">
               <Button loading={false}>{strings.cta}</Button>
