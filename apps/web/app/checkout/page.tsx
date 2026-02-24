@@ -343,15 +343,15 @@ export default function CheckoutPage() {
             <div className="mt-8">
               <h3 className="text-sm text-slate-600">{strings.payment}</h3>
               <div className="mt-3 grid gap-3">
-                <div className="flex items-center justify-between rounded-2xl border border-emerald-300/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
+                <div className="flex items-center justify-between rounded-2xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
                   <span>{strings.card}</span>
                   <span className="text-xs">Only Gateway</span>
                 </div>
               </div>
             </div>
 
-            {error ? <p className="mt-6 rounded-xl border border-rose-300/30 bg-rose-500/10 px-4 py-3 text-xs text-rose-200">{error}</p> : null}
-            {successMsg ? <p className="mt-6 rounded-xl border border-emerald-300/30 bg-emerald-500/10 px-4 py-3 text-xs text-emerald-200">{successMsg}</p> : null}
+            {error ? <p className="mt-6 rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-xs text-rose-700">{error}</p> : null}
+            {successMsg ? <p className="mt-6 rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-xs text-emerald-700">{successMsg}</p> : null}
 
             <div className="mt-8">
               <Button loading={loadingSubmit} loadingText={strings.submit} data-testid="checkout-submit">

@@ -227,11 +227,7 @@ export default function CartPage() {
           }
         />
 
-        {error ? (
-          <p className="mt-6 rounded-xl border border-rose-300/30 bg-rose-500/10 px-4 py-3 text-xs text-rose-200">
-            {error}
-          </p>
-        ) : null}
+        {error ? <p className="mt-6 rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-xs text-rose-700">{error}</p> : null}
 
         <div className="mt-10 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
           <GlassCard className="rounded-3xl p-6" data-testid="cart-items">
@@ -281,7 +277,7 @@ export default function CartPage() {
                         </button>
                         <button
                           type="button"
-                          className="rounded-lg border border-rose-300/40 px-2 py-1 text-xs text-rose-200"
+                          className="rounded-lg border border-rose-300 bg-rose-50 px-2 py-1 text-xs text-rose-700"
                           onClick={() => removeItem(item.productId)}
                           disabled={busy}
                           aria-busy={busy}

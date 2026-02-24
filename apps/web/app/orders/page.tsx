@@ -29,9 +29,9 @@ const fallbackOrders: Order[] = [
 ];
 
 const statusMap: Record<string, { label: string; cls: string }> = {
-  PAID: { label: 'پرداخت‌شده', cls: 'text-emerald-300 border-emerald-300/30 bg-emerald-500/10' },
-  PENDING: { label: 'در انتظار', cls: 'text-amber-300 border-amber-300/30 bg-amber-500/10' },
-  FAILED: { label: 'ناموفق', cls: 'text-rose-300 border-rose-300/30 bg-rose-500/10' },
+  PAID: { label: 'پرداخت‌شده', cls: 'text-emerald-700 border-emerald-300 bg-emerald-50' },
+  PENDING: { label: 'در انتظار', cls: 'text-amber-700 border-amber-300 bg-amber-50' },
+  FAILED: { label: 'ناموفق', cls: 'text-rose-700 border-rose-300 bg-rose-50' },
   SHIPPED: { label: 'ارسال‌شده', cls: 'text-orange-600 border-orange-300 bg-orange-50' },
 };
 
@@ -141,11 +141,7 @@ export default function OrdersPage() {
           ))}
         </div>
 
-        {error ? (
-          <p className="mt-6 rounded-xl border border-rose-300/30 bg-rose-500/10 px-4 py-3 text-xs text-rose-200">
-            {error}
-          </p>
-        ) : null}
+        {error ? <p className="mt-6 rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-xs text-rose-700">{error}</p> : null}
 
         <div className="mt-8 grid gap-5" data-testid="orders-list">
           {filteredOrders.map((order) => {

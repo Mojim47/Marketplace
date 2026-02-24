@@ -3,7 +3,7 @@
 import clsx from 'clsx';
 import { motion } from 'framer-motion';
 import { ArrowRight, Loader2, Sparkles } from 'lucide-react';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import useSWR from 'swr';
 import { type HeroAsset, HeroAssetSchema } from '../../../libs/common/src/contracts/hero.contract';
 
@@ -30,6 +30,16 @@ const glass =
 
 export function HeroCard() {
   const { data, isLoading, error } = useHeroAsset();
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
+  const [reducedMotion, setReducedMotion] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const apply = () => setReducedMotion(media.matches);
+    apply();
+    media.addEventListener('change', apply);
+    return () => media.removeEventListener('change', apply);
+  }, []);
 
   const asset = useMemo<HeroAsset>(
     () =>
@@ -68,12 +78,36 @@ export function HeroCard() {
   }
 
   return (
-    <section className="relative isolate">
+    <section
+      className="relative isolate"
+      onPointerMove={(event) => {
+        if (reducedMotion) {
+          return;
+        }
+        const target = event.currentTarget.getBoundingClientRect();
+        const x = (event.clientX - target.left) / target.width - 0.5;
+        const y = (event.clientY - target.top) / target.height - 0.5;
+        setTilt({
+          x: Math.max(-0.5, Math.min(0.5, x)),
+          y: Math.max(-0.5, Math.min(0.5, y)),
+        });
+      }}
+      onPointerLeave={() => setTilt({ x: 0, y: 0 })}
+    >
       <div className="pointer-events-none absolute inset-0 -z-10 bg-neon-radial blur-3xl opacity-80 animate-orb" />
       <div className="absolute inset-0 -z-10 bg-noise mix-blend-soft-light opacity-30" />
 
-      <div className="relative grid gap-6 lg:grid-cols-5">
-        <div className={clsx(glass, 'bg-semantic-surface-default/80 lg:col-span-3 p-8')}>
+      <div className="relative grid gap-6 lg:grid-cols-5 [perspective:1400px]">
+        <div
+          className={clsx(glass, 'bg-semantic-surface-default/80 lg:col-span-3 p-8 motion-reduce:transform-none')}
+          style={
+            reducedMotion
+              ? undefined
+              : {
+                  transform: `rotateX(${(-tilt.y * 4).toFixed(2)}deg) rotateY(${(tilt.x * 5).toFixed(2)}deg) translateZ(0)`,
+                }
+          }
+        >
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-semantic-border-subtle bg-semantic-surface-glass px-4 py-2 text-xs font-semibold uppercase tracking-wide text-semantic-text-secondary">
             <Sparkles size={16} className="text-semantic-accent-secondary" />
             <span>Asset Version {asset.version}</span>
@@ -129,7 +163,16 @@ export function HeroCard() {
           </div>
         </div>
 
-        <div className={clsx(glass, 'bg-semantic-surface-default/80 lg:col-span-2')}>
+        <div
+          className={clsx(glass, 'bg-semantic-surface-default/80 lg:col-span-2 motion-reduce:transform-none')}
+          style={
+            reducedMotion
+              ? undefined
+              : {
+                  transform: `rotateX(${(tilt.y * 3).toFixed(2)}deg) rotateY(${(-tilt.x * 4).toFixed(2)}deg) translateZ(0)`,
+                }
+          }
+        >
           <div className="relative h-full min-h-64 w-full overflow-hidden rounded-2xl bg-gradient-to-br from-semantic-surface-elevated via-semantic-surface-glass to-semantic-surface-elevated">
             <div className="absolute inset-0 bg-noise opacity-40 mix-blend-soft-light" />
             <div className="absolute inset-0 animate-orb bg-neon-radial blur-3xl opacity-70" />

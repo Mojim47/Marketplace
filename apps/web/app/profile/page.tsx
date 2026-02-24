@@ -160,12 +160,12 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {error ? <p className="mt-6 rounded-xl border border-rose-300/30 bg-rose-500/10 px-4 py-3 text-xs text-rose-200">{error}</p> : null}
+            {error ? <p className="mt-6 rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-xs text-rose-700">{error}</p> : null}
             {success ? (
               <p
                 role="status"
                 aria-live="polite"
-                className="mt-6 rounded-xl border border-emerald-300/30 bg-emerald-500/10 px-4 py-3 text-xs text-emerald-200"
+                className="mt-6 rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-xs text-emerald-700"
               >
                 {strings.success}
               </p>
@@ -189,7 +189,7 @@ export default function ProfilePage() {
               ].map((item) => (
                 <div key={item.label} className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
                   <span className="text-slate-700">{item.label}</span>
-                  <span className="text-emerald-300">{item.status}</span>
+                  <span className="text-emerald-700">{item.status}</span>
                 </div>
               ))}
             </div>
