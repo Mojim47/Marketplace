@@ -1,4 +1,4 @@
-﻿export function ProgressBar({
+export function ProgressBar({
   label,
   value,
   meta,

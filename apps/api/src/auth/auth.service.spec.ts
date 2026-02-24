@@ -1,4 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+vi.mock('argon2', () => ({
+  argon2id: 2,
+  default: {
+    argon2id: 2,
+    hash: vi.fn(async (value: string) => `$argon2id$mock$${value}`),
+    verify: vi.fn(async (hashed: string, plain: string) => hashed === `$argon2id$mock$${plain}`),
+    needsRehash: vi.fn(async () => false),
+  },
+  hash: vi.fn(async (value: string) => `$argon2id$mock$${value}`),
+  verify: vi.fn(async (hashed: string, plain: string) => hashed === `$argon2id$mock$${plain}`),
+  needsRehash: vi.fn(async () => false),
+}));
 import { AuthService } from './auth.service';
 
 const createService = () => {

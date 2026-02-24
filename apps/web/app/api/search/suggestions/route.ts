@@ -64,29 +64,31 @@ async function getHistorySuggestions(
   try {
     const history: Array<{ query: string; category?: { slug?: string | null } | null }> =
       await prismaSuggestion.searchSuggestionHistory.findMany({
-      where: {
-        visitor_id: visitorId,
-        normalized_query: {
-          startsWith: normalized,
-          mode: 'insensitive',
+        where: {
+          visitor_id: visitorId,
+          normalized_query: {
+            startsWith: normalized,
+            mode: 'insensitive',
+          },
+          ...(categoryScope ? { category: { slug: categoryScope } } : {}),
         },
-        ...(categoryScope ? { category: { slug: categoryScope } } : {}),
-      },
-      orderBy: { searched_at: 'desc' },
-      take: 5,
-      select: {
-        query: true,
-        category: { select: { slug: true } },
-      },
-    });
+        orderBy: { searched_at: 'desc' },
+        take: 5,
+        select: {
+          query: true,
+          category: { select: { slug: true } },
+        },
+      });
 
-    return history.map((item: { query: string; category?: { slug?: string | null } | null }, index: number) => ({
-      type: 'history' as const,
-      value: item.query,
-      label: item.query,
-      score: 100 - index,
-      categorySlug: item.category?.slug ?? null,
-    }));
+    return history.map(
+      (item: { query: string; category?: { slug?: string | null } | null }, index: number) => ({
+        type: 'history' as const,
+        value: item.query,
+        label: item.query,
+        score: 100 - index,
+        categorySlug: item.category?.slug ?? null,
+      })
+    );
   } catch {
     if (isStrictProdPolicyEnabled()) {
       throw new Error('suggestion_history_unavailable_strict_mode');
@@ -102,8 +104,11 @@ async function getTrendingSuggestions(query: string, categoryScope: string | nul
   }
 
   try {
-    const trends: Array<{ query: string; hits: number; category?: { slug?: string | null } | null }> =
-      await prismaSuggestion.searchSuggestionTrend.findMany({
+    const trends: Array<{
+      query: string;
+      hits: number;
+      category?: { slug?: string | null } | null;
+    }> = await prismaSuggestion.searchSuggestionTrend.findMany({
       where: {
         normalized_query: {
           contains: normalized,
@@ -121,13 +126,15 @@ async function getTrendingSuggestions(query: string, categoryScope: string | nul
     });
 
     if (trends.length > 0) {
-      return trends.map((item: { query: string; hits: number; category?: { slug?: string | null } | null }) => ({
-        type: 'trending' as const,
-        value: item.query,
-        label: item.query,
-        score: Math.min(95, 40 + item.hits),
-        categorySlug: item.category?.slug ?? null,
-      }));
+      return trends.map(
+        (item: { query: string; hits: number; category?: { slug?: string | null } | null }) => ({
+          type: 'trending' as const,
+          value: item.query,
+          label: item.query,
+          score: Math.min(95, 40 + item.hits),
+          categorySlug: item.category?.slug ?? null,
+        })
+      );
     }
   } catch {
     if (isStrictProdPolicyEnabled()) {

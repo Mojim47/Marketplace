@@ -23,5 +23,6 @@ models/
 !ops/assets/ai/models/
 !ops/assets/ai/models/tokenizer.json
 !ops/assets/ai/models/tokenizer_config.json
+ops/assets/ai/models/*.registry.json
 coverage/
 *.lcov
