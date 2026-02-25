@@ -195,7 +195,17 @@ jobs:
       - name: artifact immutable digest
         run: |
           mkdir -p artifacts
-          tar -czf artifacts/launch-dist-${GITHUB_SHA}.tar.gz dist apps/api/dist apps/web/.next apps/admin/.next apps/vendor-portal/.next
+          artifact_inputs=()
+          for candidate in dist apps/api/dist apps/web/.next apps/admin/.next apps/vendor-portal/.next; do
+            if [ -e "$candidate" ]; then
+              artifact_inputs+=("$candidate")
+            fi
+          done
+          if [ "${#artifact_inputs[@]}" -eq 0 ]; then
+            echo "artifact immutable digest failed: no build outputs found"
+            exit 1
+          fi
+          tar -czf artifacts/launch-dist-${GITHUB_SHA}.tar.gz "${artifact_inputs[@]}"
           sha256sum artifacts/launch-dist-${GITHUB_SHA}.tar.gz | tee artifacts/launch-dist-${GITHUB_SHA}.sha256
           cat > artifacts/manifest.json <<EOF
           {
