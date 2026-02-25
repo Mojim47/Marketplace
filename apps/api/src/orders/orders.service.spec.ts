@@ -124,11 +124,11 @@ const createPrismaFake = (stock: number) => {
         state.orders += 1;
         return {
           id: `order-${state.orders}`,
-          orderNumber: `ORD-${state.orders}`,
+          order_number: `ORD-${state.orders}`,
           status: 'PENDING',
           paymentStatus: 'PENDING',
-          totalAmount: 1000,
-          createdAt: new Date(),
+          total_amount: 1000,
+          created_at: new Date(),
           items: [],
         };
       },

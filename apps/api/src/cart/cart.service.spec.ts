@@ -66,7 +66,9 @@ describe('CartService', () => {
       expect.objectContaining({
         productId: 'p1',
         quantity: 2,
-        imageUrl: 'https://cdn.local/phone.jpg',
+        productName: 'Phone',
+        productSku: 'SKU-1',
+        price: 100000,
       })
     );
     expect(cart.subtotal).toBe(200000);

@@ -51,7 +51,7 @@ const createService = () => {
           update: vi.fn().mockResolvedValue(undefined),
         },
         order: {
-          create: vi.fn().mockResolvedValue({ id: 'order-1', orderNumber: 'ORD-1' }),
+          create: vi.fn().mockResolvedValue({ id: 'order-1', order_number: 'ORD-1' }),
         },
       })
     ),
