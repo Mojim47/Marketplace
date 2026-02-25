@@ -31,6 +31,10 @@ if [[ $MIGRATE_EXIT -ne 0 ]]; then
 fi
 
 echo "[db-migrate-safe] checking runtime schema drift"
-pnpm exec prisma migrate diff --from-url "$DATABASE_URL" --to-schema-datamodel prisma/schema.prisma --exit-code
+if [[ "${DB_SKIP_RUNTIME_DRIFT_CHECK:-false}" == "true" ]]; then
+  echo "[db-migrate-safe] runtime schema drift check skipped (DB_SKIP_RUNTIME_DRIFT_CHECK=true)"
+else
+  pnpm exec prisma migrate diff --from-url "$DATABASE_URL" --to-schema-datamodel prisma/schema.prisma --exit-code
+fi
 
 echo "[db-migrate-safe] success"

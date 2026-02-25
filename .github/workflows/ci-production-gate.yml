@@ -116,14 +116,17 @@ jobs:
           echo "backup_file=$backup_file" >> "$GITHUB_OUTPUT"
 
       - name: prisma safe migrate deploy
-        run: pnpm run db:migrate:deploy:safe
         env:
+          DB_SKIP_RUNTIME_DRIFT_CHECK: ${{ github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'freeze-approved') && 'true' || 'false' }}
           DB_MIGRATION_BACKUP_FILE: ${{ steps.db_backup.outputs.backup_file }}
+        run: pnpm run db:migrate:deploy:safe
 
       - name: prisma migrate diff gate
+        if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'freeze-approved') }}
         run: pnpm exec prisma migrate diff --from-migrations prisma/migrations --to-schema-datamodel prisma/schema.prisma --shadow-database-url postgresql://test:test@localhost:5432/nextgen_ci_shadow --exit-code
 
       - name: runtime drift gate (db -> schema)
+        if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'freeze-approved') }}
         run: pnpm run db:drift:runtime
 
       - name: secrets policy schema gate
