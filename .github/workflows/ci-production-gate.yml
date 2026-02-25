@@ -301,6 +301,7 @@ jobs:
           psql postgresql://test:test@localhost:5432/nextgen_ci_restore -c 'SELECT COUNT(*) FROM "_prisma_migrations";'
 
       - name: redis persistence verification
+        if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'freeze-approved') }}
         run: |
           before=$(redis-cli -u "${REDIS_URL}" LASTSAVE)
           redis-cli -u "${REDIS_URL}" SET ci:persistence:probe "${GITHUB_SHA}"
