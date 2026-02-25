@@ -32,13 +32,23 @@ trim() {
 
 pg_stat_exists_raw="$(run_sql "SELECT EXISTS(SELECT 1 FROM pg_extension WHERE extname='pg_stat_statements');")"
 pg_stat_exists="$(trim "$pg_stat_exists_raw")"
+pg_stat_preloaded_raw="$(run_sql "SELECT POSITION('pg_stat_statements' IN COALESCE(current_setting('shared_preload_libraries', true), '')) > 0;")"
+pg_stat_preloaded="$(trim "$pg_stat_preloaded_raw")"
+pg_stat_available="f"
+if [[ "$pg_stat_exists" == "t" && "$pg_stat_preloaded" == "t" ]]; then
+  pg_stat_available="t"
+fi
 
 slow_query_count="0"
-if [[ "$pg_stat_exists" == "t" ]]; then
+if [[ "$pg_stat_available" == "t" ]]; then
   slow_query_count_raw="$(run_sql "SELECT COUNT(*) FROM pg_stat_statements WHERE mean_exec_time > ${SLOW_QUERY_THRESHOLD_MS};")"
   slow_query_count="$(trim "$slow_query_count_raw")"
 elif [[ "$REQUIRE_PG_STAT_STATEMENTS" == "true" ]]; then
-  echo "pg_stat_statements extension is required but not enabled" >&2
+  if [[ "$pg_stat_exists" != "t" ]]; then
+    echo "pg_stat_statements extension is required but not enabled" >&2
+  else
+    echo "pg_stat_statements extension is installed but not preloaded (shared_preload_libraries)" >&2
+  fi
   exit 1
 fi
 
@@ -59,7 +69,7 @@ if [[ -n "$BACKUP_FILE" ]]; then
 fi
 
 violations=()
-if [[ "$pg_stat_exists" == "t" ]] && (( slow_query_count > MAX_SLOW_QUERIES )); then
+if [[ "$pg_stat_available" == "t" ]] && (( slow_query_count > MAX_SLOW_QUERIES )); then
   violations+=("slow_queries=${slow_query_count} exceeds max=${MAX_SLOW_QUERIES} (threshold_ms=${SLOW_QUERY_THRESHOLD_MS})")
 fi
 
@@ -79,6 +89,8 @@ fi
   echo "  \"maxSlowQueries\": ${MAX_SLOW_QUERIES},"
   echo "  \"slowQueryCount\": ${slow_query_count},"
   echo "  \"pgStatStatementsEnabled\": $( [[ "$pg_stat_exists" == "t" ]] && echo true || echo false ),"
+  echo "  \"pgStatStatementsPreloaded\": $( [[ "$pg_stat_preloaded" == "t" ]] && echo true || echo false ),"
+  echo "  \"pgStatStatementsAvailable\": $( [[ "$pg_stat_available" == "t" ]] && echo true || echo false ),"
   echo "  \"maxReplicaLagSeconds\": ${MAX_REPLICA_LAG_SECONDS},"
   echo "  \"replicaLagSeconds\": ${replica_lag_seconds},"
   echo "  \"backupStatus\": \"${backup_status}\","
