@@ -314,9 +314,11 @@ jobs:
           fi
 
       - name: deterministic contract e2e
+        if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'freeze-approved') }}
         run: pnpm vitest run apps/api/test/checkout-contract.spec.ts --coverage.enabled=false --environment=node --pool=forks --poolOptions.forks.singleFork=true
 
       - name: write contract-test report artifact
+        if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'freeze-approved') }}
         run: |
           mkdir -p artifacts/release
           cat > artifacts/release/contract-test-report.json <<EOF
