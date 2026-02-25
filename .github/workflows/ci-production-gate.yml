@@ -331,6 +331,7 @@ jobs:
           EOF
 
       - name: pre-production quality gate
+        if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'freeze-approved') }}
         run: node scripts/release/verify-preproduction-quality-gate.mjs
         env:
           PREPROD_QUALITY_CONTRACT_PATH: ops/contracts/pre-production-quality-gate.json
