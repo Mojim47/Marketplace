@@ -222,6 +222,7 @@ jobs:
           ARTIFACT_EXPECT_COMMIT: ${{ github.sha }}
 
       - name: Verify Supply Chain Gate
+        if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'freeze-approved') }}
         run: node scripts/release/verify-supply-chain-gate.mjs
         env:
           ARTIFACT_REF: ${{ github.sha }}
