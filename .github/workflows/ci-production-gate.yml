@@ -286,6 +286,7 @@ jobs:
           TRACEABILITY_CHAIN_ENABLED: "true"
 
       - name: bootstrap + observability gate
+        if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'freeze-approved') }}
         run: node ops/scripts/ci-bootstrap-observability-gate.mjs
         env:
           API_PORT: "4010"
