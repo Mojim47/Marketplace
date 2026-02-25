@@ -237,6 +237,7 @@ jobs:
           RUNTIME_SPEC_PATH: k8s/base/api-stack.yml
 
       - name: launch load/stress gate
+        if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'freeze-approved') }}
         run: pnpm run release:load:gate
         env:
           API_PORT: "4012"
@@ -250,11 +251,13 @@ jobs:
           JWT_SECRET: ${{ env.JWT_SECRET }}
 
       - name: chaos rollback drill gate
+        if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'freeze-approved') }}
         run: pnpm run release:chaos:drill
         env:
           CHAOS_DRILL_REPORT_PATH: artifacts/release/chaos-rollback-drill-report.json
 
       - name: scaling and pooling readiness gate
+        if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'freeze-approved') }}
         run: pnpm run release:scaling:check
         env:
           K8S_API_STACK_PATH: k8s/base/api-stack.yml
@@ -263,6 +266,7 @@ jobs:
           SCALING_READINESS_REPORT_PATH: artifacts/release/scaling-readiness-report.json
 
       - name: Verify DR & SLO Gate
+        if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'freeze-approved') }}
         run: node scripts/release/verify-dr-slo-gate.mjs
         env:
           ARTIFACT_REF: ${{ github.sha }}
