@@ -183,6 +183,18 @@ jobs:
       - name: build launch scope
         run: pnpm turbo run build --filter=@nextgen/api-v3 --filter=@nextgen/web --filter=@nextgen/admin --filter=@nextgen/vendor-portal
 
+      - name: install Playwright browsers (UI release gate)
+        if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'freeze-approved') }}
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: ui release gate (critical Playwright + Lighthouse budget)
+        if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'freeze-approved') }}
+        run: pnpm run release:ui:gate
+        env:
+          UI_WEB_PORT: "3000"
+          UI_ADMIN_PORT: "3003"
+          UI_GATE_COLD_START_RUNS: "2"
+
       - name: verify AI model contract + checksums
         run: node scripts/ai/verify-model-contract.mjs
 

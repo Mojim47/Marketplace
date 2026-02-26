@@ -1,5 +1,6 @@
 import { CampaignCarousel } from '@/components/campaign-carousel';
 import { HeroCard } from '@/components/hero-card';
+import { ProductRails } from '@/components/product-rails';
 import { StoryDiscoveryRail } from '@/components/story-discovery-rail';
 import {
   BentoFeatureGrid,
@@ -65,10 +66,10 @@ const userPanelItems = [
 ];
 
 const categoryBanners = [
-  { title: 'موبایل و گجت', tag: 'Up to 18% OFF', image: '/images/products/smartphone-ultra.jpg' },
-  { title: 'خانه هوشمند', tag: 'Smart Living', image: '/images/products/smart-home-hub.jpg' },
-  { title: 'محصولات پردازشی', tag: 'AI Hardware', image: '/images/products/laptop-pro.jpg' },
-  { title: 'صوت و تصویر', tag: 'Cinema & Audio', image: '/images/products/smart-tv-oled.jpg' },
+  { title: 'موبایل و گجت', tag: 'Up to 18% OFF', image: '/images/products/phone-ultra.jpg' },
+  { title: 'خانه هوشمند', tag: 'Smart Living', image: '/images/products/smart-home.jpg' },
+  { title: 'محصولات پردازشی', tag: 'AI Hardware', image: '/images/products/laptop.jpg' },
+  { title: 'صوت و تصویر', tag: 'Cinema & Audio', image: '/images/products/speaker.jpg' },
 ];
 
 const intelligence = [
@@ -297,6 +298,8 @@ export default function HomePage() {
         <section className="mt-14">
           <CampaignCarousel />
         </section>
+
+        <ProductRails products={spotlightProducts} />
 
         <section className="mt-14 grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
           <GlassCard className="rounded-3xl p-6">

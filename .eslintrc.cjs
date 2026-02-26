@@ -9,6 +9,10 @@ module.exports = {
     ecmaVersion: "latest",
     sourceType: "module",
   },
+  rules: {
+    // TypeScript compiler performs symbol resolution; eslint no-undef is noisy on type-only names.
+    "no-undef": "off",
+  },
   ignorePatterns: [
     "**/dist/**",
     "**/.next/**",

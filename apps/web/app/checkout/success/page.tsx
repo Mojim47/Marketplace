@@ -2,7 +2,7 @@
 
 import { Button, GlassCard, PageHeader } from '@/components/ui';
 import { useTraceId } from '@/hooks/use-trace-id';
-import { emitUiEvent } from '@/lib/ui-telemetry';
+import { emitCommerceEvent, emitUiEvent } from '@/lib/ui-telemetry';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useRef } from 'react';
@@ -17,6 +17,7 @@ export default function CheckoutSuccessPage() {
   const paymentMessage = search.get('paymentMessage');
   const storyId = search.get('storyId');
   const conversionSent = useRef(false);
+  const commerceConversionSent = useRef(false);
 
   const strings = useMemo(
     () =>
@@ -38,6 +39,22 @@ export default function CheckoutSuccessPage() {
     emitUiEvent('page_view', { path: '/checkout/success', locale }, traceId ?? undefined);
     emitUiEvent('flow_complete', { flow: 'checkout', status: 'success' }, traceId ?? undefined);
   }, [locale, traceId]);
+
+  useEffect(() => {
+    if (commerceConversionSent.current || paymentStatus !== 'success') {
+      return;
+    }
+    commerceConversionSent.current = true;
+    emitCommerceEvent(
+      'conversion',
+      {
+        source: 'checkout_success',
+        orderId: orderId || null,
+        orderNumber: orderNumber || null,
+      },
+      traceId ?? undefined
+    );
+  }, [orderId, orderNumber, paymentStatus, traceId]);
 
   useEffect(() => {
     if (conversionSent.current || paymentStatus !== 'success') {

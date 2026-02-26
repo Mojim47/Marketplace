@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
 import path from 'node:path';
+import net from 'node:net';
 import { spawn } from 'node:child_process';
 import { setTimeout as delay } from 'node:timers/promises';
 
@@ -20,6 +21,13 @@ const startupTimeoutMs = Number.parseInt(process.env.LOAD_GATE_STARTUP_TIMEOUT_M
 const requestTimeoutMs = Number.parseInt(process.env.LOAD_GATE_REQUEST_TIMEOUT_MS || '3000', 10);
 const totalRequests = Number.parseInt(process.env.LOAD_GATE_TOTAL_REQUESTS || '600', 10);
 const concurrency = Number.parseInt(process.env.LOAD_GATE_CONCURRENCY || '40', 10);
+const apiDistEntry = path.resolve(repoRoot, 'dist/apps/api/src/main.js');
+const effectiveDatabaseUrl =
+  process.env.DATABASE_URL ||
+  process.env.LOAD_GATE_DATABASE_URL ||
+  'postgresql://nextgen:nextgen123@127.0.0.1:5432/nextgen_marketplace';
+const effectiveRedisUrl =
+  process.env.REDIS_URL || process.env.LOAD_GATE_REDIS_URL || 'redis://:nextgen123@127.0.0.1:6379/0';
 
 function fail(message) {
   console.error(`[load-gate][fatal] ${message}`);
@@ -37,9 +45,59 @@ function resolvePnpmCommand() {
   return { cmd: 'pnpm', args: ['--filter', '@nextgen/api-v3', 'start'], shell: false };
 }
 
-async function waitForHealth(url, timeoutMs) {
+function resolveApiCommand() {
+  if (fs.existsSync(apiDistEntry)) {
+    return {
+      cmd: process.execPath,
+      args: [apiDistEntry],
+      shell: false,
+      description: `node ${path.relative(repoRoot, apiDistEntry)}`,
+    };
+  }
+  const fallback = resolvePnpmCommand();
+  return { ...fallback, description: `pnpm --filter @nextgen/api-v3 start` };
+}
+
+function normalizeMinioEndpoint(rawEndpoint, rawPort) {
+  const endpoint = typeof rawEndpoint === 'string' ? rawEndpoint.trim() : '';
+  const fallbackPort = Number.parseInt(String(rawPort || '9000'), 10) || 9000;
+  if (!endpoint) {
+    return null;
+  }
+
+  try {
+    const parsed = new URL(endpoint);
+    if (parsed.hostname) {
+      const parsedPort = Number.parseInt(parsed.port || String(fallbackPort), 10);
+      return {
+        endpoint: parsed.hostname,
+        port: Number.isNaN(parsedPort) ? fallbackPort : parsedPort,
+      };
+    }
+  } catch {}
+
+  if (endpoint.includes(':')) {
+    const [host, portText] = endpoint.split(':');
+    const parsedPort = Number.parseInt(portText || String(fallbackPort), 10);
+    return {
+      endpoint: host || endpoint,
+      port: Number.isNaN(parsedPort) ? fallbackPort : parsedPort,
+    };
+  }
+
+  return { endpoint, port: fallbackPort };
+}
+
+async function waitForHealth(url, timeoutMs, getChildExitInfo) {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
+    const exitInfo = getChildExitInfo?.();
+    if (exitInfo) {
+      const signalPart = exitInfo.signal ? ` signal=${exitInfo.signal}` : '';
+      throw new Error(
+        `api process exited before health became ready (code=${String(exitInfo.code)}${signalPart})`
+      );
+    }
     try {
       const res = await fetch(url, { method: 'GET' });
       if (res.status === 200) {
@@ -49,6 +107,99 @@ async function waitForHealth(url, timeoutMs) {
     await delay(500);
   }
   throw new Error(`timeout waiting for health: ${url}`);
+}
+
+function extractHostPortFromUrl(rawUrl, defaultPort) {
+  if (!rawUrl) {
+    return null;
+  }
+  try {
+    const parsed = new URL(rawUrl);
+    const host = parsed.hostname;
+    const port = Number.parseInt(parsed.port || String(defaultPort), 10);
+    if (!host || Number.isNaN(port)) {
+      return null;
+    }
+    return { host, port };
+  } catch {
+    return null;
+  }
+}
+
+function waitForTcp(host, port, timeoutMs) {
+  return new Promise((resolve, reject) => {
+    const socket = net.createConnection({ host, port });
+    let settled = false;
+    const finish = (fn, value) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      socket.destroy();
+      fn(value);
+    };
+    socket.setTimeout(timeoutMs);
+    socket.on('connect', () => finish(resolve));
+    socket.on('timeout', () =>
+      finish(reject, new Error(`tcp timeout to ${host}:${String(port)} after ${String(timeoutMs)}ms`))
+    );
+    socket.on('error', (error) => {
+      finish(reject, error);
+    });
+  });
+}
+
+function formatConnectionError(error) {
+  if (!(error instanceof Error)) {
+    return String(error);
+  }
+  if (error.message) {
+    return error.message;
+  }
+  const maybeCode = typeof error === 'object' && error && 'code' in error ? String(error.code) : null;
+  if (maybeCode) {
+    return maybeCode;
+  }
+  if ('errors' in error && Array.isArray(error.errors) && error.errors.length > 0) {
+    const first = error.errors[0];
+    if (first instanceof Error && first.message) {
+      return first.message;
+    }
+    if (first && typeof first === 'object' && 'code' in first) {
+      return String(first.code);
+    }
+  }
+  return error.name || 'unknown';
+}
+
+async function preflightDependencies() {
+  const checks = [
+    {
+      name: 'postgres',
+      details: extractHostPortFromUrl(effectiveDatabaseUrl, 5432),
+    },
+    {
+      name: 'redis',
+      details: extractHostPortFromUrl(effectiveRedisUrl, 6379),
+    },
+  ];
+
+  for (const check of checks) {
+    if (!check.details) {
+      continue;
+    }
+    const { host, port } = check.details;
+    try {
+      await waitForTcp(host, port, 1500);
+    } catch (error) {
+      const reason = formatConnectionError(error);
+      throw new Error(
+        `dependency "${check.name}" unreachable at ${host}:${String(port)} (${reason}). ` +
+          'Start local dependencies (for example: `docker-compose up -d postgres redis minio`) ' +
+          'or set LOAD_GATE_START_LOCAL_API=false to target an existing healthy API.'
+      );
+    }
+  }
 }
 
 async function timedFetch(target) {
@@ -167,25 +318,44 @@ function loadContractThresholds() {
 async function run() {
   const thresholds = loadContractThresholds();
   let child = null;
+  let childExitInfo = null;
   try {
     if (startLocalApi) {
-      const { cmd, args, shell } = resolvePnpmCommand();
+      await preflightDependencies();
+      const { cmd, args, shell, description } = resolveApiCommand();
+      console.log(`[load-gate] starting local api via ${description}`);
+      const childEnv = {
+        ...process.env,
+        API_PORT: String(apiPort),
+        NODE_ENV: process.env.NODE_ENV || 'production',
+        DATABASE_URL: effectiveDatabaseUrl,
+        REDIS_URL: effectiveRedisUrl,
+        JWT_SECRET: process.env.JWT_SECRET || 'test-jwt-secret-for-ci-pipeline-minimum-32-chars',
+        JWT_REFRESH_SECRET:
+          process.env.JWT_REFRESH_SECRET || 'test-refresh-secret-for-ci-pipeline-minimum-32-chars',
+        PRISMA_CLIENT_ENGINE_TYPE: 'binary',
+        PRISMA_CLI_QUERY_ENGINE_TYPE: 'binary',
+      };
+      const minioConfig = normalizeMinioEndpoint(
+        process.env.MINIO_ENDPOINT,
+        process.env.MINIO_API_PORT || process.env.MINIO_PORT
+      );
+      childEnv.MINIO_ENDPOINT = minioConfig?.endpoint || '127.0.0.1';
+      childEnv.MINIO_API_PORT = String(minioConfig?.port || 9000);
+      delete childEnv.MINIO_PORT;
       child = spawn(cmd, args, {
         shell,
         stdio: ['ignore', 'pipe', 'pipe'],
-        env: {
-          ...process.env,
-          API_PORT: String(apiPort),
-          NODE_ENV: process.env.NODE_ENV || 'production',
-          DATABASE_URL: process.env.DATABASE_URL || 'postgresql://test:test@localhost:5432/nextgen_ci',
-          REDIS_URL: process.env.REDIS_URL || 'redis://localhost:6379',
-          JWT_SECRET: process.env.JWT_SECRET || 'test-jwt-secret-for-ci-pipeline-minimum-32-chars',
-        },
+        windowsHide: true,
+        env: childEnv,
       });
       child.stdout.on('data', (buf) => process.stdout.write(buf));
       child.stderr.on('data', (buf) => process.stderr.write(buf));
-      await waitForHealth(`${baseUrl}/health/live`, startupTimeoutMs);
-      await waitForHealth(`${baseUrl}/health/ready`, startupTimeoutMs);
+      child.on('exit', (code, signal) => {
+        childExitInfo = { code, signal };
+      });
+      await waitForHealth(`${baseUrl}/health/live`, startupTimeoutMs, () => childExitInfo);
+      await waitForHealth(`${baseUrl}/health/ready`, startupTimeoutMs, () => childExitInfo);
     }
 
     const report = await runLoad();
@@ -229,10 +399,14 @@ async function run() {
     );
   } finally {
     if (child) {
-      child.kill('SIGTERM');
-      await delay(500);
-      if (!child.killed) {
-        child.kill('SIGKILL');
+      if (process.platform === 'win32' && child.pid) {
+        spawn('taskkill', ['/pid', String(child.pid), '/t', '/f'], { stdio: 'ignore', shell: false });
+      } else {
+        child.kill('SIGTERM');
+        await delay(500);
+        if (!child.killed) {
+          child.kill('SIGKILL');
+        }
       }
     }
   }

@@ -297,6 +297,12 @@ importers:
       '@types/react-dom':
         specifier: ^18.3.3
         version: 18.3.7(@types/react@18.3.27)
+      eslint:
+        specifier: ^8.57.1
+        version: 8.57.1
+      eslint-config-next:
+        specifier: ^15.5.10
+        version: 15.5.12(eslint@8.57.1)(typescript@5.9.3)
 
   apps/api:
     dependencies:
@@ -546,6 +552,12 @@ importers:
       '@types/react-dom':
         specifier: ^18.3.3
         version: 18.3.7(@types/react@18.3.27)
+      eslint:
+        specifier: ^8.57.1
+        version: 8.57.1
+      eslint-config-next:
+        specifier: ^15.5.10
+        version: 15.5.12(eslint@8.57.1)(typescript@5.9.3)
 
   apps/worker:
     dependencies:

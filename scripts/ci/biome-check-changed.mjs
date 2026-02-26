@@ -14,6 +14,15 @@ function run(cmd, args) {
 }
 
 function resolveBaseSha() {
+  const mode = (process.env.BIOME_DIFF_MODE || (process.env.CI ? 'head' : 'base')).toLowerCase();
+  if (mode === 'head') {
+    try {
+      return run('git', ['rev-parse', 'HEAD~1']);
+    } catch {
+      return run('git', ['rev-parse', 'HEAD']);
+    }
+  }
+
   const fromEnv =
     process.env.BASE_SHA ||
     process.env.GITHUB_BASE_SHA ||

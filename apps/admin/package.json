@@ -7,7 +7,7 @@
     "dev": "next dev --port 3003",
     "build": "next build",
     "start": "next start --port 3003",
-    "lint": "next lint"
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx --max-warnings=0"
   },
   "dependencies": {
     "@nextgen/types": "workspace:*",
@@ -19,6 +19,8 @@
   },
   "devDependencies": {
     "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.3"
+    "@types/react-dom": "^18.3.3",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "^15.5.10"
   }
 }

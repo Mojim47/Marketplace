@@ -30,6 +30,27 @@ type VendorStoryAnalytics = {
   windowDays: number;
 };
 
+type UiFunnelAnalytics = {
+  surface: string;
+  impressions: number;
+  clicks: number;
+  conversions: number;
+  ctr: number;
+  cvr: number;
+  uniqueSessions: number;
+  windowDays: number;
+};
+
+type UiFunnelTrendPoint = {
+  date: string;
+  surface: string;
+  impressions: number;
+  clicks: number;
+  conversions: number;
+  ctr: number;
+  cvr: number;
+};
+
 const fallbackVendors: VendorStoryCapability[] = [
   {
     vendorId: 'vendor-techhub',
@@ -108,6 +129,51 @@ const fallbackAnalytics: VendorStoryAnalytics[] = [
   },
 ];
 
+const fallbackUiFunnel: UiFunnelAnalytics[] = [
+  {
+    surface: 'home_rail',
+    impressions: 0,
+    clicks: 0,
+    conversions: 0,
+    ctr: 0,
+    cvr: 0,
+    uniqueSessions: 0,
+    windowDays: 14,
+  },
+  {
+    surface: 'category_grid',
+    impressions: 0,
+    clicks: 0,
+    conversions: 0,
+    ctr: 0,
+    cvr: 0,
+    uniqueSessions: 0,
+    windowDays: 14,
+  },
+  {
+    surface: 'product_detail',
+    impressions: 0,
+    clicks: 0,
+    conversions: 0,
+    ctr: 0,
+    cvr: 0,
+    uniqueSessions: 0,
+    windowDays: 14,
+  },
+  {
+    surface: 'product_related',
+    impressions: 0,
+    clicks: 0,
+    conversions: 0,
+    ctr: 0,
+    cvr: 0,
+    uniqueSessions: 0,
+    windowDays: 14,
+  },
+];
+
+const fallbackUiFunnelTrend: UiFunnelTrendPoint[] = [];
+
 function toAnalyticsMap(rows: VendorStoryAnalytics[]): Record<string, VendorStoryAnalytics> {
   return rows.reduce<Record<string, VendorStoryAnalytics>>((acc, row) => {
     acc[row.vendorId] = row;
@@ -122,6 +188,8 @@ function roundPercent(value: number): string {
 export default function AdminVendorsPage() {
   const [vendors, setVendors] = useState<VendorStoryCapability[]>([]);
   const [analyticsMap, setAnalyticsMap] = useState<Record<string, VendorStoryAnalytics>>({});
+  const [uiFunnelRows, setUiFunnelRows] = useState<UiFunnelAnalytics[]>([]);
+  const [uiFunnelTrendRows, setUiFunnelTrendRows] = useState<UiFunnelTrendPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<Record<string, boolean>>({});
   const [error, setError] = useState<string | null>(null);
@@ -134,7 +202,8 @@ export default function AdminVendorsPage() {
       setLoading(true);
       setError(null);
       try {
-        const [capabilityResult, analyticsResult] = await Promise.allSettled([
+        const [capabilityResult, analyticsResult, uiFunnelResult, uiTrendResult] =
+          await Promise.allSettled([
           fetch(buildApiUrl('/admin/vendors/story-capabilities'), {
             credentials: 'include',
             headers: { 'content-type': 'application/json' },
@@ -145,10 +214,22 @@ export default function AdminVendorsPage() {
             headers: { 'content-type': 'application/json' },
             cache: 'no-store',
           }),
+          fetch(buildApiUrl(`/admin/ui-funnel-analytics?windowDays=${windowDays}`), {
+            credentials: 'include',
+            headers: { 'content-type': 'application/json' },
+            cache: 'no-store',
+          }),
+          fetch(buildApiUrl(`/admin/ui-funnel-trend?windowDays=${Math.min(windowDays, 30)}`), {
+            credentials: 'include',
+            headers: { 'content-type': 'application/json' },
+            cache: 'no-store',
+          }),
         ]);
 
         let nextVendors = fallbackVendors;
         let nextAnalytics = fallbackAnalytics.map((item) => ({ ...item, windowDays }));
+        let nextUiFunnel = fallbackUiFunnel.map((item) => ({ ...item, windowDays }));
+        let nextUiTrend = fallbackUiFunnelTrend;
         let hasFallback = false;
 
         if (capabilityResult.status === 'fulfilled' && capabilityResult.value.ok) {
@@ -173,9 +254,33 @@ export default function AdminVendorsPage() {
           hasFallback = true;
         }
 
+        if (uiFunnelResult.status === 'fulfilled' && uiFunnelResult.value.ok) {
+          const payload = (await uiFunnelResult.value.json()) as UiFunnelAnalytics[];
+          if (Array.isArray(payload) && payload.length > 0) {
+            nextUiFunnel = payload;
+          } else {
+            hasFallback = true;
+          }
+        } else {
+          hasFallback = true;
+        }
+
+        if (uiTrendResult.status === 'fulfilled' && uiTrendResult.value.ok) {
+          const payload = (await uiTrendResult.value.json()) as UiFunnelTrendPoint[];
+          if (Array.isArray(payload)) {
+            nextUiTrend = payload;
+          } else {
+            hasFallback = true;
+          }
+        } else {
+          hasFallback = true;
+        }
+
         if (!cancelled) {
           setVendors(nextVendors);
           setAnalyticsMap(toAnalyticsMap(nextAnalytics));
+          setUiFunnelRows(nextUiFunnel);
+          setUiFunnelTrendRows(nextUiTrend);
           if (hasFallback) {
             setError('بخشی از داده‌های analytics از fallback بارگذاری شد.');
           }
@@ -186,6 +291,8 @@ export default function AdminVendorsPage() {
           setAnalyticsMap(
             toAnalyticsMap(fallbackAnalytics.map((item) => ({ ...item, windowDays })))
           );
+          setUiFunnelRows(fallbackUiFunnel.map((item) => ({ ...item, windowDays })));
+          setUiFunnelTrendRows(fallbackUiFunnelTrend);
           setError('ارتباط با API برقرار نشد؛ داده نمونه نمایش داده می‌شود.');
         }
       } finally {
@@ -263,6 +370,55 @@ export default function AdminVendorsPage() {
       totalActiveStories: total.totalActiveStories,
     };
   }, [analyticsRows]);
+
+  const uiFunnelOverview = useMemo(() => {
+    if (uiFunnelRows.length === 0) {
+      return {
+        impressions: 0,
+        clicks: 0,
+        conversions: 0,
+        ctr: 0,
+        cvr: 0,
+      };
+    }
+
+    const totals = uiFunnelRows.reduce(
+      (acc, row) => {
+        acc.impressions += row.impressions;
+        acc.clicks += row.clicks;
+        acc.conversions += row.conversions;
+        return acc;
+      },
+      { impressions: 0, clicks: 0, conversions: 0 }
+    );
+
+    return {
+      ...totals,
+      ctr: totals.impressions > 0 ? totals.clicks / totals.impressions : 0,
+      cvr: totals.clicks > 0 ? totals.conversions / totals.clicks : 0,
+    };
+  }, [uiFunnelRows]);
+
+  const uiTrendRowsSorted = useMemo(
+    () =>
+      uiFunnelTrendRows
+        .slice()
+        .sort((a, b) => {
+          if (a.date === b.date) {
+            return a.surface.localeCompare(b.surface);
+          }
+          return a.date < b.date ? 1 : -1;
+        }),
+    [uiFunnelTrendRows]
+  );
+
+  const uiTrendMaxConversions = useMemo(() => {
+    if (uiFunnelTrendRows.length === 0) {
+      return 1;
+    }
+    const max = uiFunnelTrendRows.reduce((acc, row) => Math.max(acc, row.conversions), 0);
+    return Math.max(1, max);
+  }, [uiFunnelTrendRows]);
 
   async function saveVendorCapability(
     vendorId: string,
@@ -537,6 +693,130 @@ export default function AdminVendorsPage() {
                     </td>
                   </tr>
                 ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className="mt-6 overflow-hidden rounded-2xl border border-white/10 bg-black/10">
+        <div className="border-b border-white/10 px-4 py-3 text-sm text-slate-200">
+          Storefront Funnel Analytics (Rail / Category / Product)
+        </div>
+
+        <div className="grid gap-3 border-b border-white/10 px-4 py-4 md:grid-cols-5">
+          <article className="rounded-xl border border-cyan-400/20 bg-cyan-400/10 px-3 py-2 text-cyan-200">
+            <p className="text-[10px] text-cyan-100/70">Impressions</p>
+            <p className="mt-1 text-lg font-semibold">
+              {uiFunnelOverview.impressions.toLocaleString('en-US')}
+            </p>
+          </article>
+          <article className="rounded-xl border border-amber-400/20 bg-amber-400/10 px-3 py-2 text-amber-200">
+            <p className="text-[10px] text-amber-100/70">Clicks</p>
+            <p className="mt-1 text-lg font-semibold">
+              {uiFunnelOverview.clicks.toLocaleString('en-US')}
+            </p>
+          </article>
+          <article className="rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-3 py-2 text-emerald-200">
+            <p className="text-[10px] text-emerald-100/70">Conversions</p>
+            <p className="mt-1 text-lg font-semibold">
+              {uiFunnelOverview.conversions.toLocaleString('en-US')}
+            </p>
+          </article>
+          <article className="rounded-xl border border-violet-400/20 bg-violet-400/10 px-3 py-2 text-violet-200">
+            <p className="text-[10px] text-violet-100/70">CTR</p>
+            <p className="mt-1 text-lg font-semibold">{roundPercent(uiFunnelOverview.ctr)}</p>
+          </article>
+          <article className="rounded-xl border border-orange-400/20 bg-orange-400/10 px-3 py-2 text-orange-200">
+            <p className="text-[10px] text-orange-100/70">CVR</p>
+            <p className="mt-1 text-lg font-semibold">{roundPercent(uiFunnelOverview.cvr)}</p>
+          </article>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-left text-xs text-slate-300">
+            <thead className="bg-slate-900/70 text-[11px] uppercase tracking-wide text-slate-400">
+              <tr>
+                <th className="px-4 py-2">Surface</th>
+                <th className="px-4 py-2">Impressions</th>
+                <th className="px-4 py-2">Clicks</th>
+                <th className="px-4 py-2">Conversions</th>
+                <th className="px-4 py-2">CTR</th>
+                <th className="px-4 py-2">CVR</th>
+                <th className="px-4 py-2">Sessions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {uiFunnelRows
+                .slice()
+                .sort((a, b) => b.conversions - a.conversions || b.clicks - a.clicks)
+                .map((row) => (
+                  <tr key={row.surface} className="border-t border-white/5">
+                    <td className="px-4 py-2 text-slate-200">{row.surface}</td>
+                    <td className="px-4 py-2">{row.impressions.toLocaleString('en-US')}</td>
+                    <td className="px-4 py-2">{row.clicks.toLocaleString('en-US')}</td>
+                    <td className="px-4 py-2">{row.conversions.toLocaleString('en-US')}</td>
+                    <td className="px-4 py-2">{roundPercent(row.ctr)}</td>
+                    <td className="px-4 py-2">{roundPercent(row.cvr)}</td>
+                    <td className="px-4 py-2">{row.uniqueSessions.toLocaleString('en-US')}</td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className="mt-6 overflow-hidden rounded-2xl border border-white/10 bg-black/10">
+        <div className="border-b border-white/10 px-4 py-3 text-sm text-slate-200">
+          Rolling Trend (Daily CTR/CVR)
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-left text-xs text-slate-300">
+            <thead className="bg-slate-900/70 text-[11px] uppercase tracking-wide text-slate-400">
+              <tr>
+                <th className="px-4 py-2">Date</th>
+                <th className="px-4 py-2">Surface</th>
+                <th className="px-4 py-2">Impressions</th>
+                <th className="px-4 py-2">Clicks</th>
+                <th className="px-4 py-2">Conversions</th>
+                <th className="px-4 py-2">CTR</th>
+                <th className="px-4 py-2">CVR</th>
+                <th className="px-4 py-2">Conv Trend</th>
+              </tr>
+            </thead>
+            <tbody>
+              {uiTrendRowsSorted.length === 0 ? (
+                <tr className="border-t border-white/5">
+                  <td className="px-4 py-3 text-slate-400" colSpan={8}>
+                    داده trend هنوز ثبت نشده است.
+                  </td>
+                </tr>
+              ) : (
+                uiTrendRowsSorted.slice(0, 70).map((row) => (
+                  <tr key={`${row.date}:${row.surface}`} className="border-t border-white/5">
+                    <td className="px-4 py-2 font-mono text-slate-200">{row.date}</td>
+                    <td className="px-4 py-2 text-slate-200">{row.surface}</td>
+                    <td className="px-4 py-2">{row.impressions.toLocaleString('en-US')}</td>
+                    <td className="px-4 py-2">{row.clicks.toLocaleString('en-US')}</td>
+                    <td className="px-4 py-2">{row.conversions.toLocaleString('en-US')}</td>
+                    <td className="px-4 py-2">{roundPercent(row.ctr)}</td>
+                    <td className="px-4 py-2">{roundPercent(row.cvr)}</td>
+                    <td className="px-4 py-2">
+                      <div className="h-2 w-28 rounded-full bg-slate-700/40">
+                        <div
+                          className="h-2 rounded-full bg-emerald-400"
+                          style={{
+                            width: `${Math.max(
+                              4,
+                              Math.round((row.conversions / uiTrendMaxConversions) * 100)
+                            )}%`,
+                          }}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

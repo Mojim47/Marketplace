@@ -59,6 +59,27 @@ interface VendorStoryAnalyticsDto {
   windowDays: number;
 }
 
+interface UiFunnelAnalyticsDto {
+  surface: string;
+  impressions: number;
+  clicks: number;
+  conversions: number;
+  ctr: number;
+  cvr: number;
+  uniqueSessions: number;
+  windowDays: number;
+}
+
+interface UiFunnelTrendPointDto {
+  date: string;
+  surface: string;
+  impressions: number;
+  clicks: number;
+  conversions: number;
+  ctr: number;
+  cvr: number;
+}
+
 interface AuthenticatedRequest {
   user?: { id: string; [key: string]: any };
 }
@@ -218,6 +239,38 @@ export class AdminController {
         : 14;
     this.logger.log(`Fetching vendor story analytics for ${parsedWindow} day window`);
     return this.adminService.getVendorStoryAnalytics(parsedWindow);
+  }
+
+  /**
+   * UI funnel analytics snapshot for storefront surfaces
+   * GET /admin/ui-funnel-analytics?windowDays=14
+   */
+  @Get('ui-funnel-analytics')
+  async getUiFunnelAnalytics(
+    @Query('windowDays') windowDays?: string
+  ): Promise<UiFunnelAnalyticsDto[]> {
+    const parsedWindow =
+      typeof windowDays === 'string' && windowDays.trim() !== ''
+        ? Number.parseInt(windowDays, 10)
+        : 14;
+    this.logger.log(`Fetching UI funnel analytics for ${parsedWindow} day window`);
+    return this.adminService.getUiFunnelAnalytics(parsedWindow);
+  }
+
+  /**
+   * UI funnel daily trend for storefront surfaces
+   * GET /admin/ui-funnel-trend?windowDays=7
+   */
+  @Get('ui-funnel-trend')
+  async getUiFunnelTrend(
+    @Query('windowDays') windowDays?: string
+  ): Promise<UiFunnelTrendPointDto[]> {
+    const parsedWindow =
+      typeof windowDays === 'string' && windowDays.trim() !== ''
+        ? Number.parseInt(windowDays, 10)
+        : 7;
+    this.logger.log(`Fetching UI funnel trend for ${parsedWindow} day window`);
+    return this.adminService.getUiFunnelTrend(parsedWindow);
   }
 
   /**

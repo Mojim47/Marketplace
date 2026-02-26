@@ -23,6 +23,11 @@ html[data-theme='light'] {
   --shadow: 0 14px 32px rgb(2 6 23 / 0.08);
 }
 
+html {
+  overflow-y: scroll;
+  scrollbar-gutter: stable both-edges;
+}
+
 html[data-theme='dark'] {
   --color-bg-primary: #090c12;
   --color-bg-elevated: #111827;
@@ -55,6 +60,7 @@ body {
   font-family: var(--font-vazirmatn), sans-serif;
   background-color: var(--bg);
   color: var(--ink);
+  overflow-x: clip;
 }
 
 body::before {
@@ -257,18 +263,8 @@ body::after {
   gap: 18px;
   padding: 8px 14px;
   white-space: nowrap;
-  animation: auth-marquee 14s linear infinite;
   font-size: 11px;
   color: #475569;
-}
-
-@keyframes auth-marquee {
-  from {
-    transform: translateX(20%);
-  }
-  to {
-    transform: translateX(-50%);
-  }
 }
 
 .btn-secondary {

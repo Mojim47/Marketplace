@@ -8,8 +8,9 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
   constructor() {
     const requestedEngine = process.env.PRISMA_CLIENT_ENGINE_TYPE?.toLowerCase();
-    if (requestedEngine !== 'library') {
-      process.env.PRISMA_CLIENT_ENGINE_TYPE = 'library';
+    const isValidRequestedEngine = requestedEngine === 'library' || requestedEngine === 'binary';
+    if (requestedEngine && !isValidRequestedEngine) {
+      process.env.PRISMA_CLIENT_ENGINE_TYPE = 'binary';
     }
 
     super({
@@ -39,9 +40,9 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       return result;
     });
 
-    if (requestedEngine && requestedEngine !== 'library') {
+    if (requestedEngine && !isValidRequestedEngine) {
       this.logger.warn(
-        `Overriding PRISMA_CLIENT_ENGINE_TYPE=${requestedEngine} to library for deterministic runtime startup.`
+        `Overriding invalid PRISMA_CLIENT_ENGINE_TYPE=${requestedEngine} to binary for deterministic runtime startup.`
       );
     }
   }

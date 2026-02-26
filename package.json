@@ -90,6 +90,7 @@
     "ui:lighthouse": "lhci autorun --config lighthouserc.cjs",
     "ui:governance": "node scripts/ui/run-ui-governance.mjs",
     "release:load:gate": "node scripts/release/run-launch-load-gate.mjs",
+    "release:ui:gate": "node scripts/release/run-ui-release-gate.mjs",
     "release:chaos:drill": "node scripts/release/chaos-rollback-drill.mjs",
     "release:scaling:check": "node scripts/release/verify-scaling-readiness.mjs",
     "build:api": "tsc -p tsconfig.prod.json --skipLibCheck",

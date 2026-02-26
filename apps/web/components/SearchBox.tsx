@@ -22,6 +22,8 @@ type SearchBoxProps = {
 
 const SEARCH_HISTORY_KEY = 'ng_search_history_v1';
 const MAX_HISTORY = 8;
+const SEARCH_DEBOUNCE_MS = 300;
+const SEARCH_REQUEST_TIMEOUT_MS = 2400;
 const FALLBACK_TRENDING = [
   'گوشی پرچمدار',
   'لپ‌تاپ سبک',
@@ -35,6 +37,29 @@ function toSearchHref(text: string, categoryScope: string) {
   return categoryScope === 'all'
     ? `/categories?q=${query}`
     : `/categories?q=${query}&group=${encodeURIComponent(categoryScope)}`;
+}
+
+function highlightSuggestion(label: string, query: string) {
+  const normalized = query.trim();
+  if (normalized.length < 2) {
+    return label;
+  }
+  const hay = label.toLowerCase();
+  const needle = normalized.toLowerCase();
+  const start = hay.indexOf(needle);
+  if (start < 0) {
+    return label;
+  }
+  const before = label.slice(0, start);
+  const match = label.slice(start, start + normalized.length);
+  const after = label.slice(start + normalized.length);
+  return (
+    <>
+      {before}
+      <mark className="rounded bg-amber-100 px-0.5 text-slate-900">{match}</mark>
+      {after}
+    </>
+  );
 }
 
 export function SearchBox({ compact = false, mega = false }: SearchBoxProps) {
@@ -101,7 +126,12 @@ export function SearchBox({ compact = false, mega = false }: SearchBoxProps) {
       return;
     }
 
+    let controller: AbortController | null = null;
+    let timeoutId: number | null = null;
+
     const timer = window.setTimeout(async () => {
+      controller = new AbortController();
+      timeoutId = window.setTimeout(() => controller?.abort(), SEARCH_REQUEST_TIMEOUT_MS);
       try {
         setIsLoading(true);
         const params = new URLSearchParams({
@@ -115,6 +145,7 @@ export function SearchBox({ compact = false, mega = false }: SearchBoxProps) {
         const response = await fetch(`/api/search/suggestions?${params.toString()}`, {
           method: 'GET',
           cache: 'no-store',
+          signal: controller.signal,
         });
 
         if (!response.ok) {
@@ -125,12 +156,23 @@ export function SearchBox({ compact = false, mega = false }: SearchBoxProps) {
         const payload = (await response.json()) as { suggestions?: SuggestionItem[] };
         setSuggestions(payload.suggestions ?? []);
         setActiveIndex(-1);
+      } catch {
+        setSuggestions([]);
       } finally {
+        if (timeoutId) {
+          window.clearTimeout(timeoutId);
+        }
         setIsLoading(false);
       }
-    }, 180);
+    }, SEARCH_DEBOUNCE_MS);
 
-    return () => window.clearTimeout(timer);
+    return () => {
+      window.clearTimeout(timer);
+      if (timeoutId) {
+        window.clearTimeout(timeoutId);
+      }
+      controller?.abort();
+    };
   }, [query, categoryScope]);
 
   const offlineSuggestions = useMemo<SuggestionItem[]>(() => {
@@ -189,26 +231,25 @@ export function SearchBox({ compact = false, mega = false }: SearchBoxProps) {
     [compact, visibleSuggestions]
   );
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     const normalized = query.trim();
+    event.preventDefault();
     if (!normalized) {
-      event.preventDefault();
       return;
     }
     saveHistory(normalized);
+    setOpen(false);
+    setActiveIndex(-1);
+    router.push(toSearchHref(normalized, categoryScope));
 
-    try {
-      await fetch('/api/search/suggestions', {
+    void fetch('/api/search/suggestions', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           query: normalized,
           categorySlug: categoryScope === 'all' ? null : categoryScope,
         }),
-      });
-    } catch {
-      // Ignore tracking failures.
-    }
+      }).catch(() => undefined);
   };
 
   return (
@@ -312,7 +353,7 @@ export function SearchBox({ compact = false, mega = false }: SearchBoxProps) {
                     setActiveIndex(-1);
                   }}
                 >
-                  <span>{item.label}</span>
+                  <span>{highlightSuggestion(item.label, query)}</span>
                   <span className="rounded-full border border-slate-200 px-2 py-0.5 text-[10px] text-slate-500">
                     {item.type === 'history'
                       ? 'History'
