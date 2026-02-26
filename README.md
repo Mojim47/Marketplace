@@ -50,8 +50,8 @@ pnpm test:unit
 ```
 
 ### WARNING: Follow-up required (orders lock integration)
-- `orders-lock.integration.test.ts` ДМгр хЕ Redis Ф Postgres ФгчзМ огяо.
-- │Мт²щяж: гМД йсй хЕ²уФяй **skip** ЦМ²тФо Ц░я гМД≤Е `ORDER_LOCK_FORCE=1` сй тФо (хЕ оАМА йогнА Postgres АФ≤гА Ф Postgres ог≤я).
-- хягМ глягМ ≤гЦА Ф глхгяМ:
+- `orders-lock.integration.test.ts` О©╫О©╫О©╫О©╫ О©╫О©╫ Redis О©╫ Postgres О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫.
+- О©╫О©╫т²О©╫О©╫О©╫: О©╫О©╫О©╫ О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫ **skip** О©╫О©╫О©╫О©╫О©╫ О©╫О©╫ О©╫О©╫О©╫О©╫ `ORDER_LOCK_FORCE=1` О©╫О©╫ О©╫О©╫О©╫ (О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫ Postgres О©╫О©╫О©╫О©╫ О©╫ Postgres О©╫г≤О©╫).
+- О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫ О©╫О©╫О©╫О©╫О©╫О©╫:
   `ORDER_LOCK_FORCE=1 DATABASE_URL=postgresql://<user>:<pass>@<host>:5432/<db> REDIS_URL=redis://:<pass>@<host>:6379/0 pnpm vitest run -c tests/integration/vitest.config.ts tests/integration/orders-lock.integration.test.ts --test-timeout=180000`
-- г░я щчь ЦМ²нФгЕМо сяМз │Фт оЕМо хоФД гМД йсй: `SKIP_ORDER_LOCK=1 git push` (гЦг ыящ 24 сгзй хгМо хг ORDER_LOCK_FORCE=1 йсй ФгчзМ яг х░пягДМо).
+- г░О©╫ О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫О©╫ О©╫О©╫О©╫: `SKIP_ORDER_LOCK=1 git push` (О©╫О©╫О©╫ О©╫О©╫О©╫ 24 О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ О©╫О©╫ ORDER_LOCK_FORCE=1 О©╫О©╫О©╫ О©╫О©╫О©╫О©╫О©╫ О©╫О©╫ х░О©╫О©╫О©╫О©╫О©╫О©╫).

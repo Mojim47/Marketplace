@@ -399,7 +399,7 @@ export class RateLimitGuard implements CanActivate {
     try {
       // Use Redis sorted set for sliding window
       // Score = timestamp, Member = unique request ID
-      const requestId = `${now}:${Math.random().toString(36).substring(7)}`;
+      const requestId = `${now}:${uuidv4()}`;
 
       // Execute atomic operations
       const pipeline = this.redis.pipeline();
@@ -604,9 +604,8 @@ export class RequestContextMiddleware implements NestMiddleware {
 }
 
 // Export Roles decorator
-export { Roles, ROLES_KEY } from '../../auth/roles.guard';
-
+export { ROLES_KEY, Roles } from '../../auth/roles.guard';
+export { AdminRoleGuard } from './admin-role.guard';
+export { OrderOwnershipGuard } from './order-ownership.guard';
 // Export ownership and role guards
 export { ProductOwnershipGuard } from './product-ownership.guard';
-export { OrderOwnershipGuard } from './order-ownership.guard';
-export { AdminRoleGuard } from './admin-role.guard';

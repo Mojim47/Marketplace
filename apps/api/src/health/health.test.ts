@@ -271,7 +271,7 @@ describe('Health Check', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          alive: true,
+          status: 'ok',
           timestamp: expect.any(String),
         })
       );

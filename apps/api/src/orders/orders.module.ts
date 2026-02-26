@@ -1,14 +1,20 @@
 import { Module } from '@nestjs/common';
-import { DistributedLockService } from '@nextgen/cache';
 import { DatabaseModule } from '../database/database.module';
-import { OrdersCqrsService } from './orders-cqrs.service';
+import { LocalDistributedLockService } from './local-distributed-lock.service';
 import { OrdersController } from './orders.controller';
 import { OrdersService } from './orders.service';
 
 @Module({
   imports: [DatabaseModule],
   controllers: [OrdersController],
-  providers: [OrdersService, OrdersCqrsService, DistributedLockService],
-  exports: [OrdersService, OrdersCqrsService],
+  providers: [
+    OrdersService,
+    LocalDistributedLockService,
+    {
+      provide: 'DISTRIBUTED_LOCK_SERVICE',
+      useExisting: LocalDistributedLockService,
+    },
+  ],
+  exports: [OrdersService],
 })
 export class OrdersModule {}

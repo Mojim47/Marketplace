@@ -1,0 +1,627 @@
+name: production-gate
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: "20.19.5"
+  PNPM_VERSION: "9.15.1"
+  DATABASE_URL: postgresql://test:test@localhost:5432/nextgen_ci
+  REDIS_URL: redis://localhost:6379
+  JWT_SECRET: test-jwt-secret-for-ci-pipeline-minimum-32-chars
+  JWT_REFRESH_SECRET: test-refresh-secret-for-ci-pipeline-32-chars
+  QUEUE_WAIT_KEY: "bull:email:wait"
+  QUEUE_LAG_THRESHOLD: "1000"
+  BOOTSTRAP_TIMEOUT_MS: "45000"
+  ERROR_BUDGET_RATIO: "0.005"
+  LATENCY_P95_SLO_SECONDS: "0.4"
+  METRIC_ROUTE_CARDINALITY_MAX: "50"
+
+jobs:
+  deterministic-production-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: nextgen_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: freeze gate
+        env:
+          FREEZE_OVERRIDE: ${{ github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'freeze-approved') && 'true' || 'false' }}
+        run: bash ops/scripts/enforce-system-freeze.sh origin/main
+
+      - name: install frozen lockfile
+        run: pnpm install --frozen-lockfile
+
+      - name: unit coverage gate baseline
+        run: pnpm run test:unit --coverage
+        env:
+          COVERAGE_SCOPE: launch
+          RELAX_COVERAGE: "true"
+          NODE_ENV: test
+          DATABASE_URL: ${{ env.DATABASE_URL }}
+          REDIS_URL: ${{ env.REDIS_URL }}
+          JWT_SECRET: ${{ env.JWT_SECRET }}
+          JWT_REFRESH_SECRET: ${{ env.JWT_REFRESH_SECRET }}
+
+      - name: persist coverage summary artifact
+        run: |
+          mkdir -p artifacts/release
+          cp coverage/coverage-summary.json artifacts/release/coverage-summary.json
+
+      - name: enforce UTF-8/LF/ASCII text policy
+        shell: bash
+        run: |
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          if [ -z "$BASE_SHA" ]; then
+            BASE_SHA="$(git rev-parse origin/main)"
+          fi
+          CHANGED_FILES="$(git diff --name-only --diff-filter=ACMR "$BASE_SHA"...HEAD | tr '\n' ' ')"
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "No changed files for text governance policy"
+            exit 0
+          fi
+          node scripts/policy/validate-text-governance.mjs --enforce-ascii-scripts $CHANGED_FILES
+
+      - name: prisma validate
+        run: pnpm exec prisma validate --schema prisma/schema.prisma
+
+      - name: pre-migration backup
+        id: db_backup
+        run: |
+          backup_file="$(pnpm run --silent db:migrate:backup)"
+          echo "DB_MIGRATION_BACKUP_FILE=$backup_file" >> "$GITHUB_ENV"
+          echo "backup_file=$backup_file" >> "$GITHUB_OUTPUT"
+
+      - name: prisma safe migrate deploy
+        env:
+          DB_SKIP_RUNTIME_DRIFT_CHECK: ${{ github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'freeze-approved') && 'true' || 'false' }}
+          DB_MIGRATION_BACKUP_FILE: ${{ steps.db_backup.outputs.backup_file }}
+        run: pnpm run db:migrate:deploy:safe
+
+      - name: prisma migrate diff gate
+        if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'freeze-approved') }}
+        run: pnpm exec prisma migrate diff --from-migrations prisma/migrations --to-schema-datamodel prisma/schema.prisma --shadow-database-url postgresql://test:test@localhost:5432/nextgen_ci_shadow --exit-code
+
+      - name: runtime drift gate (db -> schema)
+        if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'freeze-approved') }}
+        run: pnpm run db:drift:runtime
+
+      - name: secrets policy schema gate
+        run: node scripts/release/verify-secrets-policy-schema.mjs
+        env:
+          SECRETS_ROTATION_POLICY_PATH: ops/contracts/secrets-rotation-policy.json
+          SECRETS_ROTATION_POLICY_SCHEMA_PATH: ops/contracts/secrets-rotation-policy.schema.json
+
+      - name: secrets contract sync gate (policy <-> registry)
+        run: node scripts/release/verify-secrets-contract-sync.mjs
+        env:
+          SECRETS_ROTATION_POLICY_PATH: ops/contracts/secrets-rotation-policy.json
+          SECRETS_ROTATION_POLICY_SCHEMA_PATH: ops/contracts/secrets-rotation-policy.schema.json
+          SECRETS_ROTATION_REGISTRY_PATH: ops/contracts/secrets-rotation-registry.json
+          SECRETS_ROTATION_REGISTRY_SCHEMA_PATH: ops/contracts/secrets-rotation-registry.schema.json
+
+      - name: secrets rotation gate (policy validation)
+        run: node scripts/release/verify-secrets-rotation-gate.mjs
+        env:
+          SECRETS_ROTATION_ENFORCE: "true"
+          SECRETS_PROVIDER: "vault"
+          SECRETS_ROTATION_REGISTRY_PATH: ops/contracts/secrets-rotation-registry.json
+          VAULT_ADDR: "http://vault.local"
+          SECRETS_ROTATION_MAX_AGE_DAYS: "90"
+          DATABASE_URL_ROTATED_AT: "2026-02-20T00:00:00Z"
+          DATABASE_URL_SECRET_VERSION: "ci-v1"
+          REDIS_URL_ROTATED_AT: "2026-02-20T00:00:00Z"
+          REDIS_URL_SECRET_VERSION: "ci-v1"
+          JWT_SECRET_ROTATED_AT: "2026-02-20T00:00:00Z"
+          JWT_SECRET_VERSION: "ci-v1"
+
+      - name: generate rollback runbook
+        run: node scripts/release/generate-rollback-runbook.mjs
+        env:
+          ARTIFACT_REF: ${{ github.sha }}
+          ARTIFACT_IMAGE: ghcr.io/${{ github.repository }}:${{ github.sha }}
+          DB_MIGRATION_BACKUP_FILE: ${{ steps.db_backup.outputs.backup_file }}
+
+      - name: db runtime signals gate
+        run: pnpm run db:signals:check
+        env:
+          DATABASE_URL: ${{ env.DATABASE_URL }}
+          DB_MIGRATION_BACKUP_FILE: ${{ steps.db_backup.outputs.backup_file }}
+          DB_SLOW_QUERY_THRESHOLD_MS: "250"
+          DB_MAX_SLOW_QUERIES: "0"
+          DB_MAX_REPLICA_LAG_SECONDS: "5"
+          DB_MAX_BACKUP_AGE_HOURS: "24"
+          DB_REQUIRE_PG_STAT_STATEMENTS: "false"
+          DB_RUNTIME_SIGNALS_REPORT_PATH: artifacts/release/db-runtime-signals-ci.json
+
+      - name: typecheck launch scope
+        run: pnpm turbo run typecheck --filter=@nextgen/api-v3 --filter=@nextgen/web --filter=@nextgen/admin --filter=@nextgen/vendor-portal
+
+      - name: build launch scope
+        run: pnpm turbo run build --filter=@nextgen/api-v3 --filter=@nextgen/web --filter=@nextgen/admin --filter=@nextgen/vendor-portal
+
+      - name: install Playwright browsers (UI release gate)
+        if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'freeze-approved') }}
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: ui release gate (critical Playwright + Lighthouse budget)
+        if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'freeze-approved') }}
+        run: pnpm run release:ui:gate
+        env:
+          UI_WEB_PORT: "3000"
+          UI_ADMIN_PORT: "3003"
+          UI_GATE_COLD_START_RUNS: "2"
+
+      - name: verify AI model contract + checksums
+        run: node scripts/ai/verify-model-contract.mjs
+
+      - name: shadow eval + drift gate
+        run: node scripts/ai/shadow-eval-gate.mjs
+        env:
+          AI_AUTO_ROLLBACK_ON_DRIFT: "true"
+          AI_AUTO_ROLLBACK_SCRIPT_PATH: "scripts/ai/auto-rollback-model.mjs"
+
+      - name: artifact immutable digest
+        run: |
+          mkdir -p artifacts
+          artifact_inputs=()
+          for candidate in dist apps/api/dist apps/web/.next apps/admin/.next apps/vendor-portal/.next; do
+            if [ -e "$candidate" ]; then
+              artifact_inputs+=("$candidate")
+            fi
+          done
+          if [ "${#artifact_inputs[@]}" -eq 0 ]; then
+            echo "artifact immutable digest failed: no build outputs found"
+            exit 1
+          fi
+          tar -czf artifacts/launch-dist-${GITHUB_SHA}.tar.gz "${artifact_inputs[@]}"
+          sha256sum artifacts/launch-dist-${GITHUB_SHA}.tar.gz | tee artifacts/launch-dist-${GITHUB_SHA}.sha256
+          cat > artifacts/manifest.json <<EOF
+          {
+            "commit": "${GITHUB_SHA}",
+            "artifact": "launch-dist-${GITHUB_SHA}.tar.gz",
+            "sha256_file": "launch-dist-${GITHUB_SHA}.sha256"
+          }
+          EOF
+
+      - name: verify artifact manifest digest
+        run: node scripts/ai/verify-artifact-manifest.mjs
+        env:
+          ARTIFACT_MANIFEST_PATH: artifacts/manifest.json
+          ARTIFACT_EXPECT_COMMIT: ${{ github.sha }}
+
+      - name: Verify Supply Chain Gate
+        if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'freeze-approved') }}
+        run: node scripts/release/verify-supply-chain-gate.mjs
+        env:
+          ARTIFACT_REF: ${{ github.sha }}
+          ARTIFACT_BLOB_PATH: artifacts/launch-dist-${{ github.sha }}.tar.gz
+          SBOM_PATH: artifacts/release/sbom.spdx.json
+          CVE_REPORT_PATH: artifacts/release/vuln-report.json
+
+      - name: Verify Runtime Hardening Gate
+        run: node scripts/release/verify-runtime-hardening-gate.mjs
+        env:
+          ARTIFACT_REF: ${{ github.sha }}
+          RUNTIME_SPEC_PATH: k8s/base/api-stack.yml
+
+      - name: launch load/stress gate
+        if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'freeze-approved') }}
+        run: pnpm run release:load:gate
+        env:
+          API_PORT: "4012"
+          LOAD_GATE_TOTAL_REQUESTS: "800"
+          LOAD_GATE_CONCURRENCY: "50"
+          LOAD_GATE_START_LOCAL_API: "true"
+          LOAD_TEST_REPORT_PATH: artifacts/release/load-test-report.json
+          PRODUCTION_HARDENING_CONTRACT_PATH: ops/contracts/production-hardening-contract.json
+          DATABASE_URL: ${{ env.DATABASE_URL }}
+          REDIS_URL: ${{ env.REDIS_URL }}
+          JWT_SECRET: ${{ env.JWT_SECRET }}
+
+      - name: chaos rollback drill gate
+        if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'freeze-approved') }}
+        run: pnpm run release:chaos:drill
+        env:
+          CHAOS_DRILL_REPORT_PATH: artifacts/release/chaos-rollback-drill-report.json
+
+      - name: scaling and pooling readiness gate
+        if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'freeze-approved') }}
+        run: pnpm run release:scaling:check
+        env:
+          K8S_API_STACK_PATH: k8s/base/api-stack.yml
+          K8S_HPA_PATH: k8s/base/hpa-autoscaling.yml
+          HELM_VALUES_PATH: helm/values.yaml
+          SCALING_READINESS_REPORT_PATH: artifacts/release/scaling-readiness-report.json
+
+      - name: Verify DR & SLO Gate
+        if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'freeze-approved') }}
+        run: node scripts/release/verify-dr-slo-gate.mjs
+        env:
+          ARTIFACT_REF: ${{ github.sha }}
+          DR_DRILL_REPORT_PATH: artifacts/release/dr-drill-report.json
+          SLO_REPORT_PATH: artifacts/release/slo-report.json
+          LOAD_TEST_REPORT_PATH: artifacts/release/load-test-report.json
+          CHAOS_DRILL_REPORT_PATH: artifacts/release/chaos-rollback-drill-report.json
+          LOG_FORMAT: json
+          AI_KILL_SWITCH: "false"
+          AR_KILL_SWITCH: "false"
+          CHECKOUT_KILL_SWITCH: "false"
+          PAYMENT_KILL_SWITCH: "false"
+          MTLS_ENFORCED: "true"
+          EGRESS_ALLOWLIST_VERSION: "2026-02-23"
+          TAMPER_EVIDENT_LOG_CHAIN: "enabled"
+          LOG_RETENTION_DAYS: "365"
+          TRACEABILITY_CHAIN_ENABLED: "true"
+
+      - name: bootstrap + observability gate
+        if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'freeze-approved') }}
+        run: node ops/scripts/ci-bootstrap-observability-gate.mjs
+        env:
+          API_PORT: "4010"
+          BOOTSTRAP_LOG_PATH: "api.log"
+
+      - name: db backup + restore validation
+        run: |
+          pg_dump -Fc --no-owner --no-acl -d "${DATABASE_URL}" -f /tmp/nextgen_ci.dump
+          psql postgresql://test:test@localhost:5432/postgres -c 'DROP DATABASE IF EXISTS nextgen_ci_restore;'
+          psql postgresql://test:test@localhost:5432/postgres -c 'CREATE DATABASE nextgen_ci_restore;'
+          pg_restore --clean --if-exists --no-owner --no-acl -d postgresql://test:test@localhost:5432/nextgen_ci_restore /tmp/nextgen_ci.dump
+          psql postgresql://test:test@localhost:5432/nextgen_ci_restore -c 'SELECT COUNT(*) FROM "_prisma_migrations";'
+
+      - name: redis persistence verification
+        if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'freeze-approved') }}
+        run: |
+          before=$(redis-cli -u "${REDIS_URL}" LASTSAVE)
+          redis-cli -u "${REDIS_URL}" SET ci:persistence:probe "${GITHUB_SHA}"
+          redis-cli -u "${REDIS_URL}" BGSAVE
+          sleep 2
+          after=$(redis-cli -u "${REDIS_URL}" LASTSAVE)
+          if [ "$after" -le "$before" ]; then
+            echo "redis persistence check failed: LASTSAVE did not advance"
+            exit 1
+          fi
+
+      - name: deterministic contract e2e
+        if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'freeze-approved') }}
+        run: pnpm vitest run apps/api/test/checkout-contract.spec.ts --coverage.enabled=false --environment=node --pool=forks --poolOptions.forks.singleFork=true
+
+      - name: write contract-test report artifact
+        if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'freeze-approved') }}
+        run: |
+          mkdir -p artifacts/release
+          cat > artifacts/release/contract-test-report.json <<EOF
+          {
+            "status": "passed",
+            "suite": "checkout-contract",
+            "generatedAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "commit": "${GITHUB_SHA}"
+          }
+          EOF
+
+      - name: pre-production quality gate
+        if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'freeze-approved') }}
+        run: node scripts/release/verify-preproduction-quality-gate.mjs
+        env:
+          PREPROD_QUALITY_CONTRACT_PATH: ops/contracts/pre-production-quality-gate.json
+          PREPROD_COVERAGE_PHASE: phase-1
+
+      - name: launch coverage dashboard summary
+        if: always()
+        run: node scripts/release/render-launch-coverage-summary.mjs
+        env:
+          PREPROD_QUALITY_CONTRACT_PATH: ops/contracts/pre-production-quality-gate.json
+          PREPROD_COVERAGE_PHASE: phase-1
+          COVERAGE_SUMMARY_PATH: coverage/coverage-summary.json
+
+      - name: publish launch coverage dashboard comment
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('node:fs');
+            const path = require('node:path');
+
+            const marker = '<!-- launch-coverage-dashboard -->';
+            const trendMarkerPrefix = '<!-- launch-coverage-metrics:';
+            const qualityTrendMarkerPrefix = '<!-- launch-quality-metrics:';
+            const repoRoot = process.cwd();
+            const contractPath = path.join(repoRoot, 'ops/contracts/pre-production-quality-gate.json');
+            const coveragePath = path.join(repoRoot, 'coverage/coverage-summary.json');
+            const loadPath = path.join(repoRoot, 'artifacts/release/load-test-report.json');
+            const chaosPath = path.join(repoRoot, 'artifacts/release/chaos-rollback-drill-report.json');
+
+            if (!fs.existsSync(contractPath) || !fs.existsSync(coveragePath)) {
+              core.warning('coverage dashboard files missing, skipping PR comment');
+              return;
+            }
+
+            const contract = JSON.parse(fs.readFileSync(contractPath, 'utf8'));
+            const summary = JSON.parse(fs.readFileSync(coveragePath, 'utf8'));
+            const phaseName = 'phase-1';
+            const phase = (contract.coverage?.phases || []).find((p) => p?.name === phaseName);
+            const thresholds = phase?.thresholds || {};
+            const total = summary.total || {};
+
+            const currentMetrics = [
+              { key: 'lines', actual: Number(total?.lines?.pct || 0), target: Number(thresholds?.lines || 0) },
+              { key: 'statements', actual: Number(total?.statements?.pct || 0), target: Number(thresholds?.statements || 0) },
+              { key: 'functions', actual: Number(total?.functions?.pct || 0), target: Number(thresholds?.functions || 0) },
+              { key: 'branches', actual: Number(total?.branches?.pct || 0), target: Number(thresholds?.branches || 0) },
+            ];
+
+            const icon = (a, t) => (a >= t ? '✅' : '❌');
+            const trend = (delta) => {
+              if (delta > 0.005) return `⬆️ +${delta.toFixed(2)}%`;
+              if (delta < -0.005) return `⬇️ ${delta.toFixed(2)}%`;
+              return '➖ 0.00%';
+            };
+            const issue_number = context.issue.number;
+            const { owner, repo } = context.repo;
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner,
+              repo,
+              issue_number,
+              per_page: 100,
+            });
+            const existing = comments.find((c) => c.user?.type === 'Bot' && c.body?.includes(marker));
+
+            let previous = {};
+            if (existing?.body) {
+              const qualityTrendLine = existing.body
+                .split('\n')
+                .find((line) => line.startsWith(qualityTrendMarkerPrefix));
+              if (qualityTrendLine) {
+                try {
+                  const raw = qualityTrendLine
+                    .replace(qualityTrendMarkerPrefix, '')
+                    .replace('-->', '')
+                    .trim();
+                  previous = JSON.parse(raw);
+                } catch {
+                  previous = {};
+                }
+              }
+              const trendLine = existing.body
+                .split('\n')
+                .find((line) => line.startsWith(trendMarkerPrefix));
+              if (trendLine && Object.keys(previous).length === 0) {
+                try {
+                  const raw = trendLine
+                    .replace(trendMarkerPrefix, '')
+                    .replace('-->', '')
+                    .trim();
+                  previous = JSON.parse(raw);
+                } catch {
+                  previous = {};
+                }
+              }
+            }
+
+            const coverageMetrics = currentMetrics.map((m) => {
+              const prev = Number(previous?.coverage?.[m.key] ?? previous?.[m.key]);
+              const hasPrev = Number.isFinite(prev);
+              const delta = hasPrev ? m.actual - prev : 0;
+              return {
+                ...m,
+                delta,
+                deltaLabel: hasPrev ? trend(delta) : '🆕 baseline',
+              };
+            });
+            const coverageSnapshot = Object.fromEntries(
+              coverageMetrics.map((m) => [m.key, Number(m.actual.toFixed(2))])
+            );
+            const coverageRegressions = coverageMetrics
+              .filter((m) => Number.isFinite(m.delta) && m.delta < -0.005)
+              .map((m) => `${m.key} ${m.delta.toFixed(2)}%`);
+            const warningLines = coverageRegressions.length
+              ? [
+                  '⚠️ Coverage regression detected vs previous PR run.',
+                  `- Regressed metrics: ${coverageRegressions.join(', ')}`,
+                  '',
+                ]
+              : [];
+
+            let loadReport = null;
+            let chaosReport = null;
+            if (fs.existsSync(loadPath)) {
+              try {
+                loadReport = JSON.parse(fs.readFileSync(loadPath, 'utf8'));
+              } catch {}
+            }
+            if (fs.existsSync(chaosPath)) {
+              try {
+                chaosReport = JSON.parse(fs.readFileSync(chaosPath, 'utf8'));
+              } catch {}
+            }
+
+            const resilienceCurrent = {
+              throughputRps: Number(loadReport?.throughputRps || 0),
+              errorRatePct: Number((Number(loadReport?.errorRate || 0) * 100).toFixed(2)),
+              latencyP95Ms: Number(loadReport?.latencyP95Ms || 0),
+              chaosScenarios: Array.isArray(chaosReport?.checks) ? chaosReport.checks.length : 0,
+            };
+            const resiliencePrev = previous?.resilience || {};
+            const calcDelta = (key) => {
+              const prev = Number(resiliencePrev?.[key]);
+              if (!Number.isFinite(prev)) return null;
+              return Number((resilienceCurrent[key] - prev).toFixed(2));
+            };
+            const resilience = [
+              { key: 'throughputRps', better: 'up', unit: 'rps' },
+              { key: 'errorRatePct', better: 'down', unit: '%' },
+              { key: 'latencyP95Ms', better: 'down', unit: 'ms' },
+              { key: 'chaosScenarios', better: 'up', unit: '' },
+            ].map((meta) => {
+              const delta = calcDelta(meta.key);
+              const label =
+                delta === null
+                  ? '🆕 baseline'
+                  : delta > 0.005
+                    ? `⬆️ +${delta.toFixed(2)}${meta.unit}`
+                    : delta < -0.005
+                      ? `⬇️ ${delta.toFixed(2)}${meta.unit}`
+                      : '➖ 0.00';
+              return {
+                ...meta,
+                actual: resilienceCurrent[meta.key],
+                delta,
+                deltaLabel: label,
+              };
+            });
+
+            const resilienceRegressions = resilience
+              .filter((m) => m.delta !== null)
+              .filter((m) => (m.better === 'up' ? m.delta < -0.005 : m.delta > 0.005))
+              .map((m) => `${m.key} ${m.delta > 0 ? '+' : ''}${m.delta.toFixed(2)}${m.unit}`);
+            const resilienceWarning = resilienceRegressions.length
+              ? [
+                  '⚠️ Load/Chaos regression detected vs previous PR run.',
+                  `- Regressed metrics: ${resilienceRegressions.join(', ')}`,
+                  '',
+                ]
+              : [];
+
+            const metricsSnapshot = {
+              coverage: coverageSnapshot,
+              resilience: {
+                throughputRps: Number(resilienceCurrent.throughputRps.toFixed(2)),
+                errorRatePct: Number(resilienceCurrent.errorRatePct.toFixed(2)),
+                latencyP95Ms: Number(resilienceCurrent.latencyP95Ms.toFixed(2)),
+                chaosScenarios: resilienceCurrent.chaosScenarios,
+              },
+            };
+
+            const body = [
+              marker,
+              `${qualityTrendMarkerPrefix} ${JSON.stringify(metricsSnapshot)} -->`,
+              `${trendMarkerPrefix} ${JSON.stringify(coverageSnapshot)} -->`,
+              '## Launch Coverage Dashboard',
+              '',
+              `- Profile: \`${contract.coverage?.profile || 'launch'}\``,
+              `- Phase: \`${phaseName}\``,
+              `- Commit: \`${context.sha.slice(0, 12)}\``,
+              '',
+              ...warningLines,
+              ...resilienceWarning,
+              '| Metric | Actual | Target | Trend vs previous | Status |',
+              '|---|---:|---:|---:|---:|',
+              ...coverageMetrics.map((m) => `| ${m.key} | ${m.actual.toFixed(2)}% | ${m.target.toFixed(2)}% | ${m.deltaLabel} | ${icon(m.actual, m.target)} |`),
+              '',
+              '## Load/Chaos Trend',
+              '',
+              '| Metric | Actual | Trend vs previous |',
+              '|---|---:|---:|',
+              `| throughputRps | ${resilienceCurrent.throughputRps.toFixed(2)} rps | ${resilience.find((m) => m.key === 'throughputRps')?.deltaLabel || 'n/a'} |`,
+              `| errorRatePct | ${resilienceCurrent.errorRatePct.toFixed(2)}% | ${resilience.find((m) => m.key === 'errorRatePct')?.deltaLabel || 'n/a'} |`,
+              `| latencyP95Ms | ${resilienceCurrent.latencyP95Ms.toFixed(2)} ms | ${resilience.find((m) => m.key === 'latencyP95Ms')?.deltaLabel || 'n/a'} |`,
+              `| chaosScenarios | ${resilienceCurrent.chaosScenarios} | ${resilience.find((m) => m.key === 'chaosScenarios')?.deltaLabel || 'n/a'} |`,
+              '',
+            ].join('\n');
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number,
+                body,
+              });
+            }
+
+      - name: pm2 launch smoke
+        run: |
+          npm i -g pm2
+          API_PORT=4011 pm2 start "pnpm --filter @nextgen/api-v3 start" --name nextgen-api-gate --time
+          for i in $(seq 1 30); do
+            if curl -fsS "http://127.0.0.1:4011/health/live" >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          curl -fsS "http://127.0.0.1:4011/health/live" >/dev/null
+          curl -fsS "http://127.0.0.1:4011/health/ready" >/dev/null
+          pm2 logs nextgen-api-gate --lines 100 --nostream || true
+          pm2 delete nextgen-api-gate
+
+      - name: prepare optional upload placeholders
+        if: always()
+        run: |
+          mkdir -p artifacts
+          mkdir -p artifacts/release
+          [ -f api.log ] || touch api.log
+
+      - name: upload immutable artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: launch-artifacts-${{ github.sha }}
+          path: artifacts/
+          if-no-files-found: ignore
+
+      - name: upload api logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-gate-logs
+          path: api.log
+          if-no-files-found: ignore
+
+      - name: notify gate failure (Slack/Teams)
+        if: failure()
+        continue-on-error: true
+        run: node scripts/release/notify-gate-failure.mjs
+        env:
+          GATE_NAME: ci-production-gate
+          DEPLOY_ENV: ci
+          SLACK_WEBHOOK_URL: ${{ secrets.NG_ALERTS_SLACK_WEBHOOK || '' }}
+          TEAMS_WEBHOOK_URL: ${{ secrets.NG_ALERTS_TEAMS_WEBHOOK || '' }}

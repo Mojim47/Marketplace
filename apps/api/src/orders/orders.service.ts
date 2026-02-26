@@ -1,4 +1,4 @@
-﻿import { createHash } from 'node:crypto';
+import { createHash } from 'node:crypto';
 import {
   BadRequestException,
   ConflictException,
@@ -6,13 +6,15 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  Optional,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import type { DistributedLockService } from '@nextgen/cache';
 import type { Prisma } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
-import type { PrismaService } from '../database/prisma.service';
-import type { MetricsService } from '../monitoring/metrics.service';
+import { PrismaService } from '../database/prisma.service';
+import { MetricsService } from '../monitoring/metrics.service';
+import { OutboxService } from '../outbox/outbox.service';
+import type { LocalDistributedLockService } from './local-distributed-lock.service';
 
 interface IStateService {
   setState<T>(key: string, value: T, options?: { ttlSeconds?: number }): Promise<boolean>;
@@ -83,9 +85,11 @@ export class OrdersService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly lockService: DistributedLockService,
+    @Inject('DISTRIBUTED_LOCK_SERVICE')
+    private readonly lockService: LocalDistributedLockService,
     private readonly metrics: MetricsService,
-    @Inject('STATE_SERVICE') private readonly stateService: IStateService
+    @Inject('STATE_SERVICE') private readonly stateService: IStateService,
+    @Optional() private readonly outboxService?: OutboxService
   ) {}
 
   async create(userId: string, data: CreateOrderInput, idempotencyKey?: string) {
@@ -180,46 +184,32 @@ export class OrdersService {
 
             const order = await tx.order.create({
               data: {
-                userId,
-                vendorId: data.vendorId,
-                orderNumber: `ORD-${Date.now()}`,
-                subtotal: new Decimal(subtotal),
-                taxAmount: new Decimal(taxAmount),
-                shippingCost: new Decimal(data.shippingCost || 0),
-                totalAmount: new Decimal(totalAmount),
+                user_id: userId,
+                order_number: `ORD-${Date.now()}`,
                 status: 'PENDING',
-                paymentStatus: 'PENDING',
-                customerEmail: data.customerEmail,
-                customerPhone: data.customerPhone,
-                shippingAddress: data.shippingAddress,
+                total_amount: new Decimal(totalAmount),
                 items: {
                   create: data.items.map((item) => ({
-                    productId: item.productId,
-                    variantId: item.variantId,
-                    productName: item.productName,
-                    productSku: item.productSku,
+                    product_id: item.productId,
                     quantity: item.quantity,
-                    price: new Decimal(item.price),
-                    total: new Decimal(item.price * item.quantity),
+                    unit_price: new Decimal(item.price),
+                    total_price: new Decimal(item.price * item.quantity),
                   })),
                 },
               },
               select: {
                 id: true,
-                orderNumber: true,
+                order_number: true,
                 status: true,
-                paymentStatus: true,
-                totalAmount: true,
-                createdAt: true,
+                total_amount: true,
+                created_at: true,
                 items: {
                   select: {
                     id: true,
-                    productId: true,
-                    productName: true,
-                    productSku: true,
+                    product_id: true,
                     quantity: true,
-                    price: true,
-                    total: true,
+                    unit_price: true,
+                    total_price: true,
                   },
                 },
               },
@@ -231,8 +221,40 @@ export class OrdersService {
             });
             this.metrics.orderValue.observe(
               { vendor_id: data.vendorId ?? 'unknown' },
-              Number(totalAmount)
+              Number(order.total_amount)
             );
+
+            const normalizedOrder = {
+              id: order.id,
+              orderNumber: order.order_number,
+              status: order.status,
+              totalAmount: Number(order.total_amount),
+              createdAt: order.created_at,
+              items: order.items.map((item) => ({
+                id: item.id,
+                productId: item.product_id,
+                quantity: item.quantity,
+                unitPrice: Number(item.unit_price),
+                totalPrice: Number(item.total_price),
+              })),
+            };
+
+            await this.outboxService?.enqueueInTransaction(tx, {
+              aggregateType: 'order',
+              aggregateId: order.id,
+              eventType: 'order.created',
+              dedupKey: `orders-create:${userId}:${normalizedIdempotencyKey ?? order.id}`,
+              payload: {
+                orderId: order.id,
+                orderNumber: order.order_number,
+                userId,
+                vendorId: data.vendorId ?? null,
+                itemCount: data.items.length,
+                totalAmount: Number(totalAmount),
+                idempotencyKey: normalizedIdempotencyKey ?? null,
+                source: 'orders.create',
+              },
+            });
 
             if (idempotencyRecordKey && requestHash) {
               try {
@@ -242,7 +264,7 @@ export class OrdersService {
                   idempotencyRecordKey,
                   {
                     requestHash,
-                    response: order,
+                    response: normalizedOrder,
                     createdAt: now.toISOString(),
                     expiresAt: expiresAt.toISOString(),
                   },
@@ -256,7 +278,7 @@ export class OrdersService {
               }
             }
 
-            return order;
+            return normalizedOrder;
           });
         },
         lockSettings
@@ -299,67 +321,109 @@ export class OrdersService {
     const limit = Math.min(Math.max(Number(filters?.limit ?? 20), 1), 100);
     const offset = Math.max(Number(filters?.offset ?? 0), 0);
     const where: Prisma.OrderWhereInput = {
-      userId,
+      user_id: userId,
       ...(filters?.status ? { status: filters.status as Prisma.OrderWhereInput['status'] } : {}),
     };
 
-    return this.prisma.order.findMany({
+    const orders = await this.prisma.order.findMany({
       where,
       take: limit,
       skip: offset,
       select: {
         id: true,
-        orderNumber: true,
+        order_number: true,
         status: true,
-        paymentStatus: true,
-        totalAmount: true,
-        createdAt: true,
+        total_amount: true,
+        created_at: true,
         items: {
           select: {
             id: true,
-            productId: true,
-            productName: true,
-            productSku: true,
+            product_id: true,
             quantity: true,
-            total: true,
-            product: { select: { name: true, images: true } },
+            total_price: true,
+            unit_price: true,
+            product: { select: { name: true } },
           },
         },
-        vendor: { select: { businessName: true } },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { created_at: 'desc' },
     });
+
+    return orders.map((order) => ({
+      id: order.id,
+      orderNumber: order.order_number,
+      status: order.status,
+      totalAmount: Number(order.total_amount),
+      createdAt: order.created_at,
+      items: order.items.map((item) => ({
+        id: item.id,
+        productId: item.product_id,
+        productName: item.product.name,
+        quantity: item.quantity,
+        unitPrice: Number(item.unit_price),
+        totalPrice: Number(item.total_price),
+      })),
+    }));
   }
 
   async findOne(id: string, userId: string) {
     const order = await this.prisma.order.findFirst({
-      where: { id, userId },
+      where: { id, user_id: userId },
       select: {
         id: true,
-        orderNumber: true,
+        order_number: true,
         status: true,
-        paymentStatus: true,
-        totalAmount: true,
-        createdAt: true,
+        total_amount: true,
+        created_at: true,
         items: {
           select: {
             id: true,
-            productId: true,
-            productName: true,
-            productSku: true,
+            product_id: true,
             quantity: true,
-            total: true,
+            unit_price: true,
+            total_price: true,
+            product: { select: { name: true } },
           },
         },
-        vendor: { select: { businessName: true } },
-        invoice: true,
+        payment: {
+          select: {
+            id: true,
+            status: true,
+            gateway: true,
+            transaction_id: true,
+            amount: true,
+          },
+        },
       },
     });
 
     if (!order) {
       throw new NotFoundException('سفارش يافت نشد');
     }
-    return order;
+    return {
+      id: order.id,
+      orderNumber: order.order_number,
+      status: order.status,
+      totalAmount: Number(order.total_amount),
+      createdAt: order.created_at,
+      items: order.items.map((item) => ({
+        id: item.id,
+        productId: item.product_id,
+        productName: item.product.name,
+        quantity: item.quantity,
+        unitPrice: Number(item.unit_price),
+        totalPrice: Number(item.total_price),
+      })),
+      payment: order.payment
+        ? {
+            id: order.payment.id,
+            status: order.payment.status,
+            gateway: order.payment.gateway,
+            transactionId: order.payment.transaction_id,
+            amount: Number(order.payment.amount),
+          }
+        : null,
+    };
   }
 
   async updateStatus(id: string, status: any) {

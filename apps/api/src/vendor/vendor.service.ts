@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
@@ -22,6 +23,29 @@ export interface VendorWithProducts {
     stock: number;
     category: any;
   }>;
+}
+
+export interface VendorStoryRecord {
+  id: string;
+  vendor_id: string;
+  title: string;
+  media_url: string;
+  caption?: string | null;
+  cta_label?: string | null;
+  cta_url?: string | null;
+  is_active: boolean;
+  expires_at: Date;
+  created_at: Date;
+  updated_at: Date;
+}
+
+export interface CreateVendorStoryDto {
+  title: string;
+  mediaUrl: string;
+  caption?: string;
+  ctaLabel?: string;
+  ctaUrl?: string;
+  expiresAt?: string;
 }
 
 @Injectable()
@@ -312,5 +336,112 @@ export class VendorService {
 
     this.logger.log(`Fetched vendor by slug: ${slug}`);
     return vendor;
+  }
+
+  async getStoryCapability(
+    vendorId: string
+  ): Promise<{ vendorId: string; storiesEnabled: boolean; storyRolloutPercent: number }> {
+    const vendor = await this.prisma.vendor.findUnique({
+      where: { id: vendorId },
+      select: { id: true, stories_enabled: true, story_rollout_percent: true },
+    });
+
+    if (!vendor) {
+      throw new NotFoundException(`Vendor with ID ${vendorId} not found`);
+    }
+
+    return {
+      vendorId: vendor.id,
+      storiesEnabled: vendor.stories_enabled,
+      storyRolloutPercent: vendor.story_rollout_percent,
+    };
+  }
+
+  async setStoryCapability(
+    vendorId: string,
+    storiesEnabled: boolean,
+    storyRolloutPercent?: number
+  ): Promise<{ vendorId: string; storiesEnabled: boolean; storyRolloutPercent: number }> {
+    const safeRollout =
+      typeof storyRolloutPercent === 'number'
+        ? Math.max(0, Math.min(100, Math.round(storyRolloutPercent)))
+        : undefined;
+
+    const vendor = await this.prisma.vendor.update({
+      where: { id: vendorId },
+      data: {
+        stories_enabled: storiesEnabled,
+        ...(safeRollout === undefined ? {} : { story_rollout_percent: safeRollout }),
+      },
+      select: { id: true, stories_enabled: true, story_rollout_percent: true },
+    });
+
+    return {
+      vendorId: vendor.id,
+      storiesEnabled: vendor.stories_enabled,
+      storyRolloutPercent: vendor.story_rollout_percent,
+    };
+  }
+
+  async listStories(vendorId: string, includeExpired = false): Promise<VendorStoryRecord[]> {
+    const now = new Date();
+    return this.prisma.vendorStory.findMany({
+      where: {
+        vendor_id: vendorId,
+        is_active: true,
+        ...(includeExpired ? {} : { expires_at: { gt: now } }),
+      },
+      orderBy: [{ created_at: 'desc' }],
+    });
+  }
+
+  async createStory(vendorId: string, dto: CreateVendorStoryDto): Promise<VendorStoryRecord> {
+    const vendor = await this.prisma.vendor.findUnique({
+      where: { id: vendorId },
+      select: { id: true, stories_enabled: true },
+    });
+
+    if (!vendor) {
+      throw new NotFoundException(`Vendor with ID ${vendorId} not found`);
+    }
+
+    if (!vendor.stories_enabled) {
+      throw new ForbiddenException('Stories are disabled for this vendor by admin policy');
+    }
+
+    const expiresAt = dto.expiresAt
+      ? new Date(dto.expiresAt)
+      : new Date(Date.now() + 24 * 60 * 60 * 1000);
+    if (Number.isNaN(expiresAt.getTime())) {
+      throw new BadRequestException('expiresAt must be a valid ISO date string');
+    }
+
+    return this.prisma.vendorStory.create({
+      data: {
+        vendor_id: vendorId,
+        title: dto.title.trim(),
+        media_url: dto.mediaUrl.trim(),
+        caption: dto.caption?.trim() || null,
+        cta_label: dto.ctaLabel?.trim() || null,
+        cta_url: dto.ctaUrl?.trim() || null,
+        expires_at: expiresAt,
+      },
+    });
+  }
+
+  async deleteStory(vendorId: string, storyId: string): Promise<void> {
+    const story = await this.prisma.vendorStory.findFirst({
+      where: { id: storyId, vendor_id: vendorId },
+      select: { id: true },
+    });
+
+    if (!story) {
+      throw new NotFoundException(`Story with ID ${storyId} not found for vendor ${vendorId}`);
+    }
+
+    await this.prisma.vendorStory.update({
+      where: { id: storyId },
+      data: { is_active: false },
+    });
   }
 }

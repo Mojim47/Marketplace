@@ -4,6 +4,7 @@
  * ???????????????????????????????????????????????????????????????????????????
  */
 
+import { randomBytes } from 'crypto';
 import { BadRequestException, ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { type DealerTier, ExecutorSkill, PrismaClient, UserRole } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
@@ -13,6 +14,9 @@ const prisma = new PrismaClient();
 @Injectable()
 export class HierarchyService {
   private readonly logger = new Logger('HierarchyService');
+  private generateTempPassword(length = 12): string {
+    return randomBytes(length).toString('base64url').slice(0, length);
+  }
 
   /**
    * ���� �����ϐ�� ��������� �������
@@ -111,7 +115,7 @@ export class HierarchyService {
       agentUser = existingUser;
     } else {
       // ����� ����� ����
-      const tempPassword = Math.random().toString(36).slice(-8);
+      const tempPassword = this.generateTempPassword();
       const hashedPassword = await bcrypt.hash(tempPassword, 10);
 
       agentUser = await prisma.user.create({
@@ -267,7 +271,7 @@ export class HierarchyService {
     }
 
     // ����� ����� ����
-    const tempPassword = Math.random().toString(36).slice(-8);
+    const tempPassword = this.generateTempPassword();
     const hashedPassword = await bcrypt.hash(tempPassword, 10);
 
     const executor = await prisma.user.create({

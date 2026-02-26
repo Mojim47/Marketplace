@@ -7,7 +7,7 @@
   "types": "src/index.ts",
   "scripts": {
     "build": "tsc -p .",
-    "test": "vitest run"
+    "test": "node ../../node_modules/vitest/vitest.mjs run --config ../../vitest.package.config.ts"
   },
   "dependencies": {
     "crypto-js": "^4.2.0"

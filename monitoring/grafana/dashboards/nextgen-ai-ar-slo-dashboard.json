@@ -1,0 +1,152 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "nextgen-ai-ar-slo",
+    "title": "NextGen AI/AR SLO Dashboard",
+    "tags": ["nextgen", "ai", "ar", "slo", "red"],
+    "timezone": "browser",
+    "refresh": "10s",
+    "schemaVersion": 39,
+    "version": 1,
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "AI Inference Throughput (RED-Rate)",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "sum(rate(ai_inference_total[5m]))",
+            "legendFormat": "ai req/s"
+          }
+        ],
+        "gridPos": { "h": 8, "w": 8, "x": 0, "y": 0 }
+      },
+      {
+        "id": 2,
+        "title": "AI Inference p95 Latency (SLA 50ms)",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum by (le) (rate(ai_inference_latency_seconds_bucket[5m])))",
+            "legendFormat": "p95"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "color": "green", "value": null },
+                { "color": "orange", "value": 0.05 },
+                { "color": "red", "value": 0.08 }
+              ]
+            }
+          }
+        },
+        "gridPos": { "h": 8, "w": 8, "x": 8, "y": 0 }
+      },
+      {
+        "id": 3,
+        "title": "AI Drift Score p95",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum by (le) (rate(ai_drift_score_bucket[5m])))",
+            "legendFormat": "drift p95"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "color": "green", "value": null },
+                { "color": "orange", "value": 0.35 },
+                { "color": "red", "value": 0.45 }
+              ]
+            }
+          }
+        },
+        "gridPos": { "h": 8, "w": 8, "x": 16, "y": 0 }
+      },
+      {
+        "id": 4,
+        "title": "AI Shadow Eval Outcome",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "sum(rate(ai_shadow_eval_total{outcome=\"healthy\"}[5m]))",
+            "legendFormat": "healthy"
+          },
+          {
+            "expr": "sum(rate(ai_shadow_eval_total{outcome=\"drift\"}[5m]))",
+            "legendFormat": "drift"
+          }
+        ],
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 }
+      },
+      {
+        "id": 5,
+        "title": "AI Auto Rollback Events",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "increase(ai_auto_rollback_total[24h])",
+            "legendFormat": "rollbacks/24h"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }]
+            }
+          }
+        },
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 }
+      },
+      {
+        "id": 6,
+        "title": "AR Overlay p95 Latency (SLA 50ms)",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum by (le) (rate(ar_overlay_latency_seconds_bucket[5m])))",
+            "legendFormat": "ar p95"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "color": "green", "value": null },
+                { "color": "orange", "value": 0.05 },
+                { "color": "red", "value": 0.08 }
+              ]
+            }
+          }
+        },
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 }
+      },
+      {
+        "id": 7,
+        "title": "AR Guard Events",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "sum by (reason) (increase(ar_overlay_guard_events_total[15m]))",
+            "legendFormat": "{{reason}}"
+          }
+        ],
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 }
+      }
+    ]
+  }
+}

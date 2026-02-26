@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ExecutionError, ResourceLockedError } from 'redlock';
@@ -107,7 +108,10 @@ const createPrismaFake = (stock: number) => {
       updateMany: async ({
         where,
         data,
-      }: { where: { stock: { gte: number } }; data: { stock: { decrement: number } } }) => {
+      }: {
+        where: { stock: { gte: number } };
+        data: { stock: { decrement: number } };
+      }) => {
         if (state.stock >= where.stock.gte) {
           state.stock -= data.stock.decrement;
           return { count: 1 };
@@ -120,11 +124,11 @@ const createPrismaFake = (stock: number) => {
         state.orders += 1;
         return {
           id: `order-${state.orders}`,
-          orderNumber: `ORD-${state.orders}`,
+          order_number: `ORD-${state.orders}`,
           status: 'PENDING',
           paymentStatus: 'PENDING',
-          totalAmount: 1000,
-          createdAt: new Date(),
+          total_amount: 1000,
+          created_at: new Date(),
           items: [],
         };
       },
@@ -292,5 +296,21 @@ describe('OrdersService - Locking & Concurrency', () => {
     } else {
       process.env.ORDER_CREATE_SLA_MS = prev;
     }
+  });
+
+  it('throws NotFound when order is not found for user', async () => {
+    const prisma = {
+      order: {
+        findFirst: async () => null,
+      },
+    } as any;
+    const service = new OrdersService(
+      prisma,
+      new SerialLockService() as any,
+      new MetricsService(),
+      new InMemoryStateService() as any
+    );
+
+    await expect(service.findOne('missing', 'user-1')).rejects.toBeInstanceOf(NotFoundException);
   });
 });

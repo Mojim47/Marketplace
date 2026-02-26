@@ -331,9 +331,11 @@ export class ProductsCqrsService implements OnModuleInit {
    * Find all products with filters - Read from MeiliSearch
    * Property 11: Read Operation Routing
    */
-  async findAll(filters?: { status?: string; categoryId?: string; search?: string }): Promise<
-    Product[]
-  > {
+  async findAll(filters?: {
+    status?: string;
+    categoryId?: string;
+    search?: string;
+  }): Promise<Product[]> {
     const result = await this.search({
       query: filters?.search || '',
       filters: {

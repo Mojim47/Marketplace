@@ -1,6 +1,6 @@
 import Link from 'next/link';
 
-export default function NotFound(): JSX.Element {
+export default function NotFound() {
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
       <div className="max-w-md w-full space-y-4 text-center">
@@ -9,7 +9,7 @@ export default function NotFound(): JSX.Element {
         <p className="text-gray-600">The page you are looking for does not exist.</p>
         <Link
           href="/"
-          className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="inline-block px-6 py-3 bg-blue-600 text-slate-900 rounded-lg hover:bg-blue-700 transition-colors"
         >
           Go back home
         </Link>

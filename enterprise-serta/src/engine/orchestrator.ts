@@ -2,6 +2,18 @@
 // Enterprise-SERTA Orchestrator - Main Analysis Engine
 // ═══════════════════════════════════════════════════════════════════════════
 
+import * as crypto from 'node:crypto';
+import * as fs from 'node:fs/promises';
+import * as path from 'node:path';
+import chalk from 'chalk';
+import ora from 'ora';
+import { SecurityRedTeamAgent } from '../agents/security-redteam';
+import { ASTParser } from '../collector/ast-parser';
+import { DependencyGraphBuilder } from '../collector/dependency-graph';
+import { FileScanner } from '../collector/file-scanner';
+import { SemanticEmbedder } from '../embeddings/semantic-embedder';
+import { VectorStore } from '../embeddings/store';
+import { ThreatGraphBuilder } from '../threat-graph/graph-builder';
 import {
   type Agent,
   AgentType,
@@ -15,20 +27,6 @@ import {
   type SertaConfig,
   type ThreatGraph,
 } from '../types';
-
-import { SecurityRedTeamAgent } from '../agents/security-redteam';
-import { ASTParser } from '../collector/ast-parser';
-import { DependencyGraphBuilder } from '../collector/dependency-graph';
-import { FileScanner } from '../collector/file-scanner';
-import { SemanticEmbedder } from '../embeddings/semantic-embedder';
-import { VectorStore } from '../embeddings/store';
-import { ThreatGraphBuilder } from '../threat-graph/graph-builder';
-
-import * as crypto from 'node:crypto';
-import * as fs from 'node:fs/promises';
-import * as path from 'node:path';
-import chalk from 'chalk';
-import ora from 'ora';
 
 export class SertaOrchestrator {
   private config: SertaConfig;

@@ -6,22 +6,14 @@ const RETRY_DELAY_MS = 500;
 const SLOW_QUERY_MS = 100;
 
 @Injectable()
-export class PrismaService
-  // Using any to bypass Prisma options typing during fast surgical builds
-  extends PrismaClient<any, 'query' | 'warn' | 'error'>
-  implements OnModuleInit, OnModuleDestroy
-{
+export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PrismaService.name);
   private degraded = false;
   private cache = new Map<string, any[]>();
 
   constructor() {
     super({
-      log: [
-        { emit: 'event', level: 'query' },
-        { emit: 'event', level: 'warn' },
-        { emit: 'event', level: 'error' },
-      ],
+      log: ['query', 'warn', 'error'],
     });
   }
 

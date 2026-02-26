@@ -4,8 +4,15 @@ import { PrismaClient } from '@prisma/client';
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PrismaService.name);
+  private readonly slowQueryThresholdMs = Number(process.env.PRISMA_SLOW_QUERY_MS ?? 300);
 
   constructor() {
+    const requestedEngine = process.env.PRISMA_CLIENT_ENGINE_TYPE?.toLowerCase();
+    const isValidRequestedEngine = requestedEngine === 'library' || requestedEngine === 'binary';
+    if (requestedEngine && !isValidRequestedEngine) {
+      process.env.PRISMA_CLIENT_ENGINE_TYPE = 'binary';
+    }
+
     super({
       log:
         process.env.NODE_ENV === 'development'
@@ -13,6 +20,31 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
           : ['warn', 'error'],
       errorFormat: 'pretty',
     });
+
+    this.$use(async (params, next) => {
+      const startedAt = Date.now();
+      const result = await next(params);
+      const durationMs = Date.now() - startedAt;
+      if (durationMs >= this.slowQueryThresholdMs) {
+        this.logger.warn(
+          JSON.stringify({
+            type: 'slow_query_detected',
+            durationMs,
+            thresholdMs: this.slowQueryThresholdMs,
+            model: params.model ?? 'unknown',
+            action: params.action,
+            timestamp: new Date().toISOString(),
+          })
+        );
+      }
+      return result;
+    });
+
+    if (requestedEngine && !isValidRequestedEngine) {
+      this.logger.warn(
+        `Overriding invalid PRISMA_CLIENT_ENGINE_TYPE=${requestedEngine} to binary for deterministic runtime startup.`
+      );
+    }
   }
 
   async onModuleInit() {

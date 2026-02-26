@@ -1,0 +1,146 @@
+{
+  "version": "2026-02-23",
+  "name": "production-hardening-contract",
+  "failClosedDefault": true,
+  "gates": {
+    "supplyChainSecurity": {
+      "enabled": true,
+      "failClosed": true,
+      "policy": {
+        "cosignRequired": true,
+        "sbomRequired": true,
+        "cveReportRequired": true
+      },
+      "thresholds": {
+        "maxCritical": 0,
+        "maxHigh": 0
+      }
+    },
+    "runtimeContainerHardening": {
+      "enabled": true,
+      "failClosed": true,
+      "policy": {
+        "nonRootRequired": true,
+        "readOnlyRootFsRequired": true,
+        "dropAllCapabilitiesRequired": true,
+        "seccompRequired": true,
+        "latestTagForbidden": true
+      }
+    },
+    "networkZeroTrust": {
+      "enabled": true,
+      "failClosed": true,
+      "policy": {
+        "defaultDenyRequired": true,
+        "mtlsRequired": true,
+        "egressAllowlistRequired": true
+      }
+    },
+    "secretsGovernance": {
+      "enabled": true,
+      "failClosed": true,
+      "policy": {
+        "secretRotationRequired": true,
+        "secretTtlDaysMax": 90,
+        "repoSecretLeakForbidden": true
+      }
+    },
+    "dbSafety": {
+      "enabled": true,
+      "failClosed": true,
+      "policy": {
+        "backupRestoreDrillRequired": true,
+        "migrationStatusCleanRequired": true,
+        "forwardCompatibleMigrationRequired": true
+      }
+    },
+    "disasterRecovery": {
+      "enabled": true,
+      "failClosed": true,
+      "policy": {
+        "drillReportRequired": true,
+        "lastDrillMaxAgeDays": 30,
+        "restoreTestMustPass": true
+      },
+      "thresholds": {
+        "rpoMinutesMax": 15,
+        "rtoMinutesMax": 60
+      }
+    },
+    "sloErrorBudget": {
+      "enabled": true,
+      "failClosed": true,
+      "policy": {
+        "sloReportRequired": true,
+        "autoNoGoOnBurnRate": true
+      },
+      "thresholds": {
+        "burnRate1hMax": 1.0,
+        "burnRate6hMax": 1.0,
+        "latencyP95MsMax": 500,
+        "availabilityMin": 0.999
+      }
+    },
+    "featureKillSwitch": {
+      "enabled": true,
+      "failClosed": true,
+      "policy": {
+        "aiKillSwitchRequired": true,
+        "arKillSwitchRequired": true,
+        "checkoutKillSwitchRequired": true,
+        "paymentKillSwitchRequired": true
+      }
+    },
+    "capacityLoadGate": {
+      "enabled": true,
+      "failClosed": true,
+      "policy": {
+        "loadTestReportRequired": true
+      },
+      "thresholds": {
+        "throughputRpsMin": 100,
+        "errorRateMax": 0.01
+      }
+    },
+    "chaosRollbackDrill": {
+      "enabled": true,
+      "failClosed": true,
+      "policy": {
+        "reportRequired": true,
+        "allExpectedFailuresObservedRequired": true
+      },
+      "thresholds": {
+        "minScenarios": 4
+      }
+    },
+    "securityTestingGate": {
+      "enabled": true,
+      "failClosed": true,
+      "policy": {
+        "sastRequired": true,
+        "dastRequired": true,
+        "iacScanRequired": true,
+        "licensePolicyRequired": true
+      }
+    },
+    "auditCompliance": {
+      "enabled": true,
+      "failClosed": true,
+      "policy": {
+        "structuredLoggingRequired": true,
+        "tamperEvidentLogRequired": true,
+        "retentionDaysMin": 365,
+        "traceabilityChainRequired": true
+      }
+    },
+    "opsReadiness": {
+      "enabled": true,
+      "failClosed": true,
+      "policy": {
+        "oncallRotationRequired": true,
+        "incidentMatrixRequired": true,
+        "postmortemTemplateRequired": true
+      }
+    }
+  }
+}

@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nextgen-marketplace.local/contracts/banner-system.schema.json",
+  "title": "Banner System Contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["banners"],
+  "properties": {
+    "banners": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "type",
+          "start_date",
+          "end_date",
+          "priority",
+          "target_segment",
+          "device_target",
+          "title",
+          "cta_label",
+          "cta_href"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 64
+          },
+          "type": {
+            "type": "string",
+            "enum": ["hero", "inline", "category"]
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "priority": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "target_segment": {
+            "type": "string",
+            "enum": ["all", "new_users", "returning_users", "high_intent", "sellers"]
+          },
+          "device_target": {
+            "type": "string",
+            "enum": ["all", "mobile", "tablet", "desktop"]
+          },
+          "title": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 140
+          },
+          "subtitle": {
+            "type": "string",
+            "maxLength": 280
+          },
+          "image_url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "cta_label": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 40
+          },
+          "cta_href": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          },
+          "tracking": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "campaign": { "type": "string", "maxLength": 80 },
+              "source": { "type": "string", "maxLength": 80 },
+              "medium": { "type": "string", "maxLength": 80 }
+            }
+          }
+        }
+      }
+    }
+  }
+}

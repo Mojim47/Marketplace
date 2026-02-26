@@ -1,0 +1,96 @@
+{
+  "version": "2026-02-23",
+  "name": "immutable-state-machine-contract",
+  "structuredLogRequiredFields": ["traceId", "prevState", "nextState", "guardReason"],
+  "machines": [
+    {
+      "name": "checkout",
+      "immutable": true,
+      "initialState": "CART",
+      "allowedTransitions": {
+        "CART": ["SHIPPING"],
+        "SHIPPING": ["PAYMENT", "CART"],
+        "PAYMENT": ["REVIEW", "SHIPPING"],
+        "REVIEW": ["COMPLETE", "PAYMENT"],
+        "COMPLETE": []
+      },
+      "forbiddenTransitions": [
+        ["CART", "PAYMENT"],
+        ["CART", "REVIEW"],
+        ["SHIPPING", "COMPLETE"],
+        ["PAYMENT", "CART"]
+      ]
+    },
+    {
+      "name": "order",
+      "immutable": true,
+      "initialState": "CREATED",
+      "allowedTransitions": {
+        "CREATED": ["RESERVED", "CANCELLED"],
+        "RESERVED": ["CONFIRMED", "CANCELLED"],
+        "CONFIRMED": ["FULFILLED", "CANCELLED"],
+        "FULFILLED": ["CLOSED"],
+        "CLOSED": [],
+        "CANCELLED": []
+      },
+      "forbiddenTransitions": [
+        ["CREATED", "FULFILLED"],
+        ["RESERVED", "CLOSED"],
+        ["CONFIRMED", "CREATED"]
+      ]
+    },
+    {
+      "name": "payment",
+      "immutable": true,
+      "initialState": "INITIATED",
+      "allowedTransitions": {
+        "INITIATED": ["PENDING", "FAILED"],
+        "PENDING": ["SUCCESS", "FAILED", "EXPIRED"],
+        "SUCCESS": ["SETTLED"],
+        "SETTLED": [],
+        "FAILED": [],
+        "EXPIRED": []
+      },
+      "forbiddenTransitions": [
+        ["INITIATED", "SUCCESS"],
+        ["FAILED", "SUCCESS"],
+        ["EXPIRED", "SUCCESS"]
+      ]
+    },
+    {
+      "name": "ai-inference",
+      "immutable": true,
+      "initialState": "REQUESTED",
+      "allowedTransitions": {
+        "REQUESTED": ["RUNNING", "REJECTED"],
+        "RUNNING": ["SUCCEEDED", "FAILED", "TIMEOUT", "DRIFT_BLOCKED"],
+        "SUCCEEDED": [],
+        "FAILED": [],
+        "TIMEOUT": [],
+        "REJECTED": [],
+        "DRIFT_BLOCKED": []
+      },
+      "forbiddenTransitions": [
+        ["REQUESTED", "SUCCEEDED"],
+        ["RUNNING", "REQUESTED"],
+        ["DRIFT_BLOCKED", "RUNNING"]
+      ]
+    },
+    {
+      "name": "ar-overlay",
+      "immutable": true,
+      "initialState": "CALIBRATING",
+      "allowedTransitions": {
+        "CALIBRATING": ["TRACKING", "DISABLED"],
+        "TRACKING": ["RENDERING", "DISABLED"],
+        "RENDERING": ["TRACKING", "DISABLED"],
+        "DISABLED": ["CALIBRATING"]
+      },
+      "forbiddenTransitions": [["CALIBRATING", "RENDERING"], ["DISABLED", "RENDERING"]]
+    }
+  ],
+  "runtimeReconciliation": {
+    "requiredReadyInvariant": true,
+    "autoDegradedHandlingRequired": true
+  }
+}

@@ -6,59 +6,53 @@
 
 // Module
 export { AuthModule } from './auth.module';
-
-// Types
-export type {
-  TokenPayload,
-  TokenScope,
-  TokenPair,
-  AuthenticatedUser,
-  UserCredentials,
-  SessionInfo,
-  LoginRequest,
-  LoginResponse,
-  RegisterRequest,
-  RefreshTokenRequest,
-  RefreshTokenResponse,
-  LogoutRequest,
-  TotpSetupResponse,
-  TotpVerifyRequest,
-  PasswordResetRequest,
-  PasswordResetConfirm,
-  PasswordChangeRequest,
-  RateLimitConfig,
-  RateLimitResult,
-  AuthAction,
-  AuthAuditEntry,
-  AuthConfig,
-} from './types';
-
 // Config
 export { authConfig } from './config/auth.config';
-
-// Services
-export { AuthService } from './services/auth.service';
-export { PasswordService, type PasswordValidationResult } from './services/password.service';
-export { TokenService, type CreateTokenOptions } from './services/token.service';
-export {
-  SessionService,
-  type CreateSessionOptions,
-  type SessionMetadata,
-} from './services/session.service';
-export { RateLimitService, type RateLimitAction } from './services/rate-limit.service';
-export { LockoutService, type LockoutStatus } from './services/lockout.service';
-export { TotpService } from './services/totp.service';
-export { AuthAuditService, type AuditContext } from './services/audit.service';
-
-// Strategies
-export { JwtStrategy } from './strategies/jwt.strategy';
-
+export { CurrentTenant, CurrentUser } from './decorators/current-user.decorator';
+// Decorators
+export { IS_PUBLIC_KEY, Public } from './decorators/public.decorator';
+export { REQUIRED_ROLES_KEY, RequireRoles } from './decorators/roles.decorator';
+export { REQUIRED_SCOPES_KEY, RequireScopes } from './decorators/scopes.decorator';
 // Guards
 export { JwtAuthGuard } from './guards/jwt-auth.guard';
 export { RolesGuard } from './guards/roles.guard';
-
-// Decorators
-export { Public, IS_PUBLIC_KEY } from './decorators/public.decorator';
-export { CurrentUser, CurrentTenant } from './decorators/current-user.decorator';
-export { RequireScopes, REQUIRED_SCOPES_KEY } from './decorators/scopes.decorator';
-export { RequireRoles, REQUIRED_ROLES_KEY } from './decorators/roles.decorator';
+export { type AuditContext, AuthAuditService } from './services/audit.service';
+// Services
+export { AuthService } from './services/auth.service';
+export { LockoutService, type LockoutStatus } from './services/lockout.service';
+export { PasswordService, type PasswordValidationResult } from './services/password.service';
+export { type RateLimitAction, RateLimitService } from './services/rate-limit.service';
+export {
+  type CreateSessionOptions,
+  type SessionMetadata,
+  SessionService,
+} from './services/session.service';
+export { type CreateTokenOptions, TokenService } from './services/token.service';
+export { TotpService } from './services/totp.service';
+// Strategies
+export { JwtStrategy } from './strategies/jwt.strategy';
+// Types
+export type {
+  AuthAction,
+  AuthAuditEntry,
+  AuthConfig,
+  AuthenticatedUser,
+  LoginRequest,
+  LoginResponse,
+  LogoutRequest,
+  PasswordChangeRequest,
+  PasswordResetConfirm,
+  PasswordResetRequest,
+  RateLimitConfig,
+  RateLimitResult,
+  RefreshTokenRequest,
+  RefreshTokenResponse,
+  RegisterRequest,
+  SessionInfo,
+  TokenPair,
+  TokenPayload,
+  TokenScope,
+  TotpSetupResponse,
+  TotpVerifyRequest,
+  UserCredentials,
+} from './types';

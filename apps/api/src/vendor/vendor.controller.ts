@@ -16,7 +16,12 @@ import {
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles, RolesGuard } from '../auth/roles.guard';
 import type { CreateVendorDto, PaginationDto, UpdateVendorDto } from '../common/dto/index';
-import type { VendorService, VendorWithProducts } from './vendor.service';
+import type {
+  CreateVendorStoryDto,
+  VendorService,
+  VendorStoryRecord,
+  VendorWithProducts,
+} from './vendor.service';
 
 @Controller('v1/vendors')
 export class VendorController {
@@ -141,5 +146,53 @@ export class VendorController {
   async findBySlug(@Param('slug') slug: string): Promise<VendorWithProducts> {
     this.logger.log(`Fetching vendor by slug: ${slug}`);
     return this.vendorService.findBySlug(slug);
+  }
+
+  /**
+   * Get story capability for a vendor
+   * GET /v1/vendors/:id/story-capability
+   */
+  @Get(':id/story-capability')
+  async getStoryCapability(
+    @Param('id') id: string
+  ): Promise<{ vendorId: string; storiesEnabled: boolean; storyRolloutPercent: number }> {
+    return this.vendorService.getStoryCapability(id);
+  }
+
+  /**
+   * List active stories for a vendor
+   * GET /v1/vendors/:id/stories
+   */
+  @Get(':id/stories')
+  async listStories(
+    @Param('id') id: string,
+    @Query('includeExpired') includeExpired?: string
+  ): Promise<VendorStoryRecord[]> {
+    return this.vendorService.listStories(id, includeExpired === 'true');
+  }
+
+  /**
+   * Create a story for vendor panel
+   * POST /v1/vendors/:id/stories
+   */
+  @Post(':id/stories')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.CREATED)
+  async createStory(
+    @Param('id') id: string,
+    @Body() dto: CreateVendorStoryDto
+  ): Promise<VendorStoryRecord> {
+    return this.vendorService.createStory(id, dto);
+  }
+
+  /**
+   * Soft-delete a story
+   * DELETE /v1/vendors/:id/stories/:storyId
+   */
+  @Delete(':id/stories/:storyId')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteStory(@Param('id') id: string, @Param('storyId') storyId: string): Promise<void> {
+    await this.vendorService.deleteStory(id, storyId);
   }
 }

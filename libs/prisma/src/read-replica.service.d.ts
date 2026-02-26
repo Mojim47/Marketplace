@@ -109,9 +109,7 @@ export declare class ReadReplicaService implements OnModuleInit, OnModuleDestroy
 /**
  * Decorator to mark a method as read-only (routes to replica)
  */
-export declare function ReadOnly(options?: {
-  requiresConsistency?: boolean;
-}): MethodDecorator;
+export declare function ReadOnly(options?: { requiresConsistency?: boolean }): MethodDecorator;
 /**
  * Decorator to mark a method as write (routes to primary)
  */

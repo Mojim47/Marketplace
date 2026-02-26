@@ -7,6 +7,7 @@ import {
   Logger,
   Param,
   Patch,
+  Query,
   Request,
   UseGuards,
 } from '@nestjs/common';
@@ -34,6 +35,49 @@ interface PlatformSettings {
 
 interface BanUserDto {
   reason: string;
+}
+
+interface ToggleVendorStoryDto {
+  enabled: boolean;
+  rolloutPercent?: number;
+}
+
+interface VendorStoryAnalyticsDto {
+  vendorId: string;
+  vendorName: string;
+  active: boolean;
+  storiesEnabled: boolean;
+  storyRolloutPercent: number;
+  activeStories: number;
+  impressions: number;
+  clicks: number;
+  conversions: number;
+  ctr: number;
+  cvr: number;
+  freshness: number;
+  rankScore: number;
+  windowDays: number;
+}
+
+interface UiFunnelAnalyticsDto {
+  surface: string;
+  impressions: number;
+  clicks: number;
+  conversions: number;
+  ctr: number;
+  cvr: number;
+  uniqueSessions: number;
+  windowDays: number;
+}
+
+interface UiFunnelTrendPointDto {
+  date: string;
+  surface: string;
+  impressions: number;
+  clicks: number;
+  conversions: number;
+  ctr: number;
+  cvr: number;
 }
 
 interface AuthenticatedRequest {
@@ -169,5 +213,92 @@ export class AdminController {
     const adminId = req.user?.id || 'system';
     await this.adminService.rejectVendor(vendorId, data.reason, adminId);
     return { message: 'Vendor rejected successfully' };
+  }
+
+  /**
+   * List story capability status for all vendors
+   * GET /admin/vendors/story-capabilities
+   */
+  @Get('vendors/story-capabilities')
+  async getVendorStoryCapabilities() {
+    this.logger.log('Fetching vendor story capabilities');
+    return this.adminService.getVendorStoryCapabilities();
+  }
+
+  /**
+   * Analytics snapshot for vendor stories
+   * GET /admin/vendors/story-analytics?windowDays=14
+   */
+  @Get('vendors/story-analytics')
+  async getVendorStoryAnalytics(
+    @Query('windowDays') windowDays?: string
+  ): Promise<VendorStoryAnalyticsDto[]> {
+    const parsedWindow =
+      typeof windowDays === 'string' && windowDays.trim() !== ''
+        ? Number.parseInt(windowDays, 10)
+        : 14;
+    this.logger.log(`Fetching vendor story analytics for ${parsedWindow} day window`);
+    return this.adminService.getVendorStoryAnalytics(parsedWindow);
+  }
+
+  /**
+   * UI funnel analytics snapshot for storefront surfaces
+   * GET /admin/ui-funnel-analytics?windowDays=14
+   */
+  @Get('ui-funnel-analytics')
+  async getUiFunnelAnalytics(
+    @Query('windowDays') windowDays?: string
+  ): Promise<UiFunnelAnalyticsDto[]> {
+    const parsedWindow =
+      typeof windowDays === 'string' && windowDays.trim() !== ''
+        ? Number.parseInt(windowDays, 10)
+        : 14;
+    this.logger.log(`Fetching UI funnel analytics for ${parsedWindow} day window`);
+    return this.adminService.getUiFunnelAnalytics(parsedWindow);
+  }
+
+  /**
+   * UI funnel daily trend for storefront surfaces
+   * GET /admin/ui-funnel-trend?windowDays=7
+   */
+  @Get('ui-funnel-trend')
+  async getUiFunnelTrend(
+    @Query('windowDays') windowDays?: string
+  ): Promise<UiFunnelTrendPointDto[]> {
+    const parsedWindow =
+      typeof windowDays === 'string' && windowDays.trim() !== ''
+        ? Number.parseInt(windowDays, 10)
+        : 7;
+    this.logger.log(`Fetching UI funnel trend for ${parsedWindow} day window`);
+    return this.adminService.getUiFunnelTrend(parsedWindow);
+  }
+
+  /**
+   * Toggle story capability for one vendor
+   * PATCH /admin/vendors/:id/story-capability
+   */
+  @Patch('vendors/:id/story-capability')
+  @HttpCode(HttpStatus.OK)
+  async setVendorStoryCapability(
+    @Param('id') vendorId: string,
+    @Body() body: ToggleVendorStoryDto
+  ): Promise<{
+    message: string;
+    vendorId: string;
+    storiesEnabled: boolean;
+    storyRolloutPercent: number;
+  }> {
+    this.logger.log(`Updating story capability for vendor ${vendorId}`, body);
+    const result = await this.adminService.setVendorStoryCapability(
+      vendorId,
+      Boolean(body.enabled),
+      body.rolloutPercent
+    );
+    return {
+      message: 'Vendor story capability updated',
+      vendorId: result.vendorId,
+      storiesEnabled: result.storiesEnabled,
+      storyRolloutPercent: result.storyRolloutPercent,
+    };
   }
 }

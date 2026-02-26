@@ -1,4 +1,4 @@
-﻿import { randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import {
   ConflictException,
   HttpException,
@@ -37,8 +37,15 @@ const ARGON2_CONFIG: argon2.Options = {
   hashLength: 32, // 256-bit hash output
 };
 
+const ARGON2_REHASH_CONFIG = {
+  memoryCost: ARGON2_CONFIG.memoryCost,
+  timeCost: ARGON2_CONFIG.timeCost,
+  parallelism: ARGON2_CONFIG.parallelism,
+};
+
 export interface LoginDto {
-  email: string;
+  mobile?: string;
+  email?: string;
   password: string;
   totpCode?: string;
   ipAddress?: string;
@@ -46,7 +53,7 @@ export interface LoginDto {
 }
 
 export interface RegisterDto {
-  email: string;
+  email?: string;
   password: string;
   mobile: string;
   firstName?: string;
@@ -55,9 +62,11 @@ export interface RegisterDto {
 
 export interface AuthResponse {
   access_token: string;
+  refresh_token?: string;
+  expires_at?: number;
   user: {
     id: string;
-    email: string;
+    email: string | null;
     mobile: string | null;
     role: string;
     firstName: string | null;
@@ -282,7 +291,7 @@ export class AuthService {
    */
   async needsRehash(hash: string): Promise<boolean> {
     try {
-      return argon2.needsRehash(hash, ARGON2_CONFIG);
+      return argon2.needsRehash(hash, ARGON2_REHASH_CONFIG);
     } catch {
       return true; // If we can't check, assume it needs rehashing
     }
@@ -294,9 +303,15 @@ export class AuthService {
   }
   async login(dto: LoginDto): Promise<AuthResponse> {
     const ipAddress = dto.ipAddress || '0.0.0.0';
+    const loginIdentifier = dto.mobile || dto.email || '';
+    const syntheticEmail = dto.mobile ? `${dto.mobile}@mobile.nextgen.local` : undefined;
+
+    if (!loginIdentifier) {
+      throw new UnauthorizedException('شماره موبايل يا ايميل الزامي است');
+    }
 
     // Check brute force protection from libs/security first
-    const bruteForceStatus = this.checkBruteForceStatus(dto.email, ipAddress);
+    const bruteForceStatus = this.checkBruteForceStatus(loginIdentifier, ipAddress);
     if (!bruteForceStatus.allowed) {
       const remainingMinutes = bruteForceStatus.blockedUntil
         ? Math.ceil((bruteForceStatus.blockedUntil.getTime() - Date.now()) / 60000)
@@ -314,7 +329,7 @@ export class AuthService {
 
     // Also check database-based account lockout status
     const lockoutCheck = await this.lockoutService.recordLoginAttempt(
-      dto.email,
+      loginIdentifier,
       ipAddress,
       false // We'll update this after verification
     );
@@ -337,27 +352,29 @@ export class AuthService {
     }
 
     // Check if admin login
-    const admin = await this.prisma.admin.findFirst({
-      where: { email: dto.email },
-    });
+    const admin = dto.email
+      ? await this.prisma.admin.findFirst({
+          where: { email: dto.email },
+        })
+      : null;
 
     if (admin) {
       if (!admin.passwordHash) {
-        await this.recordFailedLogin(dto.email, ipAddress, 'INVALID_CREDENTIALS');
-        this.recordBruteForceAttempt(dto.email, ipAddress, false);
+        await this.recordFailedLogin(loginIdentifier, ipAddress, 'INVALID_CREDENTIALS');
+        this.recordBruteForceAttempt(loginIdentifier, ipAddress, false);
         throw new UnauthorizedException('نام کاربري يا رمز عبور اشتباه است');
       }
 
       const isPasswordValid = await this.verifyPassword(dto.password, admin.passwordHash);
       if (!isPasswordValid) {
-        await this.recordFailedLogin(dto.email, ipAddress, 'INVALID_PASSWORD');
-        this.recordBruteForceAttempt(dto.email, ipAddress, false);
+        await this.recordFailedLogin(loginIdentifier, ipAddress, 'INVALID_PASSWORD');
+        this.recordBruteForceAttempt(loginIdentifier, ipAddress, false);
         throw new UnauthorizedException('نام کاربري يا رمز عبور اشتباه است');
       }
 
       if (!admin.isActive) {
-        await this.recordFailedLogin(dto.email, ipAddress, 'ACCOUNT_INACTIVE');
-        this.recordBruteForceAttempt(dto.email, ipAddress, false);
+        await this.recordFailedLogin(loginIdentifier, ipAddress, 'ACCOUNT_INACTIVE');
+        this.recordBruteForceAttempt(loginIdentifier, ipAddress, false);
         throw new UnauthorizedException('حساب کاربري غيرفعال است');
       }
 
@@ -370,15 +387,15 @@ export class AuthService {
         const verifyResult = this.totpService.verify(admin.twoFactorSecret!, dto.totpCode);
 
         if (!verifyResult.valid) {
-          await this.recordFailedLogin(dto.email, ipAddress, 'INVALID_2FA');
-          this.recordBruteForceAttempt(dto.email, ipAddress, false);
+          await this.recordFailedLogin(loginIdentifier, ipAddress, 'INVALID_2FA');
+          this.recordBruteForceAttempt(loginIdentifier, ipAddress, false);
           throw new UnauthorizedException('کد 2FA نامعتبر است');
         }
       }
 
       // Successful login - clear failed attempts
-      await this.lockoutService.clearFailedAttempts(dto.email);
-      this.recordBruteForceAttempt(dto.email, ipAddress, true);
+      await this.lockoutService.clearFailedAttempts(loginIdentifier);
+      this.recordBruteForceAttempt(loginIdentifier, ipAddress, true);
 
       await this.prisma.admin.update({
         where: { id: admin.id },
@@ -390,9 +407,12 @@ export class AuthService {
         email: admin.email,
         role: 'ADMIN',
       };
+      const tokens = await this.generateTokenPair(payload);
 
       return {
-        access_token: await this.generateToken(payload),
+        access_token: tokens.accessToken,
+        refresh_token: tokens.refreshToken || undefined,
+        expires_at: tokens.expiresAt,
         user: {
           id: admin.id,
           email: admin.email,
@@ -405,20 +425,26 @@ export class AuthService {
     }
 
     // Regular user login
-    const user = await this.prisma.user.findUnique({
-      where: { email: dto.email },
-    });
+    const user = dto.mobile
+      ? await this.prisma.user.findFirst({
+          where: { mobile: dto.mobile },
+        })
+      : dto.email
+        ? await this.prisma.user.findUnique({
+            where: { email: dto.email },
+          })
+        : null;
 
     if (!user || !user.passwordHash) {
-      await this.recordFailedLogin(dto.email, ipAddress, 'USER_NOT_FOUND');
-      this.recordBruteForceAttempt(dto.email, ipAddress, false);
+      await this.recordFailedLogin(loginIdentifier, ipAddress, 'USER_NOT_FOUND');
+      this.recordBruteForceAttempt(loginIdentifier, ipAddress, false);
       throw new UnauthorizedException('نام کاربري يا رمز عبور اشتباه است');
     }
 
     const isPasswordValid = await this.verifyPassword(dto.password, user.passwordHash);
     if (!isPasswordValid) {
-      await this.recordFailedLogin(dto.email, ipAddress, 'INVALID_PASSWORD');
-      this.recordBruteForceAttempt(dto.email, ipAddress, false);
+      await this.recordFailedLogin(loginIdentifier, ipAddress, 'INVALID_PASSWORD');
+      this.recordBruteForceAttempt(loginIdentifier, ipAddress, false);
       throw new UnauthorizedException('نام کاربري يا رمز عبور اشتباه است');
     }
 
@@ -433,22 +459,22 @@ export class AuthService {
     }
 
     if (!user.isActive) {
-      await this.recordFailedLogin(dto.email, ipAddress, 'ACCOUNT_INACTIVE');
-      this.recordBruteForceAttempt(dto.email, ipAddress, false);
+      await this.recordFailedLogin(loginIdentifier, ipAddress, 'ACCOUNT_INACTIVE');
+      this.recordBruteForceAttempt(loginIdentifier, ipAddress, false);
       throw new UnauthorizedException('حساب کاربري غيرفعال است');
     }
 
     if (user.isBanned) {
-      await this.recordFailedLogin(dto.email, ipAddress, 'ACCOUNT_BANNED');
-      this.recordBruteForceAttempt(dto.email, ipAddress, false);
+      await this.recordFailedLogin(loginIdentifier, ipAddress, 'ACCOUNT_BANNED');
+      this.recordBruteForceAttempt(loginIdentifier, ipAddress, false);
       throw new UnauthorizedException(
         `حساب کاربري مسدود شده است. دليل: ${user.bannedReason || 'نامشخص'}`
       );
     }
 
     // Successful login - clear failed attempts
-    await this.lockoutService.clearFailedAttempts(dto.email);
-    this.recordBruteForceAttempt(dto.email, ipAddress, true);
+    await this.lockoutService.clearFailedAttempts(loginIdentifier);
+    this.recordBruteForceAttempt(loginIdentifier, ipAddress, true);
 
     await this.prisma.user.update({
       where: { id: user.id },
@@ -457,15 +483,18 @@ export class AuthService {
 
     const payload = {
       sub: user.id,
-      email: user.email,
+      email: user.email || syntheticEmail || '',
       role: user.role,
     };
+    const tokens = await this.generateTokenPair(payload);
 
     return {
-      access_token: await this.generateToken(payload),
+      access_token: tokens.accessToken,
+      refresh_token: tokens.refreshToken || undefined,
+      expires_at: tokens.expiresAt,
       user: {
         id: user.id,
-        email: user.email,
+        email: user.email || syntheticEmail || null,
         mobile: user.mobile,
         role: user.role,
         firstName: user.firstName,
@@ -500,18 +529,19 @@ export class AuthService {
   }
 
   async register(dto: RegisterDto): Promise<AuthResponse> {
+    const email = dto.email || `${dto.mobile}@mobile.nextgen.local`;
     const existingUser = await this.prisma.user.findFirst({
       where: {
-        OR: [{ email: dto.email }, { mobile: dto.mobile }],
+        OR: [{ mobile: dto.mobile }, { email }],
       },
     });
 
     if (existingUser) {
-      if (existingUser.email === dto.email) {
-        throw new ConflictException('اين ايميل قبلاً ثبت شده است');
-      }
       if (existingUser.mobile === dto.mobile) {
         throw new ConflictException('اين شماره موبايل قبلاً ثبت شده است');
+      }
+      if (existingUser.email === email) {
+        throw new ConflictException('اين ايميل قبلاً ثبت شده است');
       }
     }
 
@@ -519,7 +549,7 @@ export class AuthService {
 
     const user = await this.prisma.user.create({
       data: {
-        email: dto.email,
+        email,
         mobile: dto.mobile,
         passwordHash,
         firstName: dto.firstName,
@@ -531,15 +561,18 @@ export class AuthService {
 
     const payload = {
       sub: user.id,
-      email: user.email,
+      email: user.email || email,
       role: user.role,
     };
+    const tokens = await this.generateTokenPair(payload);
 
     return {
-      access_token: await this.generateToken(payload),
+      access_token: tokens.accessToken,
+      refresh_token: tokens.refreshToken || undefined,
+      expires_at: tokens.expiresAt,
       user: {
         id: user.id,
-        email: user.email,
+        email: user.email || email,
         mobile: user.mobile,
         role: user.role,
         firstName: user.firstName,

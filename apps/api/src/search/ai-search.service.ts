@@ -9,9 +9,22 @@
  * - Cache invalidation on product updates
  */
 
+import { execFileSync } from 'node:child_process';
+import fs from 'node:fs';
 import path from 'node:path';
-import { Injectable, Logger, type OnModuleDestroy, type OnModuleInit } from '@nestjs/common';
-import { OnnxEmbedder } from '@nextgen/ai';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  type OnModuleDestroy,
+  type OnModuleInit,
+  Optional,
+  ServiceUnavailableException,
+} from '@nestjs/common';
+import { OnnxEmbedder, sha256Hex, verifyModelContract } from '@nextgen/ai';
+import { getCurrentCorrelationContext } from '../_middleware/correlation-id.middleware';
+import { LoggingService } from '../_observability/logging.service';
+import { MetricsService } from '../monitoring/metrics.service';
 import type { ProductSearchService } from '../products/product-search.service';
 
 /** AI Search Query */
@@ -67,6 +80,13 @@ interface CacheEntry {
   response: AIResponse;
   createdAt: number;
   topics?: string[];
+}
+
+interface ShadowEvaluationResult {
+  driftScore: number;
+  detected: boolean;
+  reason: 'none' | 'shadow_drift_exceeded';
+  shadowModelVersion: string;
 }
 
 class SemanticCache {
@@ -191,22 +211,59 @@ export class AISearchService implements OnModuleInit, OnModuleDestroy {
   private readonly predictionSessions = new Map<string, PredictionState>();
   private readonly embeddingCache = new EmbeddingCache(2000);
   private embedder: OnnxEmbedder | null = null;
+  private canaryEmbedder: OnnxEmbedder | null = null;
   private isInitialized = false;
+  private modelVersion = 'unversioned';
+  private canaryModelVersion = 'none';
+  private previousModelVersion = process.env.AI_PREVIOUS_MODEL_VERSION ?? 'none';
+  private canaryTrafficPercent = clampPercent(process.env.AI_MODEL_CANARY_PERCENT);
+  private readonly shadowDriftThreshold = Number(process.env.AI_SHADOW_DRIFT_THRESHOLD ?? 0.45);
+  private readonly shadowWindowSize = Number(process.env.AI_SHADOW_DRIFT_WINDOW_SIZE ?? 20);
+  private readonly driftWindow: number[] = [];
+  private rollbackTriggered = false;
+  private driftBlocked = false;
 
-  constructor(private readonly productSearchService: ProductSearchService) {}
+  constructor(
+    private readonly productSearchService: ProductSearchService,
+    @Optional() private readonly structuredLogger?: LoggingService,
+    @Optional() private readonly metricsService?: MetricsService
+  ) {}
 
   async onModuleInit() {
     const embeddingEnabled = process.env.AI_EMBEDDING_ENABLED !== 'false';
     if (embeddingEnabled) {
-      const modelPath =
-        process.env.AI_EMBEDDING_MODEL_PATH ??
-        path.join('public', 'models', 'ai', 'all-MiniLM-L6-v2.onnx');
-      const tokenizerPath =
-        process.env.AI_EMBEDDING_TOKENIZER_PATH ??
-        path.join('public', 'models', 'ai', 'tokenizer.json');
+      const requireContract = process.env.AI_EMBEDDING_REQUIRE_CONTRACT === 'true';
+      const contractPath =
+        process.env.AI_EMBEDDING_CONTRACT_PATH ??
+        path.join('ops', 'assets', 'ai', 'models', 'model.contract.json');
+
+      const resolvedContractPath = resolvePath(contractPath);
+      let modelPath = process.env.AI_EMBEDDING_MODEL_PATH;
+      let tokenizerPath = process.env.AI_EMBEDDING_TOKENIZER_PATH;
+
+      if (fs.existsSync(resolvedContractPath)) {
+        const verified = verifyModelContract({
+          contractPath: resolvedContractPath,
+          strictSignature: process.env.AI_EMBEDDING_STRICT_SIGNATURE === 'true',
+          signaturePublicKeyPem: process.env.MODEL_CONTRACT_PUBLIC_KEY_PEM,
+        });
+        this.modelVersion = verified.contract.modelVersion;
+        modelPath = modelPath ?? verified.artifactPath;
+        tokenizerPath =
+          tokenizerPath ??
+          verified.tokenizerPath ??
+          path.join(path.dirname(verified.artifactPath), 'tokenizer.json');
+      } else if (requireContract) {
+        throw new Error(`AI embedding contract is required but missing: ${resolvedContractPath}`);
+      } else {
+        this.logger.warn(`AI model contract missing (non-strict mode): ${resolvedContractPath}`);
+      }
+
+      modelPath = modelPath ?? path.join('public', 'models', 'ai', 'all-MiniLM-L6-v2.onnx');
+      tokenizerPath = tokenizerPath ?? path.join('public', 'models', 'ai', 'tokenizer.json');
       const tokenizerConfigPath =
         process.env.AI_EMBEDDING_TOKENIZER_CONFIG_PATH ??
-        path.join('public', 'models', 'ai', 'tokenizer_config.json');
+        path.join(path.dirname(tokenizerPath), 'tokenizer_config.json');
       const maxLength = Number(process.env.AI_EMBEDDING_MAX_LEN ?? 128);
 
       this.embedder = new OnnxEmbedder({
@@ -218,6 +275,7 @@ export class AISearchService implements OnModuleInit, OnModuleDestroy {
       });
       await this.embedder.ready();
       this.logger.log('AI Embedding engine loaded');
+      await this.initializeCanaryEmbedder();
     } else {
       this.logger.warn('AI embedding disabled via AI_EMBEDDING_ENABLED=false');
     }
@@ -237,36 +295,96 @@ export class AISearchService implements OnModuleInit, OnModuleDestroy {
     if (!this.isInitialized) {
       throw new Error('AI Search Service not initialized');
     }
+    if (this.driftBlocked) {
+      throw new ServiceUnavailableException('AI inference blocked by drift guard');
+    }
+    const cleanedQuery = query.query.trim();
+    if (!cleanedQuery) {
+      throw new BadRequestException('query is required');
+    }
 
-    const tokens = tokenize(query.query);
+    const tokens = tokenize(cleanedQuery);
     if (query.useCache !== false) {
       const cached = this.semanticCache.getCachedResponse(tokens);
       if (cached) {
+        const latencyMs = Date.now() - startTime;
+        this.recordInferenceAudit({
+          query: cleanedQuery,
+          response: cached.response,
+          fromCache: true,
+          latencyMs,
+          topConfidence: cached.similarity,
+        });
         return {
           response: cached.response,
           fromCache: true,
-          processingTimeMs: Date.now() - startTime,
+          processingTimeMs: latencyMs,
           similarity: cached.similarity,
         };
       }
     }
 
     const searchResult = await this.productSearchService.search({
-      query: query.query,
+      query: cleanedQuery,
       limit: 10,
     });
 
-    const rankedHits = this.embedder
-      ? await this.rankByEmbedding(query.query, searchResult.hits)
+    const traceSeed =
+      query.sessionId || getCurrentCorrelationContext()?.traceId || cleanedQuery || `${Date.now()}`;
+    const useCanary = this.shouldRouteCanary(traceSeed);
+    const primaryModelVersion = useCanary ? this.canaryModelVersion : this.modelVersion;
+    const primaryEmbedder = useCanary ? this.canaryEmbedder : this.embedder;
+    const shadowEmbedder = useCanary ? this.embedder : this.canaryEmbedder;
+    const shadowModelVersion = useCanary ? this.modelVersion : this.canaryModelVersion;
+
+    const rankedHits = primaryEmbedder
+      ? await this.rankByEmbedding(
+          cleanedQuery,
+          searchResult.hits,
+          primaryEmbedder,
+          primaryModelVersion
+        )
       : searchResult.hits;
 
-    const response = this.buildResponse(query.query, rankedHits, searchResult.suggestions);
-    this.semanticCache.cacheResponse(query.query, tokens, response, query.topics);
+    const shadowHits = shadowEmbedder
+      ? await this.rankByEmbedding(
+          cleanedQuery,
+          searchResult.hits,
+          shadowEmbedder,
+          shadowModelVersion
+        )
+      : searchResult.hits;
+    const shadowEvaluation = this.evaluateShadowDrift(rankedHits, shadowHits, shadowModelVersion);
+    this.updateShadowDriftWindow(shadowEvaluation.driftScore);
+    if (shadowEvaluation.detected) {
+      await this.onDriftDetected({
+        traceSeed,
+        primaryModelVersion,
+        shadowModelVersion: shadowEvaluation.shadowModelVersion,
+        driftScore: shadowEvaluation.driftScore,
+      });
+      if (process.env.AI_DRIFT_FAIL_CLOSED === 'true') {
+        throw new ServiceUnavailableException('AI inference blocked: drift threshold exceeded');
+      }
+    }
+
+    const response = this.buildResponse(cleanedQuery, rankedHits, searchResult.suggestions);
+    this.semanticCache.cacheResponse(cleanedQuery, tokens, response, query.topics);
+    const latencyMs = Date.now() - startTime;
+    this.recordInferenceAudit({
+      query: cleanedQuery,
+      response,
+      fromCache: false,
+      latencyMs,
+      topConfidence: rankedHits[0]?.similarity,
+      modelVersion: primaryModelVersion,
+      shadowEvaluation,
+    });
 
     return {
       response,
       fromCache: false,
-      processingTimeMs: Date.now() - startTime,
+      processingTimeMs: latencyMs,
     };
   }
 
@@ -363,6 +481,67 @@ export class AISearchService implements OnModuleInit, OnModuleDestroy {
     return this.isInitialized;
   }
 
+  private recordInferenceAudit(params: {
+    query: string;
+    response: AIResponse;
+    fromCache: boolean;
+    latencyMs: number;
+    topConfidence?: number;
+    modelVersion?: string;
+    shadowEvaluation?: ShadowEvaluationResult;
+  }): void {
+    const correlation = getCurrentCorrelationContext();
+    const promptHash = sha256Hex(params.query);
+    const outputHash = sha256Hex(params.response.content);
+    const confidenceScore =
+      typeof params.topConfidence === 'number' && Number.isFinite(params.topConfidence)
+        ? params.topConfidence
+        : 0;
+
+    const modelVersion = params.modelVersion ?? this.modelVersion;
+    const shadow = params.shadowEvaluation;
+
+    this.metricsService?.aiInferenceTotal.inc({
+      model_version: modelVersion,
+      outcome: 'ok',
+      cache: params.fromCache ? 'hit' : 'miss',
+    });
+    this.metricsService?.aiInferenceLatency.observe(
+      { model_version: modelVersion, cache: params.fromCache ? 'hit' : 'miss' },
+      params.latencyMs / 1000
+    );
+    if (shadow) {
+      this.metricsService?.aiShadowEvalTotal.inc({
+        model_version: modelVersion,
+        shadow_model_version: shadow.shadowModelVersion,
+        outcome: shadow.detected ? 'drift' : 'healthy',
+      });
+      this.metricsService?.aiDriftScore.observe(
+        {
+          model_version: modelVersion,
+          shadow_model_version: shadow.shadowModelVersion,
+        },
+        shadow.driftScore
+      );
+    }
+
+    this.structuredLogger?.log('ai.search.inference.completed', AISearchService.name, {
+      traceId: correlation?.traceId,
+      modelVersion,
+      inferenceLatencyMs: params.latencyMs,
+      confidenceScore,
+      promptHash,
+      inputHash: promptHash,
+      outputHash,
+      tokenUsage: params.response.tokens,
+      cache: params.fromCache ? 'hit' : 'miss',
+      guardReason: confidenceScore < 0.01 ? 'low_similarity' : 'none',
+      shadowModelVersion: shadow?.shadowModelVersion ?? 'none',
+      driftScore: shadow?.driftScore ?? 0,
+      driftDetected: shadow?.detected ?? false,
+    });
+  }
+
   private buildResponse(
     query: string,
     hits: Array<{
@@ -422,20 +601,19 @@ export class AISearchService implements OnModuleInit, OnModuleDestroy {
       description?: string;
       price: number;
       images?: string[];
-    }>
+    }>,
+    embedder: OnnxEmbedder,
+    modelVersion: string
   ) {
-    if (!this.embedder) {
-      return hits;
-    }
-    const queryVector = await this.embedder.embed(query);
+    const queryVector = await embedder.embed(query);
 
     const scored = await Promise.all(
       hits.map(async (hit) => {
         const text = `${hit.name}\n${hit.description ?? ''}`.trim();
-        const cacheKey = `product:${hit.id}`;
+        const cacheKey = `product:${modelVersion}:${hit.id}`;
         let vector = this.embeddingCache.get(cacheKey);
         if (!vector) {
-          vector = await this.embedder?.embed(text);
+          vector = await embedder.embed(text);
           this.embeddingCache.set(cacheKey, vector);
         }
         const similarity = cosineSimilarity(queryVector, vector);
@@ -445,6 +623,176 @@ export class AISearchService implements OnModuleInit, OnModuleDestroy {
 
     return scored.sort((a, b) => (b.similarity ?? 0) - (a.similarity ?? 0));
   }
+
+  private shouldRouteCanary(seed: string): boolean {
+    if (!this.canaryEmbedder || this.canaryTrafficPercent <= 0) {
+      return false;
+    }
+    const bucket = stableBucket(seed);
+    return bucket < this.canaryTrafficPercent;
+  }
+
+  private evaluateShadowDrift(
+    primaryHits: Array<{ id: string }>,
+    shadowHits: Array<{ id: string }>,
+    shadowModelVersion: string
+  ): ShadowEvaluationResult {
+    const topK = 3;
+    const primaryTop = primaryHits.slice(0, topK).map((hit) => hit.id);
+    const shadowTop = shadowHits.slice(0, topK).map((hit) => hit.id);
+    const overlap = primaryTop.filter((id) => shadowTop.includes(id)).length / Math.max(1, topK);
+    const driftScore = 1 - overlap;
+    const detected = driftScore > this.shadowDriftThreshold;
+    return {
+      driftScore,
+      detected,
+      reason: detected ? 'shadow_drift_exceeded' : 'none',
+      shadowModelVersion,
+    };
+  }
+
+  private updateShadowDriftWindow(driftScore: number): void {
+    this.driftWindow.push(driftScore);
+    if (this.driftWindow.length > this.shadowWindowSize) {
+      this.driftWindow.shift();
+    }
+  }
+
+  private async onDriftDetected(params: {
+    traceSeed: string;
+    primaryModelVersion: string;
+    shadowModelVersion: string;
+    driftScore: number;
+  }): Promise<void> {
+    const avgDrift =
+      this.driftWindow.length > 0
+        ? this.driftWindow.reduce((sum, item) => sum + item, 0) / this.driftWindow.length
+        : params.driftScore;
+    if (avgDrift <= this.shadowDriftThreshold) {
+      return;
+    }
+
+    this.structuredLogger?.warn('ai.search.drift.detected', AISearchService.name, {
+      traceId: getCurrentCorrelationContext()?.traceId,
+      driftScore: params.driftScore,
+      averageDriftScore: avgDrift,
+      primaryModelVersion: params.primaryModelVersion,
+      shadowModelVersion: params.shadowModelVersion,
+      threshold: this.shadowDriftThreshold,
+    });
+
+    if (this.rollbackTriggered) {
+      return;
+    }
+    this.rollbackTriggered = true;
+    this.metricsService?.aiAutoRollbackTotal.inc({
+      model_version: params.primaryModelVersion,
+      reason: 'shadow_drift_exceeded',
+    });
+
+    this.canaryEmbedder = null;
+    this.canaryTrafficPercent = 0;
+
+    const rollbackScript =
+      process.env.AI_AUTO_ROLLBACK_SCRIPT_PATH ||
+      path.join('scripts', 'ai', 'auto-rollback-model.mjs');
+    try {
+      execFileSync('node', [rollbackScript], {
+        stdio: 'pipe',
+        env: {
+          ...process.env,
+          AI_ROLLBACK_REASON: 'shadow_drift_exceeded',
+          AI_ROLLBACK_TRACE_ID: params.traceSeed,
+          AI_ROLLBACK_TARGET_VERSION: this.previousModelVersion,
+        },
+      });
+      this.structuredLogger?.warn('ai.search.auto.rollback.executed', AISearchService.name, {
+        traceId: params.traceSeed,
+        rollbackTargetVersion: this.previousModelVersion,
+      });
+    } catch (error) {
+      this.structuredLogger?.error(
+        'ai.search.auto.rollback.failed',
+        error instanceof Error ? error : new Error('rollback_failed'),
+        AISearchService.name,
+        {
+          traceId: params.traceSeed,
+          rollbackScript,
+        }
+      );
+    }
+
+    if (process.env.AI_DRIFT_FAIL_CLOSED === 'true') {
+      this.driftBlocked = true;
+    }
+  }
+
+  private async initializeCanaryEmbedder(): Promise<void> {
+    if (this.canaryTrafficPercent <= 0) {
+      return;
+    }
+
+    const contractPath =
+      process.env.AI_CANARY_EMBEDDING_CONTRACT_PATH ??
+      path.join('ops', 'assets', 'ai', 'models', 'model.contract.json');
+    const resolvedContractPath = resolvePath(contractPath);
+    if (!fs.existsSync(resolvedContractPath)) {
+      this.logger.warn(`AI canary contract missing: ${resolvedContractPath}`);
+      return;
+    }
+
+    const verified = verifyModelContract({
+      contractPath: resolvedContractPath,
+      strictSignature: process.env.AI_CANARY_EMBEDDING_STRICT_SIGNATURE === 'true',
+      signaturePublicKeyPem: process.env.MODEL_CONTRACT_PUBLIC_KEY_PEM,
+    });
+    this.canaryModelVersion = verified.contract.modelVersion;
+
+    const canary = new OnnxEmbedder({
+      modelPath:
+        process.env.AI_CANARY_EMBEDDING_MODEL_PATH ??
+        verified.artifactPath ??
+        path.join('public', 'models', 'ai', 'all-MiniLM-L6-v2.onnx'),
+      tokenizerPath:
+        process.env.AI_CANARY_EMBEDDING_TOKENIZER_PATH ??
+        verified.tokenizerPath ??
+        path.join('public', 'models', 'ai', 'tokenizer.json'),
+      tokenizerConfigPath:
+        process.env.AI_CANARY_EMBEDDING_TOKENIZER_CONFIG_PATH ??
+        path.join(
+          path.dirname(verified.tokenizerPath ?? verified.artifactPath),
+          'tokenizer_config.json'
+        ),
+      maxLength: Number(
+        process.env.AI_CANARY_EMBEDDING_MAX_LEN ?? process.env.AI_EMBEDDING_MAX_LEN ?? 128
+      ),
+      normalize: true,
+    });
+    await canary.ready();
+    this.canaryEmbedder = canary;
+    this.logger.log(
+      `AI canary embedding engine loaded (${this.canaryModelVersion}) with traffic=${this.canaryTrafficPercent}%`
+    );
+  }
+}
+
+function resolvePath(inputPath: string): string {
+  return path.isAbsolute(inputPath) ? inputPath : path.resolve(process.cwd(), inputPath);
+}
+
+function stableBucket(seed: string): number {
+  const digest = sha256Hex(seed);
+  const head = digest.slice(0, 8);
+  const value = Number.parseInt(head, 16);
+  return Number.isFinite(value) ? value % 100 : 0;
+}
+
+function clampPercent(input: string | undefined): number {
+  const value = Number(input ?? 0);
+  if (!Number.isFinite(value)) {
+    return 0;
+  }
+  return Math.max(0, Math.min(100, Math.floor(value)));
 }
 
 function cosineSimilarity(a: Float32Array, b: Float32Array): number {

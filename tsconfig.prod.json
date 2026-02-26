@@ -16,17 +16,17 @@
   },
   "include": [
     "apps/api/src/main.ts",
-    "apps/api/src/app/**/*",
-    "apps/api/src/types/**/*",
-    "libs/prisma/src/**/*",
-    "libs/common/src/**/*"
+    "apps/api/src/types/**/*.d.ts",
+    "libs/prisma/src/**/*.ts",
+    "libs/common/src/**/*.ts"
   ],
   "exclude": [
     "node_modules",
     "dist",
-    "apps/**/test",
-    "apps/**/__tests__",
+    "apps/**/test/**",
+    "apps/**/__tests__/**",
     "**/*.spec.ts",
+    "**/*.test.ts",
     "libs/prisma/src/log-sanitizer.spec.ts",
     "libs/prisma/src/transaction.utils.spec.ts"
   ]

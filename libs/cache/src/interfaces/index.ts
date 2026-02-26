@@ -2,20 +2,19 @@
 // Cache Interfaces - Barrel Export
 // ═══════════════════════════════════════════════════════════════════════════
 
-export { CacheProviderType } from './cache.interface';
-
 export type {
-  ICacheProvider,
+  CacheConfig,
+  CacheConfigBase,
   CacheEntry,
-  CacheSetOptions,
   CacheGetOptions,
+  CacheHealthCheck,
   CacheScanOptions,
   CacheScanResult,
+  CacheSetOptions,
   CacheStats,
-  CacheHealthCheck,
-  CacheConfigBase,
+  ICacheProvider,
+  MemcachedCacheConfig,
   MemoryCacheConfig,
   RedisCacheConfig,
-  MemcachedCacheConfig,
-  CacheConfig,
 } from './cache.interface';
+export { CacheProviderType } from './cache.interface';

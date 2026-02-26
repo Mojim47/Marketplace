@@ -7,8 +7,33 @@
  * ???????????????????????????????????????????????????????????????????????????
  */
 
-import { Injectable, Logger } from '@nestjs/common';
-
+import { type PriceChangeTracking, trackPriceChange } from '@libs/audit';
+import {
+  type ChequeStatus,
+  applyBouncePenalty,
+  calculateBounceImpact,
+  calculateNewDebt,
+  isValidTransition,
+  shouldBlockCredit,
+  validateSayadiNumber,
+} from '@libs/cheque';
+import {
+  type FinancialEventType,
+  type RiskScoreCalculation,
+  adjustRiskScore,
+  calculateAvailableCredit,
+  calculateRiskScoreFromEvents,
+  calculateVouchPenalty,
+  isCreditSufficient,
+} from '@libs/credit';
+import {
+  ACCOUNT_NAMES,
+  type CreateLedgerEntryDto,
+  type GeneralLedgerEntry,
+  createOrderLedgerEntries,
+  createPaymentLedgerEntries,
+  validateDoubleEntry,
+} from '@libs/ledger';
 // Import calculator functions from libs
 import {
   type DealerTier,
@@ -17,7 +42,6 @@ import {
   type PriceCalculationWithAuditResult,
   calculatePriceWithAudit,
 } from '@libs/pricing';
-
 import {
   type CreditCheckForConversion,
   type PriceFreezeResult,
@@ -28,27 +52,6 @@ import {
   freezePrices,
   lockStock,
 } from '@libs/proforma';
-
-import {
-  type ChequeStatus,
-  applyBouncePenalty,
-  calculateBounceImpact,
-  calculateNewDebt,
-  isValidTransition,
-  shouldBlockCredit,
-  validateSayadiNumber,
-} from '@libs/cheque';
-
-import {
-  type FinancialEventType,
-  type RiskScoreCalculation,
-  adjustRiskScore,
-  calculateAvailableCredit,
-  calculateRiskScoreFromEvents,
-  calculateVouchPenalty,
-  isCreditSufficient,
-} from '@libs/credit';
-
 import {
   type ApprovalAction,
   type ApprovalRequirement,
@@ -57,17 +60,7 @@ import {
   getRequiredSteps,
   isWorkflowComplete,
 } from '@libs/workflow';
-
-import { type PriceChangeTracking, trackPriceChange } from '@libs/audit';
-
-import {
-  ACCOUNT_NAMES,
-  type CreateLedgerEntryDto,
-  type GeneralLedgerEntry,
-  createOrderLedgerEntries,
-  createPaymentLedgerEntries,
-  validateDoubleEntry,
-} from '@libs/ledger';
+import { Injectable, Logger } from '@nestjs/common';
 
 // ???????????????????????????????????????????????????????????????????????????
 // Interfaces

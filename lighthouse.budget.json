@@ -4,15 +4,15 @@
     "resourceSizes": [{ "resourceType": "script", "budget": 150 }]
   },
   {
-    "path": "/checkout",
-    "resourceSizes": [{ "resourceType": "script", "budget": 150 }]
+    "path": "/categories",
+    "resourceSizes": [{ "resourceType": "script", "budget": 175 }]
   },
   {
-    "path": "/profile",
-    "resourceSizes": [{ "resourceType": "script", "budget": 150 }]
+    "path": "/product/aimarket-ultra-5g",
+    "resourceSizes": [{ "resourceType": "script", "budget": 175 }]
   },
   {
-    "path": "/orders",
+    "path": "/auth/login",
     "resourceSizes": [{ "resourceType": "script", "budget": 150 }]
   },
   {

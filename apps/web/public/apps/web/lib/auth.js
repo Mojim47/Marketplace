@@ -1,6 +1,7 @@
 import { login } from '@nextgen/auth';
 import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
+
 // Theorem: Identity is conserved across sessions iff entropy < threshold
 const authConfig = {
   providers: [

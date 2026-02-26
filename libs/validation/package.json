@@ -6,7 +6,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "test": "vitest run --passWithNoTests",
+    "test": "node ../../node_modules/vitest/vitest.mjs run --config ../../vitest.package.config.ts --passWithNoTests",
     "test:coverage": "vitest --coverage"
   },
   "dependencies": {
@@ -23,9 +23,9 @@
   },
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.js"
     }
   }
 }

@@ -61,6 +61,24 @@
       "main": "rgb(var(--color-info-main-rgb) / <alpha-value>)",
       "dark": "rgb(var(--color-info-dark-rgb) / <alpha-value>)",
       "contrast": "rgb(var(--color-info-contrast-rgb) / <alpha-value>)"
+    },
+    "semantic": {
+      "text-primary": "rgb(var(--semantic-color-text-primary-rgb) / <alpha-value>)",
+      "text-secondary": "rgb(var(--semantic-color-text-secondary-rgb) / <alpha-value>)",
+      "text-muted": "rgb(var(--semantic-color-text-muted-rgb) / <alpha-value>)",
+      "surface-default": "rgb(var(--semantic-color-surface-default-rgb) / <alpha-value>)",
+      "surface-elevated": "rgb(var(--semantic-color-surface-elevated-rgb) / <alpha-value>)",
+      "surface-glass": "rgb(var(--semantic-color-surface-glass-rgb) / <alpha-value>)",
+      "border-subtle": "rgb(var(--semantic-color-border-subtle-rgb) / <alpha-value>)",
+      "border-strong": "rgb(var(--semantic-color-border-strong-rgb) / <alpha-value>)",
+      "accent-primary": "rgb(var(--semantic-color-accent-primary-rgb) / <alpha-value>)",
+      "accent-secondary": "rgb(var(--semantic-color-accent-secondary-rgb) / <alpha-value>)",
+      "success": "rgb(var(--semantic-color-success-rgb) / <alpha-value>)",
+      "warning": "rgb(var(--semantic-color-warning-rgb) / <alpha-value>)",
+      "danger": "rgb(var(--semantic-color-danger-rgb) / <alpha-value>)",
+      "info": "rgb(var(--semantic-color-info-rgb) / <alpha-value>)",
+      "disabled": "rgb(var(--semantic-color-disabled-rgb) / <alpha-value>)",
+      "highlight": "rgb(var(--semantic-color-highlight-rgb) / <alpha-value>)"
     }
   },
   "spacing": {
@@ -99,6 +117,14 @@
     "1.5": "var(--space-1.5)",
     "2.5": "var(--space-2.5)",
     "3.5": "var(--space-3.5)"
+  },
+  "semanticSpacing": {
+    "container-padding": "var(--space-sem-container-padding)",
+    "section-gap": "var(--space-sem-section-gap)",
+    "card-padding": "var(--space-sem-card-padding)",
+    "field-gap": "var(--space-sem-field-gap)",
+    "stack-gap": "var(--space-sem-stack-gap)",
+    "inline-gap": "var(--space-sem-inline-gap)"
   },
   "borderRadius": {
     "none": "var(--radius-none)",

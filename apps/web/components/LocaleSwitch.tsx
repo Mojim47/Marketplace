@@ -16,14 +16,14 @@ export function LocaleSwitch() {
   return (
     <div className="flex items-center gap-2 text-xs">
       <Link
-        className="rounded-full border border-white/10 px-3 py-1 transition hover:border-white/20"
+        className="rounded-full border border-slate-200 bg-white px-3 py-1 text-slate-700 transition hover:border-orange-300 hover:bg-orange-50"
         href={`/locale?lang=fa&next=${encodeURIComponent(pathname)}`}
         onClick={() => onClick('fa')}
       >
         فارسی
       </Link>
       <Link
-        className="rounded-full border border-white/10 px-3 py-1 transition hover:border-white/20"
+        className="rounded-full border border-slate-200 bg-white px-3 py-1 text-slate-700 transition hover:border-orange-300 hover:bg-orange-50"
         href={`/locale?lang=en&next=${encodeURIComponent(pathname)}`}
         onClick={() => onClick('en')}
       >

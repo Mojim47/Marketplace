@@ -4,12 +4,12 @@
  * ???????????????????????????????????????????????????????????????????????????
  */
 
-export { PaymentModule } from './payment.module';
-export { PaymentService, PAYMENT_AUDIT_SERVICE } from './payment.service';
-export type { PaymentAuditService } from './payment.service';
-export { PaymentSecurityService } from './payment-security.service';
-export {
-  PaymentAuditService as PaymentAuditServiceImpl,
-  PaymentAuditEventType,
-} from './payment-audit.service';
 export * from './dto/payment.dto';
+export { PaymentModule } from './payment.module';
+export type { PaymentAuditService } from './payment.service';
+export { PAYMENT_AUDIT_SERVICE, PaymentService } from './payment.service';
+export {
+  PaymentAuditEventType,
+  PaymentAuditService as PaymentAuditServiceImpl,
+} from './payment-audit.service';
+export { PaymentSecurityService } from './payment-security.service';

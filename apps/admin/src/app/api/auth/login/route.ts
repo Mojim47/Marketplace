@@ -7,10 +7,12 @@ const loginSchema = z.object({
 });
 
 const AUTH_COOKIE_NAME = 'admin-token';
+const isMockAuthMode =
+  (process.env.AUTH_MODE || '').toLowerCase() === 'mock' || process.env.ALLOW_AUTH_MOCK === 'true';
 const AUTH_COOKIE_OPTIONS = {
   httpOnly: true,
   sameSite: 'lax' as const,
-  secure: process.env.NODE_ENV === 'production',
+  secure: process.env.NODE_ENV === 'production' && !isMockAuthMode,
   path: '/',
 };
 
@@ -85,7 +87,8 @@ export async function POST(request: Request) {
   }
   const payload = parsed;
 
-  const mode = (process.env.AUTH_MODE || 'mock').toLowerCase();
+  const defaultMode = process.env.NODE_ENV === 'production' ? 'real' : 'mock';
+  const mode = (process.env.AUTH_MODE || defaultMode).toLowerCase();
 
   if (process.env.NODE_ENV === 'production' && mode !== 'real' && !isMockAllowed()) {
     return NextResponse.json({ error: 'auth_mode_must_be_real' }, { status: 500 });

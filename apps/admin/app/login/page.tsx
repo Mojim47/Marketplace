@@ -1,12 +1,12 @@
-﻿'use client';
+'use client';
 
 import { LocaleSwitch } from '@/components/LocaleSwitch';
 import { Button } from '@/components/ui/button';
 import { useTraceId } from '@/hooks/use-trace-id';
 import { emitUiEvent } from '@/lib/ui-telemetry';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 type FormState = {
   email: string;
@@ -180,25 +180,39 @@ export default function AdminLoginPage() {
               <Button
                 loading={loading}
                 loadingText={strings.submit}
+                className="bg-gradient-to-b from-amber-300 to-amber-500 text-slate-900 shadow-[0_8px_0_#a16207]"
                 data-testid="admin-login-submit"
               >
                 {strings.submit}
               </Button>
             </form>
           </div>
-          <div className="admin-card rounded-3xl p-8">
-            <h2 className="admin-title text-xl text-white">Security Pulse</h2>
-            <p className="mt-3 text-sm text-slate-300">
-              اجرای چندمرحله‌ای، پایش رخدادهای حساس و کنترل دسترسی سرویس‌ها از همین پنل.
-            </p>
-            <div className="mt-6 space-y-3 text-sm">
-              {['Access policies', 'Audit trail', 'Incident response'].map((item) => (
-                <div
-                  key={item}
-                  className="flex items-center justify-between rounded-xl bg-white/5 px-4 py-3"
-                >
-                  <span className="text-slate-200">{item}</span>
-                  <span className="text-emerald-300">Active</span>
+
+          <div className="space-y-4">
+            <div className="admin-card overflow-hidden rounded-3xl p-0">
+              <div className="relative h-44 bg-[radial-gradient(circle_at_20%_20%,rgba(255,215,0,.26),transparent_58%),radial-gradient(circle_at_80%_80%,rgba(59,130,246,.23),transparent_52%),linear-gradient(140deg,#0f172a,#020617)] p-6">
+                <p className="text-xs text-amber-200">Privilege Access Layer</p>
+                <h2 className="admin-title mt-2 text-2xl text-white">
+                  Command-grade Authentication
+                </h2>
+                <p className="mt-2 text-sm text-slate-300">
+                  کنترل ورود، هشدار امنیتی و بررسی رخدادهای حساس در یک مسیر.
+                </p>
+              </div>
+            </div>
+            <div className="grid gap-3">
+              {[
+                ['Access policies', 'Active'],
+                ['Audit trail', 'Live'],
+                ['Incident response', 'Ready'],
+              ].map(([item, state]) => (
+                <div key={item} className="admin-card rounded-2xl p-4 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-200">{item}</span>
+                    <span className="rounded-full border border-emerald-400/40 bg-emerald-500/10 px-2 py-0.5 text-xs text-emerald-300">
+                      {state}
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>

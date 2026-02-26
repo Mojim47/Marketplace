@@ -1,0 +1,565 @@
+{
+  "generatedAt": "2026-02-23T12:34:56.173Z",
+  "summary": {
+    "hardcodedColorClassCount": 215,
+    "arbitraryClassCount": 19,
+    "inlineStyles": 1
+  },
+  "ruleViolations": {
+    "spacingScaleOnly": {
+      "gap-10": 1,
+      "space-y-5": 4,
+      "p-10": 4,
+      "mt-10": 5,
+      "mt-5": 2,
+      "pt-5": 1,
+      "px-5": 1,
+      "space-y-10": 3,
+      "py-1.5": 3,
+      "py-10": 2,
+      "p-5": 3
+    },
+    "radiusScaleOnly": {}
+  },
+  "files": {
+    "apps/web/app/error.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 3,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 3
+    },
+    "apps/web/app/global-error.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 0,
+      "arbitraryClassTokens": 3,
+      "hardcodedHex": 0,
+      "driftScore": 6
+    },
+    "apps/web/app/layout.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 0,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 0
+    },
+    "apps/web/app/loading.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 2,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 2
+    },
+    "apps/web/app/not-found.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 4,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 4
+    },
+    "apps/web/app/page.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 8,
+      "arbitraryClassTokens": 2,
+      "hardcodedHex": 0,
+      "driftScore": 12
+    },
+    "apps/web/app/terms-of-service/page.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 2,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 2
+    },
+    "apps/web/app/profile/error.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 2,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 2
+    },
+    "apps/web/app/profile/page.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 8,
+      "arbitraryClassTokens": 1,
+      "hardcodedHex": 0,
+      "driftScore": 10
+    },
+    "apps/web/app/privacy-policy/page.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 2,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 2
+    },
+    "apps/web/app/orders/error.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 2,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 2
+    },
+    "apps/web/app/orders/page.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 8,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 8
+    },
+    "apps/web/app/offline/page.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 4,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 4
+    },
+    "apps/web/app/locale/route.ts": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 0,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 0
+    },
+    "apps/web/app/livez/route.ts": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 0,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 0
+    },
+    "apps/web/app/checkout/error.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 3,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 3
+    },
+    "apps/web/app/checkout/page.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 8,
+      "arbitraryClassTokens": 1,
+      "hardcodedHex": 0,
+      "driftScore": 10
+    },
+    "apps/web/app/checkout/success/error.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 3,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 3
+    },
+    "apps/web/app/checkout/success/page.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 6,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 6
+    },
+    "apps/web/app/categories/page.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 4,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 4
+    },
+    "apps/web/app/categories/[slug]/page.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 5,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 5
+    },
+    "apps/web/app/cart/error.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 3,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 3
+    },
+    "apps/web/app/cart/page.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 8,
+      "arbitraryClassTokens": 1,
+      "hardcodedHex": 0,
+      "driftScore": 10
+    },
+    "apps/web/app/auth/page.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 2,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 2
+    },
+    "apps/web/app/auth/reset-password/page.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 6,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 6
+    },
+    "apps/web/app/auth/register/page.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 6,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 6
+    },
+    "apps/web/app/auth/login/page.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 6,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 6
+    },
+    "apps/web/app/auth/forgot-password/page.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 6,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 6
+    },
+    "apps/web/app/api/ui-events/route.ts": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 0,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 0
+    },
+    "apps/web/app/api/backend/[...path]/route.ts": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 0,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 0
+    },
+    "apps/web/app/api/auth/session/route.ts": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 0,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 0
+    },
+    "apps/web/app/api/auth/register/route.ts": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 0,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 0
+    },
+    "apps/web/app/api/auth/refresh/route.ts": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 0,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 0
+    },
+    "apps/web/app/api/auth/logout/route.ts": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 0,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 0
+    },
+    "apps/web/app/api/auth/login/route.ts": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 0,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 0
+    },
+    "apps/web/app/api/ai/predict/route.ts": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 0,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 0
+    },
+    "apps/web/app/about/page.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 5,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 5
+    },
+    "apps/web/app/(public)/product/[id]/page.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 7,
+      "arbitraryClassTokens": 2,
+      "hardcodedHex": 0,
+      "driftScore": 11
+    },
+    "apps/web/app/(fa)/(seller)/dashboard/page.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 7,
+      "arbitraryClassTokens": 2,
+      "hardcodedHex": 0,
+      "driftScore": 11
+    },
+    "apps/web/app/(fa)/(seller)/ai/page.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 8,
+      "arbitraryClassTokens": 1,
+      "hardcodedHex": 0,
+      "driftScore": 10
+    },
+    "apps/web/components/AuthNavButton.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 5,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 5
+    },
+    "apps/web/components/AuthProvider.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 0,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 0
+    },
+    "apps/web/components/hero-card.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 0,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 0
+    },
+    "apps/web/components/LocaleSwitch.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 1,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 1
+    },
+    "apps/web/components/SiteShell.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 6,
+      "arbitraryClassTokens": 2,
+      "hardcodedHex": 0,
+      "driftScore": 10
+    },
+    "apps/web/components/ui/Button.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 0,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 0
+    },
+    "apps/web/components/ui/Container.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 0,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 0
+    },
+    "apps/web/components/ui/GlassCard.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 0,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 0
+    },
+    "apps/web/components/ui/index.ts": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 0,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 0
+    },
+    "apps/web/components/ui/KpiCard.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 0,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 0
+    },
+    "apps/web/components/ui/Pill.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 0,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 0
+    },
+    "apps/web/components/ui/ProgressBar.tsx": {
+      "inlineStyles": 1,
+      "hardcodedColorClasses": 5,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 8
+    },
+    "apps/web/components/ui/SectionTitle.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 0,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 0
+    },
+    "apps/admin/app/layout.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 0,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 0
+    },
+    "apps/admin/app/page.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 6,
+      "arbitraryClassTokens": 1,
+      "hardcodedHex": 0,
+      "driftScore": 8
+    },
+    "apps/admin/app/vendors/page.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 2,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 2
+    },
+    "apps/admin/app/users/page.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 4,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 4
+    },
+    "apps/admin/app/settings/page.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 3,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 3
+    },
+    "apps/admin/app/reports/page.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 2,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 2
+    },
+    "apps/admin/app/products/page.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 3,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 3
+    },
+    "apps/admin/app/orders/page.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 5,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 5
+    },
+    "apps/admin/app/login/error.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 3,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 3
+    },
+    "apps/admin/app/login/page.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 8,
+      "arbitraryClassTokens": 1,
+      "hardcodedHex": 0,
+      "driftScore": 10
+    },
+    "apps/admin/app/locale/route.ts": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 0,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 0
+    },
+    "apps/admin/app/livez/route.ts": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 0,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 0
+    },
+    "apps/admin/app/categories/page.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 3,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 3
+    },
+    "apps/admin/app/api/ui-events/route.ts": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 0,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 0
+    },
+    "apps/admin/app/api/auth/login/route.ts": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 0,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 0
+    },
+    "apps/admin/src/app/layout.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 0,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 0
+    },
+    "apps/admin/src/app/page.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 6,
+      "arbitraryClassTokens": 1,
+      "hardcodedHex": 0,
+      "driftScore": 8
+    },
+    "apps/admin/src/app/login/error.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 2,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 2
+    },
+    "apps/admin/src/app/login/page.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 8,
+      "arbitraryClassTokens": 1,
+      "hardcodedHex": 0,
+      "driftScore": 10
+    },
+    "apps/admin/src/app/livez/route.ts": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 0,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 0
+    },
+    "apps/admin/src/app/api/auth/login/route.ts": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 0,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 0
+    },
+    "apps/admin/src/components/AdminPanelShell.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 4,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 4
+    },
+    "apps/admin/src/components/LocaleSwitch.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 1,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 1
+    },
+    "apps/admin/src/components/ui/button.tsx": {
+      "inlineStyles": 0,
+      "hardcodedColorClasses": 0,
+      "arbitraryClassTokens": 0,
+      "hardcodedHex": 0,
+      "driftScore": 0
+    }
+  }
+}

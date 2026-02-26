@@ -9,6 +9,6 @@
  * Requirements: 8.1, 8.2, 8.3
  */
 
-export * from './search.module';
-export * from './search.controller';
 export * from './dto';
+export * from './search.controller';
+export * from './search.module';

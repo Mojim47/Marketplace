@@ -142,11 +142,10 @@ export class BruteForceGuard implements CanActivate {
    */
   private getIdentifier(request: Request): string {
     const ip = this.extractClientIP(request);
-    const email = request.body?.email || request.body?.username || '';
+    const mobile = request.body?.mobile || request.body?.email || request.body?.username || '';
 
-    // Combine IP and email for identifier
-    // This prevents attackers from trying different emails from same IP
-    return `${ip}:${email}`.toLowerCase();
+    // Combine IP and identifier for better brute-force detection
+    return `${ip}:${mobile}`.toLowerCase();
   }
 
   /**
@@ -177,7 +176,7 @@ export class BruteForceGuard implements CanActivate {
       path: request.path,
       method: request.method,
       ip: this.extractClientIP(request),
-      email: request.body?.email,
+      mobile: request.body?.mobile,
       userAgent: request.headers['user-agent'],
       timestamp: new Date().toISOString(),
     };

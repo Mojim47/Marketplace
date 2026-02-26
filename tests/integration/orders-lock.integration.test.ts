@@ -1,4 +1,4 @@
-﻿// @vitest-environment node
+// @vitest-environment node
 
 import { execSync } from 'node:child_process';
 import { DistributedLockService } from '@nextgen/cache';

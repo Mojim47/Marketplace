@@ -1,29 +1,54 @@
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-// @vitest-environment node
+import { fileURLToPath } from 'node:url';
 // @vitest-environment node
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { AISearchService } from './ai-search.service';
 
-const modelPath = path.join('public', 'models', 'ai', 'all-MiniLM-L6-v2.onnx');
-const tokenizerPath = path.join('public', 'models', 'ai', 'tokenizer.json');
-const tokenizerConfigPath = path.join('public', 'models', 'ai', 'tokenizer_config.json');
-
-const missingArtifacts = [modelPath, tokenizerPath, tokenizerConfigPath].filter(
-  (filePath) => !fs.existsSync(filePath)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const ROOT = path.resolve(__dirname, '../../../..');
+const ASSETS_ROOT = path.join(ROOT, 'ops', 'assets', 'ai');
+const CHECKSUM_FILE = path.join(ASSETS_ROOT, 'CHECKSUMS.sha256');
+const checksums = new Map(
+  fs
+    .readFileSync(CHECKSUM_FILE, 'utf-8')
+    .trim()
+    .split('\n')
+    .map((line) => {
+      const [hash, file] = line.trim().split(/\s+/, 2);
+      return [file, hash];
+    })
 );
-const describeIfReady = missingArtifacts.length > 0 ? describe.skip : describe;
-// CI hotfix: onnxruntime binding missing on runner (run 22011545132); skip suite until assets are baked.
-// TODO: fix before merge to main.
-// eslint-disable-next-line vitest/no-disabled-tests
-describe.skip('CI hotfix run 22011545132', () => {});
+const hashOf = (relPath: string) => {
+  const abs = path.join(ASSETS_ROOT, relPath);
+  const h = crypto.createHash('sha256').update(fs.readFileSync(abs)).digest('hex').toUpperCase();
+  return h;
+};
+['onnxruntime/VERSION.txt', 'models/model.onnx'].forEach((rel) => {
+  expect(hashOf(rel)).toBe(checksums.get(rel));
+});
 
-describeIfReady('AISearchService (embedding ranking)', () => {
+vi.mock('../../../../libs/ai/src/embeddings/onnx-embedder', () => ({
+  OnnxEmbedder: class {
+    async ready() {}
+    async embed(_q: string) {
+      return new Float32Array([0.9, 0.1]);
+    }
+  },
+}));
+
+describe('AISearchService (embedding ranking, offline CI)', () => {
   beforeAll(() => {
     process.env.AI_EMBEDDING_ENABLED = 'true';
-    process.env.AI_EMBEDDING_MODEL_PATH = modelPath;
-    process.env.AI_EMBEDDING_TOKENIZER_PATH = tokenizerPath;
-    process.env.AI_EMBEDDING_TOKENIZER_CONFIG_PATH = tokenizerConfigPath;
+    process.env.AI_EMBEDDING_MODEL_PATH = path.join(ASSETS_ROOT, 'models', 'model.onnx');
+    process.env.AI_EMBEDDING_TOKENIZER_PATH = path.join(ASSETS_ROOT, 'models', 'tokenizer.json');
+    process.env.AI_EMBEDDING_TOKENIZER_CONFIG_PATH = path.join(
+      ASSETS_ROOT,
+      'models',
+      'tokenizer_config.json'
+    );
     process.env.AI_EMBEDDING_MAX_LEN = '128';
   });
 

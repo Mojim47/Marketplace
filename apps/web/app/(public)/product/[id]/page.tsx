@@ -1,163 +1,175 @@
-import {
-  Button,
-  Container,
-  GlassCard,
-  KpiCard,
-  Pill,
-  ProgressBar,
-  SectionTitle,
-} from '@/components/ui';
+import { ProductActionPanel } from '@/components/ProductActionPanel';
+import { ProductMediaGallery } from '@/components/ProductMediaGallery';
+import { ProductRelatedRail } from '@/components/ProductRelatedRail';
+import { Container, GlassCard, Pill, SectionTitle } from '@/components/ui';
+import { CATALOG_PRODUCTS, findProductById } from '@/lib/catalog-data';
+import { CheckCircle2, MessageSquareMore, PackageCheck, ShieldCheck, Truck } from 'lucide-react';
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
 
-const insights = [
-  {
-    title: 'افزايش تقاضاي موبايل پرچم‌دار',
-    body: 'مدل پيش‌بيني نشان مي‌دهد تقاضا در ? روز آينده ??? رشد دارد. تامين موجودي توصيه مي‌شود.',
-  },
-  {
-    title: 'بهينه‌سازي قيمت',
-    body: 'بازه قيمت بهينه براي حفظ نرخ تبديل: 28.9M تا 31.4M ريال.',
-  },
-  {
-    title: 'ريسک موجودي',
-    body: '? SKU پرفروش در آستانه اتمام موجودي هستند. هشدار سطح اضطراري فعال شد.',
-  },
-];
+type ProductPageProps = {
+  params: Promise<{ id: string }>;
+};
 
-const inventory = [
-  { name: 'Galaxy Ultra 5G', status: 'ايمن', level: '74%' },
-  { name: 'Aero XR Headset', status: 'هشدار', level: '29%' },
-  { name: 'Nova Camera Pro', status: 'بحراني', level: '12%' },
-];
+export default async function ProductDetailPage({ params }: ProductPageProps) {
+  const { id } = await params;
+  const product = findProductById(id);
+  if (!product) {
+    notFound();
+  }
 
-export default function SellerDashboardPage() {
+  const related = CATALOG_PRODUCTS.filter(
+    (item) => item.category === product.category && item.id !== product.id
+  ).slice(0, 4);
+
+  const galleryItems = [product.image, ...related.map((item) => item.image)]
+    .filter((src, index, all) => all.indexOf(src) === index)
+    .slice(0, 5)
+    .map((src, index) => ({
+      src,
+      alt: index === 0 ? product.name : `${product.name} - نمای ${index + 1}`,
+    }));
+
+  const money = new Intl.NumberFormat('fa-IR');
+
   return (
-    <div className="min-h-screen">
-      <Container className="space-y-10 py-12">
-        <header className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-          <div className="space-y-3">
-            <Pill>Seller Command Center</Pill>
-            <SectionTitle className="text-3xl text-white">داشبورد فروشنده</SectionTitle>
-            <p className="text-sm text-slate-300">
-              تصميم‌گيري سريع با داده‌هاي واقعي، هوش مصنوعي روي دستگاه و مانيتورينگ لحظه‌اي.
-            </p>
+    <Container className="py-10">
+      <div className="grid gap-8 lg:grid-cols-[1.08fr_0.92fr]">
+        <GlassCard className="rounded-3xl border border-slate-200 bg-white p-4 sm:p-5">
+          <ProductMediaGallery items={galleryItems} />
+        </GlassCard>
+
+        <GlassCard className="rounded-3xl border border-slate-200 bg-white p-6">
+          <div className="flex flex-wrap gap-2">
+            <Pill>{product.badge}</Pill>
+            <Pill>{product.category}</Pill>
+            <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs text-amber-700">
+              فروشنده طلایی از ۱۴۰۰
+            </span>
           </div>
-          <div className="flex flex-wrap gap-3">
-            <Button loading={false}>افزودن محصول جديد</Button>
-            <Button loading={false} variant="outline">
-              درخواست تحليل AI
-            </Button>
-            <Button loading={false} variant="ghost">
-              دانلود گزارش هفتگي
-            </Button>
+
+          <SectionTitle className="mt-4 text-3xl text-slate-900">{product.name}</SectionTitle>
+
+          <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-slate-600">
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1">
+              امتیاز {product.rating.toFixed(1)}
+            </span>
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1">
+              موجودی {product.stock} عدد
+            </span>
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1">
+              فروشنده: {product.seller}
+            </span>
           </div>
-        </header>
 
-        <section className="grid gap-4 lg:grid-cols-4">
-          <KpiCard label="فروش امروز" value="3.8B ريال" trend="+12% نسبت به ديروز" />
-          <KpiCard label="سفارش‌هاي فعال" value="146" trend="ميانگين زمان پردازش 18 دقيقه" />
-          <KpiCard label="نرخ تبديل" value="2.4%" trend="+0.3% اين هفته" />
-          <KpiCard label="امتياز رضايت" value="4.7/5" trend="+0.1 نسبت به ماه قبل" />
-        </section>
+          <p className="mt-4 text-sm leading-7 text-slate-600">{product.summary}</p>
 
-        <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-          <GlassCard className="rounded-3xl p-6">
-            <div className="flex items-center justify-between">
-              <SectionTitle className="text-xl text-white">نبض فروش</SectionTitle>
-              <span className="text-xs text-slate-400">به‌روزرساني 5 دقيقه پيش</span>
-            </div>
-            <div className="mt-6 space-y-4">
-              <ProgressBar label="وب‌سايت" value={72} meta="72% از فروش" />
-              <ProgressBar label="اپليکيشن" value={54} meta="54% از فروش" />
-              <ProgressBar label="AR/VR" value={31} meta="31% از فروش" />
-            </div>
-            <div className="mt-6 grid gap-4 sm:grid-cols-2">
-              {[
-                { label: 'سبد رها شده', value: '24' },
-                { label: 'بازگشت مشتريان', value: '38%' },
-              ].map((item) => (
-                <div
-                  key={item.label}
-                  className="rounded-2xl bg-slate-900/60 p-4 text-sm text-slate-200"
-                >
-                  <p className="text-xs text-slate-400">{item.label}</p>
-                  <p className="mt-2 text-lg font-semibold text-white">{item.value}</p>
-                </div>
-              ))}
-            </div>
-          </GlassCard>
+          <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+            <p className="text-xs text-slate-600">قیمت نهایی</p>
+            <p className="text-3xl font-semibold text-slate-900">{money.format(product.priceIrr)} تومان</p>
+            <p className="mt-1 text-xs text-emerald-700">{product.eta}</p>
+          </div>
 
-          <GlassCard className="rounded-3xl p-6">
-            <SectionTitle className="text-xl text-white">بينش‌هاي هوشمند</SectionTitle>
-            <div className="mt-4 space-y-3">
-              {insights.map((item) => (
-                <div key={item.title} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                  <p className="text-sm font-semibold text-white">{item.title}</p>
-                  <p className="mt-2 text-xs text-slate-300">{item.body}</p>
-                </div>
-              ))}
-            </div>
-          </GlassCard>
-        </section>
+          <ProductActionPanel
+            productId={product.id}
+            productSlug={product.slug}
+            category={product.category}
+          />
 
-        <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-          <GlassCard className="rounded-3xl p-6">
-            <SectionTitle className="text-xl text-white">سلامت موجودي</SectionTitle>
-            <div className="mt-4 space-y-3">
-              {inventory.map((item) => (
-                <div
-                  key={item.name}
-                  className="flex items-center justify-between rounded-2xl bg-slate-900/60 px-4 py-3 text-sm"
-                >
-                  <div>
-                    <p className="text-slate-200">{item.name}</p>
-                    <p className="text-xs text-slate-400">سطح موجودي: {item.level}</p>
-                  </div>
-                  <span
-                    className={`text-xs ${
-                      item.status === 'ايمن'
-                        ? 'text-emerald-300'
-                        : item.status === 'هشدار'
-                          ? 'text-amber-300'
-                          : 'text-rose-300'
-                    }`}
-                  >
-                    {item.status}
-                  </span>
-                </div>
-              ))}
+          <div className="mt-6 grid gap-2 text-xs text-slate-700 sm:grid-cols-3">
+            <div className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+              <ShieldCheck size={14} className="text-emerald-600" />
+              ۷ روز ضمانت بازگشت
             </div>
-          </GlassCard>
+            <div className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+              <Truck size={14} className="text-emerald-600" />
+              ارسال امروز از شهر X
+            </div>
+            <div className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+              <PackageCheck size={14} className="text-emerald-600" />
+              اصالت و سلامت فیزیکی
+            </div>
+          </div>
+        </GlassCard>
+      </div>
 
-          <GlassCard className="rounded-3xl p-6">
-            <SectionTitle className="text-xl text-white">استوديو تجربه AR</SectionTitle>
-            <p className="mt-2 text-sm text-slate-300">
-              مدل‌هاي سه‌بعدي جديد را بارگذاري کنيد و نرخ تعامل را با نمايش واقعيت افزوده افزايش دهيد.
-            </p>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              {[
-                { label: 'مدل‌هاي آماده', value: '18' },
-                { label: 'در صف پردازش', value: '4' },
-                { label: 'بازديد AR امروز', value: '2,140' },
-                { label: 'نرخ تعامل AR', value: '+26%' },
-              ].map((item) => (
-                <div
-                  key={item.label}
-                  className="rounded-2xl bg-slate-900/60 p-4 text-sm text-slate-200"
-                >
-                  <p className="text-xs text-slate-400">{item.label}</p>
-                  <p className="mt-2 text-lg font-semibold text-white">{item.value}</p>
-                </div>
-              ))}
+      <section className="mt-10 space-y-6">
+        <div className="flex gap-2 overflow-x-auto text-xs">
+          <a href="#specs" className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-slate-700">
+            مشخصات فنی
+          </a>
+          <a href="#description" className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-slate-700">
+            توضیحات
+          </a>
+          <a href="#reviews" className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-slate-700">
+            نظرات
+          </a>
+          <a href="#qa" className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-slate-700">
+            پرسش و پاسخ
+          </a>
+        </div>
+
+        <div id="specs" className="rounded-3xl border border-slate-200 bg-white p-6">
+          <SectionTitle className="text-2xl text-slate-900">مشخصات فنی</SectionTitle>
+          <div className="mt-4 grid gap-3 text-sm text-slate-700 sm:grid-cols-2">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">دسته: {product.category}</div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">حداقل سفارش: {product.minOrderQty} عدد</div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">امتیاز کیفیت: {product.rating.toFixed(1)} / 5</div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">زمان ارسال: {product.eta}</div>
+          </div>
+        </div>
+
+        <div id="description" className="rounded-3xl border border-slate-200 bg-white p-6">
+          <SectionTitle className="text-2xl text-slate-900">توضیحات</SectionTitle>
+          <p className="mt-3 text-sm leading-7 text-slate-600">
+            این محصول برای تجربه خرید حرفه‌ای طراحی شده است: مسیر تصمیم‌گیری شفاف، اطلاعات قابل اتکا و
+            سازگار با استفاده روزمره. تمرکز صفحه روی Above-the-fold واضح و اقدام سریع کاربر است.
+          </p>
+        </div>
+
+        <div id="reviews" className="rounded-3xl border border-slate-200 bg-white p-6">
+          <SectionTitle className="text-2xl text-slate-900">نظرات کاربران</SectionTitle>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+              <p className="font-semibold text-slate-900">تجربه عالی در تحویل</p>
+              <p className="mt-2">ارسال سریع بود و کیفیت محصول با توضیحات کاملا مطابقت داشت.</p>
             </div>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Button loading={false}>افزودن مدل جديد</Button>
-              <Button loading={false} variant="outline">
-                مشاهده عملکرد AR
-              </Button>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+              <p className="font-semibold text-slate-900">پشتیبانی پاسخگو</p>
+              <p className="mt-2">پاسخ پشتیبانی کمتر از ۱۰ دقیقه انجام شد و مشکل سریعا رفع شد.</p>
             </div>
-          </GlassCard>
-        </section>
-      </Container>
-    </div>
+          </div>
+        </div>
+
+        <div id="qa" className="rounded-3xl border border-slate-200 bg-white p-6">
+          <SectionTitle className="text-2xl text-slate-900">پرسش و پاسخ</SectionTitle>
+          <div className="mt-4 space-y-3">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+              <p className="inline-flex items-center gap-1 font-semibold text-slate-900">
+                <MessageSquareMore size={15} /> آیا این محصول گارانتی دارد؟
+              </p>
+              <p className="mt-2">بله، شامل ۷ روز ضمانت بازگشت و پشتیبانی فنی فروشنده است.</p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+              <p className="inline-flex items-center gap-1 font-semibold text-slate-900">
+                <CheckCircle2 size={15} /> امکان خرید عمده وجود دارد؟
+              </p>
+              <p className="mt-2">بله، برای سفارش عمده می‌توانید درخواست پیش‌فاکتور ثبت کنید.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="mt-10">
+        <div className="mb-4 flex items-center justify-between">
+          <SectionTitle className="text-2xl text-slate-900">محصولات مرتبط</SectionTitle>
+          <Link href="/categories" className="text-sm text-orange-600 hover:text-orange-700">
+            مشاهده همه
+          </Link>
+        </div>
+
+        <ProductRelatedRail products={related} />
+      </section>
+    </Container>
   );
 }

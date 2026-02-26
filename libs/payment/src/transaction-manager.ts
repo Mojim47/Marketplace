@@ -606,7 +606,9 @@ export class TransactionManager {
     try {
       await tx.$executeRaw`
         INSERT INTO audit_logs (action, resource, resource_id, new_value, created_at)
-        VALUES ('FINANCIAL_TX_${action}', 'financial_transaction', ${transactionId}, ${JSON.stringify(data)}::jsonb, NOW())
+        VALUES ('FINANCIAL_TX_${action}', 'financial_transaction', ${transactionId}, ${JSON.stringify(
+          data
+        )}::jsonb, NOW())
       `;
     } catch (error) {
       console.error('Failed to log audit event:', error);

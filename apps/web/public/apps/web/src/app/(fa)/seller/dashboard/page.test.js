@@ -2,6 +2,7 @@ import { render } from '@testing-library/react';
 import { jsx as _jsx } from 'react/jsx-runtime';
 import { describe, expect, it } from 'vitest';
 import Page from './page';
+
 describe('(fa) seller dashboard', () => {
   it('renders IRR currency and Jalali date in Persian digits', () => {
     const { getByLabelText } = render(_jsx(Page, {}));

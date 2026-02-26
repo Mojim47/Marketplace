@@ -1,0 +1,33 @@
+{
+  "version": "2026.2",
+  "coverage": {
+    "profile": "launch",
+    "summaryPath": "coverage/coverage-summary.json",
+    "mode": "phased",
+    "currentPhase": "phase-1",
+    "phases": [
+      {
+        "name": "phase-1",
+        "thresholds": { "lines": 60, "statements": 60, "functions": 60, "branches": 50 }
+      },
+      {
+        "name": "phase-2",
+        "thresholds": { "lines": 75, "statements": 75, "functions": 75, "branches": 65 }
+      },
+      {
+        "name": "phase-3",
+        "thresholds": { "lines": 85, "statements": 85, "functions": 85, "branches": 80 }
+      },
+      {
+        "name": "phase-4",
+        "thresholds": { "lines": 95, "statements": 95, "functions": 95, "branches": 90 }
+      }
+    ]
+  },
+  "requiredArtifacts": [
+    "contracts/api.openapi.yaml",
+    "artifacts/release/contract-test-report.json",
+    "artifacts/release/dr-drill-report.json",
+    "artifacts/release/slo-report.json"
+  ]
+}

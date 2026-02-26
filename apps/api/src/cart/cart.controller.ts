@@ -15,12 +15,12 @@ import {
   Request,
   UseGuards,
 } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import type { CartService } from './cart.service';
+import { LaunchJwtAuthGuard } from '../common/guards/launch-jwt-auth.guard';
+import { CartService } from './cart.service';
 import type { AddToCartDto, ApplyDiscountDto, UpdateCartItemDto } from './cart.types';
 
 @Controller('cart')
-@UseGuards(JwtAuthGuard)
+@UseGuards(LaunchJwtAuthGuard)
 export class CartController {
   constructor(private readonly cartService: CartService) {}
 
