@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
-    "@nestjs/core": "^10.0.0",
+    "@nestjs/core": "^10.4.22",
     "zod": "^3.22.4",
     "dompurify": "^3.0.0",
     "jsdom": "^23.0.0"
